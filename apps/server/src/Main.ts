@@ -596,6 +596,8 @@ const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
 
 const MEASURES_THIS_PROCESS_EVERY_MS = 5_000;
 
+const MEASURES_STREAMING_EVERY_MS = 1_000;
+
 const BOOK_COVERS_AFTER_MS = 60_000;
 
 const MonitorResourceSampleSchema = z.object({
@@ -2293,6 +2295,10 @@ const tellRequestsWhoIsWhoLater = () => {
 
 const streamMeter = createStreamMeter();
 
+setInterval(() => {
+  streamMeter.sample(Date.now());
+}, MEASURES_STREAMING_EVERY_MS).unref();
+
 const requestsUse =
   requestsSetup.kind === 'on' && requestsClient !== null
     ? createRequestsUseWatch({ read: () => requestsClient.readUse() })
@@ -2321,7 +2327,7 @@ setInterval(() => {
 const valenceUseNow = () => ({
   requests: requestsUse?.current() ?? null,
   apiCpuPercent,
-  streamedBytesPerSecond: streamMeter.bytesPerSecond(Date.now()),
+  streamedBytesPerSecond: streamMeter.bytesPerSecond(),
 });
 
 const requests =

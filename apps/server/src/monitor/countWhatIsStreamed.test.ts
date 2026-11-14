@@ -21,7 +21,7 @@ describe('countWhatIsStreamed', () => {
     const meter = createStreamMeter();
     const app = appWith(meter);
 
-    meter.bytesPerSecond(0);
+    meter.sample(0);
 
     for (const path of [
       '/api/playback/abc/file',
@@ -31,7 +31,9 @@ describe('countWhatIsStreamed', () => {
       await (await app.request(path)).arrayBuffer();
     }
 
-    expect(meter.bytesPerSecond(1_000)).toBe(1_500);
+    meter.sample(1_000);
+
+    expect(meter.bytesPerSecond()).toBe(1_500);
   });
 
   it('leaves every answer alone where nobody is counting', async () => {

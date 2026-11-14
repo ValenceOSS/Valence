@@ -4,14 +4,15 @@ const SHORTEST_GAP_MS = 500;
 
 type StreamMeter = {
   count: MiddlewareHandler;
-  bytesPerSecond: (nowMs: number) => number | null;
+  sample: (nowMs: number) => void;
+  bytesPerSecond: () => number | null;
 };
 
 /**
  * Counts the bytes this server sends in answer to the requests it is put in front of, and how fast.
  *
- * @returns The middleware that counts, and the speed since it was last asked, or nothing on the first
- * asking.
+ * @returns The middleware that counts, what to call on a steady clock to measure the speed since the
+ * last call, and the speed it last measured, or nothing before two calls.
  */
 const createStreamMeter = (): StreamMeter => {
   let sent = 0;
@@ -40,26 +41,24 @@ const createStreamMeter = (): StreamMeter => {
     );
   };
 
-  const bytesPerSecond = (nowMs: number): number | null => {
+  const sample = (nowMs: number): void => {
     if (mark === null) {
       mark = { atMs: nowMs, sent };
 
-      return null;
+      return;
     }
 
     const elapsedMs = nowMs - mark.atMs;
 
     if (elapsedMs < SHORTEST_GAP_MS) {
-      return rate;
+      return;
     }
 
     rate = Math.round(((sent - mark.sent) * 1000) / elapsedMs);
     mark = { atMs: nowMs, sent };
-
-    return rate;
   };
 
-  return { count, bytesPerSecond };
+  return { count, sample, bytesPerSecond: () => rate };
 };
 
 export type { StreamMeter };

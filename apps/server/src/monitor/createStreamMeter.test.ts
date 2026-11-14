@@ -15,44 +15,65 @@ const appWith = (meter: ReturnType<typeof createStreamMeter>) => {
 };
 
 describe('createStreamMeter', () => {
-  it('says nothing until it has been asked twice', () => {
-    expect(createStreamMeter().bytesPerSecond(1_000)).toBeNull();
+  it('says nothing until it has been sampled twice', () => {
+    const meter = createStreamMeter();
+
+    expect(meter.bytesPerSecond()).toBeNull();
+
+    meter.sample(0);
+
+    expect(meter.bytesPerSecond()).toBeNull();
   });
 
   it('counts the bytes sent in answer and says how fast they went', async () => {
     const meter = createStreamMeter();
     const app = appWith(meter);
 
-    meter.bytesPerSecond(0);
+    meter.sample(0);
 
     const answer = await app.request('/stream');
 
     expect((await answer.arrayBuffer()).byteLength).toBe(4_000);
-    expect(meter.bytesPerSecond(2_000)).toBe(2_000);
+
+    meter.sample(2_000);
+
+    expect(meter.bytesPerSecond()).toBe(2_000);
   });
 
   it('counts neither what was not asked for with GET nor what was refused', async () => {
     const meter = createStreamMeter();
     const app = appWith(meter);
 
-    meter.bytesPerSecond(0);
+    meter.sample(0);
     await (await app.request('/stream', { method: 'POST' })).arrayBuffer();
     await (await app.request('/missing')).arrayBuffer();
+    meter.sample(1_000);
 
-    expect(meter.bytesPerSecond(1_000)).toBe(0);
+    expect(meter.bytesPerSecond()).toBe(0);
   });
 
-  it('keeps the last speed when asked again too soon', async () => {
+  it('gives every reader the same speed, however often it is read', async () => {
     const meter = createStreamMeter();
     const app = appWith(meter);
 
-    meter.bytesPerSecond(0);
+    meter.sample(0);
     await (await app.request('/stream')).arrayBuffer();
+    meter.sample(1_000);
 
-    expect(meter.bytesPerSecond(1_000)).toBe(4_000);
+    expect(meter.bytesPerSecond()).toBe(4_000);
+    expect(meter.bytesPerSecond()).toBe(4_000);
+  });
 
+  it('keeps the last speed when sampled again too soon', async () => {
+    const meter = createStreamMeter();
+    const app = appWith(meter);
+
+    meter.sample(0);
     await (await app.request('/stream')).arrayBuffer();
+    meter.sample(1_000);
+    await (await app.request('/stream')).arrayBuffer();
+    meter.sample(1_100);
 
-    expect(meter.bytesPerSecond(1_100)).toBe(4_000);
+    expect(meter.bytesPerSecond()).toBe(4_000);
   });
 });
