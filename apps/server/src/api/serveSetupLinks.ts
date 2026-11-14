@@ -50,9 +50,7 @@ const serveSetupLinks = (app: OpenAPIHono, context: AppContext): void => {
    * @returns Whether it is still waiting to be set up.
    */
   const isWaitingToBeSetUp = async (userId: string) => {
-    const state = await setupLinks?.stateOf(userId);
-
-    return state === 'waiting' || state === 'expired';
+    return (await setupLinks?.isAwaitingFirstUse(userId)) === true;
   };
 
   /**

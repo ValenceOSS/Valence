@@ -48,6 +48,7 @@ const build = () => {
     issue: vi.fn<SetupLinkService['issue']>(),
     linkFor: vi.fn<SetupLinkService['linkFor']>(),
     stateOf: vi.fn<SetupLinkService['stateOf']>(),
+    isAwaitingFirstUse: vi.fn<SetupLinkService['isAwaitingFirstUse']>(),
     statesOf: vi.fn<SetupLinkService['statesOf']>(),
     revoke: vi.fn<SetupLinkService['revoke']>(),
     inspect: vi.fn<SetupLinkService['inspect']>(),

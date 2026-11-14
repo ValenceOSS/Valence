@@ -33,6 +33,7 @@ const build = async (callerOf?: () => string | null) => {
     issue: vi.fn<SetupLinkService['issue']>(),
     linkFor: vi.fn<SetupLinkService['linkFor']>(),
     stateOf: vi.fn<SetupLinkService['stateOf']>(),
+    isAwaitingFirstUse: vi.fn<SetupLinkService['isAwaitingFirstUse']>(),
     statesOf: vi.fn<SetupLinkService['statesOf']>(),
     revoke: vi.fn<SetupLinkService['revoke']>(),
     inspect: vi.fn<SetupLinkService['inspect']>(),
@@ -374,7 +375,7 @@ describe('serveSetupLinks', () => {
     it('lets somebody who may only add accounts make a link for one still waiting to be set up', async () => {
       const { app, cookie, setupLinks, adaId } = await asInviter();
 
-      setupLinks.stateOf.mockResolvedValue('expired');
+      setupLinks.isAwaitingFirstUse.mockResolvedValue(true);
 
       const response = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
         method: 'POST',
@@ -389,7 +390,7 @@ describe('serveSetupLinks', () => {
       for (const state of ['used', 'none'] as const) {
         const { app, cookie, setupLinks, adaId } = await asInviter();
 
-        setupLinks.stateOf.mockResolvedValue(state);
+        setupLinks.isAwaitingFirstUse.mockResolvedValue(false);
 
         const issued = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
           method: 'POST',
@@ -400,6 +401,26 @@ describe('serveSetupLinks', () => {
         expect(issued.status, state).toBe(403);
         expect(setupLinks.issue).not.toHaveBeenCalled();
       }
+    });
+
+    it('lets somebody who may only add accounts make a link again after revoking a waiting one', async () => {
+      const { app, cookie, setupLinks, adaId } = await asInviter();
+
+      setupLinks.stateOf.mockResolvedValue('none');
+      setupLinks.isAwaitingFirstUse.mockResolvedValue(true);
+
+      const revoked = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
+        method: 'DELETE',
+        cookie,
+      });
+      const issued = await ask(app, `/api/admin/accounts/${adaId}/setup-link`, {
+        method: 'POST',
+        body: { lifetimeDays: 1 },
+        cookie,
+      });
+
+      expect(revoked.status).toBe(204);
+      expect(issued.status).toBe(201);
     });
 
     it('revokes a link', async () => {
