@@ -1,5 +1,6 @@
 import { gunzip } from 'node:zlib';
 import { promisify } from 'node:util';
+import { readBodyUpTo } from '@ValenceCore/network/readBodyUpTo';
 
 const WAITS_MS = 60_000;
 
@@ -27,38 +28,13 @@ const readRemoteText = async (
       return null;
     }
 
-    const declared = Number(response.headers.get('content-length') ?? '0');
+    const read = await readBodyUpTo(response, mostBytes);
 
-    if (declared > mostBytes || response.body === null) {
-      await response.body?.cancel();
-
+    if (read === null) {
       return null;
     }
 
-    const chunks: Uint8Array[] = [];
-    let held = 0;
-
-    const reader = response.body.getReader();
-
-    for (;;) {
-      const read = await reader.read();
-
-      if (read.done || !(read.value instanceof Uint8Array)) {
-        break;
-      }
-
-      held += read.value.length;
-
-      if (held > mostBytes) {
-        await reader.cancel();
-
-        return null;
-      }
-
-      chunks.push(read.value);
-    }
-
-    const body = Buffer.concat(chunks);
+    const body = Buffer.from(read);
     const isZipped = body[0] === 0x1f && body[1] === 0x8b;
     const text = isZipped ? await unzipped(body, { maxOutputLength: mostBytes }) : body;
 

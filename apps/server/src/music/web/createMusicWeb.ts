@@ -1,4 +1,5 @@
 import { isPublicAddress } from '@ValenceCore/network/isPublicAddress';
+import { readBodyUpTo } from '@ValenceCore/network/readBodyUpTo';
 import { createPinnedFetch } from '@ValenceServer/web/createPinnedFetch';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { nameOfSource } from '@ValenceServer/sources/nameOfSource';
@@ -55,47 +56,6 @@ const GIVES_UP_AFTER_MS = 20_000;
 const BACKOFF_MS = 2000;
 
 const LIMITS_WITH_503 = new Set(['musicbrainz.org']);
-
-/**
- * Reads an answer's body, giving up on one that runs past what any picture or page is.
- *
- * @param answer - The answer.
- * @returns Its bytes, or nothing where there was no answer, it could not be read or it was too big.
- */
-const readCapped = async (answer: Response | null): Promise<Uint8Array | null> => {
-  const reader = answer?.body?.getReader();
-
-  if (reader === undefined) {
-    return null;
-  }
-
-  const chunks: Uint8Array[] = [];
-  let held = 0;
-
-  try {
-    for (;;) {
-      const read = await reader.read();
-
-      if (read.done || !(read.value instanceof Uint8Array)) {
-        break;
-      }
-
-      held += read.value.length;
-
-      if (held > MOST_BODY_BYTES) {
-        await reader.cancel();
-
-        return null;
-      }
-
-      chunks.push(read.value);
-    }
-  } catch {
-    return null;
-  }
-
-  return new Uint8Array(Buffer.concat(chunks));
-};
 
 /**
  * The server's way out to the services music is described by, made to be a good guest on each.
@@ -283,13 +243,15 @@ const createMusicWeb = ({
     post: async (url, body) => readJson(await ask(url, 'application/json', body)),
 
     bytes: async (url) => {
-      const read = await readCapped(await ask(url, 'image/*', null, true));
+      const answer = await ask(url, 'image/*', null, true);
+      const read = answer === null ? null : await readBodyUpTo(answer, MOST_BODY_BYTES);
 
       return read === null || read.byteLength === 0 ? null : read;
     },
 
     text: async (url) => {
-      const read = await readCapped(await ask(url, 'text/html', null, true));
+      const answer = await ask(url, 'text/html', null, true);
+      const read = answer === null ? null : await readBodyUpTo(answer, MOST_BODY_BYTES);
 
       return read === null ? null : new TextDecoder().decode(read);
     },
