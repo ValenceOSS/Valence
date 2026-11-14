@@ -10979,6 +10979,11 @@
     "context": "An error the server answers with (HTTP 403) when somebody without the permission asks for a film's sources (from `serveStreams`)."
   },
   {
+    "handler": "error.subtitle.couldNotBeReadJustNow",
+    "text": "That subtitle track couldn’t be read just now. Valence will try again.",
+    "context": "An error the server answers with (HTTP 503) in the app on the server (from `serveSubtitle`), when the media service that reads subtitles out of a video could not be reached or failed in itself. Players ask again by themselves."
+  },
+  {
     "handler": "error.subtitle.noSuchFont",
     "text": "Dieser Titel enthält keine Schrift mit diesem Namen.",
     "context": "Refusal when a player asks for a subtitle font the video file does not carry."

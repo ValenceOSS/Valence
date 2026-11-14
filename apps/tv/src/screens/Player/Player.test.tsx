@@ -323,6 +323,7 @@ type Setup = {
   audioLanguage?: string;
   startedFrom?: string;
   cues?: Record<string, SubtitleCue[]>;
+  styledCues?: Record<string, SubtitleCue[]>;
   show?: ShowDetail | null;
   viewer?: ViewerProfile;
   watchParty?: WatchPartyState;
@@ -351,7 +352,11 @@ const draw = async (setup: Setup = {}) => {
   }
 
   for (const [trackId, cues] of Object.entries(setup.cues ?? {})) {
-    cache.setQueryData(playbackQueries.cues(MEDIA_ID, trackId).queryKey, cues);
+    cache.setQueryData(playbackQueries.plainCues(MEDIA_ID, trackId).queryKey, cues);
+  }
+
+  for (const [trackId, cues] of Object.entries(setup.styledCues ?? {})) {
+    cache.setQueryData(playbackQueries.styledCues(MEDIA_ID, trackId).queryKey, cues);
   }
 
   if (setup.viewer !== undefined) {
@@ -1224,6 +1229,54 @@ describe('Player', () => {
       });
 
       expect(drawn.getByText('Bonjour')).toBeTruthy();
+    });
+
+    it('draw a script’s own lines, where it has them', async () => {
+      const { drawn } = await draw({
+        tracks: [aTrackOfWords('en', 'English', { format: 'ass' })],
+        cues: { en: [aCue(0, 10, 'Plain hello')] },
+        styledCues: { en: [aCue(0, 10, 'Styled hello')] },
+        subtitleLanguage: 'en',
+      });
+
+      expect(drawn.getByText('Styled hello')).toBeTruthy();
+      expect(drawn.queryByText('Plain hello')).toBeNull();
+    });
+
+    it('draw a script’s plain lines while its own are on their way', async () => {
+      const { drawn } = await draw({
+        tracks: [aTrackOfWords('en', 'English', { format: 'ass' })],
+        cues: { en: [aCue(0, 10, 'Plain hello')] },
+        subtitleLanguage: 'en',
+      });
+
+      expect(drawn.getByText('Plain hello')).toBeTruthy();
+      expect(global.fetch).toHaveBeenCalledWith(
+        `/api/media/${MEDIA_ID}/subtitles/en/cues?from=0`,
+        expect.anything(),
+      );
+    });
+
+    it('ask a track that is not a script for its plain lines, and nothing else', async () => {
+      await draw({ tracks: [aTrackOfWords('en', 'English')], subtitleLanguage: 'en' });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `/api/media/${MEDIA_ID}/subtitles/en?from=0`,
+        expect.anything(),
+      );
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        expect.stringContaining('/cues'),
+        expect.anything(),
+      );
+    });
+
+    it('ask for no lines while subtitles are off', async () => {
+      await draw({ tracks: [aTrackOfWords('en', 'English')], subtitleLanguage: 'off' });
+
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        expect.stringContaining('/subtitles/'),
+        expect.anything(),
+      );
     });
 
     it('ask for the soundtrack in the language the sender was hearing', async () => {

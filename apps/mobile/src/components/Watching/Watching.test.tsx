@@ -13,7 +13,12 @@ import {
 } from '@ValenceClient/playback/startPlaybackSession';
 import { reportWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { fetchSubtitleTracks } from '@ValenceClient/playback/fetchSubtitles';
-import { saveSubtitleLanguage } from '@ValenceClient/playback/languagePreference';
+import { fetchSubtitleCues } from '@ValenceClient/playback/fetchSubtitleCues';
+import { fetchPlainSubtitleCues } from '@ValenceClient/playback/fetchPlainSubtitleCues';
+import {
+  readSubtitleLanguage,
+  saveSubtitleLanguage,
+} from '@ValenceClient/playback/languagePreference';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { theFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
@@ -32,6 +37,8 @@ import {
 } from '@ValenceClient/playback/theReadiedEpisode';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
+import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
+import type { SubtitleCue } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { ReactNode } from 'react';
@@ -55,7 +62,10 @@ jest.mock('@ValenceClient/playback/fetchSubtitles', () => ({
 }));
 jest.mock('@ValenceClient/playback/fetchSubtitleCues', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/fetchSubtitleCues'),
-  fetchSubtitleCues: () => Promise.resolve([]),
+  fetchSubtitleCues: jest.fn(),
+}));
+jest.mock('@ValenceClient/playback/fetchPlainSubtitleCues', () => ({
+  fetchPlainSubtitleCues: jest.fn(),
 }));
 
 jest.mock('@ValenceClient/playback/fetchChapters', () => ({
@@ -100,6 +110,40 @@ const started = (delivery: StartedSession['delivery']): StartOutcome => ({
   },
 });
 
+const aTrack = (id: string, change: Partial<SubtitleTrack> = {}): SubtitleTrack => ({
+  id,
+  language: 'en',
+  label: 'English',
+  format: 'subrip',
+  isForced: false,
+  isHearingImpaired: false,
+  delivery: 'text',
+  streamIndex: null,
+  ...change,
+});
+
+const aLine = (from: number, to: number, text: string): SubtitleCue => ({
+  from,
+  to,
+  spans: [
+    {
+      text,
+      fontFamily: null,
+      fontHeight: null,
+      colour: null,
+      opacity: null,
+      isBold: false,
+      isItalic: false,
+      isUnderlined: false,
+      isStruckThrough: false,
+    },
+  ],
+  alignment: 2,
+  position: null,
+  margins: { left: 0, right: 0, vertical: 0 },
+  isSign: false,
+});
+
 const refused = (problem: PlaybackProblem, why = 'No.'): StartOutcome => ({
   kind: 'failed',
   reason: why,
@@ -116,6 +160,8 @@ beforeEach(() => {
   jest.mocked(reportWhatStopped).mockReset();
   jest.mocked(reportWatchProgress).mockReset().mockResolvedValue(true);
   jest.mocked(fetchSubtitleTracks).mockReset().mockResolvedValue([]);
+  jest.mocked(fetchSubtitleCues).mockReset().mockResolvedValue(null);
+  jest.mocked(fetchPlainSubtitleCues).mockReset().mockResolvedValue([]);
   jest.mocked(theCookiesThisPhoneHolds).mockReset().mockResolvedValue(null);
   jest.mocked(lockAsync).mockReset().mockResolvedValue();
   jest
@@ -808,6 +854,159 @@ describe('Watching', () => {
     expect(play).not.toHaveBeenCalled();
 
     play.mockRestore();
+  });
+
+  it('asks for no lines while subtitles are off', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest.mocked(fetchSubtitleTracks).mockResolvedValue([aTrack('english', { format: 'ass' })]);
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await userEvent.press(await drawn.findByLabelText('Settings'));
+
+    expect(await drawn.findByRole('button', { name: 'Subtitles' })).toBeTruthy();
+    expect(fetchSubtitleCues).not.toHaveBeenCalled();
+    expect(fetchPlainSubtitleCues).not.toHaveBeenCalled();
+  });
+
+  it('asks for no lines of a track the server draws into the picture itself', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest.mocked(fetchSubtitleTracks).mockResolvedValue([
+      aTrack('pictures', {
+        format: 'pgs',
+        label: 'Pictures',
+        delivery: 'burnIn',
+        streamIndex: 3,
+      }),
+    ]);
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await userEvent.press(await drawn.findByLabelText('Settings'));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Subtitles' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Pictures' }));
+
+    await waitFor(() => {
+      expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[6]).toBe(3);
+    });
+    expect(fetchSubtitleCues).not.toHaveBeenCalled();
+    expect(fetchPlainSubtitleCues).not.toHaveBeenCalled();
+  });
+
+  it('asks a script for its own lines and its plain ones at once, so neither waits on the other', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest.mocked(fetchSubtitleTracks).mockResolvedValue([aTrack('english', { format: 'ass' })]);
+    jest.mocked(fetchSubtitleCues).mockReturnValue(new Promise(() => undefined));
+    saveSubtitleLanguage('en');
+
+    await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(fetchSubtitleCues).toHaveBeenCalledWith(
+        '/api/media/a-film/subtitles/english/cues?from=0',
+        expect.anything(),
+      );
+    });
+    expect(fetchPlainSubtitleCues).toHaveBeenCalledWith('a-film', 'english', expect.anything());
+  });
+
+  it('asks a track that is not a script only for its plain lines, and draws them', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest.mocked(fetchSubtitleTracks).mockResolvedValue([aTrack('english')]);
+    jest.mocked(fetchPlainSubtitleCues).mockResolvedValue([aLine(400, 440, 'Hello there')]);
+    saveSubtitleLanguage('en');
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    expect(await drawn.findByText('Hello there')).toBeTruthy();
+    expect(fetchPlainSubtitleCues).toHaveBeenCalledWith('a-film', 'english', expect.anything());
+    expect(fetchSubtitleCues).not.toHaveBeenCalled();
+  });
+
+  it('opens the next title on its own tracks, never asking it for the last one’s', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest
+      .mocked(fetchSubtitleTracks)
+      .mockResolvedValue([aTrack('untagged', { language: null, label: 'Unknown' })]);
+
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const watching = (mediaId: string) => (
+      <QueryClientProvider client={cache}>
+        <Watching mediaId={mediaId} onDone={jest.fn()} />
+      </QueryClientProvider>
+    );
+    const drawn = await render(watching('a-film'));
+
+    await userEvent.press(await drawn.findByLabelText('Settings'));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Subtitles' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Unknown' }));
+
+    await waitFor(() => {
+      expect(fetchPlainSubtitleCues).toHaveBeenCalledWith('a-film', 'untagged', expect.anything());
+    });
+
+    await drawn.rerender(watching('b-film'));
+
+    await waitFor(() => {
+      expect(fetchSubtitleTracks).toHaveBeenCalledWith('b-film');
+    });
+    await userEvent.press(await drawn.findByLabelText('Settings'));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Subtitles' }));
+
+    expect(fetchPlainSubtitleCues).not.toHaveBeenCalledWith(
+      'b-film',
+      'untagged',
+      expect.anything(),
+    );
+  });
+
+  it('remembers the language of the subtitles chosen, to read the next title in', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest
+      .mocked(fetchSubtitleTracks)
+      .mockResolvedValue([aTrack('french', { language: 'fr', label: 'Français' })]);
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await userEvent.press(await drawn.findByLabelText('Settings'));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Subtitles' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Français' }));
+
+    expect(readSubtitleLanguage()).toBe('fr');
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Off' }));
+
+    expect(readSubtitleLanguage()).toBe('off');
+  });
+
+  it('keeps the language it remembered when the subtitles chosen do not say theirs', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest
+      .mocked(fetchSubtitleTracks)
+      .mockResolvedValue([aTrack('untagged', { language: null, label: 'Unknown' })]);
+    saveSubtitleLanguage('en');
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await userEvent.press(await drawn.findByLabelText('Settings'));
+    await userEvent.press(await drawn.findByRole('button', { name: 'Subtitles' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Unknown' }));
+
+    expect(readSubtitleLanguage()).toBe('en');
   });
 
   it('never writes over a place saved elsewhere that arrived after it started at the top', async () => {

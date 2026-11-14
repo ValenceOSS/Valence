@@ -55,6 +55,10 @@ const readSubtitleRoute = createRoute({
       description: 'No such track',
       content: { 'application/json': { schema: SubtitleError } },
     },
+    503: {
+      description: 'The track could not be read just now; ask again',
+      content: { 'application/json': { schema: SubtitleError } },
+    },
   },
 });
 
@@ -93,7 +97,9 @@ const readSubtitleCuesRoute = createRoute({
   summary: 'Read one subtitle track as styled lines, for a track that carries styling',
   description:
     'Advanced SubStation scripts say where a line goes and what it is dressed in, which WebVTT ' +
-    'cannot carry. A track with no styling of its own answers 404, and is read as WebVTT instead.',
+    'cannot carry. A track with no styling of its own, or a script with no line that can be read, ' +
+    'answers 404, and is read as WebVTT instead. A track the media service could not be asked ' +
+    'about just now answers 503, and is worth asking for again.',
   request: {
     params: z.object({ mediaId: z.string().uuid(), trackId: z.string().min(1) }),
     query: z.object({
@@ -107,6 +113,10 @@ const readSubtitleCuesRoute = createRoute({
     },
     404: {
       description: 'No such track, or a track that carries no styling',
+      content: { 'application/json': { schema: SubtitleError } },
+    },
+    503: {
+      description: 'The track could not be read just now; ask again',
       content: { 'application/json': { schema: SubtitleError } },
     },
   },
@@ -127,6 +137,10 @@ const readSubtitleScriptRoute = createRoute({
     200: { description: 'The script, as text' },
     404: {
       description: 'No such track, or a track that carries no styling',
+      content: { 'application/json': { schema: SubtitleError } },
+    },
+    503: {
+      description: 'The track could not be read just now; ask again',
       content: { 'application/json': { schema: SubtitleError } },
     },
   },

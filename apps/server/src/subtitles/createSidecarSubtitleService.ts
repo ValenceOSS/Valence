@@ -1,5 +1,5 @@
 import { cuesOfScript } from './cuesOfScript';
-import { STYLED_FORMATS } from './STYLED_FORMATS';
+import { isStyledSubtitle } from '@ValenceContracts/functions/isStyledSubtitle';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { readdir, readFile } from 'node:fs/promises';
@@ -321,7 +321,7 @@ const createSidecarSubtitleService = ({
     const found = await discover(mediaId);
     const track = found?.tracks.find((candidate) => trackId(candidate.path) === id);
 
-    if (track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())) {
+    if (track === undefined || !isStyledSubtitle(track.format)) {
       return null;
     }
 

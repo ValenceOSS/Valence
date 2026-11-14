@@ -1,4 +1,4 @@
-import { readAssTimestamp } from '@ValenceCore/functions/toWebVtt';
+import { readAssTimestamp } from '@ValenceCore/functions/readAssTimestamp';
 import type { TimedPart } from './joinWebVtt';
 
 const A_SECTION = /^\[(?<name>.+)\]\s*$/;

@@ -1,13 +1,31 @@
 import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VideoSurface } from './VideoSurface';
+
+const ENGLISH = { id: 'en', label: 'English', language: 'en', src: '/en.vtt' };
+
+const textTracksOf = new WeakMap<HTMLTrackElement, { mode: string }>();
 
 beforeEach(() => {
   Object.defineProperty(HTMLMediaElement.prototype, 'textTracks', {
     configurable: true,
     value: Object.assign([], { addEventListener: vi.fn(), removeEventListener: vi.fn() }),
   });
+  Object.defineProperty(HTMLTrackElement.prototype, 'track', {
+    configurable: true,
+    get(this: HTMLTrackElement) {
+      const known = textTracksOf.get(this) ?? { mode: 'disabled' };
+
+      textTracksOf.set(this, known);
+
+      return known;
+    },
+  });
+});
+
+afterEach(() => {
+  Reflect.deleteProperty(HTMLTrackElement.prototype, 'track');
 });
 
 describe('VideoSurface', () => {
@@ -262,5 +280,85 @@ describe('VideoSurface', () => {
 
     expect(container.querySelectorAll('track')).toHaveLength(1);
     expect(container.querySelector('track')).toHaveAttribute('src', '/fr.vtt');
+  });
+
+  it('leaves the drawing of the lines to whoever is drawing them', () => {
+    const { container } = render(
+      <VideoSurface
+        label="Arrival"
+        videoRef={createRef<HTMLVideoElement>()}
+        textTrack={ENGLISH}
+        isDrawnElsewhere
+      />,
+    );
+
+    expect(container.querySelector('track')?.track.mode).toBe('hidden');
+  });
+
+  it('shows the lines while an iPhone’s own player has the film, where the page cannot draw them', () => {
+    const { container } = render(
+      <VideoSurface
+        label="Arrival"
+        videoRef={createRef<HTMLVideoElement>()}
+        textTrack={ENGLISH}
+        isDrawnElsewhere
+      />,
+    );
+    const video = screen.getByLabelText('Arrival');
+    const track = container.querySelector('track')?.track;
+
+    fireEvent(video, new Event('webkitbeginfullscreen'));
+
+    expect(track?.mode).toBe('showing');
+
+    fireEvent(video, new Event('webkitendfullscreen'));
+
+    expect(track?.mode).toBe('hidden');
+  });
+
+  it('keeps showing the lines it draws itself once the iPhone’s own player gives the film back', () => {
+    const { container } = render(
+      <VideoSurface label="Arrival" videoRef={createRef<HTMLVideoElement>()} textTrack={ENGLISH} />,
+    );
+    const video = screen.getByLabelText('Arrival');
+
+    fireEvent(video, new Event('webkitbeginfullscreen'));
+    fireEvent(video, new Event('webkitendfullscreen'));
+
+    expect(container.querySelector('track')?.track.mode).toBe('showing');
+  });
+
+  it('keeps showing the lines to the iPhone’s own player when another track is chosen there', () => {
+    const videoRef = createRef<HTMLVideoElement>();
+    const { container, rerender } = render(
+      <VideoSurface label="Arrival" videoRef={videoRef} textTrack={ENGLISH} isDrawnElsewhere />,
+    );
+
+    fireEvent(screen.getByLabelText('Arrival'), new Event('webkitbeginfullscreen'));
+
+    rerender(
+      <VideoSurface
+        label="Arrival"
+        videoRef={videoRef}
+        textTrack={{ id: 'fr', label: 'Français', language: 'fr', src: '/fr.vtt' }}
+        isDrawnElsewhere
+      />,
+    );
+
+    expect(container.querySelector('track')?.track.mode).toBe('showing');
+  });
+
+  it('stops listening for the iPhone’s own player once it is gone', () => {
+    const videoRef = createRef<HTMLVideoElement>();
+    const { unmount } = render(
+      <VideoSurface label="Arrival" videoRef={videoRef} textTrack={ENGLISH} isDrawnElsewhere />,
+    );
+    const video = screen.getByLabelText('Arrival');
+    const letGo = vi.spyOn(video, 'removeEventListener');
+
+    unmount();
+
+    expect(letGo).toHaveBeenCalledWith('webkitbeginfullscreen', expect.any(Function));
+    expect(letGo).toHaveBeenCalledWith('webkitendfullscreen', expect.any(Function));
   });
 });

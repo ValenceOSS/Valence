@@ -269,6 +269,7 @@ const createPlaybackService = ({
         burning === null ? (subtitleStreamIndex ?? null) : burning.streamIndex;
       const subtitleBurnIn = burning === null ? null : burning.file === null ? 'chosen' : 'file';
       const sources = sourcesOf(found);
+      const isDrawingInItsOwnStream = chosenSubtitleStreamIndex !== null;
       const chosen = chooseSource({
         sources,
         profile,
@@ -277,6 +278,9 @@ const createPlaybackService = ({
         chosenSubtitleStreamIndex,
         subtitleBurnIn,
         converted: converted ?? null,
+        pinnedSourceId: isDrawingInItsOwnStream
+          ? (sources.find((one) => one.isOriginal)?.id ?? null)
+          : null,
       });
 
       if (chosen === null) {
@@ -286,7 +290,7 @@ const createPlaybackService = ({
       const { plan } = chosen;
       const source = chosen.source.item;
       const rungs =
-        isAdaptive === true && converted === undefined
+        isAdaptive === true && converted === undefined && !isDrawingInItsOwnStream
           ? sources
               .filter((candidate) => candidate.id !== chosen.source.id)
               .map((candidate) =>

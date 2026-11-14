@@ -5,6 +5,7 @@ import { useVideoPlayer } from 'expo-video';
 import { forgetTheFakePlayer, theFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
 import { TheMovingParts } from './TheMovingParts';
 import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
+import type { SubtitleCue } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { TheMovingPartsProps } from './TheMovingParts.types';
 
 const AN_INTRO: MediaSegment = {
@@ -19,6 +20,28 @@ const CREDITS: MediaSegment = {
   startSeconds: 1700,
   endSeconds: 1800,
   source: 'imported',
+};
+
+const A_LINE: SubtitleCue = {
+  from: 20,
+  to: 22,
+  spans: [
+    {
+      text: 'Later on',
+      fontFamily: null,
+      fontHeight: null,
+      colour: null,
+      opacity: null,
+      isBold: false,
+      isItalic: false,
+      isUnderlined: false,
+      isStruckThrough: false,
+    },
+  ],
+  alignment: 2,
+  position: null,
+  margins: { left: 0, right: 0, vertical: 0 },
+  isSign: false,
 };
 
 const controls = (): TheMovingPartsProps['controls'] => ({
@@ -42,11 +65,13 @@ const Playing = ({
   areControlsDrawn = false,
   onMoveTo = jest.fn(),
   next = null,
+  cues = [],
 }: {
   segments?: MediaSegment[];
   areControlsDrawn?: boolean;
   onMoveTo?: (seconds: number) => void;
   next?: TheMovingPartsProps['next'];
+  cues?: SubtitleCue[];
 }) => {
   const player = useVideoPlayer({ uri: '/film' });
 
@@ -54,9 +79,11 @@ const Playing = ({
     <TheMovingParts
       player={player}
       segments={segments}
-      cues={[]}
+      cues={cues}
       subtitleOffset={0}
       captionStyle={DEFAULT_CAPTION_STYLE}
+      frame={null}
+      screen={{ width: 852, height: 393 }}
       areControlsDrawn={areControlsDrawn}
       onMoveTo={onMoveTo}
       next={next}
@@ -217,6 +244,45 @@ describe('TheMovingParts', () => {
 
     expect(drawn.getByLabelText('Skip Credits')).toBeTruthy();
     expect(drawn.queryByText('Play Next')).toBeNull();
+  });
+
+  it('puts a line up at its own moment while the film plays, between the player’s reports', async () => {
+    jest.useFakeTimers();
+
+    try {
+      theFakePlayer.currentTime = 19.6;
+
+      const drawn = await render(<Playing cues={[A_LINE]} />);
+
+      expect(drawn.queryByText('Later on')).toBeNull();
+
+      await act(() => {
+        jest.advanceTimersByTime(450);
+      });
+
+      expect(drawn.getByText('Later on')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('holds the lines where the player last said while the film is paused', async () => {
+    jest.useFakeTimers();
+
+    try {
+      theFakePlayer.currentTime = 19.6;
+      theFakePlayer.playing = false;
+
+      const drawn = await render(<Playing cues={[A_LINE]} />);
+
+      await act(() => {
+        jest.advanceTimersByTime(450);
+      });
+
+      expect(drawn.queryByText('Later on')).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('draws the controls only when asked to', async () => {

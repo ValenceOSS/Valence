@@ -70,11 +70,12 @@ import {
 } from '@keyline-icons/react-native/fill';
 import { TheNotice } from '@ValenceMobile/components/TheNotice/TheNotice';
 import { TheMovingParts } from '@ValenceMobile/components/Watching/components/TheMovingParts/TheMovingParts';
-import { useTheSubtitles } from '@ValenceMobile/components/Watching/useTheSubtitles';
+import { useSubtitleCues } from '@ValenceClient/playback/useSubtitleCues';
 import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { howBigToDrawIt } from '@ValenceMobile/components/Watching/howBigToDrawIt';
 import type { ABox } from '@ValenceMobile/components/Watching/howBigToDrawIt';
 import { fittedTo, pictureIn } from '@ValenceMobile/components/Watching/fittedTo';
+import { zoomedBy } from '@ValenceMobile/components/Watching/zoomedBy';
 import { shownShapeOf } from '@ValenceMobile/components/Watching/shownShapeOf';
 import { readPictureArea } from '@ValenceClient/playback/readPictureArea';
 import type { PictureArea } from '@ValenceClient/playback/readPictureArea';
@@ -435,6 +436,7 @@ const Watching = ({
     requestedQuality: kept === undefined ? readQualityPreference() : 'original',
   }));
   const [askingFor, setAskingFor] = useState(mediaId);
+  const [reading, setReading] = useState(SUBTITLES_OFF);
 
   if (askingFor !== mediaId) {
     setAskingFor(mediaId);
@@ -450,6 +452,7 @@ const Watching = ({
     setSessionId(null);
     setStreamReading(NOTHING_READ);
     setSubtitleOffset(0);
+    setReading(SUBTITLES_OFF);
   }
 
   useEffect(() => {
@@ -502,7 +505,6 @@ const Watching = ({
     () => createProgressReporter(mediaId, keepsAbove),
     [mediaId, keepsAbove],
   );
-  const [reading, setReading] = useState(SUBTITLES_OFF);
   const carriedOver = useRef<string | null>(null);
 
   useEffect(() => {
@@ -525,10 +527,11 @@ const Watching = ({
     }
   }, [tracks.data, mediaId]);
   const beingRead = (tracks.data ?? []).find((track) => track.id === reading) ?? null;
-  const cues = useTheSubtitles(
+  const cues = useSubtitleCues(
     mediaId,
-    reading,
-    beingRead?.delivery === 'burnIn' || asking.burnInSubtitleId !== undefined,
+    isKept || beingRead?.delivery === 'burnIn' || asking.burnInSubtitleId !== undefined
+      ? null
+      : beingRead,
   );
 
   useEffect(() => {
@@ -1050,9 +1053,12 @@ const Watching = ({
       const wanted = among.find((track) => track.id === trackId) ?? null;
 
       setReading(trackId);
-      saveSubtitleLanguage(
-        trackId === SUBTITLES_OFF ? SUBTITLES_OFF : (wanted?.language ?? SUBTITLES_OFF),
-      );
+
+      if (trackId === SUBTITLES_OFF) {
+        saveSubtitleLanguage(SUBTITLES_OFF);
+      } else if (wanted?.language !== undefined && wanted.language !== null) {
+        saveSubtitleLanguage(wanted.language);
+      }
 
       const burning = wanted?.delivery === 'burnIn' ? (wanted.streamIndex ?? undefined) : undefined;
 
@@ -1109,13 +1115,15 @@ const Watching = ({
     spatialiseEvenStereo(player);
   }, [player, loaded]);
 
+  const zoom = howBigToDrawIt(howClose, screen, drawn);
+
   useEffect(() => {
     Animated.timing(howBig, {
-      toValue: howBigToDrawIt(howClose, screen, drawn),
+      toValue: zoom,
       duration: ZOOMING,
       useNativeDriver: true,
     }).start();
-  }, [howClose, screen, drawn, howBig]);
+  }, [zoom, howBig]);
 
   const streamed = session?.delivery.kind === 'hls' ? session.sessionId : null;
 
@@ -1488,6 +1496,8 @@ const Watching = ({
           cues={cues}
           subtitleOffset={subtitleOffset}
           captionStyle={captions.style}
+          frame={fitted === null ? null : zoomedBy(fitted, screen, zoom)}
+          screen={screen}
           areControlsDrawn={areControlsDrawn && !isLocked && panel === null}
           castAt={chromecast.at}
           onMoveTo={(seconds) => {

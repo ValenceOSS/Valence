@@ -91,7 +91,7 @@ With it on, the browser reads the file straight from the server and does the wor
 | Container          | Repackages MKV, AVI and other containers for its own player, so a remux costs the server nothing.                                                                                                                                                          |
 | Picture            | Decodes with WebCodecs and draws with WebGPU. HDR films in HEVC, AV1 and VP9 are tone mapped from each film's own brightness, so they look right on an ordinary screen. DVDs in MPEG-2, up to 576 lines, are decoded by Valence's own decoder in the page. |
 | Sound              | Decodes Dolby Digital, Dolby Digital Plus, DTS, Dolby TrueHD and PCM, and passes the sound on as lossless FLAC, so 5.1 and 7.1 stay surround. A browser that cannot take FLAC gets 5.1 AAC or stereo Opus instead.                                         |
-| Styled subtitles   | Draws ASS and SSA with libass, with the fonts in the file.                                                                                                                                                                                                 |
+| Styled subtitles   | Drawn over the picture by Valence, the same as when the server converts the film. See [Subtitles](#subtitles).                                                                                                                                             |
 | Picture in picture | Pops out the drawn picture, subtitles included.                                                                                                                                                                                                            |
 
 Before every film, the browser is asked what it can actually do, rather than going by its name. Anything it cannot do is still converted by the server, and so are VC-1 pictures, Dolby Vision without an HDR10 base, and image based subtitles that are turned on. If the browser player fails partway through starting, Valence quietly asks the server to convert the film instead.
@@ -100,7 +100,7 @@ It needs all of these:
 
 - **HTTPS.** WebGPU and WebCodecs only exist on a secure page.
 - **WebGPU and WebCodecs.** Current Chrome, Edge and Safari have both. Firefox does not draw HDR this way yet, so HDR films are converted there.
-- **WebAssembly.** The sound and subtitle decoders are WebAssembly. A reverse proxy that sets its own `Content-Security-Policy` must include `'wasm-unsafe-eval'` in `script-src`, or the browser refuses to load them. See [Reverse proxy](/install/reverse-proxy).
+- **WebAssembly.** The sound and MPEG-2 decoders are WebAssembly. A reverse proxy that sets its own `Content-Security-Policy` must include `'wasm-unsafe-eval'` in `script-src`, or the browser refuses to load them. See [Reverse proxy](/install/reverse-proxy).
 - **The decoders file** for TrueHD and MPEG-2, served at `/decoders/valence-browser-decoders.wasm`. The published image includes it. Without it, those two are converted by the server.
 
 **Stats for nerds** says which player is in use. **Valence WebGPU (Mediabunny + WebCodecs)** is the browser player. **Shaka Player (HLS)** with a remux or transcode in the plan means the server is converting.
@@ -144,10 +144,15 @@ DASH is offered when the picture and sound are sent apart, which is how browsers
 
 Press the subtitles button to turn them on and off, or open **Settings** then **Subtitles/CC** to pick a track. Valence finds subtitles in three places:
 
-- **Embedded** in the video file, extracted on demand. Text tracks are converted to WebVTT, and styled ASS and SSA tracks are drawn as they were made, with their positions, effects and the fonts attached to the file.
+- **Embedded** in the video file, extracted on demand. Text tracks are converted to WebVTT.
 - **Beside the video**, as text files (`srt`, `vtt`, `ass` or `ssa`) whose name starts with the video's name, for example `Film (2016).en.srt`. Files in a folder called `Subs` or `Subtitles` are found too.
 - Image based subtitles (`sup`, `sub`, `idx` and disc formats) cannot be drawn as text, so they are burned into the picture, which forces a transcode.
 - **Written by Whisper**, for a film or episode with no subtitles at all, where an administrator has turned it on. These are named with "Generated" after the language, for example "English · Generated". See [Writing subtitles with Whisper](#writing-subtitles-with-whisper).
+
+ASS and SSA tracks, embedded or beside the video, are drawn by Valence itself in every app, from the server's reading of the script. Until the server has read a script, its lines are shown as plain text, and they take on their styling once the reading arrives. Movement and animation, karaoke, drawings and the fonts attached to the file are left out.
+
+- **In a browser, the desktop app and the phone app**, dialogue follows your caption settings. Signs keep the script's colours, bold and italic, with an edge round them that is dark round light lettering and light round dark, and sit where the script put them on the picture, never in the black bars around it. Lines meant for the top or middle of the picture are drawn there, and lines said at once are stacked rather than drawn on top of one another, at the foot with the newest line above the one you are reading. Full screen in an iPhone's browser hands the film to the system's own player, which draws the lines itself in the system's caption style.
+- **On a television**, every line is drawn in rows in your caption settings, keeping the script's bold and italic, along the top, across the middle or along the foot. The television does not place signs: a line the script put at a point of its own is drawn in the row its alignment names instead.
 
 When you watch on a television through AirPlay, Chromecast or your browser's cast button, the subtitles you are reading are burned into the picture, because the television cannot be sent them. The video is transcoded for as long as you cast with subtitles on, and goes back to how it was when you stop casting. A Chromecast is sent a stream made for what every Chromecast plays, 1080p H.264 with stereo sound, and your place is saved as it plays there. When you stop casting, the film carries on in the browser from where the Chromecast got to. **Play on another device** starts a Valence television app on the soundtrack and subtitles you last chose.
 

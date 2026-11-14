@@ -1,13 +1,12 @@
 import { cuesOfScript } from '@ValenceServer/subtitles/cuesOfScript';
 import { readFile } from 'node:fs/promises';
 import { toWebVtt } from '@ValenceCore/functions/toWebVtt';
+import { isStyledSubtitle } from '@ValenceContracts/functions/isStyledSubtitle';
 import { decodeSubtitle } from '@ValenceServer/subtitles/decodeSubtitle';
 import { describeSubtitleLabel } from '@ValenceServer/subtitles/describeSubtitleLabel';
 import { trackId } from '@ValenceServer/subtitles/SubtitleService';
 import type { SubtitleService } from '@ValenceServer/subtitles/SubtitleService';
 import type { FetchedSubtitleStore } from './createFetchedSubtitleStore';
-
-const STYLED = new Set(['ass', 'ssa']);
 
 /**
  * The subtitles Valence fetched, as tracks a player can choose: each read from Valence's own data,
@@ -55,13 +54,13 @@ const createFetchedSubtitleService = (store: FetchedSubtitleStore): SubtitleServ
     readScript: async (mediaId, id) => {
       const read = await readText(mediaId, id);
 
-      return read === null || !STYLED.has(read.entry.format) ? null : read.text;
+      return read === null || !isStyledSubtitle(read.entry.format) ? null : read.text;
     },
 
     readCues: async (mediaId, id) => {
       const read = await readText(mediaId, id);
 
-      return cuesOfScript(read === null || !STYLED.has(read.entry.format) ? null : read.text);
+      return cuesOfScript(read === null || !isStyledSubtitle(read.entry.format) ? null : read.text);
     },
   };
 };

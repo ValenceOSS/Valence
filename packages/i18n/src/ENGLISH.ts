@@ -2612,6 +2612,8 @@ const ENGLISH = {
   'error.streams.theFilmCouldNotBeReadFrom':
     'The film couldn’t be read from its source. Try again, or choose another stream.',
   'error.streams.youMayNotPlayFilmsFrom': 'You may not play films from sources.',
+  'error.subtitle.couldNotBeReadJustNow':
+    'That subtitle track couldn’t be read just now. Valence will try again.',
   'error.subtitle.noSuchFont': 'This title carries no font by that name.',
   'error.subtitle.thatTrackCarriesNoStylingOf': 'That subtitle track has no styling of its own.',
   'error.subtitles.noKeyIsSavedForThatSite':

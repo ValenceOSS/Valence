@@ -1,9 +1,8 @@
 import { cuesOfScript } from './cuesOfScript';
 import { toWebVtt } from '@ValenceCore/functions/toWebVtt';
+import { isStyledSubtitle } from '@ValenceContracts/functions/isStyledSubtitle';
 import { trackId } from './SubtitleService';
 import type { SubtitleService, SubtitleTrack } from './SubtitleService';
-
-const STYLED_FORMATS = new Set(['ass', 'ssa']);
 
 type MemorySubtitle = {
   path: string;
@@ -58,9 +57,7 @@ const createMemorySubtitleService = (state: MemoryState = {}): SubtitleService =
       const track = state[mediaId]?.find((candidate) => trackId(candidate.path) === id);
 
       return Promise.resolve(
-        track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())
-          ? null
-          : track.contents,
+        track === undefined || !isStyledSubtitle(track.format) ? null : track.contents,
       );
     },
 
@@ -69,9 +66,7 @@ const createMemorySubtitleService = (state: MemoryState = {}): SubtitleService =
 
       return Promise.resolve(
         cuesOfScript(
-          track === undefined || !STYLED_FORMATS.has(track.format.toLowerCase())
-            ? null
-            : track.contents,
+          track === undefined || !isStyledSubtitle(track.format) ? null : track.contents,
         ),
       );
     },

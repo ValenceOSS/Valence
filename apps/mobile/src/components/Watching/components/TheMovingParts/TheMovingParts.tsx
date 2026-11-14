@@ -20,6 +20,9 @@ import type { TheMovingPartsProps } from './TheMovingParts.types';
  * @param cues - The lines of the track being read.
  * @param subtitleOffset - How far the lines are moved against the film.
  * @param captionStyle - How this phone draws the lines.
+ * @param frame - Where the film's whole frame is drawn on the screen, so a line the script put at a
+ *   point is drawn over that point, or nothing until the frame's size is known.
+ * @param screen - The size of the screen the film is drawn on.
  * @param areControlsDrawn - Whether the controls are drawn.
  * @param onMoveTo - Told to move the film to a moment, by skipping a marked stretch or scrubbing.
  * @param next - Whether the next episode starts on its own at the end, whether the player is held
@@ -36,6 +39,8 @@ const TheMovingParts = ({
   cues,
   subtitleOffset,
   captionStyle,
+  frame,
+  screen,
   areControlsDrawn,
   onMoveTo,
   next,
@@ -49,6 +54,7 @@ const TheMovingParts = ({
     currentLiveTimestamp: null,
     currentOffsetFromLive: null,
   });
+  const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
   const offerHere =
     next === null
       ? null
@@ -92,8 +98,11 @@ const TheMovingParts = ({
       <TheSubtitles
         cues={cues}
         atSeconds={ticking.currentTime - subtitleOffset}
+        isPlaying={moving.isPlaying}
         captionStyle={captionStyle}
         isClearOfTheControls={areControlsDrawn}
+        frame={frame}
+        screen={screen}
       />
 
       {areControlsDrawn ? (

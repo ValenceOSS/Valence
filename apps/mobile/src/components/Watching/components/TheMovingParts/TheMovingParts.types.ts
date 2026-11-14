@@ -3,6 +3,8 @@ import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
 import type { SubtitleCue } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { CaptionStyle } from '@ValenceClient/playback/captionStyle';
 import type { TheControlsProps } from '@ValenceMobile/components/Watching/components/TheControls/TheControls.types';
+import type { ABox } from '@ValenceMobile/components/Watching/howBigToDrawIt';
+import type { AFrame } from '@ValenceMobile/components/Watching/fittedTo';
 
 type TheMovingPartsProps = {
   player: VideoPlayer;
@@ -10,6 +12,8 @@ type TheMovingPartsProps = {
   cues: readonly SubtitleCue[];
   subtitleOffset: number;
   captionStyle: CaptionStyle;
+  frame: AFrame | null;
+  screen: ABox;
   areControlsDrawn: boolean;
   onMoveTo: (seconds: number) => void;
   next: {

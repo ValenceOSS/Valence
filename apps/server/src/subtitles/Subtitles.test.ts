@@ -10,6 +10,8 @@ import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMe
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from './createMemorySubtitleService';
+import type { MemoryState } from './createMemorySubtitleService';
+import type { SubtitleService } from './SubtitleService';
 
 const BASE = 'http://localhost:8420';
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
@@ -30,7 +32,34 @@ const SCRIPT = [
   'Dialogue: 0,0:00:20.00,0:00:22.00,Sign,,{\\an2}Spoken aloud',
 ].join('\n');
 
-const build = () => {
+const TRACKS: MemoryState = {
+  [MEDIA_ID]: [
+    {
+      path: '/media/Arrival (2016).en.srt',
+      language: 'en',
+      label: 'English',
+      format: 'srt',
+      contents: SUB_RIP,
+    },
+    {
+      path: '/media/Arrival (2016).fr.forced.srt',
+      language: 'fr',
+      label: 'Français (forced)',
+      format: 'srt',
+      contents: SUB_RIP,
+      isForced: true,
+    },
+    {
+      path: '/media/Arrival (2016).ja.ass',
+      language: 'ja',
+      label: '日本語',
+      format: 'ass',
+      contents: SCRIPT,
+    },
+  ],
+};
+
+const build = (subtitles = createMemorySubtitleService(TRACKS)) => {
   const { auth, settings } = createMemoryAuth();
 
   return signedInApp(
@@ -45,32 +74,7 @@ const build = () => {
       progress: createMemoryWatchProgressService(),
       favourites: createMemoryFavouriteService(),
       ratings: createMemoryRatingService(),
-      subtitles: createMemorySubtitleService({
-        [MEDIA_ID]: [
-          {
-            path: '/media/Arrival (2016).en.srt',
-            language: 'en',
-            label: 'English',
-            format: 'srt',
-            contents: SUB_RIP,
-          },
-          {
-            path: '/media/Arrival (2016).fr.forced.srt',
-            language: 'fr',
-            label: 'Français (forced)',
-            format: 'srt',
-            contents: SUB_RIP,
-            isForced: true,
-          },
-          {
-            path: '/media/Arrival (2016).ja.ass',
-            language: 'ja',
-            label: '日本語',
-            format: 'ass',
-            contents: SCRIPT,
-          },
-        ],
-      }),
+      subtitles,
     }),
     { auth },
   );
@@ -226,5 +230,52 @@ describe('subtitle tracks', () => {
     expect(text.startsWith('WEBVTT')).toBe(true);
     expect(text).toContain('CLOSED');
     expect(text).not.toContain('\\pos');
+  });
+
+  it('answers a read the media service could not make just now as worth asking again', async () => {
+    const outOfReach = (): Promise<never> => Promise.reject(new TypeError('fetch failed'));
+    const failing: SubtitleService = {
+      ...createMemorySubtitleService(TRACKS),
+      read: outOfReach,
+      readCues: outOfReach,
+      readScript: outOfReach,
+    };
+    const app = build(failing);
+    const listed = TrackListSchema.parse(
+      await (await app.request(`${BASE}/api/media/${MEDIA_ID}/subtitles`)).json(),
+    );
+    const id = listed.tracks[2]?.id ?? '';
+
+    for (const route of ['', '/cues', '/script']) {
+      const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/subtitles/${id}${route}`);
+
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({ code: 'error.subtitle.couldNotBeReadJustNow' });
+    }
+  });
+
+  it('answers a script with no line that can be read as a track with no styling', async () => {
+    const app = build(
+      createMemorySubtitleService({
+        [MEDIA_ID]: [
+          {
+            path: '/media/Arrival (2016).en.ass',
+            language: 'en',
+            label: 'English',
+            format: 'ass',
+            contents: '[Script Info]\nTitle: Nothing said',
+          },
+        ],
+      }),
+    );
+    const listed = TrackListSchema.parse(
+      await (await app.request(`${BASE}/api/media/${MEDIA_ID}/subtitles`)).json(),
+    );
+
+    const response = await app.request(
+      `${BASE}/api/media/${MEDIA_ID}/subtitles/${listed.tracks[0]?.id ?? ''}/cues`,
+    );
+
+    expect(response.status).toBe(404);
   });
 });
