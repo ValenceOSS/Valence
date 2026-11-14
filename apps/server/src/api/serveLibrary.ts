@@ -140,9 +140,13 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       (await requires(context.req.raw.headers, 'library.edit')) ||
       (await requires(context.req.raw.headers, 'library.create'));
 
+    const mayMonitor = mayChange || (await requires(context.req.raw.headers, 'server.monitor'));
+
     return context.json(
       (await library.list(viewer)).map((listed) => ({
-        ...(mayChange ? listed : withoutHostFolders(listed)),
+        ...(mayChange
+          ? listed
+          : { ...withoutHostFolders(listed), ...(mayMonitor ? { path: listed.path } : {}) }),
         hasLock: locks[listed.id] !== undefined,
         isLocked: locked.has(listed.id),
       })),

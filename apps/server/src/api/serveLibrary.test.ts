@@ -167,6 +167,14 @@ describe('serveLibrary', () => {
     ]);
   });
 
+  it('shows where each library is, and nothing else of the machine, to somebody who monitors the server', async () => {
+    const films = { ...aLibraryAt('/mnt/nas/films'), requestPath: '/mnt/nas/requested' };
+    const monitor = await build({ jobId: null }, [], [films], ['server.monitor']);
+    const shown = LibraryListSchema.parse(await (await monitor.ask('/api/libraries')).json());
+
+    expect(shown.map((one) => [one.path, one.requestPath])).toEqual([['/mnt/nas/films', null]]);
+  });
+
   it('refuses a library on a folder the server keeps its own data in, or one that holds it', async () => {
     const root = await mkdtemp(join(tmpdir(), 'valence-library-'));
 
