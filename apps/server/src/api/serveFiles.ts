@@ -6,11 +6,13 @@ import {
   listMediaPathsRoute,
   measureLibraryFolderRoute,
   moveLibraryFileRoute,
+  readMediaOriginsRoute,
   renameLibraryFileRoute,
   searchLibraryFilesRoute,
 } from '@ValenceServer/routes/FilesRoute';
 import { listLibraryFolder } from '@ValenceServer/files/listLibraryFolder';
 import { describeEntriesIn } from '@ValenceServer/files/describeEntriesIn';
+import { withOrigins } from '@ValenceServer/origins/withOrigins';
 import { measureLibraryFolder } from '@ValenceServer/files/measureLibraryFolder';
 import { searchLibraryFiles } from '@ValenceServer/files/searchLibraryFiles';
 import { deleteLibraryEntry } from '@ValenceServer/files/deleteLibraryEntry';
@@ -27,7 +29,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
-  const { library, folderDisk, requires, settleChange, recordAudit } = context;
+  const { library, folderDisk, requires, settleChange, recordAudit, readOrigins } = context;
 
   /**
    * Reads the libraries whose files are on this server, which are all the file manager may reach.
@@ -42,8 +44,13 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const libraries = await onThisDisk();
-    const listed = await listLibraryFolder(libraries, context.req.valid('query').path, (entries) =>
-      describeEntriesIn(libraries, entries, library.readEntryFacts),
+    const listed = await listLibraryFolder(
+      libraries,
+      context.req.valid('query').path,
+      withOrigins(
+        (entries) => describeEntriesIn(libraries, entries, library.readEntryFacts),
+        readOrigins,
+      ),
     );
 
     switch (listed.kind) {
@@ -102,13 +109,28 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     const { words, within } = context.req.valid('query');
     const libraries = await onThisDisk();
-    const found = await searchLibraryFiles(folderDisk, libraries, words, within, (entries) =>
-      describeEntriesIn(libraries, entries, library.readEntryFacts),
+    const found = await searchLibraryFiles(
+      folderDisk,
+      libraries,
+      words,
+      within,
+      withOrigins(
+        (entries) => describeEntriesIn(libraries, entries, library.readEntryFacts),
+        readOrigins,
+      ),
     );
 
     return found.kind === 'found'
       ? context.json(found.search, 200)
       : context.json(refuse('error.common.thatIsNotInsideALibrary'), 403);
+  });
+
+  app.openapi(readMediaOriginsRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    return context.json({ origins: await readOrigins(context.req.valid('json').paths) }, 200);
   });
 
   app.openapi(deleteLibraryFileRoute, async (context) => {

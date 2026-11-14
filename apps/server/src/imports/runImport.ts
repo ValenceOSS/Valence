@@ -1,3 +1,5 @@
+import { rememberImportedFiles } from '@ValenceServer/imports/rememberImportedFiles';
+import { createDatabaseMediaOriginStore } from '@ValenceServer/origins/createDatabaseMediaOriginStore';
 import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { eq } from 'drizzle-orm';
 import { MOST_COLLECTION_ENTRIES } from '@ValenceContracts/schemas/Collection';
@@ -651,6 +653,13 @@ const runImport = async (
       );
     },
   });
+  await rememberImportedFiles(
+    services.db,
+    createDatabaseMediaOriginStore(services.db),
+    catalogue.matches,
+    state.report.source.name,
+  );
+
   const people = await peopleOf(state, users);
 
   if (!isBehind('access', run.cursor)) {
