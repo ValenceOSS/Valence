@@ -65,6 +65,7 @@ import { serveArrImport } from '@ValenceServer/api/serveArrImport';
 import { serveInsights } from '@ValenceServer/api/serveInsights';
 import { serveAudit } from '@ValenceServer/api/serveAudit';
 import { serveBackups } from '@ValenceServer/api/serveBackups';
+import { serveJellyfin } from '@ValenceServer/jellyfin/serveJellyfin';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 
 /**
@@ -142,6 +143,7 @@ const createApp = (options: CreateAppOptions) => {
   serveArrEmulation(app, context, options);
   serveArrImport(app, context, options);
   serveImports(app, context, options);
+  serveJellyfin(app, context);
   serveReference(app);
 
   return app;

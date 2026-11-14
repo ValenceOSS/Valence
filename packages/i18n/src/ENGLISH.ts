@@ -9675,6 +9675,12 @@ const ENGLISH = {
   'server.imports.sourceCaller.nameDidNotAnswerInTime': '{name} didn’t respond in time.',
   'server.imports.sourceCaller.nameRefusedTheKey':
     '{name} rejected the API key. Check you copied all of it.',
+  'server.jellyfin.noProfileByThatName': 'This account has no profile called {name}.',
+  'server.jellyfin.thatKeyIsForAnotherProfile':
+    'That API key belongs to {name}. Sign in as {name}, or use a key made for the profile you want.',
+  'server.jellyfin.thatNameOrPasswordIsWrong': 'That email, username or password is wrong.',
+  'server.jellyfin.thatProfileHasAPin':
+    '{name} is locked with a PIN, which Jellyfin apps can’t ask for. Sign in as another profile, or take the PIN off in Valence.',
   'server.jobs.jobDefinitions.asksEveryLiveChannelWhetherItIs':
     'Asks every live TV channel’s stream for a moment of pictures, so the guide can show which are on air, off air, blocked or gone.',
   'server.jobs.jobDefinitions.asksTheCatalogueAboutEveryEditedTitle':
