@@ -33,6 +33,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     settings,
     trustedOrigins,
     library,
+    books,
     presence,
     shares,
     permissions,
@@ -85,6 +86,8 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
                 isBanned: isAccountBanned ?? (() => Promise.resolve(false)),
                 permissionsOf: (accountId) => permissions.resolve(accountId),
                 isOutOfReach: (viewer, mediaId) => library.isOutOfReach(viewer, mediaId),
+                canReachBook: async (viewer, bookId) =>
+                  books !== undefined && (await books.canReach(viewer, bookId)),
               }),
               itemOf: async (mediaId) => {
                 const item = await library.getMedia(mediaId);

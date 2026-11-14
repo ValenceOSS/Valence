@@ -24,6 +24,7 @@ type ShareGateOptions = {
   creator?: {
     stillShares: (accountId: string) => Promise<boolean>;
     reaches: (accountId: string, mediaId: string) => Promise<boolean>;
+    reachesBook: (accountId: string, bookId: string) => Promise<boolean>;
   };
 };
 
@@ -151,7 +152,12 @@ const createShareGate = ({
       return;
     }
 
-    if (reach.kind === 'needsBook' && (found.kind !== 'book' || found.bookId !== reach.bookId)) {
+    if (
+      reach.kind === 'needsBook' &&
+      (found.kind !== 'book' ||
+        found.bookId !== reach.bookId ||
+        (creator !== undefined && !(await creator.reachesBook(found.createdBy, reach.bookId))))
+    ) {
       return context.json(refuse('error.share.thatIsNotPartOfWhat'), 403);
     }
 

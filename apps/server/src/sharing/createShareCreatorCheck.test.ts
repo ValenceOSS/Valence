@@ -4,11 +4,13 @@ import type { GrantedPermission } from '@ValenceContracts/schemas/Permission';
 
 const ITEM = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
+const BOOK = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001';
+
 /**
  * The checks, over an account with the standing given.
  */
 const checks = (
-  standing: { banned?: boolean; held?: GrantedPermission[]; refusedItems?: string[] } = {},
+  standing: { banned?: boolean; held?: GrantedPermission[]; refusedItems?: string[]; refusedBooks?: string[] } = {},
 ) =>
   createShareCreatorCheck({
     isBanned: () => Promise.resolve(standing.banned ?? false),
@@ -17,6 +19,11 @@ const checks = (
       Promise.resolve(
         !(viewer.kind === 'account' && viewer.isAdministrator) &&
           (standing.refusedItems ?? []).includes(mediaId),
+      ),
+    canReachBook: (viewer, bookId) =>
+      Promise.resolve(
+        (viewer.kind === 'account' && viewer.isAdministrator) ||
+          !(standing.refusedBooks ?? []).includes(bookId),
       ),
   });
 
@@ -33,6 +40,11 @@ describe('createShareCreatorCheck', () => {
 
   it('stops it reaching what its creator can no longer reach', async () => {
     expect(await checks({ refusedItems: [ITEM] }).reaches('account-1', ITEM)).toBe(false);
+  });
+
+  it('stops it reaching a book its creator can no longer reach', async () => {
+    expect(await checks().reachesBook('account-1', BOOK)).toBe(true);
+    expect(await checks({ refusedBooks: [BOOK] }).reachesBook('account-1', BOOK)).toBe(false);
   });
 
   it('lets an administrator’s link reach what administrators are never kept from', async () => {

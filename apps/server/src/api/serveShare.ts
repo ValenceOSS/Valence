@@ -47,6 +47,8 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     isBanned: isAccountBanned ?? (() => Promise.resolve(false)),
     permissionsOf: (accountId) => permissions.resolve(accountId),
     isOutOfReach: (viewer, mediaId) => library.isOutOfReach(viewer, mediaId),
+    canReachBook: async (viewer, bookId) =>
+      books !== undefined && (await books.canReach(viewer, bookId)),
   });
 
   /**
@@ -269,7 +271,11 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
 
     if (found.kind === 'book') {
       const shared =
-        books === undefined || found.bookId === null ? null : await books.read(found.bookId);
+        books === undefined ||
+        found.bookId === null ||
+        !(await creator.reachesBook(found.createdBy, found.bookId))
+          ? null
+          : await books.read(found.bookId);
 
       return context.json(
         { kind: found.kind, title: found.title, items: [], book: shared?.book ?? null },

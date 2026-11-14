@@ -26,6 +26,7 @@ const gatedApp = (options: {
   item?: { id: string; seriesId: string | null } | null;
   creatorShares?: boolean;
   creatorReaches?: boolean;
+  creatorReachesBook?: boolean;
 }) => {
   const shares = {
     create: () => Promise.resolve(null),
@@ -56,6 +57,7 @@ const gatedApp = (options: {
       creator: {
         stillShares: () => Promise.resolve(options.creatorShares ?? true),
         reaches: () => Promise.resolve(options.creatorReaches ?? true),
+        reachesBook: () => Promise.resolve(options.creatorReachesBook ?? true),
       },
     }),
   );
@@ -219,6 +221,16 @@ describe('createShareGate', () => {
     }).request(`/api/books/${book}/cover`, holding('token'));
 
     expect(response.status).toBe(200);
+  });
+
+  it('refuses the book that was shared once its creator can no longer reach it', async () => {
+    const book = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001';
+    const response = await gatedApp({
+      share: { ...A_SHARE, kind: 'book', mediaId: null, bookId: book },
+      creatorReachesBook: false,
+    }).request(`/api/books/${book}/cover`, holding('token'));
+
+    expect(response.status).toBe(403);
   });
 
   it('refuses a guest a book other than the one shared', async () => {

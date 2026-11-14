@@ -5,6 +5,7 @@ type ShareCreatorCheckOptions = {
   isBanned: (accountId: string) => Promise<boolean>;
   permissionsOf: (accountId: string) => Promise<ReadonlySet<GrantedPermission>>;
   isOutOfReach: (viewer: Viewer, mediaId: string) => Promise<boolean>;
+  canReachBook: (viewer: Viewer, bookId: string) => Promise<boolean>;
 };
 
 /**
@@ -13,27 +14,35 @@ type ShareCreatorCheckOptions = {
  * working once its creator would no longer be allowed to make it.
  *
  * @param options - How to tell what an account may still do and reach.
- * @returns The two checks.
+ * @returns The three checks.
  */
 const createShareCreatorCheck = ({
   isBanned,
   permissionsOf,
   isOutOfReach,
-}: ShareCreatorCheckOptions) => ({
-  stillShares: async (accountId: string): Promise<boolean> =>
-    !(await isBanned(accountId)) && (await permissionsOf(accountId)).has('sharing.link'),
-
-  reaches: async (accountId: string, mediaId: string): Promise<boolean> => {
+  canReachBook,
+}: ShareCreatorCheckOptions) => {
+  const viewerFor = async (accountId: string): Promise<Viewer> => {
     const held = await permissionsOf(accountId);
-    const viewer: Viewer = {
+
+    return {
       kind: 'account',
       accountId,
       profileId: null,
       isAdministrator: held.has('administrator'),
     };
+  };
 
-    return !(await isOutOfReach(viewer, mediaId));
-  },
-});
+  return {
+    stillShares: async (accountId: string): Promise<boolean> =>
+      !(await isBanned(accountId)) && (await permissionsOf(accountId)).has('sharing.link'),
+
+    reaches: async (accountId: string, mediaId: string): Promise<boolean> =>
+      !(await isOutOfReach(await viewerFor(accountId), mediaId)),
+
+    reachesBook: async (accountId: string, bookId: string): Promise<boolean> =>
+      canReachBook(await viewerFor(accountId), bookId),
+  };
+};
 
 export { createShareCreatorCheck };
