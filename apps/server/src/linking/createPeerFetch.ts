@@ -1,5 +1,6 @@
 import { isAcceptableEndpoint } from '@ValenceServer/buckets/isAcceptableEndpoint';
 import { isLinkLocal } from '@ValenceServer/buckets/isLinkLocal';
+import { httpsUpgradeOf } from '@ValenceServer/linking/httpsUpgradeOf';
 import { createPinnedFetch } from '@ValenceServer/web/createPinnedFetch';
 import type { Resolve } from '@ValenceServer/live/isPublicWebAddress';
 
@@ -12,7 +13,8 @@ const MOST_REMEMBERED = 1000;
 /**
  * Sends a request to another Valence only where its address is one a server can be at: never a
  * link-local address, where a cloud keeps its machines' secrets, and never somewhere the other
- * server's answer sends it, which is taken as no answer at all. A server on the household network
+ * server's answer sends it, which is taken as no answer at all, but for one step from an http address to
+ * the same name over https, which is followed. A server on the household network
  * stays reachable, since two servers in one house linking is ordinary. What an address resolves to
  * is remembered for a minute, so a film passed through is not looked up for every piece of it. A
  * request is connected only to an address that passed, chosen when connecting and not looked up
@@ -50,23 +52,26 @@ const createPeerFetch = (
   const judged = new Map<string, { isAcceptable: boolean; until: number }>();
 
   const isAcceptable = async (address: string): Promise<boolean> => {
-    const host = URL.parse(address)?.host ?? '';
-    const known = judged.get(host);
+    const origin = URL.parse(address)?.origin ?? '';
+    const known = judged.get(origin);
 
     if (known !== undefined && known.until > now()) {
       return known.isAcceptable;
     }
 
-    const verdict = host !== '' && (await isAcceptableEndpoint(address, resolve));
+    const verdict = origin !== '' && (await isAcceptableEndpoint(address, resolve));
 
     if (judged.size >= MOST_REMEMBERED) {
       judged.clear();
     }
 
-    judged.set(host, { isAcceptable: verdict, until: now() + REMEMBERED_MS });
+    judged.set(origin, { isAcceptable: verdict, until: now() + REMEMBERED_MS });
 
     return verdict;
   };
+
+  const isARedirect = (response: Response): boolean =>
+    response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400);
 
   return async (address, init) => {
     if (!(await isAcceptable(address))) {
@@ -75,11 +80,27 @@ const createPeerFetch = (
 
     const response = await send(address, { ...init, redirect: 'manual' });
 
-    if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+    if (!isARedirect(response)) {
+      return response;
+    }
+
+    const upgrade = httpsUpgradeOf(address, response.headers.get('location'));
+
+    await response.body?.cancel();
+
+    if (upgrade === null || !(await isAcceptable(upgrade))) {
       throw new Error(`${address} sent this server somewhere else`);
     }
 
-    return response;
+    const upgraded = await send(upgrade, { ...init, redirect: 'manual' });
+
+    if (isARedirect(upgraded)) {
+      await upgraded.body?.cancel();
+
+      throw new Error(`${upgrade} sent this server somewhere else`);
+    }
+
+    return upgraded;
   };
 };
 

@@ -93,4 +93,56 @@ describe('createPeerFetch', () => {
 
     expect(resolve).toHaveBeenCalledTimes(2);
   });
+
+  it('follows one step from http to the same name over https', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(null, { status: 301, headers: { location: 'https://friend.example/x' } }),
+      )
+      .mockResolvedValueOnce(new Response('ok', { status: 200 }));
+    const peerFetch = createPeerFetch(fetcher, () => Promise.resolve(['203.0.113.5']));
+
+    const answer = await peerFetch('http://friend.example/x', { method: 'POST', body: 'b' });
+
+    expect(answer.status).toBe(200);
+    expect(fetcher.mock.calls.map(([address]) => address)).toEqual([
+      'http://friend.example/x',
+      'https://friend.example/x',
+    ]);
+    expect(fetcher.mock.calls[1]?.[1]).toMatchObject({ method: 'POST', body: 'b' });
+  });
+
+  it('refuses an upgrade whose name now leads to a link-local address', async () => {
+    const fetcher = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
+        new Response(null, { status: 301, headers: { location: 'https://friend.example/x' } }),
+      ),
+    );
+    const resolve = vi
+      .fn<() => Promise<string[]>>()
+      .mockResolvedValueOnce(['203.0.113.5'])
+      .mockResolvedValue(['169.254.169.254']);
+    const peerFetch = createPeerFetch(fetcher, resolve);
+
+    await expect(peerFetch('http://friend.example/x', {})).rejects.toThrow();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a second redirect, and any redirect to another name', async () => {
+    const twice = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
+        new Response(null, { status: 301, headers: { location: 'https://friend.example/x' } }),
+      ),
+    );
+    const elsewhere = answered(301, { location: 'https://other.example/x' });
+    const resolve = () => Promise.resolve(['203.0.113.5']);
+
+    await expect(createPeerFetch(twice, resolve)('http://friend.example/x', {})).rejects.toThrow();
+    expect(twice).toHaveBeenCalledTimes(2);
+    await expect(
+      createPeerFetch(elsewhere, resolve)('http://friend.example/x', {}),
+    ).rejects.toThrow();
+    expect(elsewhere).toHaveBeenCalledTimes(1);
+  });
 });
