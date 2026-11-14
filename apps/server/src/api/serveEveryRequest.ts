@@ -82,6 +82,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
               sessions: shareSessions,
               shareHoldingTab: (clientId) => presence.shareOf(clientId),
               guestKeptForSeconds: GUEST_REMEMBERED_FOR_SECONDS,
+              isCookieSecure: async () => (await settings.read()).cookieSecure,
               creator: createShareCreatorCheck({
                 isBanned: isAccountBanned ?? (() => Promise.resolve(false)),
                 permissionsOf: (accountId) => permissions.resolve(accountId),

@@ -27,6 +27,7 @@ const gatedApp = (options: {
   creatorShares?: boolean;
   creatorReaches?: boolean;
   creatorReachesBook?: boolean;
+  secure?: boolean;
 }) => {
   const shares = {
     create: () => Promise.resolve(null),
@@ -50,6 +51,7 @@ const gatedApp = (options: {
         isClaimedBy: (_sessionId, shareId) => (options.claimedBy ?? []).includes(shareId),
         release: () => {},
       },
+      isCookieSecure: () => Promise.resolve(options.secure ?? false),
       itemOf: () =>
         Promise.resolve(
           options.item === undefined ? { id: 'film-1', seriesId: null } : options.item,
@@ -72,6 +74,15 @@ const holding = (token: string | null) => ({
 });
 
 describe('createShareGate', () => {
+  it('marks the cookie that admits a guest secure where the server’s cookies are', async () => {
+    const share = { ...A_SHARE, viewCap: 3 };
+    const secure = await gatedApp({ share, secure: true }).request('/api/health', holding('abc'));
+    const plain = await gatedApp({ share, secure: false }).request('/api/health', holding('abc'));
+
+    expect(secure.headers.get('set-cookie')).toContain('Secure');
+    expect(plain.headers.get('set-cookie')).not.toContain('Secure');
+  });
+
   it('refuses somebody holding no link at all', async () => {
     const response = await gatedApp({}).request('/api/health', holding(null));
 

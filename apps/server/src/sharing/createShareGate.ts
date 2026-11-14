@@ -21,6 +21,7 @@ type ShareGateOptions = {
   itemOf: (mediaId: string) => Promise<{ id: string; seriesId: string | null } | null>;
   shareHoldingTab?: (clientId: string) => string | null;
   guestKeptForSeconds?: number;
+  isCookieSecure?: () => Promise<boolean>;
   creator?: {
     stillShares: (accountId: string) => Promise<boolean>;
     reaches: (accountId: string, mediaId: string) => Promise<boolean>;
@@ -53,6 +54,7 @@ type ShareGateOptions = {
  * @param shares - Where links are resolved.
  * @param sessions - Which share started which playback session.
  * @param itemOf - How to look up the item a request names, to check it against the link's scope.
+ * @param isCookieSecure - Whether the server's cookies are sent only over https, as its settings say.
  * @returns The middleware.
  */
 const createShareGate = ({
@@ -61,6 +63,7 @@ const createShareGate = ({
   itemOf,
   shareHoldingTab,
   guestKeptForSeconds = DEFAULT_GUEST_KEPT_FOR_SECONDS,
+  isCookieSecure,
   creator,
 }: ShareGateOptions) =>
   createMiddleware(async (context, next) => {
@@ -122,6 +125,7 @@ const createShareGate = ({
         path: '/',
         httpOnly: true,
         sameSite: 'Lax',
+        secure: (await isCookieSecure?.()) ?? false,
         maxAge: rememberGuestFor(found.expiresAt, new Date(), guestKeptForSeconds),
       });
     }
