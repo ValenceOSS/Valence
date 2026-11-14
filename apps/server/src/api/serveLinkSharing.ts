@@ -563,7 +563,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
     if (isStarting && qualityCeiling !== null && body === null) {
       giveBack();
 
-      return context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 400);
+      return context.json(refuse('error.linking.thatStartCouldNotBeRead'), 400);
     }
 
     const address = innerAddressOf(who.inner, asked.search, asked.origin);

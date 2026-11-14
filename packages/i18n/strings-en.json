@@ -10176,6 +10176,11 @@
     "context": "Refusal sent to a linked Valence server whose people ask this one for something when this server's admin has not let it."
   },
   {
+    "handler": "error.linking.thatStartCouldNotBeRead",
+    "text": "That request to start playing couldn’t be read.",
+    "context": "Refusal sent to a linked Valence server whose request to start playing is not a body this server can read."
+  },
+  {
     "handler": "error.linking.thisAccountMayNotLinkServers",
     "text": "This account isn’t allowed to link this server with others.",
     "context": "Refusal when somebody without the right to link servers asks to."

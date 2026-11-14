@@ -4,14 +4,13 @@ import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import { ceilingOf } from '@ValenceServer/linking/content/ceilingOf';
 
-const AskedToStartSchema = z
-  .object({ requestedQuality: QualityStepIdSchema.optional() })
-  .catchall(JsonValueSchema);
+const AskedToStartSchema = z.object({}).catchall(JsonValueSchema);
 
 /**
- * What a linked server asked to start, held to the quality its admin here allows it, or nothing
- * where the request cannot be read — which is refused rather than passed on as sent, since what this
- * server cannot read it cannot hold to anything.
+ * What a linked server asked to start, held to the quality its admin here allows it, a quality this
+ * server does not know taken as above the ceiling, or nothing where the request is not a JSON
+ * object — which is refused rather than passed on as sent, since what this server cannot read it
+ * cannot hold to anything.
  *
  * @param sent - What the linked server sent.
  * @param ceiling - The best quality it may have.
@@ -27,14 +26,18 @@ const startBodyWithin = (sent: ArrayBuffer | null, ceiling: QualityStepId): Arra
       JsonValueSchema.parse(JSON.parse(new TextDecoder().decode(sent))),
     );
 
-    return asked.success
-      ? new TextEncoder().encode(
-          JSON.stringify({
-            ...asked.data,
-            requestedQuality: ceilingOf(asked.data.requestedQuality, ceiling),
-          }),
-        ).buffer
-      : null;
+    if (!asked.success) {
+      return null;
+    }
+
+    const requested = QualityStepIdSchema.safeParse(asked.data.requestedQuality);
+
+    return new TextEncoder().encode(
+      JSON.stringify({
+        ...asked.data,
+        requestedQuality: ceilingOf(requested.success ? requested.data : undefined, ceiling),
+      }),
+    ).buffer;
   } catch {
     return null;
   }

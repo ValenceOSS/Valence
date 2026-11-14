@@ -2404,6 +2404,7 @@ const ENGLISH = {
   'error.linking.thatServerHasNoPicture': 'That server has no picture.',
   'error.linking.thatServerTakesNoRequestsFromYours':
     'That server doesn’t accept requests from yours.',
+  'error.linking.thatStartCouldNotBeRead': 'That request to start playing couldn’t be read.',
   'error.linking.thisAccountMayNotLinkServers':
     'This account isn’t allowed to link this server with others.',
   'error.linking.thisPersonMayNotWatchFromHere':
