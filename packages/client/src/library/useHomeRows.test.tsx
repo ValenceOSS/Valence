@@ -15,6 +15,7 @@ const {
   upNextMock,
   becauseMock,
   serverHasMock,
+  pickedMock,
   streamedLibraryMock,
   pluginRowsMock,
 } = vi.hoisted(() => ({
@@ -34,6 +35,7 @@ const {
   facetsMock: vi.fn(),
   favouritesMock: vi.fn(),
   ratingsMock: vi.fn(),
+  pickedMock: vi.fn<(limit: number) => Promise<MediaSummary[]>>(),
 }));
 
 vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: serverHasMock }));
@@ -51,6 +53,7 @@ vi.mock('@ValenceClient/library/fetchUpNext', () => ({ fetchUpNext: upNextMock }
 vi.mock('@ValenceClient/plugins/fetchPluginHomeRows', () => ({
   fetchPluginHomeRows: pluginRowsMock,
 }));
+vi.mock('@ValenceClient/library/fetchPickedForYou', () => ({ fetchPickedForYou: pickedMock }));
 vi.mock('@ValenceClient/library/fetchBecauseYouWatched', () => ({
   fetchBecauseYouWatched: becauseMock,
 }));
@@ -156,7 +159,11 @@ beforeEach(() => {
   becauseMock.mockReset();
   becauseMock.mockResolvedValue([]);
   serverHasMock.mockReset();
-  serverHasMock.mockImplementation((feature) => feature !== 'library.homeShelves');
+  serverHasMock.mockImplementation(
+    (feature) => feature !== 'library.homeShelves' && feature !== 'library.pickedForYou',
+  );
+  pickedMock.mockReset();
+  pickedMock.mockResolvedValue([]);
   streamedLibraryMock.mockReset();
   streamedLibraryMock.mockResolvedValue('streamed-library');
   pluginRowsMock.mockReset();
@@ -690,6 +697,24 @@ describe('useHomeRows', () => {
     const picked = result.current.rails.find((rail) => rail.id === 'picked');
 
     expect(picked?.items.map((media) => media.id)).not.toContain('drama-0');
+  });
+
+  it('takes what is picked for the profile from the server where it can pick', async () => {
+    serverHasMock.mockImplementation((feature) => feature !== 'library.homeShelves');
+    facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
+    aLibrary({ byGenre: { Drama: films('drama', 8, 'Drama') } });
+    pickedMock.mockResolvedValue(films('picked', 6, 'Western'));
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(
+        result.current.rails.find((rail) => rail.id === 'picked')?.items.map((media) => media.id),
+      ).toEqual(films('picked', 6, 'Western').map((media) => media.id));
+    });
+    expect(pickedMock).toHaveBeenCalled();
   });
 
   it('keeps every row to a bounded number of things however much there is', async () => {

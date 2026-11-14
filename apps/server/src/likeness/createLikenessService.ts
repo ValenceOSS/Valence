@@ -14,6 +14,11 @@ import { indexLikeness } from './indexLikeness';
 import type { LikenessIndex } from './indexLikeness';
 import type { TitleKind } from './Likeness';
 import { rankLikeness } from './rankLikeness';
+import { listSharingGenres } from './listSharingGenres';
+import { readPickedForYou } from '@ValenceServer/taste/readPickedForYou';
+import { readGenres } from '@ValenceServer/library/readGenres';
+import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import { readSummaries } from '@ValenceServer/library/readSummaries';
 import type { Ranked } from './rankLikeness';
 import { titleKey } from './titleKey';
 import { inSeasonOrder } from '@ValenceCore/functions/inSeasonOrder';
@@ -25,6 +30,7 @@ type LikenessService = {
     rows: number,
     limit: number,
   ) => Promise<BecauseYouWatchedRow[]>;
+  pickedForYou: (viewer: Viewer, limit: number) => Promise<MediaSummary[]>;
   forget: () => void;
 };
 
@@ -58,8 +64,9 @@ const heldTitleOf = (row: {
 
 /**
  * Finds the titles in the libraries like another, and the rows of them a profile's recent viewing
- * suggests, from what the catalogue said each title is like. What every title is like is read once
- * and kept until it is told to forget it; what a viewer may see is asked of the database each time.
+ * suggests, from what the catalogue said each title is like, a row too short filled with titles that
+ * share at least two genres. What every title is like is read once and kept until it is told to
+ * forget it; what a viewer may see is asked of the database each time.
  *
  * @param options - The database, and where what each title is like is kept.
  * @param options.db - The database.
@@ -225,7 +232,12 @@ const createLikenessService = ({
   return {
     likeThis: async (viewer, mediaId, limit) => {
       const [source] = await db
-        .select({ externalId: mediaItem.externalId, seriesTitle: mediaItem.seriesTitle })
+        .select({
+          externalId: mediaItem.externalId,
+          seriesTitle: mediaItem.seriesTitle,
+          seriesId: mediaItem.seriesId,
+          genres: mediaItem.genres,
+        })
         .from(mediaItem)
         .where(eq(mediaItem.id, mediaId))
         .limit(1);
@@ -235,15 +247,51 @@ const createLikenessService = ({
       }
 
       const title = heldTitleOf(source);
+      const index = title === null ? null : await indexed();
+      const alike =
+        title === null || index === null
+          ? []
+          : (
+              await firstVisible(
+                viewer,
+                rankLikeness(index, titleKey(title.kind, title.catalogueId)),
+                limit,
+                index,
+              )
+            ).map((one) => one.summary);
 
-      if (title === null) {
-        return [];
+      if (alike.length >= limit) {
+        return alike;
       }
 
-      const index = await indexed();
-      const ranked = rankLikeness(index, titleKey(title.kind, title.catalogueId));
+      const shown = new Set(alike.map((summary) => summary.seriesId ?? summary.id));
+      const sharing = (
+        await listSharingGenres(
+          db,
+          viewer,
+          {
+            id: mediaId,
+            seriesId: source.seriesId,
+            genres: readGenres(JsonValueSchema.parse(source.genres ?? null)) ?? [],
+          },
+          limit + alike.length,
+        )
+      ).filter((one) => !shown.has(one.id));
+      const cards = await readSummaries(
+        db,
+        viewer,
+        sharing.map((one) => one.id),
+        artworkAddressOf,
+      );
 
-      return (await firstVisible(viewer, ranked, limit, index)).map((one) => one.summary);
+      return [
+        ...alike,
+        ...sharing.flatMap((one) => {
+          const card = cards.get(one.id);
+
+          return card === undefined ? [] : [card];
+        }),
+      ].slice(0, limit);
     },
 
     becauseYouWatched: async (viewer, rows, limit) => {
@@ -347,6 +395,15 @@ const createLikenessService = ({
 
       return answered;
     },
+
+    pickedForYou: async (viewer, limit) =>
+      readPickedForYou({
+        db,
+        viewer,
+        index: await indexed(),
+        limit,
+        ...(artworkAddressOf === undefined ? {} : { artworkAddressOf }),
+      }),
 
     forget: () => {
       held = null;

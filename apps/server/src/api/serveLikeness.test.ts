@@ -59,6 +59,7 @@ const appOf = (likeness: Partial<LikenessService>, isSignedIn = true) => {
     likeness: {
       likeThis: () => Promise.resolve([]),
       becauseYouWatched: () => Promise.resolve([]),
+      pickedForYou: () => Promise.resolve([]),
       forget: () => {},
       ...likeness,
     },
