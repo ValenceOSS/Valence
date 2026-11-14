@@ -6,6 +6,7 @@ describe('mediaTypeOf', () => {
     expect(mediaTypeOf('video/mp2t', 'video/mp4')).toBe('video/mp2t');
     expect(mediaTypeOf('audio/aac; charset=x', 'video/mp4')).toBe('audio/aac');
     expect(mediaTypeOf('application/octet-stream', 'video/mp4')).toBe('application/octet-stream');
+    expect(mediaTypeOf('text/vtt; charset=utf-8', 'video/mp2t')).toBe('text/vtt');
   });
 
   it('replaces a type that would render as a page', () => {

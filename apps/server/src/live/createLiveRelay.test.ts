@@ -48,4 +48,13 @@ describe('createLiveRelay', () => {
     expect(answered?.headers.get('content-security-policy')).toBe('sandbox');
     expect(answered?.headers.get('content-disposition')).toBe('attachment');
   });
+
+  it('sends a subtitle segment as the text it is, not as video', async () => {
+    const relay = createLiveRelay();
+    const link = relay.linkFor('news', 'https://provider.test/subs1.vtt');
+    const answered = await relay.answer('news', queryOf(link), ASKING, providerSending('text/vtt'));
+
+    expect(answered?.headers.get('content-type')).toBe('text/vtt');
+    expect(answered?.headers.get('content-security-policy')).toBe('sandbox');
+  });
 });

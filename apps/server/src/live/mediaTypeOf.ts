@@ -1,4 +1,4 @@
-const MEDIA_TYPE = /^(?:video\/|audio\/|application\/octet-stream$|application\/mp4$)/iu;
+const MEDIA_TYPE = /^(?:video\/|audio\/|application\/octet-stream$|application\/mp4$|text\/vtt$)/iu;
 
 /**
  * Chooses the content type a relayed answer is sent with, so that a provider cannot have a page
