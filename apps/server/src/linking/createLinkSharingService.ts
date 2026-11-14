@@ -23,6 +23,8 @@ const MOST_FROM_A_SERVER = 1200;
 
 const MOST_FROM_A_PERSON = 300;
 
+const MOST_HEARTBEATS_FOR_A_SESSION = 120;
+
 const MOST_PEOPLE_FROM_A_SERVER = 5000;
 
 const SHARING_VERDICT_LASTS_MS = 5000;
@@ -56,7 +58,9 @@ type LinkSharingServiceOptions = {
  * 1. it is signed by a server this one is linked with, and meant for this one;
  * 2. it asks for something named as open to a linked server;
  * 3. the server and the person it asks for are within their rate, and the server brings no more
- *    people than any household has, so it cannot fill this server's tables one name at a time;
+ *    people than any household has, so it cannot fill this server's tables one name at a time; a
+ *    heartbeat for a session it started is counted apart, for that session alone, so a player
+ *    saying every second where it has got never crowds out the stream it is playing;
  * 4. the person, where it names one, is not blocked;
  * 5. a catalogue, title, book, album or artist it asks about is in a library shared with that
  *    server and within its age, a session it asks about is one it started, and its record is read
@@ -98,6 +102,11 @@ const createLinkSharingService = ({
   const clock = () => now().getTime();
   const serverMayAsk = createRateLimiter({
     most: limits.perServer,
+    withinMs: MINUTE_MS,
+    now: clock,
+  });
+  const heartbeatMayAsk = createRateLimiter({
+    most: MOST_HEARTBEATS_FOR_A_SESSION,
     withinMs: MINUTE_MS,
     now: clock,
   });
@@ -157,7 +166,14 @@ const createLinkSharingService = ({
         return refused(403, 'error.linking.thatIsNotSharedWithYourServer');
       }
 
-      const isWithinItsRate = serverMayAsk(server.id);
+      const claimed =
+        reach.kind === 'claimed' ? claims.claimedBy(reach.claim, reach.id, server.id) : null;
+      const heartbeatFor =
+        reach.kind === 'claimed' && reach.isAHeartbeat && claimed !== null
+          ? `${server.id}:${reach.id}`
+          : null;
+      const isWithinItsRate =
+        heartbeatFor === null ? serverMayAsk(server.id) : heartbeatMayAsk(heartbeatFor);
       const mostPeople = limits.people ?? MOST_PEOPLE_FROM_A_SERVER;
       const hasRoom =
         !isWithinItsRate ||
@@ -184,8 +200,6 @@ const createLinkSharingService = ({
       }
 
       const subject = reach.kind === 'subject' ? await subjectOf(reach.subject) : null;
-      const claimed =
-        reach.kind === 'claimed' ? claims.claimedBy(reach.claim, reach.id, server.id) : null;
       const title: ClaimedTitle =
         subject !== null
           ? { mediaId: subject.id, title: subject.title }
@@ -206,7 +220,7 @@ const createLinkSharingService = ({
       if (
         !isWithinItsRate ||
         !hasRoom ||
-        (person !== null && !personMayAsk(`${server.id}:${person.id}`))
+        (person !== null && heartbeatFor === null && !personMayAsk(`${server.id}:${person.id}`))
       ) {
         await record(reach.action, 'tooMany');
         warn(`linking: ${server.name} is asking too often, and was slowed down`);

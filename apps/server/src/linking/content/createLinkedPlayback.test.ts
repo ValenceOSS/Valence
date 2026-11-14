@@ -52,6 +52,7 @@ const aLocal = () => ({
   readTrickplayFile: vi.fn<PlaybackService['readTrickplayFile']>(() => Promise.resolve(null)),
   stop: vi.fn<PlaybackService['stop']>(() => Promise.resolve(true)),
   heartbeat: vi.fn<PlaybackService['heartbeat']>(() => Promise.resolve(true)),
+  relayPresence: vi.fn<PlaybackService['relayPresence']>(),
 });
 
 /**
@@ -353,6 +354,50 @@ describe('createLinkedPlayback', () => {
     expect(onAsked).toHaveBeenCalledWith('the-phone', FILMS, [
       { kind: 'paused', reason: 'Bedtime' },
     ]);
+  });
+
+  it('passes on each thing a device’s player says of a linked title, one at a time', async () => {
+    const { linked, asker, onAsked } = playback();
+    const health = {
+      positionSeconds: 1200,
+      durationSeconds: 8500,
+      bufferedAheadSeconds: 60,
+      presentedWidth: 1920,
+      presentedHeight: 800,
+    };
+    const sent = () =>
+      asker.asked
+        .filter((one) => one.route === '/api/playback/session/s1/heartbeat')
+        .map((one) => new TextDecoder().decode(one.asking.body));
+
+    await linked.start(HERE, aDeviceProfile(), 0, undefined, undefined, 'the-phone');
+    linked.relayPresence('the-phone', HERE, true, health);
+    linked.relayPresence('the-phone', HERE, true, { ...health, positionSeconds: 1201 });
+    await vi.waitFor(() => {
+      expect(onAsked).toHaveBeenCalledWith('the-phone', FILMS, [
+        { kind: 'paused', reason: 'Bedtime' },
+      ]);
+    });
+    linked.relayPresence('the-phone', HERE, false);
+
+    await vi.waitFor(() => {
+      expect(sent()).toEqual([
+        JSON.stringify({ isPlaying: true, health }),
+        JSON.stringify({ isPlaying: false }),
+      ]);
+    });
+  });
+
+  it('passes on nothing for a title of its own, another device, or a session it stopped', async () => {
+    const { linked, asker } = playback();
+
+    await linked.start(HERE, aDeviceProfile(), 0, undefined, undefined, 'the-phone');
+    linked.relayPresence('the-phone', 'mine', true);
+    linked.relayPresence('the-tv', HERE, true);
+    await linked.stop(SESSION);
+    linked.relayPresence('the-phone', HERE, true);
+
+    expect(asker.asked.some((one) => one.route.endsWith('/heartbeat'))).toBe(false);
   });
 
   it('names a linked title’s thumbnails as this server’s own', async () => {

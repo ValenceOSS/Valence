@@ -526,6 +526,7 @@ const createPresenceService = (
 
 export type {
   PresenceArrival,
+  PresencePlaybackHealth,
   PresenceControlEvent,
   PresenceEntry,
   PresenceService,

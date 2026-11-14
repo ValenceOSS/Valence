@@ -1,20 +1,13 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import { PlaybackHealthSchema } from '@ValenceServer/presence/PlaybackHealthSchema';
 
 const PresenceError = RefusalSchema.openapi('PresenceError');
 
 const PresenceHeartbeatRequest = z
   .object({
     isPlaying: z.boolean(),
-    health: z
-      .object({
-        positionSeconds: z.number().nonnegative(),
-        durationSeconds: z.number().nonnegative(),
-        bufferedAheadSeconds: z.number().nonnegative(),
-        presentedWidth: z.number().int().nonnegative(),
-        presentedHeight: z.number().int().nonnegative(),
-      })
-      .optional(),
+    health: PlaybackHealthSchema.optional(),
   })
   .openapi('PresenceHeartbeatRequest');
 
