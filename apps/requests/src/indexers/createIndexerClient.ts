@@ -1,4 +1,4 @@
-import { readBoundedBytes } from '@ValenceRequests/network/readBoundedBytes';
+import { readBodyOrFail } from '@ValenceRequests/network/readBodyOrFail';
 import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { indexerEndpoint } from '@ValenceRequests/indexers/indexerEndpoint';
@@ -198,7 +198,7 @@ const createIndexerClient = ({
     }
 
     return readIndexerXml(
-      new TextDecoder().decode(await readBoundedBytes(response, MOST_FEED_BYTES)),
+      new TextDecoder().decode(await readBodyOrFail(response, MOST_FEED_BYTES)),
     );
   };
 
@@ -315,7 +315,7 @@ const createIndexerClient = ({
         );
       }
 
-      const bytes = await readBoundedBytes(response, MOST_FEED_BYTES);
+      const bytes = await readBodyOrFail(response, MOST_FEED_BYTES);
 
       if (!response.ok || bytes.length === 0) {
         throw new IndexerFailure(

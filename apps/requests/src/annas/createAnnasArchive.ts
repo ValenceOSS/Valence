@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { readBoundedBytes } from '@ValenceRequests/network/readBoundedBytes';
+import { readBodyOrFail } from '@ValenceRequests/network/readBodyOrFail';
 import { readAnnasResults } from '@ValenceRequests/annas/readAnnasResults';
 import { BROWSER_USER_AGENT } from '@ValenceRequests/cardigann/BROWSER_USER_AGENT';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
@@ -279,7 +279,7 @@ const createAnnasArchive = (
         );
       }
 
-      return new TextDecoder().decode(await readBoundedBytes(response, MOST_PAGE_BYTES));
+      return new TextDecoder().decode(await readBodyOrFail(response, MOST_PAGE_BYTES));
     }
 
     throw new IndexerFailure(saying('requests.annas.annasArchive.tooManyRedirects'));
@@ -414,7 +414,7 @@ const createAnnasArchive = (
 
         return {
           kind: 'torrent',
-          bytes: await readBoundedBytes(answer, MOST_TORRENT_BYTES),
+          bytes: await readBodyOrFail(answer, MOST_TORRENT_BYTES),
           onlyFile: {
             path: kept.fileInTorrent,
             name: `${named === '' ? kept.md5 : named}.${kept.extension}`,

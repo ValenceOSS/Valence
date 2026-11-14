@@ -2,7 +2,7 @@ import { BROWSER_USER_AGENT } from '@ValenceRequests/cardigann/BROWSER_USER_AGEN
 import { randomUUID } from 'node:crypto';
 import iconv from 'iconv-lite';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
-import { readBoundedBytes } from '@ValenceRequests/network/readBoundedBytes';
+import { readBodyOrFail } from '@ValenceRequests/network/readBodyOrFail';
 import { isCloudflareChallenge } from '@ValenceRequests/cardigann/isCloudflareChallenge';
 import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
@@ -260,7 +260,7 @@ const createSiteClient = ({ fetch, solver = null, guard }: CreateSiteClientOptio
         continue;
       }
 
-      const bytes = await readBoundedBytes(response, MOST_BYTES);
+      const bytes = await readBodyOrFail(response, MOST_BYTES);
       const body = readText(bytes, response.headers.get('content-type'), options.encoding);
 
       if (isCloudflareChallenge(response.status, response.headers.get('server'), body)) {

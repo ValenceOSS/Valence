@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { DownloadedSubtitle } from './DownloadedSubtitle';
 import { OPEN_SUBTITLES_AGENT } from './OPEN_SUBTITLES_AGENT';
 import { OPEN_SUBTITLES_API } from './OPEN_SUBTITLES_API';
-import { readBodyUpTo } from './readBodyUpTo';
+import { readBodyUpTo } from '@ValenceCore/network/readBodyUpTo';
 
 const MOST_SUBTITLE_BYTES = 5 * 1024 * 1024;
 

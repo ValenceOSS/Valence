@@ -3,7 +3,7 @@ import { extname } from 'node:path';
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
 import { parseEpisodePath } from '@ValenceServer/library/naming/parseEpisodePath';
 import type { DownloadedSubtitle } from './DownloadedSubtitle';
-import { readBodyUpTo } from './readBodyUpTo';
+import { readBodyUpTo } from '@ValenceCore/network/readBodyUpTo';
 
 const MOST_ZIP_BYTES = 5 * 1024 * 1024;
 
