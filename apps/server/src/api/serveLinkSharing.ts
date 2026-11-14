@@ -388,7 +388,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       { method: 'GET', headers },
     );
 
-    peerRequests.add(inner.headers);
+    peerRequests.set(inner.headers, ticketed.serverId);
 
     const answered = await app.fetch(inner);
     const passedBack = new Headers(answered.headers);
@@ -580,7 +580,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       ...(body === null ? {} : { body }),
     });
 
-    peerRequests.add(inner.headers);
+    peerRequests.set(inner.headers, who.serverId);
 
     const answered = await (async () => {
       try {

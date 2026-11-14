@@ -372,7 +372,7 @@ const createAppContext = (options: CreateAppOptions) => {
 
   const linkStore = linkingOptions?.store ?? createMemoryLinkStore();
   const peerClaims = createPeerClaims();
-  const peerRequests = new WeakSet<Headers>();
+  const peerRequests = new WeakMap<Headers, string>();
   const linkPeople = linkingOptions?.people ?? createPersonScope();
   const linkSharingStore =
     linkingOptions?.sharing ??

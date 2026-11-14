@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { OpenAPIHono } from '@hono/zod-openapi';
 import { createApp } from '@ValenceServer/App';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+import { registerMusicRoutes } from './registerMusicRoutes';
 import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
@@ -560,5 +563,28 @@ describe('the music routes', () => {
     });
 
     expect((await bare.request(`${BASE}/api/music/albums`)).status).not.toBe(200);
+  });
+
+  it('counts each linked server’s picture lookups apart from the others’', async () => {
+    const app = new OpenAPIHono();
+
+    registerMusicRoutes(app, {
+      viewerOf: () => Promise.resolve(asTheServer),
+      music: fakeMusic(),
+      requires: () => Promise.resolve(true),
+      peerOf: (headers) => headers.get('x-peer') ?? undefined,
+    });
+
+    const asking = (peer: string) =>
+      app.request(`${BASE}/api/music/catalogue/named-covers?title=A&artist=B`, {
+        headers: { 'x-peer': peer },
+      });
+
+    for (let count = 0; count < 240; count += 1) {
+      await asking('den');
+    }
+
+    expect((await asking('den')).status).toBe(429);
+    expect((await asking('attic')).status).not.toBe(429);
   });
 });

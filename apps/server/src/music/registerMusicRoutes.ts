@@ -52,6 +52,7 @@ type MusicRouteOptions = {
   viewerOf: (headers: Headers) => Promise<Viewer | null>;
   music: MusicServices;
   requires: (headers: Headers, permission: Permission) => Promise<boolean>;
+  peerOf?: (headers: Headers) => string | undefined;
 };
 
 const NOBODY = refuse('error.common.nobodyIsSignedIn');
@@ -84,19 +85,20 @@ const profileOf = (viewer: Viewer | null): string | null =>
  * from somebody is left out here the same as everywhere else.
  *
  * @param app - The application to add the routes to.
- * @param options - How to tell who is asking, and the services music is read through.
+ * @param options - How to tell who is asking, the services music is read through, and which linked
+ *   server a request came in from, where it did.
  */
 const registerMusicRoutes = (
   app: OpenAPIHono,
-  { viewerOf, music, requires }: MusicRouteOptions,
+  { viewerOf, music, requires, peerOf }: MusicRouteOptions,
 ): void => {
   const mayLookUp = createRateLimiter({ most: LOOKUPS_AT_MOST, withinMs: LOOKUPS_WITHIN_MS });
-  const callerOf = (viewer: Viewer): string =>
+  const callerOf = (viewer: Viewer, headers: Headers): string =>
     viewer.kind === 'account'
       ? viewer.accountId
       : viewer.kind === 'guest'
         ? viewer.shareId
-        : 'server';
+        : `server:${peerOf?.(headers) ?? ''}`;
 
   app.openapi(listAlbumsRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
@@ -338,7 +340,7 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    if (!mayLookUp(callerOf(viewer))) {
+    if (!mayLookUp(callerOf(viewer, context.req.raw.headers))) {
       return context.body(null, 429, { 'retry-after': '60' });
     }
 
@@ -369,7 +371,7 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    if (!mayLookUp(callerOf(viewer))) {
+    if (!mayLookUp(callerOf(viewer, context.req.raw.headers))) {
       return context.body(null, 429, { 'retry-after': '60' });
     }
 
@@ -400,7 +402,7 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    if (!mayLookUp(callerOf(viewer))) {
+    if (!mayLookUp(callerOf(viewer, context.req.raw.headers))) {
       return context.body(null, 429, { 'retry-after': '60' });
     }
 
@@ -431,7 +433,7 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    if (!mayLookUp(callerOf(viewer))) {
+    if (!mayLookUp(callerOf(viewer, context.req.raw.headers))) {
       return context.body(null, 429, { 'retry-after': '60' });
     }
 
