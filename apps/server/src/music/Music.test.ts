@@ -164,6 +164,10 @@ const fakeMusic = () => {
       artistPicture: vi.fn(() => Promise.resolve(null)),
       namedCover: vi.fn(() => Promise.resolve(null)),
       releaseCover: vi.fn(() => Promise.resolve(null)),
+      knowsCover: vi.fn(() => Promise.resolve(false)),
+      knowsArtistPicture: vi.fn(() => Promise.resolve(false)),
+      knowsNamedCover: vi.fn(() => Promise.resolve(false)),
+      knowsReleaseCover: vi.fn(() => Promise.resolve(false)),
     },
     corrections: {
       search: vi.fn(() => Promise.resolve([])),
@@ -586,5 +590,24 @@ describe('the music routes', () => {
 
     expect((await asking('den')).status).toBe(429);
     expect((await asking('attic')).status).not.toBe(429);
+  });
+
+  it('does not count a picture lookup the cache answers', async () => {
+    const app = new OpenAPIHono();
+    const music = fakeMusic();
+
+    music.pictures.knowsNamedCover.mockResolvedValue(true);
+    registerMusicRoutes(app, {
+      viewerOf: () => Promise.resolve(asTheServer),
+      music,
+      requires: () => Promise.resolve(true),
+      peerOf: () => 'den',
+    });
+
+    for (let count = 0; count < 300; count += 1) {
+      const answer = await app.request(`${BASE}/api/music/catalogue/named-covers?title=A&artist=B`);
+
+      expect(answer.status).not.toBe(429);
+    }
   });
 });

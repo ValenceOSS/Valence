@@ -36,6 +36,16 @@ type CataloguePictures = {
     releaseId: string,
     named: { title: string; artist: string } | null,
   ) => Promise<CataloguePicture | null>;
+  knowsCover: (
+    releaseGroupId: string,
+    hint: { title: string; artist: string } | null,
+  ) => Promise<boolean>;
+  knowsArtistPicture: (name: string, coverOf: string | null) => Promise<boolean>;
+  knowsNamedCover: (named: { title: string; artist: string }) => Promise<boolean>;
+  knowsReleaseCover: (
+    releaseId: string,
+    named: { title: string; artist: string } | null,
+  ) => Promise<boolean>;
 };
 
 /**
@@ -67,6 +77,9 @@ const createCataloguePictures = ({
 }: CataloguePicturesOptions): CataloguePictures => {
   const finding = new Map<string, Promise<string | null>>();
   let kept: number | null = null;
+
+  const namedKey = ({ title, artist }: { title: string; artist: string }): string =>
+    `named-cover:${artist.toLowerCase()}\n${title.toLowerCase()}`;
 
   const fileFor = (key: string): string =>
     join(directory, createHash('sha256').update(key).digest('hex'));
@@ -156,9 +169,8 @@ const createCataloguePictures = ({
     address !== null && (await readImage(address)) !== null ? address : null;
 
   const namedCover: CataloguePictures['namedCover'] = async ({ title, artist }) => {
-    const address = await whereIs(
-      `named-cover:${artist.toLowerCase()}\n${title.toLowerCase()}`,
-      async () => readable(await findAppleAlbumCoverUrl(web, { title, artistName: artist })),
+    const address = await whereIs(namedKey({ title, artist }), async () =>
+      readable(await findAppleAlbumCoverUrl(web, { title, artistName: artist })),
     );
 
     return address === null ? null : readImage(address);
@@ -178,9 +190,38 @@ const createCataloguePictures = ({
     return hint === null ? null : namedCover(hint);
   };
 
+  const knowsNamedCover: CataloguePictures['knowsNamedCover'] = async (named) =>
+    (await remembered(namedKey(named))) !== undefined;
+
+  const knowsCover: CataloguePictures['knowsCover'] = async (releaseGroupId, hint) => {
+    const archived = await remembered(`cover:${releaseGroupId}`);
+
+    return (
+      archived !== undefined &&
+      (archived !== null || hint === null || (await knowsNamedCover(hint)))
+    );
+  };
+
   return {
     cover,
     namedCover,
+    knowsCover,
+    knowsNamedCover,
+    knowsReleaseCover: async (releaseId, named) => {
+      const small = await remembered(`release-cover:${releaseId}`);
+
+      return (
+        small !== undefined && (small !== null || named === null || (await knowsNamedCover(named)))
+      );
+    },
+    knowsArtistPicture: async (name, coverOf) => {
+      const face = await remembered(`artist:${nameKey(name)}`);
+
+      return (
+        face !== undefined &&
+        (face !== null || coverOf === null || (await knowsCover(coverOf, null)))
+      );
+    },
     releaseCover: async (releaseId, named) => {
       const address = await whereIs(`release-cover:${releaseId}`, async () =>
         readable(`https://coverartarchive.org/release/${encodeURIComponent(releaseId)}/front-250`),

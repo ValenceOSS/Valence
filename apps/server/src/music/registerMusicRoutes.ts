@@ -340,10 +340,6 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    if (!mayLookUp(callerOf(viewer, context.req.raw.headers))) {
-      return context.body(null, 429, { 'retry-after': '60' });
-    }
-
     const title = context.req.query('title');
     const artist = context.req.query('artist');
 
@@ -351,10 +347,16 @@ const registerMusicRoutes = (
       return context.json(refuse('error.music.noCoverWasFoundForThat'), 404);
     }
 
-    const picture = await music.pictures.cover(
-      context.req.param('releaseGroupId'),
-      title === undefined || artist === undefined ? null : { title, artist },
-    );
+    const hint = title === undefined || artist === undefined ? null : { title, artist };
+
+    if (
+      !(await music.pictures.knowsCover(context.req.param('releaseGroupId'), hint)) &&
+      !mayLookUp(callerOf(viewer, context.req.raw.headers))
+    ) {
+      return context.body(null, 429, { 'retry-after': '60' });
+    }
+
+    const picture = await music.pictures.cover(context.req.param('releaseGroupId'), hint);
 
     return picture === null
       ? context.json(refuse('error.music.noCoverWasFoundForThat'), 404)
@@ -371,10 +373,6 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    if (!mayLookUp(callerOf(viewer, context.req.raw.headers))) {
-      return context.body(null, 429, { 'retry-after': '60' });
-    }
-
     const title = context.req.query('title');
     const artist = context.req.query('artist');
 
@@ -382,10 +380,16 @@ const registerMusicRoutes = (
       return context.json(refuse('error.music.noCoverWasFoundForThat'), 404);
     }
 
-    const picture = await music.pictures.releaseCover(
-      context.req.param('releaseId'),
-      title === undefined || artist === undefined ? null : { title, artist },
-    );
+    const hint = title === undefined || artist === undefined ? null : { title, artist };
+
+    if (
+      !(await music.pictures.knowsReleaseCover(context.req.param('releaseId'), hint)) &&
+      !mayLookUp(callerOf(viewer, context.req.raw.headers))
+    ) {
+      return context.body(null, 429, { 'retry-after': '60' });
+    }
+
+    const picture = await music.pictures.releaseCover(context.req.param('releaseId'), hint);
 
     return picture === null
       ? context.json(refuse('error.music.noCoverWasFoundForThat'), 404)
@@ -402,10 +406,6 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    if (!mayLookUp(callerOf(viewer, context.req.raw.headers))) {
-      return context.body(null, 429, { 'retry-after': '60' });
-    }
-
     const title = context.req.query('title') ?? '';
     const artist = context.req.query('artist') ?? '';
 
@@ -413,10 +413,17 @@ const registerMusicRoutes = (
       return context.json(refuse('error.music.noCoverWasFoundForThat'), 404);
     }
 
-    const picture =
-      title.trim() === '' || artist.trim() === ''
-        ? null
-        : await music.pictures.namedCover({ title, artist });
+    const isNamed = title.trim() !== '' && artist.trim() !== '';
+
+    if (
+      isNamed &&
+      !(await music.pictures.knowsNamedCover({ title, artist })) &&
+      !mayLookUp(callerOf(viewer, context.req.raw.headers))
+    ) {
+      return context.body(null, 429, { 'retry-after': '60' });
+    }
+
+    const picture = isNamed ? await music.pictures.namedCover({ title, artist }) : null;
 
     return picture === null
       ? context.json(refuse('error.music.noCoverWasFoundForThat'), 404)
@@ -433,20 +440,24 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    if (!mayLookUp(callerOf(viewer, context.req.raw.headers))) {
-      return context.body(null, 429, { 'retry-after': '60' });
-    }
-
     const name = context.req.query('name') ?? '';
 
     if (!isShortLookup(name, context.req.query('cover'))) {
       return context.json(refuse('error.music.noPictureWasFoundForThat'), 404);
     }
 
-    const picture =
-      name.trim() === ''
-        ? null
-        : await music.pictures.artistPicture(name, context.req.query('cover') ?? null);
+    const coverOf = context.req.query('cover') ?? null;
+    const isNamed = name.trim() !== '';
+
+    if (
+      isNamed &&
+      !(await music.pictures.knowsArtistPicture(name, coverOf)) &&
+      !mayLookUp(callerOf(viewer, context.req.raw.headers))
+    ) {
+      return context.body(null, 429, { 'retry-after': '60' });
+    }
+
+    const picture = isNamed ? await music.pictures.artistPicture(name, coverOf) : null;
 
     return picture === null
       ? context.json(refuse('error.music.noPictureWasFoundForThat'), 404)

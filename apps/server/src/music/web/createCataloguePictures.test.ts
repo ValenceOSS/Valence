@@ -296,4 +296,23 @@ describe('createCataloguePictures', () => {
     expect(await readdir(directory)).toHaveLength(2);
     expect(mtimes.filter((at) => at > longAgo.getTime() + WEEK_MS)).toHaveLength(1);
   });
+
+  it('knows whether it already holds an answer, so a caller can tell a cached lookup from a new one', async () => {
+    const { found } = await pictures([ARCHIVED]);
+
+    expect(await found.knowsCover('rg-1', null)).toBe(false);
+
+    await found.cover('rg-1', null);
+
+    expect(await found.knowsCover('rg-1', null)).toBe(true);
+    expect(await found.knowsCover('rg-9', null)).toBe(false);
+
+    await found.cover('rg-2', null);
+
+    expect(await found.knowsCover('rg-2', { title: 'A', artist: 'B' })).toBe(false);
+
+    await found.cover('rg-2', { title: 'A', artist: 'B' });
+
+    expect(await found.knowsCover('rg-2', { title: 'A', artist: 'B' })).toBe(true);
+  });
 });
