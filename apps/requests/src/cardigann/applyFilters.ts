@@ -12,6 +12,8 @@ import { JsonNodeSchema } from '@ValenceRequests/cardigann/JsonNodeSchema';
 import type { CardigannFilter } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
 import type { FilterContext } from '@ValenceRequests/cardigann/FilterContext';
 
+const MOST_REGEX_CHARACTERS = 64 * 1024;
+
 const WORD_BREAKS = /[,\s/)(.;[\]"|:]+/;
 
 /**
@@ -64,12 +66,14 @@ const applyFilter = (
     case 'fuzzytime':
       return asDate(readAnyDate(text, context.nowMs, first.toUpperCase().includes('UK')), text);
     case 'regexp':
-      return translateRegex(first).exec(text)?.[1] ?? '';
+      return translateRegex(first).exec(text.slice(0, MOST_REGEX_CHARACTERS))?.[1] ?? '';
     case 're_replace':
-      return text.replace(
-        translateRegex(first, true),
-        translateReplacement(renderTemplate(second, context.variables)),
-      );
+      return text
+        .slice(0, MOST_REGEX_CHARACTERS)
+        .replace(
+          translateRegex(first, true),
+          translateReplacement(renderTemplate(second, context.variables)),
+        );
     case 'split': {
       const parts = text.split(first.slice(0, 1));
       const position = Number(second);
@@ -160,6 +164,9 @@ const applyFilter = (
  * link, reword a date, strip a prefix and so on. A filter whose pattern cannot run leaves the value
  * as it was rather than failing the whole row, and a filter this engine does not know, such as the
  * `strdump` definitions leave in for debugging, does nothing.
+ *
+ * A pattern is run over no more than the first 64 KiB of the value, so a pattern that backtracks
+ * badly is given little to work on.
  *
  * Dates come out as ISO 8601, which is what the rest of the engine reads.
  *

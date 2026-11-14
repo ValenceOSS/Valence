@@ -146,4 +146,12 @@ describe('applyFilters', () => {
       ),
     ).toBe('s12e45');
   });
+
+  it('runs a pattern over no more than the first 64 KiB of a value', () => {
+    const long = `${'a'.repeat(65_536)}b`;
+
+    expect(filter(long, 're_replace', ['b', 'X'])).toBe('a'.repeat(65_536));
+    expect(filter(long, 'regexp', '(b)')).toBe('');
+    expect(filter(`b${'a'.repeat(70_000)}`, 'regexp', '(b)')).toBe('b');
+  });
 });
