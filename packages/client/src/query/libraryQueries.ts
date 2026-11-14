@@ -14,6 +14,7 @@ import { fetchLeftOut } from '@ValenceClient/library/fetchLeftOut';
 import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPerson';
 import { findPeople } from '@ValenceClient/library/findPeople';
 import { fetchLikeThis } from '@ValenceClient/library/fetchLikeThis';
+import { fetchPickedForYou } from '@ValenceClient/library/fetchPickedForYou';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { readEachLibrary } from '@ValenceClient/query/readEachLibrary';
@@ -82,6 +83,20 @@ const likeThis = (mediaId: string | null, isWanted: boolean) =>
     queryKey: [...LIBRARY, 'like-this', mediaId],
     queryFn: () => fetchLikeThis(mediaId ?? ''),
     enabled: mediaId !== null && isWanted,
+  });
+
+/**
+ * The films and programmes the server reckons this profile is likeliest to enjoy.
+ *
+ * @param limit - How many to ask for.
+ * @param isWanted - Whether to ask, which waits on the server saying it can answer.
+ * @returns The query.
+ */
+const pickedForYou = (limit: number, isWanted: boolean) =>
+  queryOptions({
+    queryKey: [...LIBRARY, 'picked-for-you', limit],
+    queryFn: () => fetchPickedForYou(limit),
+    enabled: isWanted,
   });
 
 /**
@@ -313,6 +328,7 @@ const libraryQueries = {
   items,
   detail,
   likeThis,
+  pickedForYou,
   shows,
   show,
   everything,

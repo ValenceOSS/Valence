@@ -829,10 +829,12 @@ const MediaDetailDialog = ({
                 </DialogSection>
               )}
 
-              {onInspect === undefined || onOpenShow === undefined || !isAFilm ? null : (
+              {onInspect === undefined ||
+              onOpenShow === undefined ||
+              (shown.extraKind ?? null) !== null ? null : (
                 <LikeThisShelf
                   mediaId={shown.id}
-                  kind="film"
+                  kind={isAFilm ? 'film' : 'series'}
                   externalId={shown.externalId}
                   {...(onAsk === undefined ? {} : { onAsk })}
                   onPlay={onPlay}

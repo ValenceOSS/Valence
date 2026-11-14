@@ -1,4 +1,8 @@
-import { becauseYouWatchedRoute, likeThisRoute } from '@ValenceServer/routes/LikenessRoute';
+import {
+  becauseYouWatchedRoute,
+  likeThisRoute,
+  pickedForYouRoute,
+} from '@ValenceServer/routes/LikenessRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -45,6 +49,18 @@ const serveLikeness = (app: OpenAPIHono, context: AppContext): void => {
       { rows: (await likeness?.becauseYouWatched(viewer, rows, limit)) ?? [] },
       200,
     );
+  });
+
+  app.openapi(pickedForYouRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const { limit } = context.req.valid('query');
+
+    return context.json({ items: (await likeness?.pickedForYou(viewer, limit)) ?? [] }, 200);
   });
 };
 
