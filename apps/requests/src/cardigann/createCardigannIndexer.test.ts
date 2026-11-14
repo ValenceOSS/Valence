@@ -679,6 +679,23 @@ ${SEARCH}`;
       expect(asked).toEqual([]);
     });
 
+    it('refuses a magnet link that is more than one link, wherever it came from', async () => {
+      const selectors = `download:\n  selectors:\n    - selector: a.m\n      attribute: href\n${SEARCH}`;
+      const wrong = 'The site returned a download that isn’t a torrent';
+      const direct = standUp(SEARCH, () => undefined);
+      const hashed = standUp(
+        `download:\n  infohash:\n    hash:\n      selector: span.hash\n    title:\n      selector: h1\n${SEARCH}`,
+        () => ({ body: '<h1>Dune</h1><span class="hash">ABC http://10.0.0.5/</span>' }),
+      );
+      const found = standUp(selectors, () => ({
+        body: '<a class="m" href="magnet:?xt=urn:btih:GHI http://10.0.0.5/">m</a>',
+      }));
+
+      await expect(direct.engine.download('magnet:?xt=urn:btih:ABC def')).rejects.toThrow(wrong);
+      await expect(hashed.engine.download('https://site.example/t/1')).rejects.toThrow(wrong);
+      await expect(found.engine.download('https://site.example/details/1')).rejects.toThrow(wrong);
+    });
+
     it('fetches a torrent with the session, following a redirect to it', async () => {
       const { engine } = standUp(SEARCH, (url) =>
         url.pathname === '/dl/1'

@@ -5,6 +5,7 @@ import { buildMagnet } from '@ValenceRequests/cardigann/buildMagnet';
 import { buildSearchRequests } from '@ValenceRequests/cardigann/buildSearchRequests';
 import { configVariables } from '@ValenceRequests/cardigann/configVariables';
 import { isNextPage } from '@ValenceRequests/cardigann/isNextPage';
+import { isSingleMagnetLink } from '@ValenceRequests/indexers/isSingleMagnetLink';
 import { createCategoryMap } from '@ValenceRequests/cardigann/createCategoryMap';
 import { createSiteHostCheck } from '@ValenceRequests/cardigann/createSiteHostCheck';
 import { encodeForm } from '@ValenceRequests/cardigann/encodeForm';
@@ -543,9 +544,25 @@ const createCardigannIndexer = ({
         });
   };
 
+  /**
+   * Hands a magnet link on as a release, once it is found to be one link and nothing besides.
+   *
+   * @param url - What the site gave as a magnet link.
+   * @returns The release.
+   */
+  const magnetFile = (url: string): ReleaseFile => {
+    if (!isSingleMagnetLink(url)) {
+      throw new IndexerFailure(
+        saying('requests.cardigann.cardigannIndexer.theSiteAnsweredTheDownloadWith'),
+      );
+    }
+
+    return { kind: 'magnet', url };
+  };
+
   const download = async (link: string): Promise<ReleaseFile> => {
     if (link.startsWith('magnet:')) {
-      return { kind: 'magnet', url: link };
+      return magnetFile(link);
     }
 
     if (definition.login !== undefined && !hasSession()) {
@@ -636,7 +653,7 @@ const createCardigannIndexer = ({
         );
       }
 
-      return { kind: 'magnet', url: buildMagnet(hash, title) };
+      return magnetFile(buildMagnet(hash, title));
     }
 
     const method = block?.method === 'post' ? 'POST' : 'GET';
@@ -650,7 +667,7 @@ const createCardigannIndexer = ({
       }
 
       if (href.startsWith('magnet:')) {
-        return { kind: 'magnet', url: href };
+        return magnetFile(href);
       }
 
       const fetched = await send({ url: at(href, link), method, body: null, headers }, true, link);
@@ -669,7 +686,7 @@ const createCardigannIndexer = ({
     const fetched = await send({ url: link, method, body: null, headers }, false, null);
 
     if (fetched.redirectedTo?.startsWith('magnet:') === true) {
-      return { kind: 'magnet', url: fetched.redirectedTo };
+      return magnetFile(fetched.redirectedTo);
     }
 
     const final =
