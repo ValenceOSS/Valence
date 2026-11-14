@@ -1,3 +1,5 @@
+import { isPublicAddress } from '@ValenceCore/network/isPublicAddress';
+import { createPinnedFetch } from '@ValenceServer/web/createPinnedFetch';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { nameOfSource } from '@ValenceServer/sources/nameOfSource';
 import { isPublicWebAddress } from '@ValenceServer/live/isPublicWebAddress';
@@ -124,12 +126,19 @@ const readCapped = async (answer: Response | null): Promise<Uint8Array | null> =
 const createMusicWeb = ({
   userAgent,
   spacingMs,
-  fetchImpl = (url, init) => fetch(url, init),
+  fetchImpl,
   wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   now = () => Date.now(),
   timeoutMs = GIVES_UP_AFTER_MS,
   resolve,
 }: MusicWebOptions): MusicWeb & QueryWeb => {
+  const plain: WebFetch = fetchImpl ?? ((url, init) => fetch(url, init));
+  const pinned: WebFetch =
+    fetchImpl ??
+    createPinnedFetch(
+      isPublicAddress,
+      () => new TypeError('that address is not on the public internet'),
+    );
   const nextAllowed = new Map<string, number>();
   const queues = new Map<string, Promise<void>>();
   let failed = 0;
@@ -174,7 +183,7 @@ const createMusicWeb = ({
         return null;
       }
 
-      const answer = await fetchImpl(at, { ...init, redirect: 'manual' });
+      const answer = await pinned(at, { ...init, redirect: 'manual' });
       const location = answer.headers.get('location');
 
       if (answer.status < 300 || answer.status >= 400 || location === null) {
@@ -197,10 +206,6 @@ const createMusicWeb = ({
     const host = new URL(url).host;
     let status = 0;
 
-    if (isChecked && !(await isPublicWebAddress(url, resolve))) {
-      return null;
-    }
-
     const failing = (reason: TroubleReason) => {
       failed += 1;
       troubleWatch.report({ source: nameOfSource(url), reason });
@@ -219,7 +224,7 @@ const createMusicWeb = ({
         ...(body === null ? {} : { method: 'POST' as const, body: JSON.stringify(body) }),
       };
       const answer = await inTurn(host, async () =>
-        (isChecked ? sentChecked(url, init) : fetchImpl(url, init)).catch(() => null),
+        (isChecked ? sentChecked(url, init) : plain(url, init)).catch(() => null),
       );
 
       if (answer === null) {

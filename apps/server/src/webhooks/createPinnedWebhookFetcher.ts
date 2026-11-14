@@ -1,7 +1,5 @@
-import { isIP } from 'node:net';
-import { Agent, fetch } from 'undici';
+import { createPinnedFetch } from '@ValenceServer/web/createPinnedFetch';
 import { isWebhookAddressAllowed } from './isWebhookAddressAllowed';
-import { pinnedWebhookLookup } from './pinnedWebhookLookup';
 import type { WebhookFetcher } from './deliverWebhook';
 import { say } from '@ValenceI18n/say';
 
@@ -13,32 +11,26 @@ import { say } from '@ValenceI18n/say';
  * @param reachesLocalNetwork - Whether the webhook is allowed to reach the local network.
  * @returns A fetcher that follows no redirect.
  */
-const createPinnedWebhookFetcher =
-  (reachesLocalNetwork: boolean): WebhookFetcher =>
-  async (url, init) => {
-    const host = URL.parse(url)?.hostname.replace(/^\[|\]$/g, '') ?? '';
-
-    if (isIP(host) !== 0 && !isWebhookAddressAllowed(host, reachesLocalNetwork)) {
-      throw new Error(
+const createPinnedWebhookFetcher = (reachesLocalNetwork: boolean): WebhookFetcher => {
+  const pinned = createPinnedFetch(
+    (address) => isWebhookAddressAllowed(address, reachesLocalNetwork),
+    (addresses) =>
+      new Error(
         say(
-          isWebhookAddressAllowed(host, true)
+          addresses.some((address) => isWebhookAddressAllowed(address, true))
             ? 'error.webhook.valenceWillNotSendToTheLocalNetwork'
             : 'error.common.valenceWillNotSendDeliveriesTo',
         ),
-      );
-    }
+      ),
+  );
 
-    const agent = new Agent({ connect: { lookup: pinnedWebhookLookup(reachesLocalNetwork) } });
+  return async (url, init) => {
+    const response = await pinned(url, init);
 
-    try {
-      const response = await fetch(url, { ...init, redirect: 'manual', dispatcher: agent });
+    await response.body?.cancel();
 
-      await response.body?.cancel();
-
-      return { ok: response.ok, status: response.status };
-    } finally {
-      await agent.close();
-    }
+    return { ok: response.ok, status: response.status };
   };
+};
 
 export { createPinnedWebhookFetcher };

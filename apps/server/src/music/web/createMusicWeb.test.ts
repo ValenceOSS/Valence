@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createServer } from 'node:http';
 import { createMusicWeb } from './createMusicWeb';
 import type { WebFetch } from './createMusicWeb';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
@@ -53,6 +54,7 @@ describe('createMusicWeb', () => {
     const web = createMusicWeb({
       userAgent: 'x',
       spacingMs: {},
+      resolve: PUBLIC,
       fetchImpl: async (url) =>
         url.includes('down')
           ? Promise.reject(new Error('down'))
@@ -255,5 +257,28 @@ describe('createMusicWeb', () => {
     });
 
     expect(await web.bytes('https://cdn.test/huge')).toBeNull();
+  });
+
+  it('connects a picture only to a public address, even where the name was checked as public', async () => {
+    let reached = 0;
+    const server = createServer((_request, response) => {
+      reached += 1;
+      response.end('picture');
+    });
+
+    await new Promise<void>((done) => {
+      server.listen(0, '127.0.0.1', done);
+    });
+
+    try {
+      const address = server.address();
+      const port = typeof address === 'object' && address !== null ? address.port : 0;
+      const web = createMusicWeb({ userAgent: 'x', spacingMs: {}, resolve: PUBLIC });
+
+      expect(await web.bytes(`http://localhost:${port}/x`)).toBeNull();
+      expect(reached).toBe(0);
+    } finally {
+      server.close();
+    }
   });
 });
