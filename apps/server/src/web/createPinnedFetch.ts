@@ -1,12 +1,13 @@
 import { isIP } from 'node:net';
 import { Agent, fetch } from 'undici';
 import { createPinnedLookup } from './createPinnedLookup';
+import type { Resolve } from '@ValenceServer/live/isPublicWebAddress';
 
 type PinnedInit = {
   headers?: Record<string, string>;
   signal?: AbortSignal;
   method?: string;
-  body?: string;
+  body?: string | ArrayBuffer;
   redirect?: 'manual';
 };
 
@@ -19,10 +20,15 @@ const WITHOUT_BODY = new Set([101, 204, 205, 304]);
  *
  * @param isAllowed - Whether a resolved address may be connected to.
  * @param whyRefused - The error to throw when none of the addresses of a host may be.
+ * @param resolve - What a name resolves to, in place of the system's lookup, injectable for tests.
  * @returns A fetch that connects only to allowed addresses.
  */
 const createPinnedFetch =
-  (isAllowed: (address: string) => boolean, whyRefused: (addresses: readonly string[]) => Error) =>
+  (
+    isAllowed: (address: string) => boolean,
+    whyRefused: (addresses: readonly string[]) => Error,
+    resolve?: Resolve,
+  ) =>
   async (url: string, init: PinnedInit = {}): Promise<Response> => {
     const host = URL.parse(url)?.hostname.replace(/^\[|\]$/g, '') ?? '';
 
@@ -30,7 +36,17 @@ const createPinnedFetch =
       throw whyRefused([host]);
     }
 
-    const agent = new Agent({ connect: { lookup: createPinnedLookup(isAllowed, whyRefused) } });
+    const refusals = new WeakSet<Error>();
+    const refused = (addresses: readonly string[]): Error => {
+      const refusal = whyRefused(addresses);
+
+      refusals.add(refusal);
+
+      return refusal;
+    };
+    const agent = new Agent({
+      connect: { lookup: createPinnedLookup(isAllowed, refused, resolve) },
+    });
 
     try {
       const answer = await fetch(url, { ...init, redirect: 'manual', dispatcher: agent });
@@ -62,7 +78,9 @@ const createPinnedFetch =
     } catch (error) {
       void agent.close();
 
-      throw error;
+      throw error instanceof Error && error.cause instanceof Error && refusals.has(error.cause)
+        ? error.cause
+        : error;
     }
   };
 

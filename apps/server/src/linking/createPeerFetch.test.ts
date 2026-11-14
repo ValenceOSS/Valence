@@ -1,10 +1,57 @@
+import { createServer } from 'node:http';
 import { describe, expect, it, vi } from 'vitest';
 import { createPeerFetch } from './createPeerFetch';
 
 const answered = (status: number, headers: Record<string, string> = {}) =>
   vi.fn<typeof fetch>(() => Promise.resolve(new Response(null, { status, headers })));
 
+const withAServer = async (test: (port: number, reached: () => number) => Promise<void>) => {
+  let reached = 0;
+  const server = createServer((_request, response) => {
+    reached += 1;
+    response.end('hello');
+  });
+
+  await new Promise<void>((done) => {
+    server.listen(0, '127.0.0.1', done);
+  });
+
+  try {
+    const address = server.address();
+
+    await test(typeof address === 'object' && address !== null ? address.port : 0, () => reached);
+  } finally {
+    server.close();
+  }
+};
+
 describe('createPeerFetch', () => {
+  it('connects to the address it checked, and hands the answer on as a stream', async () => {
+    await withAServer(async (port) => {
+      const peerFetch = createPeerFetch(undefined, () => Promise.resolve(['127.0.0.1']));
+      const answer = await peerFetch(`http://friend.example:${port}/film`, {});
+
+      expect(answer.status).toBe(200);
+      expect(answer.body).toBeInstanceOf(ReadableStream);
+      expect(await answer.text()).toBe('hello');
+    });
+  });
+
+  it('does not connect to a link-local address a name is switched to after it was checked', async () => {
+    await withAServer(async (port, reached) => {
+      const resolve = vi
+        .fn<() => Promise<string[]>>()
+        .mockResolvedValueOnce(['127.0.0.1'])
+        .mockResolvedValue(['169.254.169.254']);
+      const peerFetch = createPeerFetch(undefined, resolve);
+
+      await expect(peerFetch(`http://friend.example:${port}/film`, {})).rejects.toThrow(
+        /169\.254\.169\.254/,
+      );
+      expect(reached()).toBe(0);
+    });
+  });
+
   it('asks another server, and never follows it somewhere else', async () => {
     const fetcher = answered(200);
     const peerFetch = createPeerFetch(fetcher, () => Promise.resolve(['192.168.1.20']));

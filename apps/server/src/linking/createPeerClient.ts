@@ -77,7 +77,7 @@ type PeerClient = {
  * @param resolve - What a name resolves to, injectable for tests.
  * @returns The client.
  */
-const createPeerClient = (fetcher: typeof fetch = fetch, resolve?: Resolve): PeerClient => {
+const createPeerClient = (fetcher?: typeof fetch, resolve?: Resolve): PeerClient => {
   const peerFetch = createPeerFetch(fetcher, resolve);
 
   const send = async <Answer>(
