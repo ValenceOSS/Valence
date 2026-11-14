@@ -861,6 +861,22 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
     await expect(service.refusedLibraries('ada')).resolves.toEqual([FILMS_ID]);
   });
 
+  it('says in one lookup whether a library is kept from a viewer, or is not there', async () => {
+    const { service } = await aLibrary();
+    await expect(service.isLibraryOutOfView(ADA, FILMS_ID)).resolves.toBe(false);
+
+    await service.refuseLibrary('ada', FILMS_ID);
+
+    await expect(service.isLibraryOutOfView(ADA, FILMS_ID)).resolves.toBe(true);
+    await expect(
+      service.isLibraryOutOfView({ ...ADA, isAdministrator: true }, FILMS_ID),
+    ).resolves.toBe(false);
+    await expect(service.isLibraryOutOfView(SERVER, FILMS_ID)).resolves.toBe(false);
+    await expect(
+      service.isLibraryOutOfView(SERVER, '00000000-0000-4000-8000-000000000000'),
+    ).resolves.toBe(true);
+  });
+
   it('keeps one ceiling per library, the one set last', async () => {
     const { service } = await aLibrary();
 

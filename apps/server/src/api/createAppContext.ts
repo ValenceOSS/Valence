@@ -618,12 +618,13 @@ const createAppContext = (options: CreateAppOptions) => {
    * Whether an account was refused the library something sits in.
    *
    * The cheap question is asked first and is usually the only one. Every poster and backdrop on a
-   * page arrives as a request of its own, so the common answer — nothing is refused — costs a single
-   * indexed lookup. Who is an administrator is worked out only once something has actually been
-   * refused, which is rare, rather than on each of the fifty images a library page draws.
+   * page arrives as a request of its own, so the common answer — nothing is refused — costs a
+   * lookup of that one item, programme or library, each a single query. Who is an administrator is
+   * worked out only once something has actually been refused, which is rare, rather than on each of
+   * the fifty images a library page draws.
    *
    * @param viewer - Who is asking, as their account and the profile acting for it.
-   * @param subject - The item or programme in question.
+   * @param subject - The item, programme or library in question.
    * @returns Whether to refuse it.
    */
   const isOutOfReach = async (viewer: Viewer | null, subject: Subject): Promise<boolean> => {
@@ -637,7 +638,7 @@ const createAppContext = (options: CreateAppOptions) => {
       case 'series':
         return library.isSeriesOutOfReach(viewer, subject.seriesId);
       case 'library':
-        return !(await library.list(viewer)).some((one) => one.id === subject.libraryId);
+        return library.isLibraryOutOfView(viewer, subject.libraryId);
     }
   };
 

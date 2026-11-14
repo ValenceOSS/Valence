@@ -154,6 +154,7 @@ type LibraryService = ShowService & {
   isOutOfReach: (viewer: Viewer, mediaId: string) => Promise<boolean>;
   isSeriesOutOfReach: (viewer: Viewer, seriesId: string) => Promise<boolean>;
   isLibraryOutOfReach: (accountId: string, libraryId: string) => Promise<boolean>;
+  isLibraryOutOfView: (viewer: Viewer, libraryId: string) => Promise<boolean>;
   refusedLibraries: (accountId: string) => Promise<string[]>;
   allowLibrary: (accountId: string, libraryId: string) => Promise<void>;
   refuseLibrary: (accountId: string, libraryId: string) => Promise<void>;

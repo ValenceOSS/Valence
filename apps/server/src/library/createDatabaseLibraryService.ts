@@ -2502,6 +2502,16 @@ const createDatabaseLibraryService = ({
       return refused.length > 0;
     },
 
+    isLibraryOutOfView: async (viewer, libraryId) => {
+      const offered = await db
+        .select({ id: library.id })
+        .from(library)
+        .where(and(eq(library.id, libraryId), librariesVisibleToViewer(db, viewer)))
+        .limit(1);
+
+      return offered.length === 0;
+    },
+
     getMedia: async (id) => {
       const rows = await db
         .select()
