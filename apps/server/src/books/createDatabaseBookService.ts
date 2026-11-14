@@ -818,9 +818,11 @@ const createDatabaseBookService = (
           path: bookChapter.path,
           format: bookChapter.format,
           bookPath: book.path,
+          libraryPath: library.path,
         })
         .from(bookChapter)
         .innerJoin(book, eq(book.id, bookChapter.bookId))
+        .innerJoin(library, eq(library.id, book.libraryId))
         .where(and(eq(bookChapter.bookId, bookId), isNull(bookChapter.missingSince)))
         .orderBy(asc(bookChapter.number));
       const first =
@@ -836,7 +838,8 @@ const createDatabaseBookService = (
         const opened = await openBookFile(first.path).catch(() => null);
         const carried = opened?.layout === 'audio' ? await opened.readCover() : null;
         const cover =
-          carried ?? (await readFolderArt(first.bookPath, first.bookPath !== first.path));
+          carried ??
+          (await readFolderArt(first.bookPath, first.bookPath !== first.path, first.libraryPath));
 
         return cover === null ? null : drawBookCover(cover, COVER_WIDTH);
       }
