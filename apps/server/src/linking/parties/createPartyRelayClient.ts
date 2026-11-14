@@ -185,7 +185,7 @@ const createPartyRelayClient = ({
           asHeardHere(JsonValueSchema.parse(JSON.parse(JSON.stringify(message))), serverId, offset),
         );
 
-        if (here !== undefined && heard.success && isPartyTalk(heard.data)) {
+        if (here?.serverId === serverId && heard.success && isPartyTalk(heard.data)) {
           here.write(heard.data);
         }
       }

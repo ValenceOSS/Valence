@@ -139,6 +139,52 @@ describe('createPartyRelayClient', () => {
     relay.forget('tab-1');
   });
 
+  it('hears a connection only from the server that connection relays to', async () => {
+    const OTHER = '00000000-0000-4000-8000-0000000000f2';
+    const said = {
+      kind: 'event',
+      topic: 'party',
+      atMs: 1000,
+      folded: 0,
+      payload: { party: { id: 'p2' }, mediaId: 'remote', members: ['here~tab-2'] },
+    };
+    let heard = 0;
+    const relay = createPartyRelayClient({
+      asker: aLinkedAskerAnswering((serverId, route) => {
+        if (!route.startsWith('/parties/hear')) {
+          return new Response(null, { status: 204 });
+        }
+
+        heard += serverId === OTHER ? 1 : 0;
+
+        return serverId === OTHER && heard === 1
+          ? Response.json({
+              serverAtMs: Date.now(),
+              heard: [
+                { connection: 'tab-1', message: said },
+                { connection: 'tab-2', message: said },
+              ],
+            })
+          : null;
+      }),
+      people: createPersonScope(),
+      linkedTitleOf: () => Promise.resolve(null),
+    });
+    const intoFilms = vi.fn<(message: FromServer) => void>();
+    const intoOther = vi.fn<(message: FromServer) => void>();
+
+    await relay.say('tab-1', SAM, intoFilms, JOIN);
+    await relay.say('tab-2', SAM, intoOther, { kind: 'partyJoin', partyId: `linked~${OTHER}~p2` });
+
+    await vi.waitFor(() => {
+      expect(intoOther).toHaveBeenCalled();
+    });
+
+    expect(intoFilms).not.toHaveBeenCalled();
+    relay.forget('tab-1');
+    relay.forget('tab-2');
+  });
+
   it('asks a party there to play a title by what that server calls it, and only one of its own', async () => {
     const { relay, asker } = relaying();
     const write = vi.fn<(message: FromServer) => void>();
