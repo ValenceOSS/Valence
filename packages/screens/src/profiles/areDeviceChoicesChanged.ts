@@ -1,7 +1,6 @@
 import type { DeviceChoices } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 
 const CHOICES: readonly (keyof DeviceChoices)[] = [
-  'language',
   'theme',
   'motion',
   'pluginTheme',

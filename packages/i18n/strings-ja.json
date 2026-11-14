@@ -14005,9 +14005,9 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
-    "handler": "screens.accountArea.profileSettings.languageKeptHere",
-    "text": "このデバイスに保存されます。保存すると、新しい言語で Valence が再起動します。",
-    "context": "Under the Language setting in a profile's settings, which picks the language this device shows Valence in."
+    "handler": "screens.accountArea.profileSettings.languageFollowsThisProfile",
+    "text": "このプロフィールで視聴するすべてのデバイスで使われます。保存すると、新しい言語で Valence が再起動します。",
+    "context": "Under the Language setting in a profile's settings, which picks the language the profile sees Valence in on every device."
   },
   {
     "handler": "screens.accountArea.profileSettings.playMoreFilmsInThisBrowser",
@@ -14018,6 +14018,11 @@
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
     "text": "最高画質のバージョンを優先",
     "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.sameAsTheServer",
+    "text": "サーバーと同じ（{language}）",
+    "context": "The first choice of the Language setting in a profile's settings: speak the language the server's administrator chose. {language} is that language's name, written in itself, such as Deutsch."
   },
   {
     "handler": "screens.accountArea.profileSettings.sameAsThisDevice",
@@ -25250,6 +25255,26 @@
     "context": "Under the server description setting."
   },
   {
+    "handler": "screens.adminArea.serverCard.eachDevicesOwn",
+    "text": "各デバイスの言語",
+    "context": "The first choice of the server's Language setting, in the admin area and in setup: no language for the whole server, so each device speaks whichever of its own languages Valence has."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageCouldNotBeSaved",
+    "text": "言語を保存できませんでした",
+    "context": "A notice when the server's language could not be saved, in the admin area's settings."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageDetail",
+    "text": "自分のプロフィールで言語を選ばない限り、全員に表示される言語です。",
+    "context": "Under the Language setting on the server card in the admin area's settings, which picks the language the whole server speaks."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageSaved",
+    "text": "言語を保存しました",
+    "context": "A notice once the server's language has been saved, in the admin area's settings."
+  },
+  {
     "handler": "screens.adminArea.serverCard.logoDetail",
     "text": "正方形の PNG、JPEG、WebP、AVIF で、2 MB 以下です。",
     "context": "Under the server logo setting: which pictures it takes."
@@ -25723,6 +25748,11 @@
     "handler": "screens.adminArea.settingsPanel.segmentLengthSaved",
     "text": "セグメントの長さを保存しました。",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.serverLanguage",
+    "text": "サーバーの言語",
+    "context": "Names the server's language setting in the admin area's activity log, where somebody changed it."
   },
   {
     "handler": "screens.adminArea.settingsPanel.shortSegments",
@@ -36555,6 +36585,11 @@
     "handler": "screens.setupWizard.validateSetupForm.useAtLeastMINIMUMPASSWORDLENGTH",
     "text": "{MINIMUM_PASSWORD_LENGTH} 文字以上を使用してください。",
     "context": "Shown in the setup wizard (from `validateSetupForm`). {MINIMUM_PASSWORD_LENGTH} is filled in by the app."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.languageDetail",
+    "text": "ここで Valence が全員に使う言語です。各自があとで自分の言語を選べます。",
+    "context": "Under the Language choice on the first step of setting up a new server. Choosing one starts the page again in that language."
   },
   {
     "handler": "screens.setupWizard.welcomeStep.makeYourAccount",

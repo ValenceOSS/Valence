@@ -27,6 +27,7 @@ const NAMED_SETTINGS: Readonly<Record<string, string>> = {
   fetchesMusicDetails: say('screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb'),
   controlsConnectedApps: say('screens.adminArea.arrAppsPanel.connectedApps'),
   roundness: say('screens.adminArea.settingsPanel.roundness'),
+  language: say('screens.adminArea.settingsPanel.serverLanguage'),
   hiddenAlerts: say('screens.adminArea.adminSections.alerts'),
   keepsDownloadsForDays: say('screens.adminArea.settingsPanel.preparedDownloads'),
   wayInMessage: say('screens.adminArea.wayInMessageRow.messageOnTheWayIn'),

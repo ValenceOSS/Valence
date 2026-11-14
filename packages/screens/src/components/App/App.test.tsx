@@ -196,6 +196,7 @@ const OPERATOR = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  language: null,
   isOwner: true,
   hasPin: false,
   mayRequest: true,

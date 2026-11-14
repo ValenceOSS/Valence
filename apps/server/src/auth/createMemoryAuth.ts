@@ -133,6 +133,7 @@ const createMemoryAuth = (
     reencodesAwaitingReviewCap: 5,
     keepsDownloadsForDays: 14,
     roundness: 'default',
+    language: null,
     hiddenAlerts: [],
     preTranscoding: PRE_TRANSCODING_DEFAULTS,
     seerr: SEERR_DEFAULTS,

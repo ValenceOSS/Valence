@@ -6,7 +6,6 @@ import type { Theme } from '@ValenceClient/shell/theme';
 import type { Motion } from '@ValenceClient/shell/motion';
 
 type DeviceChoices = {
-  language: Language | null;
   theme: Theme;
   motion: Motion;
   pluginTheme: string | null;
@@ -25,6 +24,7 @@ type ProfileDraft = DeviceChoices & {
   showsWhatIamWatching: boolean;
   discordPresence: DiscordPresence;
   prefersBestCopy: boolean;
+  language: Language | null;
   deviceWas: DeviceChoices;
   photo: File | null;
 };

@@ -10,4 +10,11 @@ describe('languageChoices', () => {
     expect(choices).toHaveLength(LANGUAGES.length + 1);
     expect(choices.find((choice) => choice.id === 'de')?.label).toBe('Deutsch');
   });
+
+  it('names the first choice after whatever it follows, where that is not the device', () => {
+    expect(languageChoices('Same as the server (Deutsch)')[0]).toEqual({
+      id: 'device',
+      label: 'Same as the server (Deutsch)',
+    });
+  });
 });

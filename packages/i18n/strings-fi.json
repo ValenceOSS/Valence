@@ -14005,9 +14005,9 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
-    "handler": "screens.accountArea.profileSettings.languageKeptHere",
-    "text": "Tallennetaan tälle laitteelle. Valence käynnistyy uudelleen uudella kielellä, kun tallennat.",
-    "context": "Under the Language setting in a profile's settings, which picks the language this device shows Valence in."
+    "handler": "screens.accountArea.profileSettings.languageFollowsThisProfile",
+    "text": "Käytössä kaikilla laitteilla, joilla tätä profiilia katsotaan. Valence käynnistyy uudelleen uudella kielellä, kun tallennat.",
+    "context": "Under the Language setting in a profile's settings, which picks the language the profile sees Valence in on every device."
   },
   {
     "handler": "screens.accountArea.profileSettings.playMoreFilmsInThisBrowser",
@@ -14018,6 +14018,11 @@
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
     "text": "Suosi parasta versiota",
     "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.sameAsTheServer",
+    "text": "Sama kuin palvelimella ({language})",
+    "context": "The first choice of the Language setting in a profile's settings: speak the language the server's administrator chose. {language} is that language's name, written in itself, such as Deutsch."
   },
   {
     "handler": "screens.accountArea.profileSettings.sameAsThisDevice",
@@ -25250,6 +25255,26 @@
     "context": "Under the server description setting."
   },
   {
+    "handler": "screens.adminArea.serverCard.eachDevicesOwn",
+    "text": "Kunkin laitteen oma",
+    "context": "The first choice of the server's Language setting, in the admin area and in setup: no language for the whole server, so each device speaks whichever of its own languages Valence has."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageCouldNotBeSaved",
+    "text": "Kieltä ei voitu tallentaa",
+    "context": "A notice when the server's language could not be saved, in the admin area's settings."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageDetail",
+    "text": "Mitä kaikki näkevät, elleivät he valitse kieltä omalle profiililleen.",
+    "context": "Under the Language setting on the server card in the admin area's settings, which picks the language the whole server speaks."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageSaved",
+    "text": "Kieli tallennettu",
+    "context": "A notice once the server's language has been saved, in the admin area's settings."
+  },
+  {
     "handler": "screens.adminArea.serverCard.logoDetail",
     "text": "Neliön muotoinen PNG, JPEG, WebP tai AVIF, enintään 2 MB.",
     "context": "Under the server logo setting: which pictures it takes."
@@ -25723,6 +25748,11 @@
     "handler": "screens.adminArea.settingsPanel.segmentLengthSaved",
     "text": "Segmentin pituus tallennettu.",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.serverLanguage",
+    "text": "Palvelimen kieli",
+    "context": "Names the server's language setting in the admin area's activity log, where somebody changed it."
   },
   {
     "handler": "screens.adminArea.settingsPanel.shortSegments",
@@ -36559,6 +36589,11 @@
     "handler": "screens.setupWizard.validateSetupForm.useAtLeastMINIMUMPASSWORDLENGTH",
     "text": "Käytä vähintään {MINIMUM_PASSWORD_LENGTH} merkkiä.",
     "context": "Shown in the setup wizard (from `validateSetupForm`). {MINIMUM_PASSWORD_LENGTH} is filled in by the app."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.languageDetail",
+    "text": "Kieli, jolla Valence puhuu täällä kaikille. Jokainen voi valita oman kielensä myöhemmin.",
+    "context": "Under the Language choice on the first step of setting up a new server. Choosing one starts the page again in that language."
   },
   {
     "handler": "screens.setupWizard.welcomeStep.makeYourAccount",

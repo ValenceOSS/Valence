@@ -38,7 +38,6 @@ const DRAFT: ProfileDraft = {
   showsDesktopNotices: false,
   appIcon: 'system',
   deviceWas: {
-    language: null,
     theme: 'system',
     motion: 'system',
     pluginTheme: null,

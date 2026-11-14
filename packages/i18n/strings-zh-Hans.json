@@ -14001,9 +14001,9 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
-    "handler": "screens.accountArea.profileSettings.languageKeptHere",
-    "text": "保存在此设备上。保存后，Valence 将以新语言重新启动。",
-    "context": "Under the Language setting in a profile's settings, which picks the language this device shows Valence in."
+    "handler": "screens.accountArea.profileSettings.languageFollowsThisProfile",
+    "text": "在此个人资料观看的每台设备上使用。保存后，Valence 将以新语言重新启动。",
+    "context": "Under the Language setting in a profile's settings, which picks the language the profile sees Valence in on every device."
   },
   {
     "handler": "screens.accountArea.profileSettings.playMoreFilmsInThisBrowser",
@@ -14014,6 +14014,11 @@
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
     "text": "优先使用最佳版本",
     "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.sameAsTheServer",
+    "text": "与服务器相同（{language}）",
+    "context": "The first choice of the Language setting in a profile's settings: speak the language the server's administrator chose. {language} is that language's name, written in itself, such as Deutsch."
   },
   {
     "handler": "screens.accountArea.profileSettings.sameAsThisDevice",
@@ -25246,6 +25251,26 @@
     "context": "Under the server description setting."
   },
   {
+    "handler": "screens.adminArea.serverCard.eachDevicesOwn",
+    "text": "各设备自己的语言",
+    "context": "The first choice of the server's Language setting, in the admin area and in setup: no language for the whole server, so each device speaks whichever of its own languages Valence has."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageCouldNotBeSaved",
+    "text": "无法保存语言",
+    "context": "A notice when the server's language could not be saved, in the admin area's settings."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageDetail",
+    "text": "除非为自己的个人资料选择语言，否则所有人看到的就是这种语言。",
+    "context": "Under the Language setting on the server card in the admin area's settings, which picks the language the whole server speaks."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageSaved",
+    "text": "语言已保存",
+    "context": "A notice once the server's language has been saved, in the admin area's settings."
+  },
+  {
     "handler": "screens.adminArea.serverCard.logoDetail",
     "text": "方形的 PNG、JPEG、WebP 或 AVIF，最大 2 MB。",
     "context": "Under the server logo setting: which pictures it takes."
@@ -25719,6 +25744,11 @@
     "handler": "screens.adminArea.settingsPanel.segmentLengthSaved",
     "text": "片段长度已保存。",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.serverLanguage",
+    "text": "服务器语言",
+    "context": "Names the server's language setting in the admin area's activity log, where somebody changed it."
   },
   {
     "handler": "screens.adminArea.settingsPanel.shortSegments",
@@ -36555,6 +36585,11 @@
     "handler": "screens.setupWizard.validateSetupForm.useAtLeastMINIMUMPASSWORDLENGTH",
     "text": "请使用至少 {MINIMUM_PASSWORD_LENGTH} 个字符。",
     "context": "Shown in the setup wizard (from `validateSetupForm`). {MINIMUM_PASSWORD_LENGTH} is filled in by the app."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.languageDetail",
+    "text": "Valence 在这里对所有人使用的语言。每个人之后都可以选择自己的语言。",
+    "context": "Under the Language choice on the first step of setting up a new server. Choosing one starts the page again in that language."
   },
   {
     "handler": "screens.setupWizard.welcomeStep.makeYourAccount",

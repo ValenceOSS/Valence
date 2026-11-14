@@ -9,6 +9,7 @@ const saved = vi.hoisted(() => ({
   saveBrand: vi.fn((brand: object) => Promise.resolve({ ...brand, logo: null })),
   saveRoundness: vi.fn(() => Promise.resolve(true)),
   saveCertificationRegion: vi.fn(() => Promise.resolve(true)),
+  saveServerLanguage: vi.fn(() => Promise.resolve(true)),
 }));
 
 vi.mock('@ValenceClient/admin/saveBrand', () => ({ saveBrand: saved.saveBrand }));
@@ -16,6 +17,7 @@ vi.mock('@ValenceClient/admin/saveBrandLogo', () => ({ saveBrandLogo: vi.fn() })
 vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveRoundness: saved.saveRoundness,
   saveCertificationRegion: saved.saveCertificationRegion,
+  saveServerLanguage: saved.saveServerLanguage,
 }));
 vi.mock('@ValenceClient/appearance/fetchAppearance', () => ({
   fetchAppearance: vi.fn(() => new Promise(() => undefined)),
@@ -52,5 +54,23 @@ describe('ServerCard', () => {
     await user.click(screen.getByRole('button', { name: 'Round' }));
 
     expect(saved.saveRoundness).toHaveBeenCalledWith('round');
+  });
+
+  it('saves the language the whole server speaks, and lets each device speak its own again', async () => {
+    const user = userEvent.setup();
+
+    renderWithAnswers(<ServerCard overview={anAdminOverview({ language: 'fr' })} />);
+
+    expect(screen.getByRole('button', { name: /^Language/ })).toHaveTextContent('Français');
+
+    await user.click(screen.getByRole('button', { name: /^Language/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Deutsch' }));
+
+    expect(saved.saveServerLanguage).toHaveBeenCalledWith('de');
+
+    await user.click(screen.getByRole('button', { name: /^Language/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Each device’s own' }));
+
+    expect(saved.saveServerLanguage).toHaveBeenCalledWith(null);
   });
 });

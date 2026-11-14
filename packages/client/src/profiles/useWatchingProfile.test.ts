@@ -22,6 +22,7 @@ const aProfile = (id: string): ViewerProfile => ({
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  language: null,
   isOwner: id === 'dan',
   hasPin: false,
   mayRequest: true,

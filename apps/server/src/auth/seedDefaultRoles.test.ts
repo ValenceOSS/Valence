@@ -58,6 +58,7 @@ const emptySettings = () =>
     announcement: null,
     reencodesAwaitingReviewCap: 5,
     roundness: 'default',
+    language: null,
     keepsDownloadsForDays: 14,
     hiddenAlerts: [],
     preTranscoding: PRE_TRANSCODING_DEFAULTS,

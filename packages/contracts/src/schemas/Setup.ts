@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 import { UsernameSchema } from '@ValenceContracts/schemas/SetupLink';
+import { SpokenLanguageSchema } from '@ValenceContracts/schemas/SpokenLanguage';
 
 const SetupStatusSchema = z.object({
   isComplete: z.boolean(),
@@ -24,6 +25,7 @@ const SetupRequestSchema = z.object({
   trustedOrigins: z.array(z.string().url()).min(1),
   cookieSecure: z.boolean(),
   sharesUsageStatistics: z.boolean().default(false),
+  language: SpokenLanguageSchema.nullable().default(null),
 });
 
 const SetupResultSchema = z.object({

@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { AllowedAppsSchema, EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
+import { SpokenLanguageSchema } from '@ValenceContracts/schemas/SpokenLanguage';
 import { DEFAULT_RELEASE_TYPES, ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 import {
   PRE_TRANSCODING_DEFAULTS,
@@ -76,6 +77,7 @@ const ServerSettingsSchema = z.object({
   requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
   controlsConnectedApps: z.boolean().default(false),
   roundness: RoundnessSchema.default('default'),
+  language: SpokenLanguageSchema.nullable().catch(null).default(null),
   hiddenAlerts: z.array(z.string()).default([]),
   keepsDownloadsForDays: z.number().int().nonnegative().max(3650).default(14),
   preTranscoding: z

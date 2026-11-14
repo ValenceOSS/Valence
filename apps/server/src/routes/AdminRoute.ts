@@ -16,6 +16,7 @@ import {
 } from '@ValenceContracts/schemas/BookRemote';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
+import { SpokenLanguageSchema } from '@ValenceContracts/schemas/SpokenLanguage';
 import { PREVIEW_QUALITIES } from '@ValenceContracts/schemas/PreviewQuality';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import { JobRunRequestSchema } from '@ValenceServer/jobs/jobDefinitions';
@@ -90,6 +91,7 @@ const AdminSettingsSchema = z
     requestReleaseTypes: ReleaseTypesSchema,
     controlsConnectedApps: z.boolean(),
     roundness: RoundnessSchema,
+    language: SpokenLanguageSchema.nullable().default(null),
     hiddenAlerts: z.array(z.string()).default([]),
     keepsDownloadsForDays: z.number().int().nonnegative(),
     splashscreen: z.string().nullable(),
@@ -195,6 +197,7 @@ const AdminSettingsRequestSchema = z
     requestReleaseTypes: ReleaseTypesSchema.optional(),
     controlsConnectedApps: z.boolean().optional(),
     roundness: RoundnessSchema.optional(),
+    language: SpokenLanguageSchema.nullable().optional(),
     hiddenAlerts: HiddenAlertsSchema.optional(),
     keepsDownloadsForDays: z.number().int().nonnegative().max(3650).optional(),
     wayInMessage: WayInMessageSchema.nullable().optional(),

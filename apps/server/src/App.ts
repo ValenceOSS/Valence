@@ -5,6 +5,7 @@ import { createAppContext } from '@ValenceServer/api/createAppContext';
 import { serveEveryRequest } from '@ValenceServer/api/serveEveryRequest';
 import { serveAbout } from '@ValenceServer/api/serveAbout';
 import { serveStrings } from '@ValenceServer/api/serveStrings';
+import { serveLanguage } from '@ValenceServer/api/serveLanguage';
 import { serveSetup } from '@ValenceServer/api/serveSetup';
 import { serveLibrary } from '@ValenceServer/api/serveLibrary';
 import { serveCalendar } from '@ValenceServer/api/serveCalendar';
@@ -84,6 +85,7 @@ const createApp = (options: CreateAppOptions) => {
   countWhatIsStreamed(app, options.streamMeter);
   serveAbout(app, context);
   serveStrings(app, context);
+  serveLanguage(app, context);
   serveSetup(app, context);
   serveLibrary(app, context);
   serveCalendar(app, context);

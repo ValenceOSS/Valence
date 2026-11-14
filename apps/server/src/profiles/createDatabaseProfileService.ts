@@ -1,4 +1,5 @@
 import { toneOfFilter } from '@ValenceContracts/functions/toneOfFilter';
+import { SpokenLanguageSchema } from '@ValenceContracts/schemas/SpokenLanguage';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { randomUUID } from 'node:crypto';
@@ -48,6 +49,7 @@ type ProfileRow = {
   showsWhatIamWatching: boolean;
   discordPresence: DiscordPresence | null;
   prefersBestCopy: boolean;
+  language: string | null;
   isOwner: boolean;
   pinHash: string | null;
   mayRequest: boolean;
@@ -132,6 +134,7 @@ const toProfile = (row: ProfileRow): ViewerProfile => ({
     row.discordPresence ?? {},
   ),
   prefersBestCopy: row.prefersBestCopy,
+  language: SpokenLanguageSchema.nullable().catch(null).parse(row.language),
   isOwner: row.isOwner,
   hasPin: row.pinHash !== null,
   mayRequest: row.mayRequest,
@@ -191,6 +194,7 @@ const COLUMNS = {
   showsWhatIamWatching: viewerProfile.showsWhatIamWatching,
   discordPresence: viewerProfile.discordPresence,
   prefersBestCopy: viewerProfile.prefersBestCopy,
+  language: viewerProfile.language,
   isOwner: viewerProfile.isOwner,
   pinHash: viewerProfile.pinHash,
   mayRequest: viewerProfile.mayRequest,
@@ -290,6 +294,7 @@ const createDatabaseProfileService = (
         showsWhatIamWatching: false,
         discordPresence: DEFAULT_DISCORD_PRESENCE,
         prefersBestCopy: false,
+        language: null,
         isOwner: created.isOwner,
         hasPin: false,
         mayRequest: true,
@@ -317,6 +322,7 @@ const createDatabaseProfileService = (
             ...(request.prefersBestCopy === undefined
               ? {}
               : { prefersBestCopy: request.prefersBestCopy }),
+            ...(request.language === undefined ? {} : { language: request.language }),
             name: request.name,
             colour: request.colour,
             updatedAt: new Date(),

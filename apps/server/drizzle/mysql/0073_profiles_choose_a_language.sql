@@ -1,0 +1,1 @@
+ALTER TABLE `viewer_profile` ADD `language` varchar(16);

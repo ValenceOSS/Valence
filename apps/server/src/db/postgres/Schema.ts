@@ -234,6 +234,7 @@ const viewerProfile = pgTable(
     showsWhatIamWatching: boolean('showsWhatIamWatching').notNull().default(false),
     discordPresence: jsonb('discordPresence').$type<DiscordPresence>(),
     prefersBestCopy: boolean('prefersBestCopy').notNull().default(false),
+    language: text('language'),
     isOwner: boolean('isOwner').notNull().default(false),
     pinHash: text('pinHash'),
     pinFailures: integer('pinFailures').notNull().default(0),

@@ -85,6 +85,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
       draft.askStillWatchingAfter !== profile.askStillWatchingAfter ||
       draft.showsWhatIamWatching !== profile.showsWhatIamWatching ||
       draft.prefersBestCopy !== profile.prefersBestCopy ||
+      draft.language !== profile.language ||
       areDeviceChoicesChanged(draft) ||
       JSON.stringify(draft.discordPresence) !== JSON.stringify(profile.discordPresence) ||
       JSON.stringify(draft.avatar) !== JSON.stringify(profile.avatar));

@@ -1,5 +1,4 @@
 import { chooseAppIcon } from '@ValenceClient/shell/chooseAppIcon';
-import { chooseLanguageHere } from '@ValenceClient/language/chooseLanguageHere';
 import { chooseDeviceNotices } from '@ValenceClient/notifications/deviceNotices';
 import { choosePluginTheme } from '@ValenceClient/plugins/pluginThemeChoice';
 import { chooseMotion } from '@ValenceClient/shell/motion';
@@ -10,7 +9,6 @@ import type { DeviceChoices } from '@ValenceScreens/components/ProfileSettings/P
 /**
  * Keeps on this device what the profile editor changed, once the editor is saved, and leaves alone
  * whatever it did not change, so a theme chosen elsewhere while the editor was open stays chosen.
- * A new language starts the app again, since every word on screen was said in the old one.
  *
  * @param choices - What the editor ends with.
  * @param was - What the device used as the editor opened.
@@ -44,14 +42,6 @@ const keepDeviceChoices = (choices: DeviceChoices, was: DeviceChoices): void => 
 
   if (choices.appIcon !== was.appIcon) {
     chooseAppIcon(choices.appIcon);
-  }
-
-  if (choices.language !== was.language) {
-    chooseLanguageHere(choices.language);
-
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
   }
 };
 

@@ -7,6 +7,7 @@ import { useAppliedBrand } from '@ValenceScreens/brand/useAppliedBrand';
 import { useAppliedRoundness } from '@ValenceScreens/roundness/useAppliedRoundness';
 import { useAppliedPluginTheme } from '@ValenceScreens/theme/useAppliedPluginTheme';
 import { useAppliedMotion } from '@ValenceScreens/motion/useAppliedMotion';
+import { useLanguageFollowsTheProfile } from '@ValenceScreens/language/useLanguageFollowsTheProfile';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { sendListenedOffline } from '@ValenceClient/offline/listenedOffline';
 import { App } from '@ValenceScreens/components/App/App';
@@ -32,7 +33,8 @@ import { profileQueries } from '@ValenceClient/query/profileQueries';
  * The chosen theme is put on the document from here, because this is the outermost thing either
  * application has in common — and from the one screen that is drawn before this exists, which is a
  * client asking which server is yours. A plugin theme somebody chose goes on after the server's
- * corners, so its own corners win while it is in force.
+ * corners, so its own corners win while it is in force. The language follows the profile watching
+ * from here too.
  *
  * @param initialTitle - What this instance is called.
  */
@@ -47,6 +49,7 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
   useAppliedRoundness();
   useAppliedBrand();
   useAppliedPluginTheme();
+  useLanguageFollowsTheProfile();
 
   const howMuchMovement = useAppliedMotion();
 

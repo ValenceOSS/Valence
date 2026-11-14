@@ -14005,9 +14005,9 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
-    "handler": "screens.accountArea.profileSettings.languageKeptHere",
-    "text": "이 기기에 저장돼요. 저장하면 Valence가 새 언어로 다시 시작해요.",
-    "context": "Under the Language setting in a profile's settings, which picks the language this device shows Valence in."
+    "handler": "screens.accountArea.profileSettings.languageFollowsThisProfile",
+    "text": "이 프로필로 보는 모든 기기에서 쓰여요. 저장하면 Valence가 새 언어로 다시 시작해요.",
+    "context": "Under the Language setting in a profile's settings, which picks the language the profile sees Valence in on every device."
   },
   {
     "handler": "screens.accountArea.profileSettings.playMoreFilmsInThisBrowser",
@@ -14018,6 +14018,11 @@
     "handler": "screens.accountArea.profileSettings.preferTheBestCopy",
     "text": "가장 좋은 버전 우선",
     "context": "Profile setting: play the better copy of a title where a linked server has one."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.sameAsTheServer",
+    "text": "서버와 같음({language})",
+    "context": "The first choice of the Language setting in a profile's settings: speak the language the server's administrator chose. {language} is that language's name, written in itself, such as Deutsch."
   },
   {
     "handler": "screens.accountArea.profileSettings.sameAsThisDevice",
@@ -25250,6 +25255,26 @@
     "context": "Under the server description setting."
   },
   {
+    "handler": "screens.adminArea.serverCard.eachDevicesOwn",
+    "text": "각 기기의 언어",
+    "context": "The first choice of the server's Language setting, in the admin area and in setup: no language for the whole server, so each device speaks whichever of its own languages Valence has."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageCouldNotBeSaved",
+    "text": "언어를 저장할 수 없어요",
+    "context": "A notice when the server's language could not be saved, in the admin area's settings."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageDetail",
+    "text": "자기 프로필에 언어를 고르지 않으면 모두가 보는 언어예요.",
+    "context": "Under the Language setting on the server card in the admin area's settings, which picks the language the whole server speaks."
+  },
+  {
+    "handler": "screens.adminArea.serverCard.languageSaved",
+    "text": "언어를 저장했어요",
+    "context": "A notice once the server's language has been saved, in the admin area's settings."
+  },
+  {
     "handler": "screens.adminArea.serverCard.logoDetail",
     "text": "정사각형 PNG, JPEG, WebP 또는 AVIF, 2MB 이하예요.",
     "context": "Under the server logo setting: which pictures it takes."
@@ -25723,6 +25748,11 @@
     "handler": "screens.adminArea.settingsPanel.segmentLengthSaved",
     "text": "세그먼트 길이를 저장했어요.",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.serverLanguage",
+    "text": "서버 언어",
+    "context": "Names the server's language setting in the admin area's activity log, where somebody changed it."
   },
   {
     "handler": "screens.adminArea.settingsPanel.shortSegments",
@@ -36555,6 +36585,11 @@
     "handler": "screens.setupWizard.validateSetupForm.useAtLeastMINIMUMPASSWORDLENGTH",
     "text": "최소 {MINIMUM_PASSWORD_LENGTH}자 이상 사용하세요.",
     "context": "Shown in the setup wizard (from `validateSetupForm`). {MINIMUM_PASSWORD_LENGTH} is filled in by the app."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.languageDetail",
+    "text": "Valence가 이곳의 모두에게 쓰는 언어예요. 각자 나중에 자기 언어를 고를 수 있어요.",
+    "context": "Under the Language choice on the first step of setting up a new server. Choosing one starts the page again in that language."
   },
   {
     "handler": "screens.setupWizard.welcomeStep.makeYourAccount",

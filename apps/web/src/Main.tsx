@@ -11,12 +11,22 @@ import { installBrowserPlatform } from '@ValenceWeb/platform/installBrowserPlatf
 import { buildRouter } from '@ValenceScreens/routes/buildRouter';
 import { KeepTheLayout } from '@ValenceScreens/components/KeepTheLayout/KeepTheLayout';
 import { startSpeaking } from '@ValenceClient/language/startSpeaking';
+import { fetchLanguagesInUse } from '@ValenceClient/language/fetchLanguagesInUse';
 import { directionOf } from '@ValenceI18n/directionOf';
 import { loadWords } from 'virtual:valence-words';
 import './styles/main.css';
 
 installBrowserPlatform();
 reloadWhenCodeIsGone(window);
+
+const LANGUAGE_WAIT_MS = 1500;
+
+await Promise.race([
+  fetchLanguagesInUse(),
+  new Promise((resolve) => {
+    setTimeout(resolve, LANGUAGE_WAIT_MS);
+  }),
+]);
 
 const spoken = await startSpeaking(navigator.languages, loadWords);
 

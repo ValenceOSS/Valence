@@ -22,11 +22,10 @@ import { TheChosenAppearance } from '@ValenceMobile/components/TheChosenAppearan
 import { TheHousehold } from '@ValenceMobile/components/TheHousehold/TheHousehold';
 import { IfThisAppIsOn } from '@ValenceMobile/components/IfThisAppIsOn/IfThisAppIsOn';
 import { speakTheKeptWords } from '@ValenceClient/language/speakTheKeptWords';
-import { fetchTheWords } from '@ValenceClient/language/fetchTheWords';
+import { catchUpOnLanguage } from '@ValenceClient/language/catchUpOnLanguage';
 import { useNewWords } from '@ValenceClient/language/useNewWords';
 import { thisDevicesLanguages } from '@ValenceClient/language/thisDevicesLanguages';
 import { layOutFor } from '@ValenceNative/language/layOutFor';
-import type { Language } from '@ValenceI18n/LANGUAGES';
 
 const styles = StyleSheet.create({ whole: { flex: 1 } });
 import { WhereIsYourValence } from '@ValenceMobile/components/WhereIsYourValence/WhereIsYourValence';
@@ -65,7 +64,6 @@ const Phone = () => {
   const [isHomeReady, setIsHomeReady] = useState(false);
   const [isSplashDone, setIsSplashDone] = useState(false);
   const [isSplashGone, setIsSplashGone] = useState(false);
-  const [spoken, setSpoken] = useState<Language>('en');
   const wordsDrawn = useNewWords();
   const scheme = useColorScheme();
 
@@ -90,7 +88,6 @@ const Phone = () => {
       const language = speakTheKeptWords(thisDevicesLanguages());
 
       layOutFor(language);
-      setSpoken(language);
 
       const known = platformInUse().serverAddress();
 
@@ -108,8 +105,8 @@ const Phone = () => {
       return;
     }
 
-    void fetchTheWords(spoken);
-  }, [isReady, address, spoken]);
+    void catchUpOnLanguage();
+  }, [isReady, address]);
 
   return (
     <GestureHandlerRootView style={styles.whole}>

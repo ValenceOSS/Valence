@@ -240,6 +240,7 @@ const viewerProfile = mysqlTable(
     showsWhatIamWatching: boolean('showsWhatIamWatching').notNull().default(false),
     discordPresence: jsonColumn('discordPresence').$type<DiscordPresence>(),
     prefersBestCopy: boolean('prefersBestCopy').notNull().default(false),
+    language: varchar('language', { length: 16 }),
     isOwner: boolean('isOwner').notNull().default(false),
     pinHash: mediumtext('pinHash'),
     pinFailures: int('pinFailures').notNull().default(0),

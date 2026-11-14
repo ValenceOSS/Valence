@@ -10,7 +10,14 @@ import { SettingRow } from '@ValenceUI/SettingRow';
 import { TextField } from '@ValenceUI/TextField';
 import { saveBrand } from '@ValenceClient/admin/saveBrand';
 import { saveBrandLogo } from '@ValenceClient/admin/saveBrandLogo';
-import { saveCertificationRegion, saveRoundness } from '@ValenceClient/admin/fetchAdmin';
+import {
+  saveCertificationRegion,
+  saveRoundness,
+  saveServerLanguage,
+} from '@ValenceClient/admin/fetchAdmin';
+import { languageChoices } from '@ValenceClient/language/languageChoices';
+import { SAME_AS_THE_DEVICE } from '@ValenceClient/language/SAME_AS_THE_DEVICE';
+import { isLanguage } from '@ValenceI18n/isLanguage';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import {
@@ -49,7 +56,8 @@ const storedOf = (text: string | null): string | null =>
 
 /**
  * The server itself: what it is called and how it describes itself, its logo and accent colour,
- * how round the corners of everything are, and whose age ratings it reads. Each saves as it is
+ * how round the corners of everything are, the language it speaks to everybody who has not chosen
+ * their own, and whose age ratings it reads. Each saves as it is
  * changed, and typing saves once it stops.
  *
  * @param overview - What the server reports about itself.
@@ -98,6 +106,16 @@ const ServerCard = ({ overview }: ServerCardProps) => {
     {
       done: say('screens.adminArea.settingsPanel.roundnessSaved'),
       failed: say('screens.adminArea.settingsPanel.roundnessCouldNotBeSaved'),
+      onSaved: reread,
+    },
+  );
+
+  const [language, changeLanguage] = useSavedSetting(
+    settings?.language ?? null,
+    saveServerLanguage,
+    {
+      done: say('screens.adminArea.serverCard.languageSaved'),
+      failed: say('screens.adminArea.serverCard.languageCouldNotBeSaved'),
       onSaved: reread,
     },
   );
@@ -235,6 +253,20 @@ const ServerCard = ({ overview }: ServerCardProps) => {
               if (chosen.success) {
                 changeRoundness(chosen.data);
               }
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title={say('common.language')}
+          description={say('screens.adminArea.serverCard.languageDetail')}
+        >
+          <SettingMenu
+            label={say('common.language')}
+            value={language ?? SAME_AS_THE_DEVICE}
+            options={languageChoices(say('screens.adminArea.serverCard.eachDevicesOwn'))}
+            onSelect={(id) => {
+              changeLanguage(isLanguage(id) ? id : null);
             }}
           />
         </SettingRow>

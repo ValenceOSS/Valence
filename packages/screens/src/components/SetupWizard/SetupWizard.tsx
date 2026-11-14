@@ -17,6 +17,10 @@ import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import { say } from '@ValenceI18n/say';
+import { isLanguage } from '@ValenceI18n/isLanguage';
+import { chooseLanguageHere } from '@ValenceClient/language/chooseLanguageHere';
+import { chosenLanguageHere } from '@ValenceClient/language/chosenLanguageHere';
+import { SAME_AS_THE_DEVICE } from '@ValenceClient/language/SAME_AS_THE_DEVICE';
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
 import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { AccessStep } from './components/AccessStep/AccessStep';
@@ -125,8 +129,8 @@ const slideVariants = (prefersReducedMotion: boolean | null): Variants =>
       };
 
 /**
- * Walks whoever opened Valence first through making it theirs, one step at a time: what setup does,
- * their account, how the server is reached, their profile and household, a catalogue key, their
+ * Walks whoever opened Valence first through making it theirs, one step at a time: what setup does
+ * and the language the server speaks, their account, how the server is reached, their profile and household, a catalogue key, their
  * libraries, and importing
  * from another server if they are moving, followed by what came of it. Steps that
  * follow making the account are shown again to the administrator after a reload, until they finish.
@@ -184,6 +188,7 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
       trustedOrigins: origins,
       cookieSecure,
       sharesUsageStatistics: sharesUsageStatistics && !status.isTelemetryOffByEnvironment,
+      language: chosenLanguageHere(),
     });
 
     if (made.kind === 'refused') {
@@ -202,6 +207,7 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
       await signInWithUsernameOrEmail(draft.username.trim(), draft.password);
     }
 
+    chooseLanguageHere(null);
     setIsCreating(false);
     setIsMade(true);
     setRestartRequired(made.value.restartRequired);
@@ -224,6 +230,11 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
       case 'welcome':
         return (
           <WelcomeStep
+            language={chosenLanguageHere() ?? SAME_AS_THE_DEVICE}
+            onLanguageChange={(picked) => {
+              chooseLanguageHere(isLanguage(picked) ? picked : null);
+              window.location.reload();
+            }}
             setupCode={setupCode}
             onSetupCodeChange={(typed) => {
               setSetupCode(typed);

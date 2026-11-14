@@ -1,6 +1,7 @@
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { PictureFault } from './whatIsWrongWithThePicture';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
+import type { Language } from '@ValenceI18n/LANGUAGES';
 
 type ProfileRequest = {
   name: string;
@@ -10,6 +11,7 @@ type ProfileRequest = {
   showsWhatIamWatching?: boolean;
   discordPresence?: DiscordPresence;
   prefersBestCopy?: boolean;
+  language?: Language | null;
 };
 
 type ProfileStanding = {

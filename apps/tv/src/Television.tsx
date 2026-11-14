@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { buildQueryClient } from '@ValenceClient/query/queryClient';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
-import { fetchTheWords } from '@ValenceClient/language/fetchTheWords';
+import { catchUpOnLanguage } from '@ValenceClient/language/catchUpOnLanguage';
 import { useNewWords } from '@ValenceClient/language/useNewWords';
-import { languageToSpeak } from '@ValenceClient/language/languageToSpeak';
-import { thisDevicesLanguages } from '@ValenceClient/language/thisDevicesLanguages';
 import { TheWayIn } from '@ValenceTv/screens/TheWayIn/TheWayIn';
 import { ControllerHint } from '@ValenceTv/components/ControllerHint/ControllerHint';
 import { PromptHost } from '@ValenceTv/components/PromptHost/PromptHost';
@@ -29,7 +27,7 @@ const Television = () => {
       return;
     }
 
-    void fetchTheWords(languageToSpeak(thisDevicesLanguages()));
+    void catchUpOnLanguage();
   }, []);
 
   return (

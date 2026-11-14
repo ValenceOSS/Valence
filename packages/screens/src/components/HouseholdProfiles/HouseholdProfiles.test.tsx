@@ -61,6 +61,7 @@ const aProfile = (
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  language: null,
   isOwner: false,
   hasPin: false,
   mayRequest: true,

@@ -21,6 +21,7 @@ const draftOfProfile = (profile: ViewerProfile): ProfileDraft => {
     showsWhatIamWatching: profile.showsWhatIamWatching,
     discordPresence: profile.discordPresence,
     prefersBestCopy: profile.prefersBestCopy,
+    language: profile.language,
     ...device,
     deviceWas: device,
     photo: null,

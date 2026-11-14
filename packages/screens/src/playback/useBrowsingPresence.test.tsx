@@ -46,6 +46,7 @@ const aProfile = (
   showsWhatIamWatching,
   discordPresence,
   prefersBestCopy: false,
+  language: null,
   isOwner: true,
   hasPin: false,
   mayRequest: true,

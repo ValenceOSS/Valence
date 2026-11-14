@@ -9,6 +9,7 @@ const REQUEST = {
   trustedOrigins: ['http://localhost:8420'],
   cookieSecure: false,
   sharesUsageStatistics: true,
+  language: null,
 };
 
 beforeEach(() => {
