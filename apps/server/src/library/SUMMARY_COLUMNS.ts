@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { mediaArtworkChoice, mediaItem } from '#dialect/Schema';
+import { qualified } from '@ValenceDatabase/qualified';
 
 const SUMMARY_COLUMNS = {
   id: mediaItem.id,
@@ -30,7 +31,7 @@ const SUMMARY_COLUMNS = {
   genres: mediaItem.genres,
   titleBackdropUrl: sql<
     string | null
-  >`(select ${mediaArtworkChoice.url} from ${mediaArtworkChoice} where ${mediaArtworkChoice.libraryId} = ${mediaItem.libraryId} and ${mediaArtworkChoice.externalKind} = 'tv' and ${mediaArtworkChoice.externalId} = ${mediaItem.externalId} and ${mediaArtworkChoice.kind} = 'backdrop' and ${mediaItem.seriesTitle} is not null)`,
+  >`(select ${qualified(mediaArtworkChoice.url)} from ${mediaArtworkChoice} where ${qualified(mediaArtworkChoice.libraryId)} = ${qualified(mediaItem.libraryId)} and ${qualified(mediaArtworkChoice.externalKind)} = 'tv' and ${qualified(mediaArtworkChoice.externalId)} = ${qualified(mediaItem.externalId)} and ${qualified(mediaArtworkChoice.kind)} = 'backdrop' and ${qualified(mediaItem.seriesTitle)} is not null limit 1)`,
 };
 
 export { SUMMARY_COLUMNS };
