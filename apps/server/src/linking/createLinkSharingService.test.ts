@@ -208,6 +208,20 @@ describe('createLinkSharingService', () => {
     });
   });
 
+  it('stops a session’s direct ticket once the title it plays is no longer shared', async () => {
+    const { animeSharing, filmsAtAnime, claims } = await twoSharingServers();
+    const ticketed = { serverId: filmsAtAnime, isWhole: false, subjectId: 'one' };
+
+    await animeSharing.changeSharing(filmsAtAnime, { libraryIds: [FILMS] });
+    claims.claim('session', 'one', filmsAtAnime, { mediaId: ARRIVAL, title: 'Arrival' });
+
+    expect(await animeSharing.stillReaches(ticketed)).toBe(true);
+
+    await animeSharing.changeSharing(filmsAtAnime, { libraryIds: [] });
+
+    expect(await animeSharing.stillReaches(ticketed)).toBe(false);
+  });
+
   it('refuses the other server its record where its admin does not show it', async () => {
     const { animeSharing, filmsAtAnime, filmsAsks } = await twoSharingServers();
 

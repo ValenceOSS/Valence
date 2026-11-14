@@ -1,3 +1,4 @@
+import { createBriefVerdicts } from '@ValenceServer/linking/content/createBriefVerdicts';
 import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { createRateLimiter } from './createRateLimiter';
 import { federationReachOf } from './federationReachOf';
@@ -23,6 +24,8 @@ const MOST_FROM_A_SERVER = 1200;
 const MOST_FROM_A_PERSON = 300;
 
 const MOST_PEOPLE_FROM_A_SERVER = 5000;
+
+const SHARING_VERDICT_LASTS_MS = 5000;
 
 const MOST_ACTIVITY = 200;
 
@@ -106,6 +109,8 @@ const createLinkSharingService = ({
     status: 401 | 403 | 429,
     code: Extract<Admission, { kind: 'refused' }>['code'],
   ): Admission => ({ kind: 'refused', status, code });
+
+  const sharingVerdicts = createBriefVerdicts(SHARING_VERDICT_LASTS_MS);
 
   const linkedServer = async (id: string) => {
     const server = await links.readServer(id);
@@ -256,16 +261,26 @@ const createLinkSharingService = ({
         return false;
       }
 
-      if (!isWhole) {
-        return claims.claimedBy('session', subjectId, serverId) !== null;
+      const claimed = isWhole ? null : claims.claimedBy('session', subjectId, serverId);
+
+      if (!isWhole && claimed === null) {
+        return false;
       }
 
-      const [shared, subject] = await Promise.all([
-        sharing.readSharing(serverId),
-        subjectOf({ kind: 'item', id: subjectId }),
-      ]);
+      if (claimed !== null && claimed.mediaId === null) {
+        return true;
+      }
 
-      return shared !== null && subject !== null && peerMayReach(shared, subject) === 'allowed';
+      const mediaId = claimed?.mediaId ?? subjectId;
+
+      return sharingVerdicts.judge(`${serverId}:${mediaId}`, async () => {
+        const [shared, subject] = await Promise.all([
+          sharing.readSharing(serverId),
+          subjectOf({ kind: 'item', id: mediaId }),
+        ]);
+
+        return shared !== null && subject !== null && peerMayReach(shared, subject) === 'allowed';
+      });
     },
 
     sharedWith: async (serverId) => {
@@ -301,6 +316,8 @@ const createLinkSharingService = ({
       }
 
       const changed = await sharing.changeSharing(id, change);
+
+      sharingVerdicts.forget();
 
       return changed === null ? { kind: 'noSuchServer' } : { kind: 'changed', sharing: changed };
     },
