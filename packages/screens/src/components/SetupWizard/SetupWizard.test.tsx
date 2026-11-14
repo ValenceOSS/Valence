@@ -375,6 +375,26 @@ describe('SetupWizard', () => {
     expect(screen.getByLabelText('Setup code')).toHaveValue(SETUP_CODE);
   });
 
+  it('clears the wrong-code message as soon as the code is retyped', async () => {
+    completeSetup.mockResolvedValue({
+      kind: 'refused',
+      refusal: {
+        message: 'That setup code doesn’t match the one in the server’s log.',
+        code: 'error.setup.thatSetupCodeIsNotRight',
+      },
+    });
+
+    renderWizard();
+
+    await createAccount();
+    await screen.findByText('That setup code doesn’t match the one in the server’s log.');
+    await userEvent.type(screen.getByLabelText('Setup code'), 'X');
+
+    expect(
+      screen.queryByText('That setup code doesn’t match the one in the server’s log.'),
+    ).not.toBeInTheDocument();
+  });
+
   it('stays on the access step and says why the server refused', async () => {
     completeSetup.mockResolvedValue({
       kind: 'refused',

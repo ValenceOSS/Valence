@@ -225,7 +225,10 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
         return (
           <WelcomeStep
             setupCode={setupCode}
-            onSetupCodeChange={setSetupCode}
+            onSetupCodeChange={(typed) => {
+              setSetupCode(typed);
+              setProblem(null);
+            }}
             problem={problem}
             onBegin={() => {
               go('account');
