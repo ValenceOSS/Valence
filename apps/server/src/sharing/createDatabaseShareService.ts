@@ -472,13 +472,17 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
         return true;
       });
 
-      admitting.set(
-        shareId,
-        admitted.then(
-          () => undefined,
-          () => undefined,
-        ),
+      const settled = admitted.then(
+        () => undefined,
+        () => undefined,
       );
+
+      admitting.set(shareId, settled);
+      void settled.then(() => {
+        if (admitting.get(shareId) === settled) {
+          admitting.delete(shareId);
+        }
+      });
 
       return admitted;
     },
