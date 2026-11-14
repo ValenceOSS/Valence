@@ -44,7 +44,7 @@ pub enum ProbeError {
 }
 
 /// The demuxers that read a list of other things to open rather than a container of media.
-const PLAYLIST_FORMATS: [&str; 8] = [
+const PLAYLIST_FORMATS: [&str; 9] = [
     "hls",
     "applehttp",
     "sdp",
@@ -53,6 +53,7 @@ const PLAYLIST_FORMATS: [&str; 8] = [
     "mpd",
     "rtsp",
     "rtp",
+    "imf",
 ];
 
 #[derive(Debug, Deserialize)]
@@ -648,6 +649,11 @@ mod tests {
         assert!(parse_ffprobe_output(
             &json.replace("hls,applehttp", "concat"),
             Path::new("/media/film.mp4")
+        )
+        .is_err());
+        assert!(parse_ffprobe_output(
+            &json.replace("hls,applehttp", "imf"),
+            Path::new("/media/film.mxf")
         )
         .is_err());
     }

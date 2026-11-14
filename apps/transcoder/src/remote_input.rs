@@ -41,7 +41,7 @@ pub const FOLDER_NAME: &str = "remote";
 pub const EXTENSION: &str = "ffconcat";
 
 /// The containers a library holds, which are all that is read as a file; a playlist is not one.
-pub const CONTAINERS: &str = "matroska,webm,mov,mp4,m4a,3gp,3g2,mj2,mpegts,mpeg,avi,asf,flv,ogg,mp3,flac,wav,aac,ac3,eac3,dts,rm,mxf,dv,nut,mpegvideo,h264,hevc,truehd,aiff,wv,ape";
+pub const CONTAINERS: &str = "matroska,webm,mov,mp4,m4a,3gp,3g2,mj2,mpegts,mpeg,avi,asf,flv,ogg,mp3,flac,wav,aac,ac3,eac3,dts,rm,mxf,dv,nut,mpegvideo,h264,hevc,truehd,aiff,wv,ape,wtv";
 
 /// What ffmpeg and ffprobe are told before the relay's address: that they may open it, and that
 /// a connection to it that drops is to be opened again, and that what it carries must be a
@@ -809,6 +809,7 @@ mod tests {
             "aiff",
             "wv",
             "ape",
+            "wtv",
         ] {
             assert!(formats.contains(&format), "{format}");
         }
