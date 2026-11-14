@@ -144,6 +144,12 @@ const handlePartyMessage = (
         mediaId: message.mediaId,
         host: who,
         ...(message.partyKind === undefined ? {} : { kind: message.partyKind }),
+        onClosed: (closed) => {
+          binding.tell(
+            closed.members.map((member) => member.connectionId),
+            asPartyJson({ ...closed, members: [] }),
+          );
+        },
       }),
     );
 
@@ -151,10 +157,6 @@ const handlePartyMessage = (
   }
 
   if (message.kind === 'partyJoin') {
-    if (registry.partyOf(who.connectionId)?.id !== message.partyId) {
-      tellEveryone(binding, registry.leave(who.connectionId));
-    }
-
     const joined = registry.join({
       partyId: message.partyId,
       ...who,
@@ -186,6 +188,7 @@ const handlePartyMessage = (
       return;
     }
 
+    tellEveryone(binding, joined.left ?? null);
     tellEveryone(binding, joined.party);
 
     const heard = registry.chatOf(joined.party.id);
