@@ -16,7 +16,9 @@ type Artwork = 'poster' | 'backdrop' | 'logo';
  * and keeps; a server too old to know the option sends the whole picture instead, which still
  * draws. Where the server has said where it serves that picture by name, the narrowed copy is asked
  * for there, which never changes and which anybody may fetch, so a browser keeps it for good and a
- * proxy or CDN in front of the server answers it without the server hearing of it.
+ * proxy or CDN in front of the server answers it without the server hearing of it. A Jellyfin
+ * server's picture is named by an address that already carries a query, and takes its width as one
+ * more.
  *
  * @param mediaId - The title, or the episode or cover standing for it.
  * @param kind - Which picture.
@@ -36,6 +38,12 @@ const artworkUrl = (
     options.isBare === true
       ? undefined
       : artworkAddresses.of(mediaId, kind, revision, options.isOfTitle);
+
+  if (named?.includes('?') === true) {
+    return options.size === undefined
+      ? named
+      : `${named}&maxWidth=${ARTWORK_WIDTHS[options.size].toString()}`;
+  }
 
   if (named !== undefined && options.size !== undefined) {
     return `${named}-w${ARTWORK_WIDTHS[options.size].toString()}.webp`;

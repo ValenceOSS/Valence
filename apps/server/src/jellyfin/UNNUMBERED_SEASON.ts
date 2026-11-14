@@ -1,0 +1,3 @@
+const UNNUMBERED_SEASON = 0xffff;
+
+export { UNNUMBERED_SEASON };

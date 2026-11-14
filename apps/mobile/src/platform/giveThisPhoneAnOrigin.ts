@@ -1,5 +1,6 @@
 import { theServerThisPhoneWatches } from '@ValenceMobile/platform/theServerThisPhoneWatches';
 import { tellThisServerWhoAsks } from '@ValenceMobile/platform/tellThisServerWhoAsks';
+import { answeredByJellyfin } from '@ValenceClient/jellyfin/answeredByJellyfin';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
 
 /**
@@ -40,6 +41,12 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
 
     if (input instanceof Request) {
       if (input.url.startsWith(address)) {
+        const jellyfin = answeredByJellyfin(address, input, asked);
+
+        if (jellyfin !== null) {
+          return jellyfin;
+        }
+
         tellThisServerWhoAsks(input.headers, address);
       }
 
@@ -54,6 +61,11 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
     }
 
     const headers = new Headers(init?.headers);
+    const jellyfin = answeredByJellyfin(address, new Request(whole, { ...init, headers }), asked);
+
+    if (jellyfin !== null) {
+      return jellyfin;
+    }
 
     tellThisServerWhoAsks(headers, address);
 

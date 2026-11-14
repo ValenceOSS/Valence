@@ -2,6 +2,7 @@ import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
 import { readDeviceHints } from '@ValenceContracts/functions/readDeviceHints';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { jellyfinLinks } from '@ValenceClient/jellyfin/jellyfinLinks';
 import { giveThisPhoneAnOrigin } from './giveThisPhoneAnOrigin';
 import { THE_SERVER_ADDRESS } from './THE_SERVER_ADDRESS';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
@@ -165,5 +166,27 @@ describe('giveThisPhoneAnOrigin', () => {
     await globalThis.fetch('/api/health');
 
     expect(asked[0]?.url).toBe('/api/health');
+  });
+
+  it('answers Valence’s endpoints itself for a Jellyfin server, asking Jellyfin rather than Valence', async () => {
+    const store = aStore('http://jellyfin.example');
+
+    installPlatform(aFakePlatform({ store }));
+    jellyfinLinks(store).keep({
+      address: 'http://jellyfin.example',
+      serverId: 'jf',
+      serverName: 'Den',
+      token: null,
+      userId: null,
+      userName: null,
+      isAdministrator: false,
+    });
+    giveThisPhoneAnOrigin(store);
+
+    const about = await globalThis.fetch('/api/about');
+
+    expect(about.status).toBe(200);
+    expect(await about.text()).toContain('"features"');
+    expect(asked).toHaveLength(0);
   });
 });

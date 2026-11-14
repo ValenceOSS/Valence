@@ -8,6 +8,7 @@ import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEAD
 import { DEVICE_HEADER } from '@ValenceContracts/constants/DEVICE_HEADER';
 import { writeDeviceHints } from '@ValenceContracts/functions/writeDeviceHints';
 import { theDeviceHints } from '@ValenceClient/platform/theDeviceHints';
+import { answeredByJellyfin } from '@ValenceClient/jellyfin/answeredByJellyfin';
 
 const OURS = '/api/';
 
@@ -95,6 +96,13 @@ const pointFetchAtTheServer = (): void => {
   globalThis.fetch = (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     if (input instanceof Request) {
       const aimed = new Request(atTheServer(input.url), input);
+      const jellyfin = isOnTheServer(aimed.url)
+        ? answeredByJellyfin(theServersOrigin(), aimed, send)
+        : null;
+
+      if (jellyfin !== null) {
+        return jellyfin;
+      }
 
       return isOnTheServer(aimed.url)
         ? send(new Request(aimed, { headers: withTheSession(aimed.headers) }), init)
@@ -102,6 +110,13 @@ const pointFetchAtTheServer = (): void => {
     }
 
     const address = atTheServer(String(input));
+    const jellyfin = isOnTheServer(address)
+      ? answeredByJellyfin(theServersOrigin(), new Request(address, init), send)
+      : null;
+
+    if (jellyfin !== null) {
+      return jellyfin;
+    }
 
     return isOnTheServer(address)
       ? send(address, { ...init, headers: withTheSession(init?.headers) })
