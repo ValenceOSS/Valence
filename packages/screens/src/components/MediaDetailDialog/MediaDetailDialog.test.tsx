@@ -33,8 +33,11 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
 }));
 
 vi.mock('@ValenceScreens/components/LikeThisShelf/LikeThisShelf', () => ({
-  LikeThisShelf: ({ mediaId }: { mediaId: string | null }) => (
-    <p>{`Like ${mediaId ?? 'nothing'}`}</p>
+  LikeThisShelf: ({ mediaId, kind }: { mediaId: string | null; kind?: string }) => (
+    <>
+      <p>{`Like ${mediaId ?? 'nothing'}`}</p>
+      <p>{`As a ${kind ?? 'film'}`}</p>
+    </>
   ),
 }));
 
@@ -285,7 +288,7 @@ describe('collections', () => {
     expect(await screen.findByText(`Like ${summary.id}`)).toBeInTheDocument();
   });
 
-  it('leaves what is like a title to its programme’s page for an episode', async () => {
+  it('offers what is like an episode’s programme on the episode', async () => {
     renderInAnAddress(
       <MediaDetailDialog
         media={{ ...summary, seriesTitle: 'Story of Us', seasonNumber: 2, episodeNumber: 5 }}
@@ -296,7 +299,22 @@ describe('collections', () => {
       />,
     );
 
-    await screen.findAllByText('Story of Us');
+    expect(await screen.findByText(`Like ${summary.id}`)).toBeInTheDocument();
+    expect(screen.getByText('As a series')).toBeInTheDocument();
+  });
+
+  it('offers nothing like an extra', async () => {
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={{ ...summary, extraKind: 'trailer' }}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+        onOpenShow={vi.fn()}
+      />,
+    );
+
+    await screen.findAllByText(summary.title);
 
     expect(screen.queryByText(`Like ${summary.id}`)).not.toBeInTheDocument();
   });

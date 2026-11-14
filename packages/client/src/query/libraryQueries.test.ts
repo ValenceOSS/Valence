@@ -12,6 +12,7 @@ const fetchFacets = vi.hoisted(() => vi.fn());
 const fetchPerson = vi.hoisted(() => vi.fn());
 const fetchPersonCredits = vi.hoisted(() => vi.fn());
 const fetchLikeThis = vi.hoisted(() => vi.fn());
+const fetchPickedForYou = vi.hoisted(() => vi.fn(() => Promise.resolve([{ id: 'heat' }])));
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraries,
@@ -24,6 +25,7 @@ vi.mock('@ValenceClient/library/fetchShows', () => ({ fetchShows, fetchShow }));
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets }));
 vi.mock('@ValenceClient/library/fetchPerson', () => ({ fetchPerson, fetchPersonCredits }));
 vi.mock('@ValenceClient/library/fetchLikeThis', () => ({ fetchLikeThis }));
+vi.mock('@ValenceClient/library/fetchPickedForYou', () => ({ fetchPickedForYou }));
 
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -100,6 +102,15 @@ describe('libraryQueries', () => {
       { id: 'contact' },
     ]);
     expect(fetchLikeThis).toHaveBeenCalledWith('arrival');
+  });
+
+  it('reads what is picked for the profile, once the server can say', async () => {
+    expect(libraryQueries.pickedForYou(12, false).enabled).toBe(false);
+
+    await expect(aCache().fetchQuery(libraryQueries.pickedForYou(12, true))).resolves.toEqual([
+      { id: 'heat' },
+    ]);
+    expect(fetchPickedForYou).toHaveBeenCalledWith(12);
   });
 
   it('reads what a library can be narrowed by', async () => {

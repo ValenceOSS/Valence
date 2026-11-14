@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 import { hidden, library, mediaItem, rating, series, watchHistory } from '#dialect/Schema';
 import { aHousehold } from '@ValenceServer/testing/aHousehold';
@@ -72,6 +73,27 @@ describe('createLikenessService', { timeout: STARTING_POSTGRES_MS }, () => {
 
     await expect(service.likeThis(viewer, 'film', 10)).resolves.toEqual([]);
     await expect(service.likeThis(viewer, 'nowhere', 10)).resolves.toBeNull();
+  });
+
+  it('fills a short row with titles sharing at least two genres, after what the catalogue named', async () => {
+    const { db, viewer, service } = await aDramaticHousehold(['1', '2']);
+
+    await db.insert(mediaItem).values([
+      { ...aMediaItemRow('unmatched', 'films'), genres: ['Drama', 'Crime', 'Mystery'] },
+      { ...aMediaItemRow('heist', 'films'), genres: ['Crime', 'Mystery'] },
+      { ...aMediaItemRow('romance', 'films'), genres: ['Crime', 'Romance'] },
+    ]);
+    await db
+      .update(mediaItem)
+      .set({ genres: ['Drama', 'Crime'] })
+      .where(eq(mediaItem.id, '2'));
+
+    await expect(
+      service.likeThis(viewer, 'unmatched', 10).then((found) => found?.map((one) => one.id)),
+    ).resolves.toEqual(['2', 'heist']);
+    await expect(
+      service.likeThis(viewer, '1', 10).then((found) => found?.map((one) => one.id).toSorted()),
+    ).resolves.toEqual(['2', 's1e1']);
   });
 
   it('takes no more than it is asked for', async () => {

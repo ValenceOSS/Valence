@@ -69,4 +69,27 @@ const becauseYouWatchedRoute = createRoute({
   },
 });
 
-export { becauseYouWatchedRoute, likeThisRoute };
+const pickedForYouRoute = createRoute({
+  method: 'get',
+  path: '/api/picked-for-you',
+  tags: ['Library'],
+  summary:
+    'Suggest the films and programmes this profile is likeliest to enjoy, learnt from what it and the household watched',
+  request: {
+    query: z.object({
+      limit: z.coerce.number().int().positive().max(MOST_ASKED).default(LIKE_THIS_SHOWN),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'The titles, best first, a programme by its first episode',
+      content: { 'application/json': { schema: LikeThisSchema.openapi('PickedForYou') } },
+    },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: LikenessError } },
+    },
+  },
+});
+
+export { becauseYouWatchedRoute, likeThisRoute, pickedForYouRoute };

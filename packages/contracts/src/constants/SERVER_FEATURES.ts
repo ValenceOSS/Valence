@@ -11,6 +11,7 @@ const SERVER_FEATURES = [
   'plugins.homeRows',
   'books.bookmarks',
   'library.homeShelves',
+  'library.pickedForYou',
 ] as const;
 
 export { SERVER_FEATURES };
