@@ -795,6 +795,21 @@
     "context": "Shown in the history when clearing all of it failed (from `forgetHistory`)."
   },
   {
+    "handler": "client.jellyfin.aJellyfinServerDoesNotDoThat",
+    "text": "Jellyfin zerbitzari batek ez du hori egiten.",
+    "context": "A refusal the app gives itself when it is connected to a Jellyfin server rather than Valence and something only Valence does is asked for (from `createJellyfinAnswers`). Rarely seen, since the app hides what a Jellyfin server cannot do."
+  },
+  {
+    "handler": "client.jellyfin.jellyfinConvertsTheFile",
+    "text": "Jellyfinek fitxategia bihurtzen du gailu honetarako.",
+    "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
+  },
+  {
+    "handler": "client.jellyfin.jellyfinSendsTheFileAsItIs",
+    "text": "Jellyfinek fitxategia dagoen bezala bidaltzen du.",
+    "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
+  },
+  {
     "handler": "client.library.buildFilterOptions.decadeS",
     "text": "{decade}-eko",
     "context": "The label in the library (from `buildFilterOptions`). {decade} is filled in by the app."
@@ -38476,6 +38491,26 @@
     "handler": "server.imports.sourceCaller.nameRefusedTheKey",
     "text": "{name} API gakoa baztertu du. Egiaztatu gako osoa kopiatu duzula.",
     "context": "Why an import could not read the old server. {name} is Jellyfin, Emby, Plex or plex.tv."
+  },
+  {
+    "handler": "server.jellyfin.noProfileByThatName",
+    "text": "Kontu honek ez du {name} izeneko profilik.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). {name} is the profile somebody typed after a # in the username."
+  },
+  {
+    "handler": "server.jellyfin.thatKeyIsForAnotherProfile",
+    "text": "API gako hori {name} profilarena da. Hasi saioa {name} gisa, edo erabili nahi duzun profilerako sortutako gako bat.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). Somebody signed in with an API key as their password and named a different profile. {name} is the key's profile."
+  },
+  {
+    "handler": "server.jellyfin.thatNameOrPasswordIsWrong",
+    "text": "Helbide elektronikoa, erabiltzaile-izena edo pasahitza okerra da.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`)."
+  },
+  {
+    "handler": "server.jellyfin.thatProfileHasAPin",
+    "text": "{name} PIN batekin blokeatuta dago, eta Jellyfin aplikazioek ezin dute eskatu. Hasi saioa beste profil batekin, edo kendu PINa Valencen.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). {name} is the profile."
   },
   {
     "handler": "server.jobs.jobDefinitions.asksEveryLiveChannelWhetherItIs",

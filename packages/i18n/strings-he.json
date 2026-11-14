@@ -811,17 +811,17 @@
   },
   {
     "handler": "client.jellyfin.aJellyfinServerDoesNotDoThat",
-    "text": "A Jellyfin server doesn’t do that.",
+    "text": "שרת Jellyfin לא עושה את זה.",
     "context": "A refusal the app gives itself when it is connected to a Jellyfin server rather than Valence and something only Valence does is asked for (from `createJellyfinAnswers`). Rarely seen, since the app hides what a Jellyfin server cannot do."
   },
   {
     "handler": "client.jellyfin.jellyfinConvertsTheFile",
-    "text": "Jellyfin converts the file for this device.",
+    "text": "Jellyfin ממיר את הקובץ למכשיר הזה.",
     "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
   },
   {
     "handler": "client.jellyfin.jellyfinSendsTheFileAsItIs",
-    "text": "Jellyfin sends the file as it is.",
+    "text": "Jellyfin שולח את הקובץ כמו שהוא.",
     "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
   },
   {
@@ -39561,22 +39561,22 @@
   },
   {
     "handler": "server.jellyfin.noProfileByThatName",
-    "text": "This account has no profile called {name}.",
+    "text": "אין בחשבון הזה פרופיל בשם {name}.",
     "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). {name} is the profile somebody typed after a # in the username."
   },
   {
     "handler": "server.jellyfin.thatKeyIsForAnotherProfile",
-    "text": "That API key belongs to {name}. Sign in as {name}, or use a key made for the profile you want.",
+    "text": "מפתח ה-API הזה שייך ל-{name}. התחבר בתור {name}, או השתמש במפתח שנוצר לפרופיל שאתה רוצה.",
     "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). Somebody signed in with an API key as their password and named a different profile. {name} is the key's profile."
   },
   {
     "handler": "server.jellyfin.thatNameOrPasswordIsWrong",
-    "text": "That email, username or password is wrong.",
+    "text": "האימייל, שם המשתמש או הסיסמה שגויים.",
     "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`)."
   },
   {
     "handler": "server.jellyfin.thatProfileHasAPin",
-    "text": "{name} is locked with a PIN, which Jellyfin apps can’t ask for. Sign in as another profile, or take the PIN off in Valence.",
+    "text": "{name} נעול בקוד PIN, ואפליקציות Jellyfin לא יכולות לבקש אותו. התחבר בפרופיל אחר, או הסר את קוד ה-PIN ב-Valence.",
     "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). {name} is the profile."
   },
   {

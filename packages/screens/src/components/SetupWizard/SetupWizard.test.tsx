@@ -289,6 +289,7 @@ describe('SetupWizard', () => {
       trustedOrigins: ['http://192.168.1.40:8420', 'http://192.168.1.40:5173'],
       cookieSecure: false,
       sharesUsageStatistics: false,
+      language: null,
     });
   });
 
@@ -312,6 +313,7 @@ describe('SetupWizard', () => {
         trustedOrigins: ['http://192.168.1.40:8420'],
         cookieSecure: true,
         sharesUsageStatistics: false,
+        language: null,
       });
     });
   });

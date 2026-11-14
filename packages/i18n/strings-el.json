@@ -795,6 +795,21 @@
     "context": "Shown in the history when clearing all of it failed (from `forgetHistory`)."
   },
   {
+    "handler": "client.jellyfin.aJellyfinServerDoesNotDoThat",
+    "text": "Ένας διακομιστής Jellyfin δεν το κάνει αυτό.",
+    "context": "A refusal the app gives itself when it is connected to a Jellyfin server rather than Valence and something only Valence does is asked for (from `createJellyfinAnswers`). Rarely seen, since the app hides what a Jellyfin server cannot do."
+  },
+  {
+    "handler": "client.jellyfin.jellyfinConvertsTheFile",
+    "text": "Το Jellyfin μετατρέπει το αρχείο για αυτή τη συσκευή.",
+    "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
+  },
+  {
+    "handler": "client.jellyfin.jellyfinSendsTheFileAsItIs",
+    "text": "Το Jellyfin στέλνει το αρχείο ως έχει.",
+    "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
+  },
+  {
     "handler": "client.library.buildFilterOptions.decadeS",
     "text": "Δεκαετία του {decade}",
     "context": "The label in the library (from `buildFilterOptions`). {decade} is filled in by the app."
@@ -38472,6 +38487,26 @@
     "handler": "server.imports.sourceCaller.nameRefusedTheKey",
     "text": "Το {name} απέρριψε το κλειδί API. Έλεγξε ότι αντέγραψες όλο το κλειδί.",
     "context": "Why an import could not read the old server. {name} is Jellyfin, Emby, Plex or plex.tv."
+  },
+  {
+    "handler": "server.jellyfin.noProfileByThatName",
+    "text": "Αυτός ο λογαριασμός δεν έχει προφίλ με όνομα {name}.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). {name} is the profile somebody typed after a # in the username."
+  },
+  {
+    "handler": "server.jellyfin.thatKeyIsForAnotherProfile",
+    "text": "Αυτό το κλειδί API ανήκει στο προφίλ {name}. Συνδέσου ως {name} ή χρησιμοποίησε κλειδί που φτιάχτηκε για το προφίλ που θέλεις.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). Somebody signed in with an API key as their password and named a different profile. {name} is the key's profile."
+  },
+  {
+    "handler": "server.jellyfin.thatNameOrPasswordIsWrong",
+    "text": "Το email, το όνομα χρήστη ή ο κωδικός πρόσβασης είναι λάθος.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`)."
+  },
+  {
+    "handler": "server.jellyfin.thatProfileHasAPin",
+    "text": "Το {name} είναι κλειδωμένο με PIN, το οποίο οι εφαρμογές Jellyfin δεν μπορούν να ζητήσουν. Συνδέσου με άλλο προφίλ ή αφαίρεσε το PIN στο Valence.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). {name} is the profile."
   },
   {
     "handler": "server.jobs.jobDefinitions.asksEveryLiveChannelWhetherItIs",

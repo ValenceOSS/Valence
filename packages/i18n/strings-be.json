@@ -825,6 +825,21 @@
     "context": "Shown in the history when clearing all of it failed (from `forgetHistory`)."
   },
   {
+    "handler": "client.jellyfin.aJellyfinServerDoesNotDoThat",
+    "text": "Сервер Jellyfin гэтага не робіць.",
+    "context": "A refusal the app gives itself when it is connected to a Jellyfin server rather than Valence and something only Valence does is asked for (from `createJellyfinAnswers`). Rarely seen, since the app hides what a Jellyfin server cannot do."
+  },
+  {
+    "handler": "client.jellyfin.jellyfinConvertsTheFile",
+    "text": "Jellyfin пераўтварае файл для гэтай прылады.",
+    "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
+  },
+  {
+    "handler": "client.jellyfin.jellyfinSendsTheFileAsItIs",
+    "text": "Jellyfin адпраўляе файл як ёсць.",
+    "context": "Why a film or episode plays as it does, in the playback details, when the app is connected to a Jellyfin server rather than Valence (from `startedSessionOfJellyfin`)."
+  },
+  {
     "handler": "client.library.buildFilterOptions.decadeS",
     "text": "{decade}-я",
     "context": "The label in the library (from `buildFilterOptions`). {decade} is filled in by the app."
@@ -40658,6 +40673,26 @@
     "handler": "server.imports.sourceCaller.nameRefusedTheKey",
     "text": "{name} адхіліў ключ API. Праверы, ці скапіяваў ты яго цалкам.",
     "context": "Why an import could not read the old server. {name} is Jellyfin, Emby, Plex or plex.tv."
+  },
+  {
+    "handler": "server.jellyfin.noProfileByThatName",
+    "text": "У гэтым акаўнце няма профілю з імем {name}.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). {name} is the profile somebody typed after a # in the username."
+  },
+  {
+    "handler": "server.jellyfin.thatKeyIsForAnotherProfile",
+    "text": "Гэты ключ API належыць {name}. Увайдзі як {name} або скарыстайся ключом, створаным для патрэбнага профілю.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). Somebody signed in with an API key as their password and named a different profile. {name} is the key's profile."
+  },
+  {
+    "handler": "server.jellyfin.thatNameOrPasswordIsWrong",
+    "text": "Няправільны адрас электроннай пошты, імя карыстальніка або пароль.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`)."
+  },
+  {
+    "handler": "server.jellyfin.thatProfileHasAPin",
+    "text": "{name} заблакаваны PIN-кодам, а праграмы Jellyfin не могуць яго запытаць. Увайдзі ў іншы профіль або прыберы PIN у Valence.",
+    "context": "A refusal Valence answers a Jellyfin app's sign-in with, shown by that app (from `jellyfinBackendOf`). {name} is the profile."
   },
   {
     "handler": "server.jobs.jobDefinitions.asksEveryLiveChannelWhetherItIs",
