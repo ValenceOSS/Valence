@@ -1,4 +1,4 @@
-import { readdir, stat } from 'node:fs/promises';
+import { lstat, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
 import { libraryOf } from '@ValenceServer/files/libraryOf';
@@ -17,7 +17,7 @@ type FolderMeasureAnswer =
 /**
  * Adds up everything inside a folder of a library, folders within folders: how much it takes on
  * the disk and how many files and folders it holds. Hidden files are passed over as the file
- * manager passes over them. A folder holding more than can be counted in a moment is counted as far
+ * manager passes over them, and so are links, which are not followed. A folder holding more than can be counted in a moment is counted as far
  * as that, and said to be counted only in part, rather than holding the page up.
  *
  * @param libraries - Every library, one of which the folder must be inside.
@@ -55,12 +55,12 @@ const measureLibraryFolder = async (
       }
 
       const full = join(folder, name);
-      const found = await stat(full).catch(() => null);
+      const found = await lstat(full).catch(() => null);
 
       if (found?.isDirectory() === true) {
         measure.folders += 1;
         waiting.push(full);
-      } else if (found !== null) {
+      } else if (found !== null && !found.isSymbolicLink()) {
         measure.files += 1;
         measure.sizeBytes += found.size;
       }
