@@ -2314,12 +2314,15 @@ const createDatabaseLibraryService = ({
     },
 
     isSeriesOutOfReach: async (asThem, seriesId) => {
-      const rows = await db
-        .select({ reachable: truth(sql`coalesce(${reachableByViewer(db, asThem)}, true)`) })
+      const reachable = sql`coalesce(${reachableByViewer(db, asThem)}, true)`;
+      const first = await db
+        .select({ reachable: truth(reachable) })
         .from(mediaItem)
-        .where(eq(mediaItem.seriesId, seriesId));
+        .where(eq(mediaItem.seriesId, seriesId))
+        .orderBy(desc(reachable))
+        .limit(1);
 
-      return rows.length > 0 && rows.every((row) => row.reachable === false);
+      return first[0]?.reachable === false;
     },
 
     refusedLibraries: async (accountId) => {

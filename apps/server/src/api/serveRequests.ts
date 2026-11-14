@@ -199,7 +199,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(headers);
 
     return viewer === null
-      ? discovery.lookup
+      ? withinReachOf(discovery.lookup, {
+          isItemOutOfReach: () => Promise.resolve(true),
+          isSeriesOutOfReach: () => Promise.resolve(true),
+        })
       : withinReachOf(discovery.lookup, {
           isItemOutOfReach: (mediaId) => library.isOutOfReach(viewer, mediaId),
           isSeriesOutOfReach: (seriesId) => library.isSeriesOutOfReach(viewer, seriesId),
@@ -534,16 +537,14 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       );
     }
 
+    const lookup = await lookupFor(context.req.raw.headers);
+
     return context.json(
       {
         shelves: await Promise.all(
           shelves.map(async (shelf) => ({
             ...shelf,
-            titles: await standTitles(
-              shelf.titles,
-              await lookupFor(context.req.raw.headers),
-              requested,
-            ),
+            titles: await standTitles(shelf.titles, lookup, requested),
           })),
         ),
         studios: kinds.has('film') ? discovered.studios : [],
@@ -642,9 +643,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           : [];
       });
     const requests = await everyRequest();
+    const lookup = await lookupFor(context.req.raw.headers);
     const [titles, stoodCredits] = await Promise.all([
-      standTitles(asTitles(work.titles), await lookupFor(context.req.raw.headers), requests),
-      standTitles(asTitles(work.timeline), await lookupFor(context.req.raw.headers), requests),
+      standTitles(asTitles(work.titles), lookup, requests),
+      standTitles(asTitles(work.timeline), lookup, requests),
     ]);
     const creditOf = new Map(work.timeline.map((credit) => [credit.externalId, credit]));
 
@@ -737,13 +739,10 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const requests = await everyRequest();
+    const lookup = await lookupFor(context.req.raw.headers);
     const [byAuthor, alike] = await Promise.all([
-      standTitles(
-        about.byAuthor.map(bookAsTitle),
-        await lookupFor(context.req.raw.headers),
-        requests,
-      ),
-      standTitles(about.alike.map(bookAsTitle), await lookupFor(context.req.raw.headers), requests),
+      standTitles(about.byAuthor.map(bookAsTitle), lookup, requests),
+      standTitles(about.alike.map(bookAsTitle), lookup, requests),
     ]);
 
     return context.json({ ...about, byAuthor, alike }, 200);
