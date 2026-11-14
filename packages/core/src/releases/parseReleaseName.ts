@@ -1,3 +1,4 @@
+import { MOST_RELEASE_NAME_CHARACTERS } from '@ValenceCore/releases/MOST_RELEASE_NAME_CHARACTERS';
 import { readAudio } from '@ValenceCore/releases/readAudio';
 import { readCodec } from '@ValenceCore/releases/readCodec';
 import { readEdition } from '@ValenceCore/releases/readEdition';
@@ -13,8 +14,6 @@ import { readSpokenAudio } from '@ValenceCore/releases/readSpokenAudio';
 import { readTitle } from '@ValenceCore/releases/readTitle';
 import { spacedName } from '@ValenceCore/releases/spacedName';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
-
-const MOST_CHARACTERS = 500;
 
 /**
  * What a name says after its title, where its title can be found in it, and otherwise all of it.
@@ -45,7 +44,7 @@ const afterTheTitle = (spaced: string, title: string): string => {
  * @returns What it is.
  */
 const parseReleaseName = (given: string): ParsedRelease => {
-  const name = given.slice(0, MOST_CHARACTERS);
+  const name = given.slice(0, MOST_RELEASE_NAME_CHARACTERS);
   const spaced = spacedName(name);
   const named = readTitle(spaced);
 

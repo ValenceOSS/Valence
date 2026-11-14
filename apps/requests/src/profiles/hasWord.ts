@@ -1,6 +1,5 @@
+import { MOST_RELEASE_NAME_CHARACTERS } from '@ValenceCore/releases/MOST_RELEASE_NAME_CHARACTERS';
 import { repeatsARepeat } from './repeatsARepeat';
-
-const MOST_CHARACTERS = 500;
 
 /**
  * Whether a release name has a word a profile names: as a whole word, whatever its case, or — for
@@ -13,7 +12,7 @@ const MOST_CHARACTERS = 500;
  * @returns Whether it has it.
  */
 const hasWord = (release: string, word: string): boolean => {
-  const name = release.slice(0, MOST_CHARACTERS);
+  const name = release.slice(0, MOST_RELEASE_NAME_CHARACTERS);
   const pattern = /^\/(.+)\/$/.exec(word)?.[1];
 
   if (pattern !== undefined) {

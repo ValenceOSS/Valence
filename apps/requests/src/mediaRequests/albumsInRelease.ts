@@ -1,10 +1,9 @@
+import { MOST_RELEASE_NAME_CHARACTERS } from '@ValenceCore/releases/MOST_RELEASE_NAME_CHARACTERS';
 import { isSameTitle } from '@ValenceRequests/mediaRequests/isSameTitle';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
 type Matchable = Pick<RequestItemRecord, 'id' | 'title'>;
-
-const MOST_CHARACTERS = 500;
 
 const DASHES = /\s*-\s*/g;
 
@@ -67,7 +66,7 @@ const albumsInRelease = <Item extends Matchable>(
   given: string,
   isArtistChecked = true,
 ): Item[] => {
-  const title = given.slice(0, MOST_CHARACTERS);
+  const title = given.slice(0, MOST_RELEASE_NAME_CHARACTERS);
   const artists = [request.artistName ?? request.title, ...request.aliases];
   const albums = splitsOf(title)
     .filter(
