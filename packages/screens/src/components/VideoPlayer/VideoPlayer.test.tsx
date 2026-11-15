@@ -596,6 +596,185 @@ describe('VideoPlayer', () => {
     expect(startMock.mock.calls.at(-1)?.[7]).toBe('picture');
   });
 
+  describe('a stream with nothing left to convert', () => {
+    const fullyConverted = {
+      kind: 'started',
+      session: {
+        ...startedSession,
+        plan: {
+          ...transcodingPlan,
+          audio: {
+            kind: 'transcode',
+            streamIndex: 2,
+            codec: 'aac',
+            channels: 2,
+            maxBitrateKbps: 384,
+            reason,
+          },
+        },
+      },
+    } as const;
+
+    const playedTo = async (seconds: number) => {
+      const element = await screen.findByLabelText('Arrival');
+
+      Object.defineProperty(element, 'readyState', { configurable: true, value: 4 });
+      Object.defineProperty(element, 'currentTime', {
+        configurable: true,
+        writable: true,
+        value: seconds - 2,
+      });
+      fireEvent.timeUpdate(element);
+      Object.defineProperty(element, 'currentTime', {
+        configurable: true,
+        writable: true,
+        value: seconds,
+      });
+      fireEvent.timeUpdate(element);
+
+      return element;
+    };
+
+    it('goes back to where it was where the engine starts it again at the start', async () => {
+      startMock.mockResolvedValue(fullyConverted);
+      const attached: { onRecovered?: ((refusedAtSeconds: number) => void) | undefined } = {};
+
+      attachMock.mockImplementation((options: typeof attached) => {
+        attached.onRecovered = options.onRecovered;
+
+        return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+      });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(attached.onRecovered).toBeDefined();
+      });
+
+      const element = await playedTo(1700);
+
+      Object.defineProperty(element, 'currentTime', {
+        configurable: true,
+        writable: true,
+        value: 0,
+      });
+      act(() => {
+        attached.onRecovered?.(1700);
+      });
+
+      expect(element).toHaveProperty('currentTime', 1700);
+      expect(startMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops where it fails a third time within seconds of starting again', async () => {
+      startMock.mockResolvedValue(fullyConverted);
+      const attached: { onRecovered?: ((refusedAtSeconds: number) => void) | undefined } = {};
+
+      attachMock.mockImplementation((options: typeof attached) => {
+        attached.onRecovered = options.onRecovered;
+
+        return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+      });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(attached.onRecovered).toBeDefined();
+      });
+      await playedTo(1700);
+      act(() => {
+        attached.onRecovered?.(1700);
+        attached.onRecovered?.(1700);
+      });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+      act(() => {
+        attached.onRecovered?.(1700);
+      });
+
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      expect(startMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts it again where it was where the browser stops taking what it is sent', async () => {
+      startMock.mockResolvedValue(fullyConverted);
+      const attached: {
+        onFault?:
+          | ((
+              fault: { severity: number; category: number; code: number; httpStatus: null },
+              atSeconds: number,
+            ) => void)
+          | undefined;
+      } = {};
+
+      attachMock.mockImplementation((options: typeof attached) => {
+        attached.onFault = options.onFault;
+
+        return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+      });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(attached.onFault).toBeDefined();
+      });
+      await playedTo(1702);
+      act(() => {
+        attached.onFault?.({ severity: 2, category: 3, code: 3014, httpStatus: null }, 1702);
+      });
+
+      await waitFor(() => {
+        expect(startMock).toHaveBeenCalledTimes(2);
+      });
+      expect(startMock.mock.calls.at(-1)?.[3]).toBe(1702);
+      expect(startMock.mock.calls.at(-1)?.[7]).toBeUndefined();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('counts the failures of a stream it started again, and says it is damaged once it gives up', async () => {
+      startMock.mockResolvedValue(fullyConverted);
+      const attached: {
+        onFault?:
+          | ((
+              fault: { severity: number; category: number; code: number; httpStatus: null },
+              atSeconds: number,
+            ) => void)
+          | undefined;
+      } = {};
+
+      attachMock.mockImplementation((options: typeof attached) => {
+        attached.onFault = options.onFault;
+
+        return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+      });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(attached.onFault).toBeDefined();
+      });
+      await playedTo(1702);
+
+      const refuse = async (times: number) => {
+        const before = attachMock.mock.calls.length;
+
+        act(() => {
+          attached.onFault?.({ severity: 2, category: 3, code: 3014, httpStatus: null }, 1702);
+        });
+
+        if (times > 0) {
+          await waitFor(() => {
+            expect(attachMock.mock.calls.length).toBeGreaterThan(before);
+          });
+        }
+      };
+
+      await refuse(1);
+      await refuse(1);
+      await refuse(0);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('This file is damaged');
+      expect(startMock).toHaveBeenCalledTimes(3);
+    });
+  });
+
   it('asks again with the sound converted too where the converted picture still would not decode', async () => {
     const attached: {
       onFault?: ((fault: { severity: number; category: number; code: number }) => void) | undefined;

@@ -348,6 +348,8 @@ describe('attachShaka', () => {
     video.dispatchEvent(new Event('error'));
     recover();
     Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 15.5;
+    video.dispatchEvent(new Event('timeupdate'));
     video.currentTime = 40;
     video.dispatchEvent(new Event('timeupdate'));
     recover();

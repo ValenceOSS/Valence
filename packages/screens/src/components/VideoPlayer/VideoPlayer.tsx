@@ -145,6 +145,10 @@ import { ProblemScreen } from './components/ProblemScreen/ProblemScreen';
 import { describePlaybackProblem } from '@ValenceClient/playback/describePlaybackProblem';
 import { describeProblemDetails } from '@ValenceClient/playback/describeProblemDetails';
 import { problemOfAFault } from '@ValenceClient/playback/problemOfAFault';
+import { recoverOrGiveUp } from '@ValenceClient/playback/recoverOrGiveUp';
+import type { Recoveries } from '@ValenceClient/playback/recoverOrGiveUp';
+import { followPlace } from '@ValenceScreens/playback/followPlace';
+import type { FollowedPlace } from '@ValenceScreens/playback/followPlace';
 import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
 import { useKeepsTheScreenOn } from '@ValenceScreens/playback/useKeepsTheScreenOn';
 import { waitForTheServer } from '@ValenceClient/session/waitForTheServer';
@@ -207,6 +211,10 @@ const STILL_PICTURE_CHECKS = 2;
 const STILL_PICTURE_MOVES_SECONDS = 1.5;
 
 const ELEMENT_COULD_NOT_DECODE = 3;
+
+const MEDIA = 3;
+
+const BACK_WHERE_IT_WAS_WITHIN_SECONDS = 1;
 
 const ELEMENT_COULD_NOT_READ = 4;
 
@@ -372,6 +380,8 @@ const VideoPlayer = ({
     reason: string | null;
   } | null>(null);
   const hasPlayedRef = useRef(false);
+  const placeRef = useRef<FollowedPlace | null>(null);
+  const recoveriesRef = useRef<Recoveries>({});
   const playingRef = useRef(describePlaying(media));
 
   useEffect(() => {
@@ -453,6 +463,7 @@ const VideoPlayer = ({
     autoRung: AutoRung;
     converted?: Converted;
     isCast?: boolean;
+    hasPlayed?: true;
   }>({
     mediaId: media.id,
     startSeconds: Math.floor(startSeconds),
@@ -689,10 +700,12 @@ const VideoPlayer = ({
       return;
     }
 
+    const at = placeRef.current?.read();
+
     setRequest((asked) => ({
       ...asked,
       burnInSubtitleId: toBurnIn,
-      startSeconds: Math.floor(videoRef.current?.currentTime ?? asked.startSeconds),
+      startSeconds: Math.floor(at ?? asked.startSeconds),
     }));
   }, [toBurnIn, request.burnInSubtitleId]);
 
@@ -708,10 +721,13 @@ const VideoPlayer = ({
     const castAt = castAtRef.current;
 
     castAtRef.current = null;
+
+    const at = castAt ?? placeRef.current?.read();
+
     setRequest((asked) => ({
       ...asked,
       isCast: toCast,
-      startSeconds: Math.floor(castAt ?? videoRef.current?.currentTime ?? asked.startSeconds),
+      startSeconds: Math.floor(at ?? asked.startSeconds),
     }));
   }, [toCast, request.isCast]);
 
@@ -769,7 +785,7 @@ const VideoPlayer = ({
       void castStream(context, {
         url: whole,
         title: media.title,
-        startSeconds: element.currentTime,
+        startSeconds: placeRef.current?.read() ?? element.currentTime,
       }).then((accepted) => {
         if (!accepted) {
           notify.failed(say('screens.videoPlayer.thatDeviceWouldNotTakeThis'), {
@@ -876,9 +892,11 @@ const VideoPlayer = ({
       return;
     }
 
+    const at = placeRef.current?.read();
+
     setRequest((asked) => ({
       ...asked,
-      startSeconds: Math.floor(videoRef.current?.currentTime ?? asked.startSeconds),
+      startSeconds: Math.floor(at ?? asked.startSeconds),
     }));
   }, [castState, session, request.isCast]);
 
@@ -995,7 +1013,7 @@ const VideoPlayer = ({
     setCanSwitchCopies(false);
     setState('starting');
     setStoppedBy(null);
-    hasPlayedRef.current = false;
+    hasPlayedRef.current = request.hasPlayed === true;
     setIsPlaying(false);
     setPosition(request.startSeconds);
     setReportedDuration(0);
@@ -1011,6 +1029,7 @@ const VideoPlayer = ({
     let pictureWatch: ReturnType<typeof setInterval> | null = null;
     let noteProgress: (() => void) | null = null;
     let progressOn: HTMLVideoElement | null = null;
+    let place: FollowedPlace | null = null;
     const stopAt = (problem: PlaybackProblem, cause: string | null) => {
       if (isAbandoned()) {
         return;
@@ -1023,14 +1042,14 @@ const VideoPlayer = ({
         problem,
         cause,
         title: playingRef.current,
-        positionSeconds: videoRef.current?.currentTime ?? null,
+        positionSeconds: placeRef.current?.read() ?? videoRef.current?.currentTime ?? null,
         how: null,
         sessionId: startedId,
         mediaId: request.mediaId,
         clientId,
       });
     };
-    const reconnect = (atSeconds = videoRef.current?.currentTime) => {
+    const reconnect = (atSeconds = placeRef.current?.read()) => {
       if (isAbandoned() || stopWaiting !== null) {
         return;
       }
@@ -1231,9 +1250,21 @@ const VideoPlayer = ({
 
       const { sessionId } = outcome.session;
       const isHls = outcome.session.delivery.kind !== 'direct';
+      const startAgainAt = (atSeconds: number): boolean => {
+        const recovering = recoverOrGiveUp(recoveriesRef.current, Date.now());
+
+        if (!recovering.shouldRecover) {
+          return false;
+        }
+
+        recoveriesRef.current = recovering.recoveries;
+        setRequest((asked) => ({ ...asked, startSeconds: Math.floor(atSeconds), hasPlayed: true }));
+
+        return true;
+      };
       const convertInstead = (
         fault: { category: number; code?: number } | null,
-        atSeconds = videoRef.current?.currentTime,
+        atSeconds = placeRef.current?.read(),
       ): boolean => {
         const next =
           keptSource === undefined
@@ -1286,6 +1317,8 @@ const VideoPlayer = ({
       };
       element.addEventListener('timeupdate', noteProgress);
       progressOn = element;
+      place = followPlace(element, request.startSeconds);
+      placeRef.current = place;
 
       await settledRef.current;
 
@@ -1329,9 +1362,12 @@ const VideoPlayer = ({
             }
 
             engineRefusedRef.current = true;
+
+            const at = placeRef.current?.read();
+
             setRequest((asked) => ({
               ...asked,
-              startSeconds: Math.floor(videoRef.current?.currentTime ?? asked.startSeconds),
+              startSeconds: Math.floor(at ?? asked.startSeconds),
             }));
           };
           const toPlay = {
@@ -1403,7 +1439,7 @@ const VideoPlayer = ({
               return;
             }
 
-            const at = element.currentTime;
+            const at = placeRef.current?.read() ?? element.currentTime;
             const wasPlaying = !element.paused;
             const copyRoute = copy === null ? route : chooseBrowserRoute(copy, engine, isHdrScreen);
 
@@ -1502,6 +1538,10 @@ const VideoPlayer = ({
                 hasPlayedRef.current,
               );
 
+              if (fault.category === MEDIA && decided === 'damaged' && startAgainAt(atSeconds)) {
+                return;
+              }
+
               if (decided === 'reconnect') {
                 reconnect(atSeconds);
               } else {
@@ -1509,8 +1549,33 @@ const VideoPlayer = ({
               }
             },
             onRecovered: (refusedAtSeconds) => {
-              if (!isAbandoned()) {
-                convertInstead(null, refusedAtSeconds);
+              if (isAbandoned() || convertInstead(null, refusedAtSeconds)) {
+                return;
+              }
+
+              const recovering = recoverOrGiveUp(recoveriesRef.current, Date.now());
+
+              if (!recovering.shouldRecover) {
+                const decided = problemOfAFault(
+                  { from: 'element', code: ELEMENT_COULD_NOT_DECODE },
+                  hasPlayedRef.current,
+                );
+
+                if (decided === 'reconnect') {
+                  reconnect(refusedAtSeconds);
+                } else {
+                  stopAt(decided, null);
+                }
+
+                return;
+              }
+
+              recoveriesRef.current = recovering.recoveries;
+
+              if (
+                Math.abs(element.currentTime - refusedAtSeconds) > BACK_WHERE_IT_WAS_WITHIN_SECONDS
+              ) {
+                element.currentTime = refusedAtSeconds;
               }
             },
           });
@@ -1629,6 +1694,13 @@ const VideoPlayer = ({
       if (noteProgress !== null) {
         progressOn?.removeEventListener('timeupdate', noteProgress);
       }
+
+      place?.stop();
+
+      if (placeRef.current === place) {
+        placeRef.current = null;
+      }
+
       settledRef.current = Promise.resolve(teardown?.()).catch(() => undefined);
       releaseRef.current = null;
 
@@ -2254,9 +2326,11 @@ const VideoPlayer = ({
         return;
       }
 
+      const at = placeRef.current?.read();
+
       setRequest((asked) => ({
         ...asked,
-        startSeconds: Math.floor(element?.currentTime ?? asked.startSeconds),
+        startSeconds: Math.floor(at ?? asked.startSeconds),
         autoRung: rung,
       }));
     },
@@ -3086,9 +3160,11 @@ const VideoPlayer = ({
                 })
           }
           onRetry={() => {
+            const at = placeRef.current?.read();
+
             setRequest((asked) => ({
               ...asked,
-              startSeconds: Math.floor(videoRef.current?.currentTime ?? asked.startSeconds),
+              startSeconds: Math.floor(at ?? asked.startSeconds),
             }));
           }}
           onSignIn={() => {

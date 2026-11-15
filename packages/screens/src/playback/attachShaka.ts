@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { deliveredBitrateKbps } from '@ValenceClient/playback/deliveredBitrateKbps';
 import { teachShakaOurScheme } from '@ValenceScreens/playback/teachShakaOurScheme';
+import { followPlace } from '@ValenceScreens/playback/followPlace';
 import type { ShakaNetworking } from '@ValenceScreens/playback/teachShakaOurScheme';
 import type shaka from 'shaka-player/dist/shaka-player.compiled';
 import type { Buffer } from '@ValenceClient/playback/bufferFor';
@@ -89,8 +90,6 @@ type AttachOptions = {
 };
 
 const CRITICAL = 2;
-
-const HAS_A_PICTURE = 2;
 
 const ONE_AT_A_TIME = 1;
 
@@ -239,17 +238,9 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  *
  * A picture the browser refuses to decode is not reported as a fault. The engine empties the element
  * and starts it again where it was, and says so with an event of its own, which is passed on with
- * where the element last was while it had a picture, or where it refused, since by then it has
- * been emptied and reads nothing, and not every such start follows the element refusing anything.
- * Firefox has emptied it already when it says it refused, so a refusal that reads the start of the
- * film is taken as no place at all and the last place it had a picture stands. The place is then
- * held until the engine says it has started again, because on its way it seeks the emptied element
- * to the start and plays a moment of it there. The same holds from the element being emptied once
- * it has had a picture, which is how a buffer the browser would not take shows before the engine
- * gives up on it, and a reading of the very start is never taken as a place, because an element
- * being reset reads that before anything says so. A
- * stream that copies a damaged file meets the same frame again, and only the server converting it
- * gets past.
+ * where the viewer was as `followPlace` keeps it, since by then the element has been emptied and
+ * reads nothing, and not every such start follows the element refusing anything. A stream that
+ * copies a damaged file meets the same frame again, and only the server converting it gets past.
  *
  * None of that holds for a stream Valence did not make, such as a live channel's: its segments'
  * own timestamps are a broadcaster's, often starting far from nothing, and placed by them nothing
@@ -291,53 +282,22 @@ const attachShaka = async ({
     streaming: { segmentPrefetchLimit: Math.max(connections, ONE_AT_A_TIME) - ONE_AT_A_TIME },
   });
 
-  const place = { atSeconds: startSeconds, hasPicture: false, isHeld: false };
-  const noteWhereRefused = () => {
-    if (!place.isHeld && element.currentTime > 0) {
-      place.atSeconds = element.currentTime;
-    }
-
-    place.isHeld = true;
-  };
-  const holdWhereItWas = () => {
-    if (place.hasPicture) {
-      place.isHeld = true;
-    }
-  };
-  const noteWhereItIs = () => {
-    if (!place.isHeld && element.currentTime > 0 && element.readyState >= HAS_A_PICTURE) {
-      place.atSeconds = element.currentTime;
-      place.hasPicture = true;
-    }
-  };
-  const noteWhereItGoes = () => {
-    if (!place.isHeld && element.currentTime > 0) {
-      place.atSeconds = element.currentTime;
-    }
-  };
+  const place = followPlace(element, startSeconds);
 
   player.addEventListener?.('error', (event) => {
     const fault = faultFrom(event);
 
     if (fault !== null) {
-      onFault?.(fault, place.atSeconds);
+      onFault?.(fault, place.read());
     }
   });
 
-  element.addEventListener('error', noteWhereRefused);
-  element.addEventListener('timeupdate', noteWhereItIs);
-  element.addEventListener('seeking', noteWhereItGoes);
-  element.addEventListener('emptied', holdWhereItWas);
   player.addEventListener?.('mediasourcerecovered', () => {
-    place.isHeld = false;
-    onRecovered?.(place.atSeconds);
+    onRecovered?.(place.read());
   });
 
   const detach = () => {
-    element.removeEventListener('error', noteWhereRefused);
-    element.removeEventListener('timeupdate', noteWhereItIs);
-    element.removeEventListener('seeking', noteWhereItGoes);
-    element.removeEventListener('emptied', holdWhereItWas);
+    place.stop();
 
     return player.destroy();
   };
