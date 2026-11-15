@@ -113,7 +113,11 @@ const faceOf = (name: string, person: Askable | undefined) => (
     source={
       person?.updatedAt === undefined
         ? ''
-        : profileAvatarUrl({ id: person.id, updatedAt: person.updatedAt })
+        : profileAvatarUrl({
+            id: person.id,
+            updatedAt: person.updatedAt,
+            pictureUrl: person.pictureUrl,
+          })
     }
     className="size-7 text-xs"
   />

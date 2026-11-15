@@ -437,6 +437,28 @@ describe('PartyPanel', () => {
     expect(onAsk).toHaveBeenCalledWith('profile-kit');
   });
 
+  it('shows a household by its own picture rather than its owner profile’s', () => {
+    const { container } = render(
+      <PartyPanel
+        party={party()}
+        meConnectionId="dan"
+        people={[
+          {
+            id: 'profile-ones',
+            name: 'The Ones',
+            avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+            updatedAt: '2026-11-15T10:00:00.000Z',
+            pictureUrl: '/api/profiles/profile-ones/household?v=1',
+          },
+        ]}
+        onAsk={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('img[src*="/household"]')).not.toBeNull();
+    expect(container.querySelector('img[src*="profile-ones/avatar"]')).toBeNull();
+  });
+
   it('heads the people from each linked server with where they are from, by their own name', () => {
     render(
       <PartyPanel
