@@ -210,6 +210,7 @@ mod tests {
             container: SegmentContainer::Fmp4,
             source_video_codec: None,
             source_pixel_format: None,
+            fallback_bitrate_kbps: None,
             track: Track::Both,
             source_range: None,
             source_range_base: None,

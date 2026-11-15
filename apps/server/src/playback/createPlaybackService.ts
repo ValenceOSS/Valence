@@ -37,6 +37,7 @@ import { problemOfStartFailure } from '@ValenceServer/playback/problemOfStartFai
 import { isTrickplayAddress } from '@ValenceServer/playback/isTrickplayAddress';
 import { readStreamedPath } from '@ValenceServer/streamSources/readStreamedPath';
 import type { SubtitleService } from '@ValenceServer/subtitles/SubtitleService';
+import { fallbackEncodeKbpsFor } from '@ValenceCore/functions/fallbackEncodeKbpsFor';
 
 const TRICKPLAY_INDEX_NAME = 'thumbnails.vtt';
 
@@ -75,12 +76,14 @@ const withDeliveredRange = (plan: PlaybackPlan, deliveredRange: string): Playbac
  * @param plan - What the negotiator decided.
  * @param item - The file it decided about.
  * @param started - What the media service says it is doing: whether the picture is in fact being encoded, and whether that is for this browser's keyframes.
+ * @param fallbackKbps - The ceiling the media service was given for an encode it might have to make.
  * @returns The plan as carried out.
  */
 const asDelivered = (
   plan: PlaybackPlan,
   item: MediaItem,
   started: { encodesVideo: boolean; encodedForKeyframes: boolean },
+  fallbackKbps: number,
 ): PlaybackPlan => {
   if (!started.encodesVideo || plan.video.kind !== 'passthrough') {
     return plan;
@@ -92,7 +95,7 @@ const asDelivered = (
       kind: 'transcode',
       codec: 'h264',
       range: item.videoRange,
-      maxBitrateKbps: item.bitrateKbps,
+      maxBitrateKbps: fallbackKbps,
       maxWidth: item.width,
       maxHeight: item.height,
       reason: {
@@ -362,6 +365,7 @@ const createPlaybackService = ({
           sourceRangeBase: item.videoRangeBase ?? null,
           sourceSize: [item.width, item.height],
           sourceVideoCodec: item.videoCodec,
+          fallbackBitrateKbps: fallbackEncodeKbpsFor(item, profile, weighed.qualityClamp),
           sourceBitDepth: item.videoBitDepth,
           sourceIsInterlaced: item.videoIsInterlaced,
           sourcePixelAspect: item.videoPixelAspect ?? null,
@@ -410,7 +414,12 @@ const createPlaybackService = ({
         );
 
         const delivered = withDeliveredRange(
-          asDelivered(plan, source, session),
+          asDelivered(
+            plan,
+            source,
+            session,
+            fallbackEncodeKbpsFor(source, profile, chosen.qualityClamp),
+          ),
           session.toneMaps === true ? 'SDR' : outcome.deliveredRange,
         );
 

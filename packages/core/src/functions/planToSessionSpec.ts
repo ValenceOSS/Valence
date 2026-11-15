@@ -39,6 +39,7 @@ type SessionSpec = {
   sourceSize?: [number, number];
   container: SegmentContainer;
   sourceVideoCodec?: string;
+  fallbackBitrateKbps?: number;
   sourceRange?: string;
   sourceRangeBase?: string;
   needsIdrKeyframes?: boolean;
@@ -60,6 +61,7 @@ type PlanToSessionSpecOptions = {
   audioStreamIndex?: number;
   container: SegmentContainer;
   sourceVideoCodec?: string;
+  fallbackBitrateKbps?: number;
   sourceBitDepth?: number;
   sourceIsInterlaced?: boolean;
   sourcePixelAspect?: string | null;
@@ -135,6 +137,7 @@ const planToSessionSpec = ({
   subtitleFile = null,
   container,
   sourceVideoCodec,
+  fallbackBitrateKbps,
   sourceBitDepth,
   sourceIsInterlaced = false,
   sourcePixelAspect = null,
@@ -187,6 +190,7 @@ const planToSessionSpec = ({
         subtitles,
         ...(sourceSize === undefined ? {} : { sourceSize }),
         ...(sourceVideoCodec === undefined ? {} : { sourceVideoCodec }),
+        ...(fallbackBitrateKbps === undefined ? {} : { fallbackBitrateKbps }),
         ...(audioStreamIndex === undefined ? {} : { audioStreamIndex }),
         ...(needsIdrKeyframes ? { needsIdrKeyframes } : {}),
         video: { kind: 'copy' },
