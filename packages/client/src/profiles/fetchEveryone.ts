@@ -1,7 +1,7 @@
 import { askTheServer } from '@ValenceClient/session/askTheServer';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { z } from 'zod';
-import { ViewerProfileListSchema } from '@ValenceContracts/schemas/ViewerProfile';
+import { WayInSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { say } from '@ValenceI18n/say';
 
@@ -12,8 +12,10 @@ const TwoFactorPendingSchema = z.object({ twoFactorRedirect: z.literal(true) });
  * has. Names and faces only — enough to be picked from, and nothing that says anything about the
  * accounts behind them.
  */
-const fetchEveryone = async (): Promise<ViewerProfile[]> => {
-  return (await readFromServer('/api/profiles/everyone', ViewerProfileListSchema)).profiles;
+const fetchEveryone = async (): Promise<
+  (ViewerProfile & { pictureUrl?: string | undefined })[]
+> => {
+  return (await readFromServer('/api/profiles/everyone', WayInSchema)).profiles;
 };
 
 /**

@@ -23,6 +23,18 @@ describe('faceOfAskable', () => {
     });
   });
 
+  it('reads a household’s face from where the server keeps its picture', () => {
+    expect(
+      faceOfAskable({
+        id: 'owner',
+        name: 'The Ones',
+        avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: true },
+        updatedAt: '2026-11-15T10:00:00.000Z',
+        pictureUrl: '/api/profiles/owner/household?v=1',
+      }).pictureUrl,
+    ).toBe('/api/profiles/owner/household?v=1');
+  });
+
   it('draws somebody from a linked server by their initial', () => {
     expect(faceOfAskable({ id: 'peer~films~kai', name: 'Kai from Films' })).toMatchObject({
       name: 'Kai from Films',
