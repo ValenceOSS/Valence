@@ -1112,6 +1112,14 @@ pub struct SessionRegistry {
     /// nothing would start the session again, each counting as another
     /// viewer holding it.
     reviving: Arc<Mutex<()>>,
+    /// Which session directories a run is writing into, held from the moment a
+    /// run starts until its ffmpeg has exited.
+    ///
+    /// Stopping a run only asks it to stop, so a run started again at once
+    /// waits on this before it clears the directory: the old ffmpeg, still
+    /// alive, could put back a segment just cleared, or write a playlist
+    /// claiming segments the new run has not made.
+    writers: Arc<std::sync::Mutex<HashMap<String, Arc<Mutex<()>>>>>,
     /// When somebody last pressed play, so background work that would compete
     /// with the start can hold off while the first segment is made.
     last_asked_to_start: Arc<std::sync::Mutex<Option<Instant>>>,
@@ -1143,6 +1151,7 @@ impl SessionRegistry {
             starting: Arc::new(Mutex::new(std::collections::HashSet::new())),
             live,
             reviving: Arc::new(Mutex::new(())),
+            writers: Arc::new(std::sync::Mutex::new(HashMap::new())),
             last_asked_to_start: Arc::new(std::sync::Mutex::new(None)),
             devices: Arc::new(tokio::sync::OnceCell::new()),
             placement: Arc::new(std::sync::RwLock::new(None)),
@@ -1527,6 +1536,8 @@ impl SessionRegistry {
             cut_seconds: boundaries.cut_seconds,
         };
 
+        drop(self.take_the_directory(&id).await);
+
         let is_complete = is_already_complete(&directory).await;
 
         let (resume, reuse) =
@@ -1617,6 +1628,40 @@ impl SessionRegistry {
         self.begin_run(session, wanted).await;
 
         true
+    }
+
+    /// Waits for any run still writing a session's directory to exit, and holds
+    /// the directory for the run about to start.
+    ///
+    /// Bounded, since an ffmpeg stuck in the kernel can outlive any signal, and
+    /// waiting for it for good would hold up every session behind this one.
+    /// A run that is not out within the bound is logged and started beside.
+    async fn take_the_directory(&self, id: &str) -> Option<tokio::sync::OwnedMutexGuard<()>> {
+        let writer = {
+            let mut writers = self
+                .writers
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+            writers.retain(|_, writer| Arc::strong_count(writer) > 1);
+
+            Arc::clone(writers.entry(id.to_owned()).or_default())
+        };
+
+        let taken = tokio::time::timeout(STOPPED_RUN_EXITS_WITHIN, writer.lock_owned())
+            .await
+            .ok();
+
+        if taken.is_none() {
+            tracing::warn!(
+                target: "session",
+                session_id = %id,
+                "a stopped run had still not exited after {}s, starting the next beside it",
+                STOPPED_RUN_EXITS_WITHIN.as_secs()
+            );
+        }
+
+        taken
     }
 
     /// Starts a run at a segment, recording it as the live one.
@@ -2108,6 +2153,8 @@ static RUNS: AtomicU64 = AtomicU64::new(1);
     reason = "the free function is the body of the method beside it"
 )]
 async fn begin_run_inner(registry: &SessionRegistry, session: &mut Session, wanted: u64) {
+    let writing = registry.take_the_directory(&session.id).await;
+
     let start_at = SegmentStart {
         index: u32::try_from(wanted).unwrap_or(u32::MAX),
         seconds: if session.plan.spec.starts_where_sought() {
@@ -2149,6 +2196,8 @@ async fn begin_run_inner(registry: &SessionRegistry, session: &mut Session, want
     tokio::spawn(async move {
         let ended = supervise(config, supervised, segments, cancel_rx, watched, woken).await;
 
+        drop(writing);
+
         ending.run_ended(&id, run, ended).await;
     });
 
@@ -2185,7 +2234,14 @@ async fn run_attempt(
         tokio::select! {
             biased;
 
-            _ = &mut *cancel => break ExitClass::Cancelled,
+            _ = &mut *cancel => {
+                end_at_once(pid);
+                paused = false;
+
+                let _ = (&mut waiting).await;
+
+                break ExitClass::Cancelled;
+            }
 
             () = woken.notified() => {
                 follow_the_viewer(
@@ -2392,6 +2448,27 @@ fn set_paused(pid: u32, paused: bool) {
     }
 }
 
+/// Kills a run's ffmpeg, paused or not, so the run can wait for it to exit.
+///
+/// Dropping the process would kill it too, but without waiting: the run
+/// would end, and the next one start, while the old ffmpeg was still writing.
+fn end_at_once(pid: Option<u32>) {
+    use sysinfo::{Pid, ProcessesToUpdate, Signal, System};
+
+    let Some(pid) = pid else {
+        return;
+    };
+
+    let mut system = System::new();
+    let pid = Pid::from_u32(pid);
+
+    system.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
+
+    if let Some(process) = system.process(pid) {
+        process.kill_with(Signal::Kill);
+    }
+}
+
 /// Whether a transcode should be paused, given where it and the viewer are.
 ///
 /// Both are segment numbers in the film's own numbering and converted here, so
@@ -2403,6 +2480,9 @@ pub fn is_too_far_ahead(head: u64, reached: u64, segment_seconds: u32) -> bool {
 
     ahead > THROTTLE_AHEAD_SECONDS
 }
+
+/// How long a run being started waits for a stopped one to exit.
+const STOPPED_RUN_EXITS_WITHIN: Duration = Duration::from_secs(5);
 
 /// How long a start that failed is refused before it may be tried again.
 const FAILED_START_BACKOFF: Duration = Duration::from_secs(10);
@@ -3360,6 +3440,110 @@ mod tests {
         };
 
         (session, stopped)
+    }
+
+    /// A run about to start waits for the one still writing the directory,
+    /// and starts the moment that one has gone.
+    #[tokio::test]
+    async fn waits_for_a_stopped_run_to_let_go_of_the_directory() {
+        let registry = SessionRegistry::new(SessionConfig::default());
+        let held = registry
+            .take_the_directory("film")
+            .await
+            .expect("nothing else is writing it");
+
+        let waiting = tokio::spawn({
+            let registry = registry.clone();
+
+            async move { registry.take_the_directory("film").await.is_some() }
+        });
+
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        assert!(!waiting.is_finished(), "the next run waits");
+
+        drop(held);
+
+        assert!(
+            waiting.await.expect("the wait finishes"),
+            "the next run holds the directory"
+        );
+        assert!(
+            registry.take_the_directory("other").await.is_some(),
+            "another session's directory is never waited on"
+        );
+    }
+
+    /// A run started again at once, as a seek does, clears the directory only
+    /// once the ffmpeg it replaced has exited, paused or not, so nothing the old
+    /// one writes lands among the new run's segments.
+    #[cfg(unix)]
+    #[allow(unsafe_code, reason = "asking whether a process exists is a libc call")]
+    #[tokio::test]
+    async fn a_run_started_again_begins_once_the_stopped_ffmpeg_has_exited() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let directory = std::env::temp_dir().join("valence-started-again");
+        let _ = tokio::fs::remove_dir_all(&directory).await;
+        tokio::fs::create_dir_all(&directory)
+            .await
+            .expect("makes the directory");
+
+        let ffmpeg = directory.join("ffmpeg");
+        let pid_file = directory.join("pid");
+        tokio::fs::write(
+            &ffmpeg,
+            format!(
+                "#!/bin/sh\necho $$ > {}\nexec sleep 30\n",
+                pid_file.display()
+            ),
+        )
+        .await
+        .expect("writes the stand-in ffmpeg");
+        tokio::fs::set_permissions(&ffmpeg, std::fs::Permissions::from_mode(0o755))
+            .await
+            .expect("makes it runnable");
+
+        let registry = SessionRegistry::new(SessionConfig {
+            ffmpeg: ffmpeg.to_string_lossy().into_owned(),
+            ..SessionConfig::default()
+        });
+        let (running, _stopped) = a_session_running(0);
+        let mut session = Session {
+            directory: directory.clone(),
+            plan: TranscodePlan {
+                output_directory: directory.to_string_lossy().into_owned(),
+                ..running.plan.clone()
+            },
+            cancel: None,
+            running_from: None,
+            ..running
+        };
+
+        registry.begin_run(&mut session, 0).await;
+
+        let first = loop {
+            if let Ok(written) = tokio::fs::read_to_string(&pid_file).await {
+                if let Ok(pid) = written.trim().parse::<i32>() {
+                    break pid;
+                }
+            }
+
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        };
+
+        super::set_paused(first.unsigned_abs(), true);
+        session.stop();
+        registry.begin_run(&mut session, 0).await;
+
+        // SAFETY: signal 0 only asks whether the process exists; nothing is sent.
+        let is_alive = unsafe { libc::kill(first, 0) } == 0;
+
+        assert!(!is_alive, "the stopped ffmpeg has exited and been reaped");
+
+        session.stop();
+        drop(registry.take_the_directory("film").await);
+
+        let _ = tokio::fs::remove_dir_all(&directory).await;
     }
 
     /// The race behind a session that never started: stopped, and started
