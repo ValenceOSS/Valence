@@ -517,6 +517,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       if (decided.kind === 'play' && mayMove) {
         setCarriedOn((was) => was + 1);
         watchParty.send({ kind: 'changeWhatIsPlaying', mediaId: decided.episode.id });
+      } else if (decided.kind === 'ask' && mayMove) {
+        setAskingAbout(decided.episode);
       }
 
       return;
@@ -997,10 +999,23 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           const next = askingAbout;
 
           setAskingAbout(null);
-          choose(next.id, 0);
+
+          if (filmParty === null) {
+            choose(next.id, 0);
+          } else if (filmParty.mediaId === watching?.mediaId) {
+            setCarriedOn(0);
+            watchParty.send({ kind: 'changeWhatIsPlaying', mediaId: next.id });
+          } else {
+            setWatching({ mediaId: filmParty.mediaId, startSeconds: 0 });
+          }
         }}
         onStop={() => {
           setAskingAbout(null);
+
+          if (filmParty !== null) {
+            watchParty.leave();
+            stopWatchingIt();
+          }
         }}
       />
     ) : watchingHeld !== null ? (

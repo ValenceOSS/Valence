@@ -1511,6 +1511,17 @@ describe('Player', () => {
 
       expect(onLeave).toHaveBeenCalledTimes(1);
     });
+
+    it('stays on the last frame of a film in a watch party, rather than leaving the party', async () => {
+      const { onLeave } = await draw({
+        detail: FILM,
+        watchParty: aWatchPartyStateWith(jest.fn, { party: aWatchParty({ mediaId: MEDIA_ID }) }),
+      });
+
+      await tell('playToEnd', {});
+
+      expect(onLeave).not.toHaveBeenCalled();
+    });
   });
 
   describe('reporting where the viewer is', () => {

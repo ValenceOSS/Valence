@@ -198,7 +198,9 @@ const qualityLabelOf = (quality: QualityPreference): string =>
  * @param carriedOn - How many episodes have followed on their own before this one.
  * @param startedFrom - The device that started it here, such as a phone, said on a card in the top
  *   right as it starts so the room knows where it came from.
- * @param onLeave - Told when the title ends with nothing after it, or somebody gives up on it.
+ * @param onLeave - Told when the title ends with nothing after it, or somebody gives up on it. In a
+ *   watch party a title ending is not leaving it: the player stays on its last frame for the party
+ *   to move on, or for them to leave.
  * @param onNext - Told to play the next episode, and how many will then have followed on untouched.
  *   Without it nothing is offered to follow on, for a guest in a watch party, who waits for the
  *   party to move on.
@@ -821,10 +823,10 @@ const Player = ({
   const stayForTheCredits = useCallback(() => {
     setIsUpNextAway(true);
 
-    if (hasEnded && !isHeldAtTheEnd) {
+    if (hasEnded && !isHeldAtTheEnd && party === undefined) {
       onLeave();
     }
-  }, [hasEnded, isHeldAtTheEnd, onLeave]);
+  }, [hasEnded, isHeldAtTheEnd, party, onLeave]);
 
   const hearRemote = useCallback(
     (event: HWEvent) => {
@@ -1236,11 +1238,13 @@ const Player = ({
     }
 
     if (decided.kind === 'nothing') {
-      onLeave();
+      if (party === undefined) {
+        onLeave();
+      }
     } else if (decided.kind === 'play') {
       goNext(true);
     }
-  }, [hasEnded, isHeldAtTheEnd, decided.kind, onLeave, goNext]);
+  }, [hasEnded, isHeldAtTheEnd, decided.kind, party, onLeave, goNext]);
 
   if (stoppedBy !== null) {
     return (

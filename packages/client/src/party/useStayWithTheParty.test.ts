@@ -66,14 +66,40 @@ describe('useStayWithTheParty', () => {
     expect(leave).toHaveBeenCalledTimes(1);
   });
 
+  it('follows a party joined by invitation when it moves on afterwards', () => {
+    const { leave, onMovedTo, change } = stay({
+      mediaId: 'episode-1',
+      partyMediaId: 'episode-1',
+      invitedTo: 'p-1',
+    });
+
+    change({ mediaId: 'episode-1', partyMediaId: 'episode-2', invitedTo: 'p-1' });
+
+    expect(onMovedTo).toHaveBeenCalledWith('episode-2');
+    expect(leave).not.toHaveBeenCalled();
+  });
+
+  it('takes somebody invited to where the party has got to once they are in it', () => {
+    const { leave, onMovedTo, change } = stay({
+      mediaId: 'episode-1',
+      partyMediaId: null,
+      invitedTo: 'p-1',
+    });
+
+    change({ mediaId: 'episode-1', partyMediaId: 'episode-3', invitedTo: 'p-1' });
+
+    expect(onMovedTo).toHaveBeenCalledWith('episode-3');
+    expect(leave).not.toHaveBeenCalled();
+  });
+
   it('leaves a party still being joined alone', () => {
     const { leave, onMovedTo, change } = stay({
       mediaId: 'episode-1',
       partyMediaId: 'film-1',
-      invitedTo: 'p-1',
+      invitedTo: 'p-2',
     });
 
-    change({ mediaId: 'episode-1', partyMediaId: 'film-2', invitedTo: 'p-1' });
+    change({ mediaId: 'episode-1', partyMediaId: 'film-2', invitedTo: 'p-2' });
 
     expect(leave).not.toHaveBeenCalled();
     expect(onMovedTo).not.toHaveBeenCalled();

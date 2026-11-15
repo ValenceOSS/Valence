@@ -530,6 +530,31 @@ describe('SignedIn', () => {
       expect(jest.mocked(startPlaybackSession).mock.calls.length).toBe(startedBefore);
     });
 
+    it('asks whoever runs the watch party whether anybody is still watching, as it would alone', async () => {
+      asksAfter(1);
+
+      const send = inAPartyAs('host');
+      const drawn = await intoTheFirstEpisode();
+
+      await itEnds();
+      await waitFor(() => {
+        expect(send).toHaveBeenCalledTimes(1);
+      });
+      await itEnds();
+      await waitFor(() => {
+        expect(drawn.getByText('Are you still watching?')).toBeTruthy();
+      });
+
+      await userEvent.press(drawn.getByText('Still watching'));
+
+      await waitFor(() => {
+        expect(send).toHaveBeenLastCalledWith({
+          kind: 'changeWhatIsPlaying',
+          mediaId: THREE[1]!.id,
+        });
+      });
+    });
+
     it('keeps a guest at the end until the watch party moves on', async () => {
       asksAfter(0);
 
