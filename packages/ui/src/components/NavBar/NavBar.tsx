@@ -365,7 +365,7 @@ const NavBar = ({
           </motion.div>
         </div>
 
-        <div ref={actionsRef} className="flex flex-1 basis-0 items-center justify-end gap-0.5">
+        <div ref={actionsRef} className="flex flex-1 basis-0 items-center justify-end">
           {actions.map((action, at) =>
             action.control === undefined ? (
               <Button
@@ -386,7 +386,7 @@ const NavBar = ({
                 }}
                 onClick={action.onSelect}
                 className={cn(
-                  'relative flex size-9 shrink-0 items-center justify-center rounded-full text-sm',
+                  'relative flex size-8.5 shrink-0 items-center justify-center rounded-full text-sm',
                   'coarse:size-11',
                   MOVES,
                   'text-text',
