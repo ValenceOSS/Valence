@@ -32,6 +32,7 @@ type FakePlayer = {
   showNowPlayingNotification: boolean;
   staysActiveInBackground: boolean;
   source: string | null;
+  emptied: number;
   sentWith: Record<string, string> | null;
   describedAs: { title?: string; artwork?: string } | null;
   floatsOnLeaving: boolean;
@@ -61,6 +62,7 @@ const theFakePlayer: FakePlayer = {
   showNowPlayingNotification: false,
   staysActiveInBackground: false,
   source: null,
+  emptied: 0,
   sentWith: null,
   describedAs: null,
   floatsOnLeaving: false,
@@ -98,6 +100,7 @@ const forgetTheFakePlayer = (): void => {
   theFakePlayer.showNowPlayingNotification = false;
   theFakePlayer.staysActiveInBackground = false;
   theFakePlayer.source = null;
+  theFakePlayer.emptied = 0;
   theFakePlayer.sentWith = null;
   theFakePlayer.describedAs = null;
   theFakePlayer.floatsOnLeaving = false;

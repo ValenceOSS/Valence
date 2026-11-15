@@ -225,6 +225,8 @@ jest.mock('expo-video', () => ({
 
     mockUseEffect(() => {
       if (source === null) {
+        mockPlayer.emptied += mockPlayer.source === null ? 0 : 1;
+
         return;
       }
 
