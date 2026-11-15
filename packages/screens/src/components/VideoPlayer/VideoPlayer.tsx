@@ -1030,15 +1030,13 @@ const VideoPlayer = ({
         clientId,
       });
     };
-    const reconnect = () => {
+    const reconnect = (atSeconds = videoRef.current?.currentTime) => {
       if (isAbandoned() || stopWaiting !== null) {
         return;
       }
 
       const resumeAt =
-        hasPlayedRef.current && videoRef.current !== null
-          ? Math.floor(videoRef.current.currentTime)
-          : null;
+        hasPlayedRef.current && atSeconds !== undefined ? Math.floor(atSeconds) : null;
 
       setState('reconnecting');
       stopWaiting = waitForTheServer({
@@ -1494,8 +1492,8 @@ const VideoPlayer = ({
                 : (source?.bitrateKbps ?? null),
             ),
             connections: readPlaybackPreferences().connections,
-            onFault: (fault) => {
-              if (fault.severity < CRITICAL || isAbandoned() || convertInstead(fault)) {
+            onFault: (fault, atSeconds) => {
+              if (fault.severity < CRITICAL || isAbandoned() || convertInstead(fault, atSeconds)) {
                 return;
               }
 
@@ -1505,7 +1503,7 @@ const VideoPlayer = ({
               );
 
               if (decided === 'reconnect') {
-                reconnect();
+                reconnect(atSeconds);
               } else {
                 stopAt(decided, `${fault.category.toString()}/${fault.code.toString()}`);
               }
@@ -1599,7 +1597,7 @@ const VideoPlayer = ({
           ...(engine.data.code === undefined ? {} : { code: engine.data.code }),
         };
 
-        if (isAbandoned() || convertInstead(fault)) {
+        if (isAbandoned() || convertInstead(fault, request.startSeconds)) {
           return;
         }
 

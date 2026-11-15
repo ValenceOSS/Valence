@@ -559,6 +559,43 @@ describe('VideoPlayer', () => {
     });
   });
 
+  it('asks again converted from where the engine says it was when it fails, not where the element reads', async () => {
+    startMock.mockResolvedValue({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        plan: { ...transcodingPlan, video: { kind: 'passthrough', reason } },
+      },
+    });
+    const attached: {
+      onFault?:
+        | ((
+            fault: { severity: number; category: number; code: number; httpStatus: null },
+            atSeconds: number,
+          ) => void)
+        | undefined;
+    } = {};
+
+    attachMock.mockImplementation((options: typeof attached) => {
+      attached.onFault = options.onFault;
+
+      return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+    });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(attached.onFault).toBeDefined();
+    });
+    act(() => {
+      attached.onFault?.({ severity: 2, category: 3, code: 3014, httpStatus: null }, 1666.8);
+    });
+
+    await waitFor(() => {
+      expect(startMock.mock.calls.at(-1)?.[3]).toBe(1666);
+    });
+    expect(startMock.mock.calls.at(-1)?.[7]).toBe('picture');
+  });
+
   it('asks again with the sound converted too where the converted picture still would not decode', async () => {
     const attached: {
       onFault?: ((fault: { severity: number; category: number; code: number }) => void) | undefined;
@@ -845,6 +882,16 @@ describe('VideoPlayer', () => {
       expect(startMock.mock.calls.at(-1)?.[7]).toBe('pictureAndSound');
     });
     expect(screen.queryByText('Reconnecting…')).not.toBeInTheDocument();
+  });
+
+  it('asks for the stream converted from where it was asked to begin where it will not load', async () => {
+    attachMock.mockRejectedValueOnce({ category: 4, code: 4032 });
+    renderInAnAddress(<VideoPlayer media={media} startSeconds={1720} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(startMock.mock.calls.at(-1)?.[7]).toBe('pictureAndSound');
+    });
+    expect(startMock.mock.calls.at(-1)?.[3]).toBe(1720);
   });
 
   it('stops the session and tears down the engine when closed', async () => {
