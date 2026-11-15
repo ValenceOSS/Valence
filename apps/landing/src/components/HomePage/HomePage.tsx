@@ -2,17 +2,15 @@ import { HomeHero } from '@ValenceLanding/components/HomePage/components/HomeHer
 import { ScreensStrip } from '@ValenceLanding/components/HomePage/components/ScreensStrip/ScreensStrip';
 import { FeatureBento } from '@ValenceLanding/components/HomePage/components/FeatureBento/FeatureBento';
 import { PhoneFan } from '@ValenceLanding/components/HomePage/components/PhoneFan/PhoneFan';
-import { DuoShowcase } from '@ValenceLanding/components/HomePage/components/DuoShowcase/DuoShowcase';
-import { AppTour } from '@ValenceLanding/components/HomePage/components/AppTour/AppTour';
-import { LatestReleases } from '@ValenceLanding/components/HomePage/components/LatestReleases/LatestReleases';
+import { LivingRoom } from '@ValenceLanding/components/HomePage/components/LivingRoom/LivingRoom';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
 
 /**
  * getvalence.app itself: what Valence is on a card of light written in characters, with the app in
  * a window hanging over its foot, the screens it plays on, all it does
- * in its groups, the phone app fanned out, the iPhone Duo opened out, a walk round the app, the
- * newest releases, and a last card asking whether you are ready, each on a rounded card of its own.
+ * in its groups, the phone app fanned out, the television app in a living room, and a last card
+ * asking whether you are ready, each on a rounded card of its own.
  */
 const HomePage = () => (
   <>
@@ -29,15 +27,7 @@ const HomePage = () => (
     </SectionCard>
 
     <SectionCard>
-      <DuoShowcase />
-    </SectionCard>
-
-    <SectionCard>
-      <AppTour />
-    </SectionCard>
-
-    <SectionCard>
-      <LatestReleases />
+      <LivingRoom />
     </SectionCard>
 
     <GetStarted />
