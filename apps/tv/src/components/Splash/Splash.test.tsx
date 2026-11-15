@@ -4,6 +4,8 @@ import { Splash } from '@ValenceTv/components/Splash/Splash';
 
 const runsInJavaScript = Animated.timing;
 
+const springsInJavaScript = Animated.spring;
+
 describe('Splash', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -11,6 +13,11 @@ describe('Splash', () => {
       .spyOn(Animated, 'timing')
       .mockImplementation((value, config) =>
         runsInJavaScript(value, { ...config, useNativeDriver: false }),
+      );
+    jest
+      .spyOn(Animated, 'spring')
+      .mockImplementation((value, config) =>
+        springsInJavaScript(value, { ...config, useNativeDriver: false }),
       );
   });
 
