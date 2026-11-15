@@ -33,10 +33,14 @@ describe('HomeHero', () => {
     ).toBeInTheDocument();
   });
 
-  it('says it is free, open source and yours beneath the heading', async () => {
+  it('says what it is, and that it is free, beneath the heading', async () => {
     await renderWithRoutes(HomeHero);
 
-    expect(screen.getByText(/Free, open source, and yours\./u)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /A self-hosted streaming platform for the whole house\. Free, with no subscription\./u,
+      ),
+    ).toBeInTheDocument();
   });
 
   it('writes its light out in characters behind the words', async () => {
@@ -108,7 +112,7 @@ describe('HomeHero', () => {
     await renderWithRoutes(HomeHero);
 
     const shown = screen.getByRole('img', {
-      name: "The Valence web app's home page, with a film in the featured row",
+      name: "The Valence web app's home page, with a show in the featured row",
     });
 
     expect(shown).toHaveAttribute('src', '/tour/home.jpg');

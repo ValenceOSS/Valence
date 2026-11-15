@@ -27,7 +27,7 @@ describe('HomePage', () => {
 
     expect(
       screen.getByRole('img', {
-        name: "The Valence web app's home page, with a film in the featured row",
+        name: "The Valence web app's home page, with a show in the featured row",
       }),
     ).toHaveAttribute('src', '/tour/home.jpg');
   });

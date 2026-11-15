@@ -15,19 +15,27 @@ describe('BrandPage', () => {
     );
   });
 
-  it('sets out the logo, its motion, the sticker, where it goes, the typefaces and the colours', () => {
+  it('sets out the mark, the logo, its motion, the app icon, where it goes, the typefaces and the colours', () => {
     render(<BrandPage />);
 
-    for (const part of ['Logo', 'Motion', 'Sticker', 'Placement', 'Typography', 'Colour']) {
+    for (const part of [
+      'The mark',
+      'Logo',
+      'Motion',
+      'App icon',
+      'Placement',
+      'Typography',
+      'Colour',
+    ]) {
       expect(screen.getByRole('region', { name: part })).toBeInTheDocument();
     }
   });
 
-  it('sets the wordmark in Plus Jakarta Sans, and names every colour by its hex', () => {
+  it('sets the wordmark in Plus Jakarta Sans ExtraBold, and names every colour by its hex', () => {
     render(<BrandPage />);
 
-    expect(screen.getByText('Plus Jakarta Sans Semibold')).toBeInTheDocument();
-    expect(screen.getByText('Wordmark')).toBeInTheDocument();
+    expect(screen.getByText('Plus Jakarta Sans ExtraBold')).toBeInTheDocument();
+    expect(screen.getByText('Wordmark and display')).toBeInTheDocument();
     expect(screen.getByText('#0066FF')).toBeInTheDocument();
   });
 

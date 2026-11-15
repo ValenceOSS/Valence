@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react';
-import { MotionConfig } from 'motion/react';
+import { MotionConfig, MotionGlobalConfig } from 'motion/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LandingSplash } from './LandingSplash';
 
@@ -21,11 +21,15 @@ describe('LandingSplash', () => {
   });
 
   it('goes after a moment, so it never stands in the way', () => {
+    MotionGlobalConfig.skipAnimations = true;
+
     const { container } = render(<LandingSplash />);
 
     act(() => {
       vi.advanceTimersByTime(5000);
     });
+
+    MotionGlobalConfig.skipAnimations = false;
 
     expect(container).toBeEmptyDOMElement();
   });
