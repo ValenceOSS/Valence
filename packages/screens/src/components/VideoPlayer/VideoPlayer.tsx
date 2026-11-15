@@ -523,6 +523,7 @@ const VideoPlayer = ({
           isPaused: () => element.paused,
           isSeeking: () => element.seeking,
           seekTo: (seconds) => {
+            placeRef.current?.seek(seconds);
             element.currentTime = seconds;
           },
           play: () => element.play(),
@@ -955,6 +956,10 @@ const VideoPlayer = ({
     }
   }, [media.id, hold]);
 
+  useEffect(() => {
+    recoveriesRef.current = {};
+  }, [media.id]);
+
   if (request.mediaId !== media.id) {
     setRequest({
       mediaId: media.id,
@@ -1030,11 +1035,13 @@ const VideoPlayer = ({
     let noteProgress: (() => void) | null = null;
     let progressOn: HTMLVideoElement | null = null;
     let place: FollowedPlace | null = null;
+    let hasStopped = false;
     const stopAt = (problem: PlaybackProblem, cause: string | null) => {
       if (isAbandoned()) {
         return;
       }
 
+      hasStopped = true;
       videoRef.current?.pause();
       setStoppedBy({ problem, cause, reason: null });
       setState('failed');
@@ -1601,7 +1608,7 @@ const VideoPlayer = ({
           element.currentTime = request.startSeconds;
         }
 
-        if (!isAbandoned()) {
+        if (!isAbandoned() && !hasStopped) {
           setState('playing');
           setPosition(element.currentTime);
 
@@ -2204,6 +2211,7 @@ const VideoPlayer = ({
       }
 
       setPosition(seconds);
+      placeRef.current?.seek(seconds);
 
       element.currentTime = seconds;
     },
@@ -3160,6 +3168,8 @@ const VideoPlayer = ({
                 })
           }
           onRetry={() => {
+            recoveriesRef.current = {};
+
             const at = placeRef.current?.read();
 
             setRequest((asked) => ({

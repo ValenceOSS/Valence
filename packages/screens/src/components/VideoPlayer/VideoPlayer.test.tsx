@@ -729,6 +729,64 @@ describe('VideoPlayer', () => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
+    it('gives a new film a fresh allowance of recoveries', async () => {
+      startMock.mockResolvedValue(fullyConverted);
+      const attached: { onRecovered?: ((refusedAtSeconds: number) => void) | undefined } = {};
+
+      attachMock.mockImplementation((options: typeof attached) => {
+        attached.onRecovered = options.onRecovered;
+
+        return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+      });
+
+      const { rerender } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(attached.onRecovered).toBeDefined();
+      });
+      await playedTo(1700);
+      act(() => {
+        attached.onRecovered?.(1700);
+        attached.onRecovered?.(1700);
+      });
+      attached.onRecovered = undefined;
+      rerender(<VideoPlayer media={{ ...media, id: 'media-2' }} onClose={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(attached.onRecovered).toBeDefined();
+      });
+      await playedTo(30);
+      act(() => {
+        attached.onRecovered?.(30);
+      });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('stays stopped where it gives up before the stream has finished loading', async () => {
+      startMock.mockResolvedValue(fullyConverted);
+      attachMock.mockImplementation(
+        (options: { onRecovered?: (refusedAtSeconds: number) => void }) => {
+          options.onRecovered?.(0);
+          options.onRecovered?.(0);
+          options.onRecovered?.(0);
+
+          return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+        },
+      );
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+
+      await act(async () => {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 50);
+        });
+      });
+
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
     it('counts the failures of a stream it started again, and says it is damaged once it gives up', async () => {
       startMock.mockResolvedValue(fullyConverted);
       const attached: {

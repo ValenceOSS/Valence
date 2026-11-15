@@ -98,6 +98,19 @@ describe('followPlace', () => {
     expect(place.read()).toBe(2410);
   });
 
+  it('follows a seek somebody asked for to the very start while it is held', () => {
+    const element = anElement();
+    const place = followPlace(element, 4);
+
+    playAt(element, 1731);
+    resetTo(element, 0);
+    element.dispatchEvent(new Event('error'));
+    place.seek(0);
+    playAt(element, 3);
+
+    expect(place.read()).toBe(3);
+  });
+
   it('holds where it was from being emptied once it had a picture', () => {
     const element = anElement();
     const place = followPlace(element, 4);

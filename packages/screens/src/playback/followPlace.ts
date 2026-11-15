@@ -4,6 +4,7 @@ const CAUGHT_UP_WITHIN_SECONDS = 2;
 
 type FollowedPlace = {
   read: () => number;
+  seek: (seconds: number) => void;
   stop: () => void;
 };
 
@@ -16,13 +17,16 @@ type FollowedPlace = {
  * what it was sent, or being emptied once it has had a picture, the place is held: Firefox has
  * emptied it already by the time it says so, and an engine starting it again seeks it to the start
  * and plays a moment there on its way. It lets go once a picture plays where it was held, which is
- * the element back where the viewer was, or once the viewer seeks somewhere past the first moments
- * of the film, since an engine starting the element again only ever seeks it to the start.
+ * the element back where the viewer was, or once the element seeks somewhere past the first moments
+ * of the film, since an engine starting the element again only ever seeks it to the start. A seek
+ * somebody asked for is told to it directly, wherever it goes, since only the element's own seeks
+ * are in doubt.
  *
  * @param element - The element playing the film.
  * @param startSeconds - Where the film was asked to begin, which is the place until it has one of
  *   its own.
- * @returns A reading of the place, and a way to stop following it.
+ * @returns A reading of the place, a way to tell it of a seek somebody asked for, and a way to stop
+ *   following it.
  */
 const followPlace = (element: HTMLMediaElement, startSeconds: number): FollowedPlace => {
   const place = { atSeconds: startSeconds, hasPicture: false, isHeld: false };
@@ -71,6 +75,10 @@ const followPlace = (element: HTMLMediaElement, startSeconds: number): FollowedP
 
   return {
     read: () => place.atSeconds,
+    seek: (seconds) => {
+      place.isHeld = false;
+      place.atSeconds = seconds;
+    },
     stop: () => {
       element.removeEventListener('error', noteWhereRefused);
       element.removeEventListener('emptied', holdWhereItWas);
