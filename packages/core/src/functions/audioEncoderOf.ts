@@ -1,4 +1,4 @@
-const ENCODERS: Readonly<Record<string, string>> = { eac3: 'eac3' };
+const DOLBY_DIGITAL_PLUS = 'eac3';
 
 const DEFAULT_ENCODER = 'aac';
 
@@ -9,6 +9,7 @@ const DEFAULT_ENCODER = 'aac';
  * @param codec - The codec the plan encodes to.
  * @returns The encoder's name.
  */
-const audioEncoderOf = (codec: string): string => ENCODERS[codec] ?? DEFAULT_ENCODER;
+const audioEncoderOf = (codec: string): string =>
+  codec === DOLBY_DIGITAL_PLUS ? DOLBY_DIGITAL_PLUS : DEFAULT_ENCODER;
 
 export { audioEncoderOf };

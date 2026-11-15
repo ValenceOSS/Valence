@@ -10,5 +10,7 @@ describe('audioEncoderOf', () => {
     expect(audioEncoderOf('aac')).toBe('aac');
     expect(audioEncoderOf('mp3')).toBe('aac');
     expect(audioEncoderOf('-f null')).toBe('aac');
+    expect(audioEncoderOf('constructor')).toBe('aac');
+    expect(audioEncoderOf('toString')).toBe('aac');
   });
 });
