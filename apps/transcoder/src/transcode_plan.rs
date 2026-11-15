@@ -520,6 +520,7 @@ impl SessionSpec {
             subtitles: SubtitleAction::None,
             source_size: None,
             source_video_codec: None,
+            fallback_bitrate_kbps: None,
             track: Track::Audio,
             needs_idr_keyframes: false,
             ..self.clone()
@@ -6871,6 +6872,20 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         assert_ne!(open.plan_id(), capped.plan_id());
         assert_ne!(open.session_id(), capped.session_id());
         assert_eq!(open.plan_id(), copy_with_fallback(Some(8_068)).plan_id());
+    }
+
+    /// The sound of a session sent apart from its picture is the same sound whatever the picture
+    /// would be encoded at, so two viewers who differ only there share it.
+    #[test]
+    fn the_sound_of_a_split_session_is_shared_whatever_the_picture_would_be_encoded_at() {
+        assert_eq!(
+            copy_with_fallback(Some(8_068)).audio_alone(4).plan_id(),
+            copy_with_fallback(Some(6_000)).audio_alone(4).plan_id()
+        );
+        assert_eq!(
+            copy_with_fallback(Some(8_068)).audio_alone(4).plan_id(),
+            copy_with_fallback(None).audio_alone(4).plan_id()
+        );
     }
 
     /// A server that sends no figure gets the ids it always did, and a figure means nothing to a
