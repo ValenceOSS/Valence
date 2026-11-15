@@ -38,7 +38,7 @@ const readMediaOrigins = async (
       ),
     ),
     recorded.read(paths),
-    Promise.all(paths.map(linkOf)),
+    Promise.all(paths.map((path) => linkOf(path))),
   ]);
   const filedOf = new Map(fromRequests.flatMap((some) => Object.entries(some)));
   const recordedOf = new Map(Object.entries(fromServer));
