@@ -21,10 +21,11 @@ async function* readEveryItemAsItComes(
   options: Omit<ListItemsOptions, 'limit' | 'offset'> = {},
   signal?: AbortSignal,
 ): AsyncGenerator<readonly MediaSummary[], void, undefined> {
+  const isGivenUp = () => signal?.aborted === true;
   const first = await fetchItemsAcross(libraryIds, { ...options, limit: PAGE_SIZE, offset: 0 });
   const offsets: number[] = [];
 
-  if (signal?.aborted === true) {
+  if (isGivenUp()) {
     return;
   }
 
@@ -34,7 +35,7 @@ async function* readEveryItemAsItComes(
     offsets.push(offset);
   }
 
-  for (let start = 0; start < offsets.length && signal?.aborted !== true; start += AT_ONCE) {
+  for (let start = 0; start < offsets.length && !isGivenUp(); start += AT_ONCE) {
     const pages = await Promise.all(
       offsets
         .slice(start, start + AT_ONCE)
@@ -45,7 +46,7 @@ async function* readEveryItemAsItComes(
         ),
     );
 
-    if (signal?.aborted === true) {
+    if (isGivenUp()) {
       return;
     }
 
