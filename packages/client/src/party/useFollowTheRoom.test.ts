@@ -14,7 +14,13 @@ vi.mock('@ValenceClient/platform/installPlatform', () => ({
   platformInUse: () => ({ thisClientId: () => 'tab-1' }),
 }));
 
-type FakePlayer = RoomPlayer & { at: number; paused: boolean; ended: boolean; rate: number };
+type FakePlayer = RoomPlayer & {
+  at: number;
+  paused: boolean;
+  ended: boolean;
+  rate: number;
+  skew: number;
+};
 
 /**
  * A player standing at a moment, paused or not, that remembers what it was asked to do.
@@ -29,9 +35,10 @@ const aPlayer = (at: number, paused = false): FakePlayer => {
     paused,
     ended: false,
     rate: 1,
+    skew: 0,
     readyState: () => 4,
     currentSeconds: () => player.at,
-    frameSkewSeconds: () => 0,
+    frameSkewSeconds: () => player.skew,
     bufferedAheadSeconds: () => 10,
     isPaused: () => player.paused,
     isEnded: () => player.ended,
@@ -136,6 +143,20 @@ describe('useFollowTheRoom', () => {
     expect(reportPlaybackNote).toHaveBeenCalledTimes(1);
     expect(reportPlaybackNote).toHaveBeenCalledWith(
       { kind: 'caughtUp', partyId: 'a-party', fromSeconds: 10, toSeconds: 600, because: 'joined' },
+      'tab-1',
+    );
+  });
+
+  it('notes a jump by the frame shown, where the picture runs behind the clock', () => {
+    const player = aPlayer(100);
+
+    player.skew = 5;
+
+    follow(player, aParty({ referenceSeconds: 120 }));
+
+    expect(player.seekTo).toHaveBeenCalledWith(115);
+    expect(reportPlaybackNote).toHaveBeenCalledWith(
+      expect.objectContaining({ fromSeconds: 105, toSeconds: 120 }),
       'tab-1',
     );
   });

@@ -38,7 +38,7 @@ const moveToTheRoom = (
   toSeconds: number,
   because: 'joined' | 'drifted',
 ): void => {
-  const fromSeconds = player.currentSeconds();
+  const fromSeconds = player.currentSeconds() + player.frameSkewSeconds();
 
   player.seekTo(toSeconds - player.frameSkewSeconds());
 
