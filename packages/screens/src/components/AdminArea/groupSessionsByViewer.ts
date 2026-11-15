@@ -18,6 +18,10 @@ type SessionGroup = { key: string; label: string; sessions: ActiveSession[] };
  * watching on one person's links reads as that person's guests, and is not lumped in with a signed
  * in tab that has simply not said who it is yet.
  *
+ * Somebody watching from a linked server has neither a profile nor an account here either, so they
+ * group by their server and the name it gives them. Keyed on neither, everybody from every linked
+ * server fell into one group under whichever of them was seen first.
+ *
  * @param sessions - Every session open at the moment.
  * @returns The sessions by viewer, in the order the viewers were first seen.
  */
@@ -27,7 +31,11 @@ const groupSessionsByViewer = (sessions: ActiveSession[]): SessionGroup[] => {
   for (const session of sessions) {
     const key = session.isGuest
       ? `guest:${session.guestOf ?? 'unknown'}`
-      : (session.profileId ?? session.accountId ?? 'unknown');
+      : (session.profileId ??
+        session.accountId ??
+        (session.fromServer === null
+          ? 'unknown'
+          : `linked:${session.fromServer}:${session.profileName ?? ''}`));
     const existing = groups.get(key);
 
     if (existing === undefined) {
