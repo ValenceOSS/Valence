@@ -5,7 +5,7 @@ const metadata: Metadata = {
   title: 'Valence statistics',
   description:
     'How Valence is run: anonymous, aggregate figures from the Valence servers that report once a day.',
-  icons: { icon: '/icon.png', apple: '/icon.png' },
+  icons: { icon: '/icon.png?v=layers', apple: '/icon.png?v=layers' },
 };
 
 export { metadata };

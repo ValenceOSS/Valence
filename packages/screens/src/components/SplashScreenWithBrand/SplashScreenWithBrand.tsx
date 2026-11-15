@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { BrandLogo } from '@ValenceScreens/components/BrandLogo/BrandLogo';
-import { DeckMark } from '@ValenceUI/DeckMark';
+import { StackingMark } from '@ValenceUI/StackingMark';
 import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import type { SplashScreenWithBrandProps } from './SplashScreenWithBrand.types';
 import { say } from '@ValenceI18n/say';
@@ -41,11 +41,10 @@ const SplashScreenWithBrand = ({ label, ...props }: SplashScreenWithBrandProps) 
       name={name}
       mark={
         (brand?.logo ?? null) === null ? (
-          <DeckMark
-            size={84}
-            isAnimated
-            loops={props.isReady !== true && (props.failure ?? null) === null}
+          <StackingMark
+            isLooping={props.isReady !== true && (props.failure ?? null) === null}
             label={name}
+            className="h-16"
           />
         ) : (
           <BrandLogo logo={brand?.logo ?? null} size={MARK_SIZE} label={name} />

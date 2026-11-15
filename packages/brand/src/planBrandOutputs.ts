@@ -1,6 +1,10 @@
 const ICON = 'assets/valence-icon.icon';
 
+const DEV_ICON = 'assets/valence-icon-dev.icon';
+
 const LOGO = 'assets/valence-logo.svg';
+
+const LAYERS = ['top', 'middle', 'base'] as const;
 
 const MAC_ICON_MARGIN = 100;
 
@@ -17,7 +21,14 @@ type BannerLayers = 'both' | 'logo' | 'background';
 type BrandOutput =
   | { kind: 'copy'; from: string; to: string }
   | { kind: 'mark'; from: string; to: string; width: number; height: number }
-  | { kind: 'icon'; from: string; to: string; pixels: number; margin: number }
+  | {
+      kind: 'icon';
+      from: string;
+      to: string;
+      pixels: number;
+      margin: number;
+      rendition?: 'Default' | 'Dark';
+    }
   | { kind: 'roundIcon'; from: string; to: string; pixels: number; rendition: 'Default' | 'Dark' }
   | {
       kind: 'banner';
@@ -87,6 +98,21 @@ const planBrandOutputs = (): BrandOutput[] => {
       margin: 0,
     },
     { kind: 'icon', from: ICON, to: 'assets/valence-icon.png', pixels: 256, margin: 0 },
+    {
+      kind: 'icon',
+      from: ICON,
+      to: 'packages/ui/src/assets/discord/valence-desktop.png',
+      pixels: 512,
+      margin: 0,
+    },
+    {
+      kind: 'icon',
+      from: ICON,
+      to: 'packages/ui/src/assets/discord/valence-desktop-dark.png',
+      pixels: 512,
+      margin: 0,
+      rendition: 'Dark',
+    },
     { kind: 'copy', from: ICON, to: 'apps/desktop/build/icon.icon' },
     { kind: 'icon', from: ICON, to: 'apps/desktop/build/icon.png', pixels: 1024, margin: 0 },
     {
@@ -105,17 +131,38 @@ const planBrandOutputs = (): BrandOutput[] => {
     },
     {
       kind: 'icon',
-      from: ICON,
+      from: DEV_ICON,
       to: 'apps/desktop/build/icon-dev.png',
       pixels: 1024,
       margin: MAC_ICON_MARGIN,
     },
-    mark('apps/mobile/src/assets/valence-mark.png', 38, 28),
-    mark('apps/mobile/src/assets/valence-mark@2x.png', 76, 56),
-    mark('apps/mobile/src/assets/valence-mark@3x.png', 114, 84),
-    mark('apps/tv/src/assets/valence-mark.png', 1248, 916),
-    mark('apps/tv/assets/launch/launch-mark.png', 160, 117),
-    mark('apps/tv/assets/launch/launch-mark@2x.png', 320, 234),
+    mark('apps/mobile/src/assets/valence-mark.png', 30, 28),
+    mark('apps/mobile/src/assets/valence-mark@2x.png', 59, 56),
+    mark('apps/mobile/src/assets/valence-mark@3x.png', 89, 84),
+    mark('apps/tv/src/assets/valence-mark.png', 972, 916),
+    mark('apps/tv/assets/launch/launch-mark.png', 124, 117),
+    mark('apps/tv/assets/launch/launch-mark@2x.png', 248, 234),
+    ...LAYERS.flatMap((layer): BrandOutput[] => [
+      ...['web', 'desktop', 'docs', 'landing', 'metrics'].map((app): BrandOutput => ({
+        kind: 'copy',
+        from: `assets/valence-layers-${layer}.svg`,
+        to: `apps/${app}/public/valence-layers-${layer}.svg`,
+      })),
+      {
+        kind: 'mark',
+        from: `assets/valence-layers-${layer}.svg`,
+        to: `apps/mobile/src/assets/valence-layer-${layer}.png`,
+        width: 318,
+        height: 300,
+      },
+      {
+        kind: 'mark',
+        from: `assets/valence-layers-${layer}.svg`,
+        to: `apps/tv/src/assets/valence-layer-${layer}.png`,
+        width: 972,
+        height: 916,
+      },
+    ]),
     tv('icon', 1280, 768, APP_ICON_LOGO_SHARE),
     tv('iconSmall', 400, 240, APP_ICON_LOGO_SHARE),
     tv('iconSmall2x', 800, 480, APP_ICON_LOGO_SHARE),

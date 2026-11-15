@@ -15,7 +15,7 @@ import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { ServerCard } from '@ValenceTv/screens/ChooseServer/components/ServerCard/ServerCard';
-import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
+import { LayersMark } from '@ValenceTv/components/LayersMark/LayersMark';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import type { ChooseServerProps } from './ChooseServer.types';
 import { say } from '@ValenceI18n/say';
@@ -129,7 +129,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
 
       <FadeIn isFilling={false}>
         <View style={styles.top}>
-          <DeckMark width={MARK.width} height={MARK.height} />
+          <LayersMark width={MARK.width} height={MARK.height} />
           <Text style={styles.title}>{say('common.whichValenceIsYours')}</Text>
           <Text style={styles.lead}>{whichServerFor(whichTv())}</Text>
         </View>

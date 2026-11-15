@@ -11,7 +11,7 @@ import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
+import { LayersMark } from '@ValenceTv/components/LayersMark/LayersMark';
 import { PhoneSignIn } from '@ValenceTv/components/PhoneSignIn/PhoneSignIn';
 import type { WhoIsWatchingProps } from './WhoIsWatching.types';
 import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
@@ -58,7 +58,7 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
       <FadeIn isFilling={false}>
         <View style={styles.top}>
           <View ref={holdMark} collapsable={false}>
-            <DeckMark width={MARK.width} height={MARK.height} />
+            <LayersMark width={MARK.width} height={MARK.height} />
           </View>
           <Text style={styles.title}>
             {isHidden ? say('common.signInWithYourPhone') : say('common.whoIsWatching')}

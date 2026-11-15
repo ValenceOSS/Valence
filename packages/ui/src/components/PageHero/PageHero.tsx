@@ -19,8 +19,23 @@ import type { PageHeroProps } from './PageHero.types';
  * @param description - A line or two about the page.
  * @param actions - What to do next, set under the words.
  * @param aside - A picture set beside the words on a wide screen.
+ * @param ground - What the card is painted with, where a site has its own rather than the blue light.
+ * @param isFlat - Whether the name is set solid and heavy rather than lit from below, with the
+ *   small line above it in the same face rather than a typewriter's.
  */
-const PageHero = ({ eyebrow, lead, accent, trail, description, actions, aside }: PageHeroProps) => {
+const PageHero = ({
+  eyebrow,
+  lead,
+  accent,
+  trail,
+  description,
+  actions,
+  aside,
+  ground,
+  isFlat = false,
+}: PageHeroProps) => {
+  const lit = isFlat ? '' : LIT_TEXT;
+
   const prefersReducedMotion = useReducedMotionConfig();
   const arrives = {
     variants: revealVariants(prefersReducedMotion),
@@ -30,22 +45,26 @@ const PageHero = ({ eyebrow, lead, accent, trail, description, actions, aside }:
   return (
     <section className="px-2 pt-2 sm:px-3 sm:pt-3">
       <div className="relative isolate overflow-hidden rounded-[2rem] bg-aurora sm:rounded-[2.5rem]">
-        <AuroraBackdrop />
+        {ground ?? <AuroraBackdrop />}
 
         <motion.div
           variants={staggerVariants}
           initial="hidden"
           animate="shown"
           className={cn(
-            'mx-auto grid max-w-6xl items-center gap-12 px-6 pb-16 pt-[var(--page-hero-top,8rem)] sm:px-10 sm:pb-20 sm:pt-[var(--page-hero-top-wide,10rem)] xl:max-w-7xl',
+            'mx-auto grid max-w-6xl items-center gap-12 px-6 pt-[var(--page-hero-top,8rem)] sm:px-10 sm:pt-[var(--page-hero-top-wide,10rem)] xl:max-w-7xl',
+            isFlat ? 'pb-10 sm:pb-12' : 'pb-16 sm:pb-20',
             aside === undefined ? '' : 'lg:grid-cols-[1.1fr_1fr]',
           )}
         >
-          <div className="flex flex-col items-start gap-5">
+          <div className={cn('flex flex-col items-start', isFlat ? 'gap-4' : 'gap-5')}>
             {eyebrow === undefined ? null : (
               <motion.p
                 {...arrives}
-                className="font-mono text-xs uppercase tracking-[0.2em] text-on-scrim/75"
+                className={cn(
+                  'text-xs uppercase text-on-scrim/75',
+                  isFlat ? 'font-bold tracking-[0.22em]' : 'font-mono tracking-[0.2em]',
+                )}
               >
                 {eyebrow}
               </motion.p>
@@ -53,14 +72,19 @@ const PageHero = ({ eyebrow, lead, accent, trail, description, actions, aside }:
 
             <motion.h1
               {...arrives}
-              className="max-w-[18ch] text-balance text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[0.95] tracking-[-0.035em] text-on-scrim"
+              className={cn(
+                'max-w-[18ch] text-balance leading-[0.95] text-on-scrim',
+                isFlat
+                  ? 'text-[clamp(2.25rem,4.5vw,3.75rem)] font-[800] tracking-[-0.04em]'
+                  : 'text-[clamp(2.75rem,6vw,5rem)] font-semibold tracking-[-0.035em]',
+              )}
             >
-              <span className={cn('box-decoration-clone', LIT_TEXT)}>{lead}</span>
+              <span className={cn('box-decoration-clone', lit)}>{lead}</span>
               {accent === undefined ? null : (
                 <>
                   {' '}
                   <span className="relative inline-block font-accent font-normal italic tracking-normal">
-                    <span className={LIT_TEXT}>{accent}</span>
+                    <span className={lit}>{accent}</span>
                     <Doodle
                       of="underline"
                       delay={0.5}
@@ -72,7 +96,7 @@ const PageHero = ({ eyebrow, lead, accent, trail, description, actions, aside }:
               {trail === undefined ? null : (
                 <>
                   {' '}
-                  <span className={cn('box-decoration-clone', LIT_TEXT)}>{trail}</span>
+                  <span className={cn('box-decoration-clone', lit)}>{trail}</span>
                 </>
               )}
             </motion.h1>
@@ -80,14 +104,20 @@ const PageHero = ({ eyebrow, lead, accent, trail, description, actions, aside }:
             {description === undefined ? null : (
               <motion.div
                 {...arrives}
-                className="max-w-xl text-balance text-lg text-on-scrim/75 sm:text-xl"
+                className={cn(
+                  'text-balance text-on-scrim/75',
+                  isFlat ? 'max-w-2xl text-base sm:text-lg' : 'max-w-xl text-lg sm:text-xl',
+                )}
               >
                 {description}
               </motion.div>
             )}
 
             {actions === undefined ? null : (
-              <motion.div {...arrives} className="flex flex-wrap gap-3 pt-3">
+              <motion.div
+                {...arrives}
+                className={cn('flex flex-wrap gap-3', isFlat ? 'pt-1' : 'pt-3')}
+              >
                 {actions}
               </motion.div>
             )}

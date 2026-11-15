@@ -5,7 +5,7 @@ import { Button } from '@ValenceUI/Button';
 import { groupVariants, revealItemVariants } from '@ValenceUI/animations/reveal';
 import { useReached } from '@ValenceUI/useReached';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
-import { PageHero } from '@ValenceUI/PageHero';
+import { LandingPageHero } from '@ValenceLanding/components/LandingPageHero/LandingPageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import { FeatureVisual } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/FeatureVisual';
 import { PluginCard } from '@ValenceLanding/components/PluginsPage/components/PluginCard/PluginCard';
@@ -52,7 +52,7 @@ const PluginsPage = ({ plugins = OFFICIAL }: PluginsPageProps) => {
 
   return (
     <>
-      <PageHero
+      <LandingPageHero
         eyebrow="Plugins"
         lead="Add to Valence without handing over"
         accent="the keys"

@@ -1,7 +1,7 @@
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
-import { PageHero } from '@ValenceUI/PageHero';
+import { LandingPageHero } from '@ValenceLanding/components/LandingPageHero/LandingPageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
 import { FEATURE_GROUPS } from '@ValenceLanding/content/features/FEATURE_GROUPS';
@@ -57,7 +57,7 @@ const FEATURE_COUNT = FEATURE_GROUPS.reduce((sum, group) => sum + group.features
  */
 const FeaturesPage = () => (
   <>
-    <PageHero
+    <LandingPageHero
       eyebrow="Features"
       lead="Everything"
       accent="Valence"

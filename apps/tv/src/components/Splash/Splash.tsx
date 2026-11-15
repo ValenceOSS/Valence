@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
-import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
+import { LayersMark } from '@ValenceTv/components/LayersMark/LayersMark';
 import { LoadingBar } from '@ValenceTv/components/LoadingBar/LoadingBar';
 import type { SplashProps } from './Splash.types';
 import { say } from '@ValenceI18n/say';
 
-const MARK = { width: 160, height: 117 };
+const CAP_HEIGHT = 0.705;
+
+const MARK_HIGH = Math.round(tokens.type.hero * CAP_HEIGHT);
+
+const MARK = { width: Math.round((MARK_HIGH * 140) / 132), height: MARK_HIGH };
+
+const GAP = Math.round(tokens.type.hero / 4);
 
 const NAME_OPENS_MS = 420;
 
@@ -26,9 +32,9 @@ const EASES_IN = Easing.in((t) => Easing.cubic(t));
 /**
  * What Valence shows as it opens, taking over from the television's launch screen without a seam:
  * the same mark, at the same size and in the same place, on the same dark ground. While the app
- * finds out who is signed in the deck gathers its cards back up and fans them out again, over and
- * over, with a slim bar at the foot of the screen sliding along. Once it knows, the bar fades, the
- * deck fans out and stays, the name opens out beside it and holds a moment, and then the mark
+ * finds out who is signed in its three layers lift away and stack again, over and over, with a
+ * slim bar at the foot of the screen sliding along. Once it knows, the bar fades, the layers stack
+ * and stay, the name opens out beside it and holds a moment, and then the mark
  * swells and fades and the ground fades with it, uncovering the first screen beneath.
  *
  * @param isDone - Whether the app is ready to show its first screen.
@@ -97,26 +103,29 @@ const Splash = ({ isDone, onGone }: SplashProps) => {
           },
         ]}
       >
-        <DeckMark
+        <LayersMark
           width={MARK.width}
           height={MARK.height}
           loops={!isDone && !isStill}
           label={say('common.valence')}
         />
 
-        <Animated.View
-          style={[
-            styles.name,
-            {
-              opacity: named,
-              transform: [
-                { translateX: named.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) },
-              ],
-            },
-          ]}
-        >
-          <Text style={styles.word}>{say('common.valence')}</Text>
-        </Animated.View>
+        <View style={styles.name}>
+          <View style={styles.room} />
+
+          <Animated.View
+            style={[
+              {
+                opacity: named,
+                transform: [
+                  { translateX: named.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) },
+                ],
+              },
+            ]}
+          >
+            <Text style={styles.word}>{say('common.valence')}</Text>
+          </Animated.View>
+        </View>
       </Animated.View>
 
       <Animated.View style={[styles.bar, { opacity: barShown }]}>
@@ -136,11 +145,12 @@ const styles = StyleSheet.create({
   },
   name: {
     position: 'absolute',
-    left: MARK.width + 28,
+    left: 0,
     top: 0,
-    bottom: 0,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'baseline',
   },
+  room: { width: MARK.width + GAP, height: MARK.height },
   word: {
     color: tokens.colours.text,
     fontSize: tokens.type.hero,

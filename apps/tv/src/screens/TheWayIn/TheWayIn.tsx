@@ -21,7 +21,7 @@ import { EnterPassword } from '@ValenceTv/screens/EnterPassword/EnterPassword';
 import { WhoIsWatching } from '@ValenceTv/screens/WhoIsWatching/WhoIsWatching';
 import { SignedIn } from '@ValenceTv/screens/SignedIn/SignedIn';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
+import { LayersMark } from '@ValenceTv/components/LayersMark/LayersMark';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { useThisAppIsTurnedOff } from '@ValenceClient/about/useThisAppIsTurnedOff';
 import { Button } from '@ValenceTv/components/Button/Button';
@@ -276,7 +276,7 @@ const TheWayIn = () => {
           to={flights.mark.to}
           onLanded={markLanded}
         >
-          <DeckMark width={flights.mark.from.width} height={flights.mark.from.height} />
+          <LayersMark width={flights.mark.from.width} height={flights.mark.from.height} />
         </Flight>
       )}
 

@@ -26,7 +26,7 @@ Your films, programmes, music and books, on every screen in the house, from a se
 
 <div align="center">
 
-<img src="assets/valence.jpg" alt="The Valence home page: Charlie's Angels in the hero with Play and More info, above the Continue watching row, with Shows, Films, Music, Books, Discover and Calendar along the top" width="900" />
+<img src="assets/valence.jpg" alt="The Valence home page: Reasonable Doubt in the hero with Play and More info, above the Coming up row, with Home, Shows, Films, Music, Books, Discover and Calendar along the top" width="900" />
 
 </div>
 

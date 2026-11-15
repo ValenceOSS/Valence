@@ -71,7 +71,7 @@ const AWrittenName = ({ name }: AWrittenNameProps) => {
               ],
             }}
           >
-            <Words size="heading">{letter}</Words>
+            <Words size="name">{letter}</Words>
           </Animated.View>
         );
       })}

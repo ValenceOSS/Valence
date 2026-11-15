@@ -13,7 +13,7 @@ const WAITS_AT_MOST = 3000;
 const FADES_OVER = 250;
 
 const styles = StyleSheet.create({
-  fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
+  fills: { bottom: 0, elevation: 20, left: 0, position: 'absolute', right: 0, top: 0, zIndex: 20 },
   mark: { position: 'absolute' },
 });
 

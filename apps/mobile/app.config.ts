@@ -63,7 +63,7 @@ const config: ExpoConfig = {
     adaptiveIcon: {
       foregroundImage: './assets/icon/android-icon-foreground.png',
       backgroundImage: './assets/icon/android-icon-background.png',
-      backgroundColor: '#0088FF',
+      backgroundColor: '#FFFFFF',
     },
     permissions: ['ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE'],
     blockedPermissions: [

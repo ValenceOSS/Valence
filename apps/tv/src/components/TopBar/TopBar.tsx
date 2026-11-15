@@ -9,7 +9,7 @@ import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { TabBar } from '@ValenceTv/components/TabBar/TabBar';
 import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
+import { LayersMark } from '@ValenceTv/components/LayersMark/LayersMark';
 import type { Tab } from '@ValenceTv/navigation/Tab';
 import type { TopBarProps } from './TopBar.types';
 import { say } from '@ValenceI18n/say';
@@ -122,7 +122,7 @@ const TopBar = ({
         style={[styles.mark, isArriving && styles.hidden]}
         onLayout={markLaidOut}
       >
-        <DeckMark width={MARK.width} height={MARK.height} isAnimated />
+        <LayersMark width={MARK.width} height={MARK.height} isAnimated />
       </View>
 
       <Glass cornerRadius={tokens.radii.round} style={styles.glass}>

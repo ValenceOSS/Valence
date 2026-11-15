@@ -11,6 +11,15 @@ const JOINED_SHAPES = {
   raised: 'raisedJoined',
 } as const;
 
+const PARTED_SHAPES = {
+  confirm: 'confirmParted',
+  secondary: 'secondaryParted',
+  raised: 'raisedParted',
+} as const;
+
+const PARTED_FACE =
+  'h-11 gap-2 rounded-[0.75rem] rounded-e-[4px] px-4 text-[0.9375rem] font-semibold shadow-[var(--shadow-lifted)]';
+
 /**
  * One large action with a choice of what it acts on behind an arrow at its end: Play, with which
  * edition of a film it plays chosen from the arrow. The two read as one control split by a hairline,
@@ -25,6 +34,8 @@ const JOINED_SHAPES = {
  * @param onSelect - Called with what was chosen.
  * @param tone - How loudly it stands.
  * @param size - How large it stands: large for the answer of a page, small for a card's heading.
+ * @param shape - Whether the arrow runs on from the action behind a hairline, or sits a sliver
+ *   apart as its own square, the way Play and Start again stand on a title.
  * @param footer - Something to say beneath the choices, such as what changing them does.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -38,18 +49,20 @@ const SplitButton = ({
   onSelect,
   tone = 'confirm',
   size = 'lg',
+  shape = 'joined',
   footer,
   className,
 }: SplitButtonProps) => (
-  <div className={cn('inline-flex min-w-0', className)}>
+  <div className={cn('inline-flex min-w-0', shape === 'parted' ? 'gap-[3px]' : '', className)}>
     <Button
       variant={tone}
-      size={size}
-      joins="next"
+      size={shape === 'parted' ? 'none' : size}
+      {...(shape === 'parted' ? {} : { joins: 'next' as const })}
       className={cn(
         'min-w-0 flex-1',
-        tone === 'confirm' ? '' : 'border-e-0',
-        tone === 'raised' ? 'shadow-none' : '',
+        shape === 'parted'
+          ? PARTED_FACE
+          : cn(tone === 'confirm' ? '' : 'border-e-0', tone === 'raised' ? 'shadow-none' : ''),
       )}
       onClick={onClick}
     >
@@ -59,7 +72,7 @@ const SplitButton = ({
     <OptionMenu
       label={choiceLabel}
       trigger={<Icon of={ChevronDownIcon} size={size === 'sm' ? 14 : 16} />}
-      triggerShape={JOINED_SHAPES[tone]}
+      triggerShape={shape === 'parted' ? PARTED_SHAPES[tone] : JOINED_SHAPES[tone]}
       align="end"
       groups={[{ name: choiceName, options, selectedId, onSelect }]}
       {...(size === 'sm' ? { className: 'size-7 before:inset-y-1.5' } : {})}

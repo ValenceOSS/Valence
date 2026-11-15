@@ -6,7 +6,7 @@ import { Button } from '@ValenceUI/Button';
 import { Drawer } from '@ValenceUI/Drawer';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { UiComponentView } from '@ValenceLanding/components/UiLibraryPage/components/UiComponentView/UiComponentView';
-import { PageHero } from '@ValenceUI/PageHero';
+import { LandingPageHero } from '@ValenceLanding/components/LandingPageHero/LandingPageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { UiLibrarySidebar } from '@ValenceLanding/components/UiLibraryPage/components/UiLibrarySidebar/UiLibrarySidebar';
@@ -54,7 +54,7 @@ const UiLibraryPage = () => {
 
   return (
     <>
-      <PageHero
+      <LandingPageHero
         eyebrow="@ValenceUI"
         lead="The parts the Valence web apps are"
         accent="built from"

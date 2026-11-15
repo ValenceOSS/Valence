@@ -9,6 +9,8 @@ const DIVIDER =
 
 const FLIPS = '[&_svg]:transition-transform [&[data-state=open]_svg]:rotate-180';
 
+const PARTED_SQUARE = 'h-11 w-10 justify-center rounded-[0.75rem] rounded-s-[4px]';
+
 const JOINED_LOOKS = {
   confirm: cn(
     buttonStyles({ variant: 'confirm', size: 'lg', isIconOnly: true, shape: 'joinsPrevious' }),
@@ -30,6 +32,24 @@ const JOINED_LOOKS = {
     DIVIDER,
     FLIPS,
     'border-s-0 shadow-none before:bg-[var(--surface-line)] data-[state=open]:brightness-125',
+  ),
+  confirmParted: cn(
+    buttonStyles({ variant: 'confirm', size: 'none', isIconOnly: true, shape: 'bare' }),
+    PARTED_SQUARE,
+    FLIPS,
+    'inline-flex items-center text-on-white shadow-[var(--shadow-lifted)] hover:bg-white-hover data-[state=open]:bg-white-hover',
+  ),
+  secondaryParted: cn(
+    buttonStyles({ variant: 'secondary', size: 'none', isIconOnly: true, shape: 'bare' }),
+    PARTED_SQUARE,
+    FLIPS,
+    'inline-flex items-center data-[state=open]:bg-[var(--surface-active)]',
+  ),
+  raisedParted: cn(
+    buttonStyles({ variant: 'raised', size: 'none', isIconOnly: true, shape: 'bare' }),
+    PARTED_SQUARE,
+    FLIPS,
+    'inline-flex items-center data-[state=open]:brightness-125',
   ),
   track: cn(
     'inline-flex min-w-0 divide-x divide-[var(--surface-line)] overflow-hidden rounded-lg',

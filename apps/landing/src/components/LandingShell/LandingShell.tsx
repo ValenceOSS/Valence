@@ -3,6 +3,7 @@ import { keepCanonical } from '@ValenceLanding/components/LandingShell/keepCanon
 import { useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
+import { LandingSplash } from '@ValenceLanding/components/LandingSplash/LandingSplash';
 import { SiteCursor } from '@ValenceLanding/components/SiteCursor/SiteCursor';
 import { SiteFooter } from '@ValenceUI/SiteFooter';
 import { LandingLink } from '@ValenceLanding/components/LandingLink/LandingLink';
@@ -56,9 +57,11 @@ const LandingShell = () => {
         </Suspense>
       </AnimatePresence>
 
-      <SiteFooter here="landing" InSiteLink={LandingLink} logoSrc="/valence-icon.png" />
+      <SiteFooter here="landing" InSiteLink={LandingLink} />
 
       <SiteCursor />
+
+      <LandingSplash />
     </div>
   );
 };

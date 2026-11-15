@@ -87,6 +87,7 @@ const LINK =
  *
  * @param here - Which site the footer is on.
  * @param InSiteLink - How that site links to one of its own pages.
+ * @param logoSrc - A picture to show in place of the mark.
  */
 const SiteFooter = ({ here, InSiteLink, logoSrc }: SiteFooterProps) => {
   const isStill = useReducedMotionConfig() === true;
@@ -119,20 +120,23 @@ const SiteFooter = ({ here, InSiteLink, logoSrc }: SiteFooterProps) => {
       <SectionCard>
         <div className="mx-auto grid max-w-6xl gap-12 px-5 pt-20 sm:px-10 lg:grid-cols-[1.4fr_repeat(4,1fr)] xl:max-w-7xl">
           <div className="flex flex-col gap-5">
-            <span className="flex items-center gap-3">
-              {logoSrc === undefined ? (
-                <Logo size={34} isSolid />
-              ) : (
+            {logoSrc === undefined ? (
+              <span className="flex items-baseline gap-[0.25em] text-3xl font-extrabold tracking-[-0.045em] text-text">
+                <Logo isCurrentColour className="h-[1cap]" />
+                {say('common.valence')}
+              </span>
+            ) : (
+              <span className="flex items-center gap-3">
                 <img
                   src={logoSrc}
                   alt=""
                   className="size-[2.125rem] rounded-[0.5rem] shadow-[var(--shadow-raised)]"
                 />
-              )}
-              <span className="text-3xl font-semibold tracking-tight text-text">
-                {say('common.valence')}
+                <span className="text-3xl font-semibold tracking-tight text-text">
+                  {say('common.valence')}
+                </span>
               </span>
-            </span>
+            )}
 
             <p className="max-w-xs text-[0.9375rem] leading-relaxed text-text-muted">
               {say('ui.siteFooter.whatValenceIs')}

@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
-import { ADeckMark } from '@ValenceMobile/components/ADeckMark/ADeckMark';
+import { ALayersMark } from '@ValenceMobile/components/ALayersMark/ALayersMark';
 import { useTheBrand } from '@ValenceMobile/hooks/useTheBrand';
 import { pictureOnThisServer } from '@ValenceMobile/platform/pictureOnThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheMarkProps } from './TheMark.types';
 import { say } from '@ValenceI18n/say';
 
-const WIDER_BY = 484.56 / 363.62;
+const WIDER_BY = 140 / 132;
 
 /**
  * The server's mark, in the ink of the words around it, as the web draws it in the corner of its
- * bar: the logo an administrator gave the server, or Valence's deck of cards where it has none or
+ * bar: the logo an administrator gave the server, or Valence's layers where it has none or
  * the logo cannot be read.
  *
  * @param high - How tall it is.
@@ -38,11 +38,10 @@ const TheMark = ({ high = 28 }: TheMarkProps) => {
   }
 
   return (
-    <ADeckMark
+    <ALayersMark
       width={high * WIDER_BY}
       height={high}
       ink={colours.text}
-      ground={colours.surface}
       label={say('common.valence')}
     />
   );
