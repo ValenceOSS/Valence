@@ -1,3 +1,4 @@
+import { followPlace } from '@ValenceScreens/playback/followPlace';
 import { describe, expect, it, vi } from 'vitest';
 import { attachShaka, deliveredFormat, faultFrom, CRITICAL } from './attachShaka';
 import type { ShakaModule, ShakaPlayer, ShakaStats, ShakaVariant } from './attachShaka';
@@ -132,12 +133,108 @@ describe('attachShaka', () => {
 
     raise({ severity: CRITICAL, category: 3, code: 3016 });
 
-    expect(onFault).toHaveBeenCalledWith({
-      severity: CRITICAL,
-      category: 3,
-      code: 3016,
-      httpStatus: null,
+    expect(onFault).toHaveBeenCalledWith(
+      {
+        severity: CRITICAL,
+        category: 3,
+        code: 3016,
+        httpStatus: null,
+      },
+      0,
+    );
+  });
+
+  it('says with a failure where the element last had a picture, not where an emptied one reads', async () => {
+    const { module, raise } = engine();
+    const onFault = vi.fn();
+    const video = element();
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onFault,
+      loadShaka: () => Promise.resolve(module),
     });
+
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 1717;
+    video.dispatchEvent(new Event('timeupdate'));
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 0 });
+    video.currentTime = 0;
+    raise({ severity: CRITICAL, category: 1, code: 1003 });
+
+    expect(onFault).toHaveBeenCalledWith(expect.objectContaining({ code: 1003 }), 1717);
+  });
+
+  it('says with a failure where it last had a picture where a buffer it refused emptied it first', async () => {
+    const { module, raise } = engine();
+    const onFault = vi.fn();
+    const video = element();
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onFault,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 1657;
+    video.dispatchEvent(new Event('timeupdate'));
+    video.currentTime = 0;
+    video.dispatchEvent(new Event('timeupdate'));
+    video.dispatchEvent(new Event('emptied'));
+    video.dispatchEvent(new Event('seeking'));
+    video.currentTime = 0.04;
+    video.dispatchEvent(new Event('timeupdate'));
+    raise({ severity: CRITICAL, category: 3, code: 3014 });
+
+    expect(onFault).toHaveBeenCalledWith(expect.objectContaining({ code: 3014 }), 1657);
+  });
+
+  it('goes on noting where the element is after it is emptied on its way to a first picture', async () => {
+    const { module, raise } = engine();
+    const onFault = vi.fn();
+    const video = element();
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onFault,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    video.dispatchEvent(new Event('emptied'));
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 30;
+    video.dispatchEvent(new Event('timeupdate'));
+    raise({ severity: CRITICAL, category: 1, code: 1003 });
+
+    expect(onFault).toHaveBeenCalledWith(expect.objectContaining({ code: 1003 }), 30);
+  });
+
+  it('says with a failure where the element was sent, before it has a picture there', async () => {
+    const { module, raise } = engine();
+    const onFault = vi.fn();
+    const video = element();
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onFault,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 1 });
+    video.currentTime = 3600;
+    video.dispatchEvent(new Event('seeking'));
+    raise({ severity: CRITICAL, category: 1, code: 1003 });
+
+    expect(onFault).toHaveBeenCalledWith(expect.objectContaining({ code: 1003 }), 3600);
   });
 
   it('passes on that the engine started the element again, with where it was refused', async () => {
@@ -183,6 +280,132 @@ describe('attachShaka', () => {
     recover();
 
     expect(onRecovered).toHaveBeenCalledWith(1830);
+  });
+
+  it('keeps where the element last had a picture where it is emptied before it says it refused', async () => {
+    const { module, recover } = engine();
+    const onRecovered = vi.fn();
+    const video = element();
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onRecovered,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 1717;
+    video.dispatchEvent(new Event('timeupdate'));
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 0 });
+    video.currentTime = 0;
+    video.dispatchEvent(new Event('error'));
+    recover();
+
+    expect(onRecovered).toHaveBeenCalledWith(1717);
+  });
+
+  it('holds where it was refused while the engine starts the emptied element again at the start', async () => {
+    const { module, recover } = engine();
+    const onRecovered = vi.fn();
+    const video = element();
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onRecovered,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 1731;
+    video.dispatchEvent(new Event('timeupdate'));
+    video.currentTime = 0;
+    video.dispatchEvent(new Event('error'));
+    video.dispatchEvent(new Event('seeking'));
+    video.currentTime = 0.04;
+    video.dispatchEvent(new Event('timeupdate'));
+    recover();
+
+    expect(onRecovered).toHaveBeenCalledWith(1731);
+  });
+
+  it('notes where the element is again once the engine has started it again', async () => {
+    const { module, recover } = engine();
+    const onRecovered = vi.fn();
+    const video = element();
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onRecovered,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    video.currentTime = 15;
+    video.dispatchEvent(new Event('error'));
+    recover();
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 15.5;
+    video.dispatchEvent(new Event('timeupdate'));
+    video.currentTime = 40;
+    video.dispatchEvent(new Event('timeupdate'));
+    recover();
+
+    expect(onRecovered).toHaveBeenLastCalledWith(40);
+  });
+
+  it('reads the place the player keeps where it is given one, seeks and all', async () => {
+    const { module, raise, recover } = engine();
+    const onFault = vi.fn();
+    const onRecovered = vi.fn();
+    const video = element();
+    const place = followPlace(video, 4);
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onFault,
+      onRecovered,
+      place,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 1731;
+    video.dispatchEvent(new Event('timeupdate'));
+    video.currentTime = 0;
+    video.dispatchEvent(new Event('error'));
+    place.seek(0.5);
+    recover();
+    raise({ severity: CRITICAL, category: 3, code: 3014 });
+
+    expect(onRecovered).toHaveBeenCalledWith(0.5);
+    expect(onFault).toHaveBeenCalledWith(expect.objectContaining({ code: 3014 }), 0.5);
+  });
+
+  it('leaves following the place it was given to whoever gave it', async () => {
+    const { module } = engine();
+    const video = element();
+    const place = followPlace(video, 4);
+    const attached = await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      place,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    await attached.detach();
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 40;
+    video.dispatchEvent(new Event('timeupdate'));
+
+    expect(place.read()).toBe(40);
   });
 
   it('says where it began where the element was never refused', async () => {
