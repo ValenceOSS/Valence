@@ -15,21 +15,41 @@ afterEach(() => {
 });
 
 /**
- * Has the machine say whether it prefers dark.
+ * A machine whose preference for dark can change while the page is open, telling whoever listens.
  *
- * @param isDark - Whether it does.
+ * @param isDark - Whether it prefers dark at first.
+ * @returns How to change its mind.
  */
-const theMachinePrefers = (isDark: boolean): void => {
+const aMachinePreferring = (isDark: boolean): { prefer: (dark: boolean) => void } => {
+  const listeners = new Set<() => void>();
+  let prefersDark = isDark;
+
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: isDark && query.includes('dark'),
+    get matches() {
+      return prefersDark && query.includes('dark');
+    },
     media: query,
     onchange: null,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
+    addEventListener: (_kind: string, listener: () => void) => {
+      listeners.add(listener);
+    },
+    removeEventListener: (_kind: string, listener: () => void) => {
+      listeners.delete(listener);
+    },
     addListener: vi.fn(),
     removeListener: vi.fn(),
     dispatchEvent: vi.fn(),
   }));
+
+  return {
+    prefer: (dark) => {
+      prefersDark = dark;
+
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+  };
 };
 
 describe('useIsDarkPage', () => {
@@ -53,14 +73,24 @@ describe('useIsDarkPage', () => {
     expect(result.current).toBe(false);
   });
 
-  it('follows the machine where nothing was chosen', () => {
+  it('follows the machine as it changes, where nothing was chosen', () => {
     chooseTheme('system');
-    theMachinePrefers(true);
 
-    expect(renderHook(() => useIsDarkPage()).result.current).toBe(true);
+    const machine = aMachinePreferring(true);
+    const { result } = renderHook(() => useIsDarkPage());
 
-    theMachinePrefers(false);
+    expect(result.current).toBe(true);
 
-    expect(renderHook(() => useIsDarkPage()).result.current).toBe(false);
+    act(() => {
+      machine.prefer(false);
+    });
+
+    expect(result.current).toBe(false);
+
+    act(() => {
+      machine.prefer(true);
+    });
+
+    expect(result.current).toBe(true);
   });
 });
