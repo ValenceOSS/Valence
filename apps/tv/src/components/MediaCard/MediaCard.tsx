@@ -118,8 +118,6 @@ const MediaCard = ({
           </>
         ) : null}
 
-        {watchedFraction === undefined ? null : <ProgressLine fraction={watchedFraction} />}
-
         {origin === null ? null : (
           <View
             style={[styles.origin, { backgroundColor: origin.colour }]}
@@ -145,7 +143,7 @@ const MediaCard = ({
         )}
       </View>
     ),
-    [media, shape, size, isLettered, isUrgent, watchedFraction, unwatchedCount, origin],
+    [media, shape, size, isLettered, isUrgent, unwatchedCount, origin],
   );
 
   return (
@@ -173,17 +171,20 @@ const MediaCard = ({
         <View style={{ width: size.width }}>
           {picture}
 
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.name,
-              ((!isFocused && !isEpisode) || (isLettered && !isEpisode)) && styles.hidden,
-            ]}
-          >
-            {name}
-          </Text>
+          {watchedFraction === undefined ? null : (
+            <ProgressLine fraction={watchedFraction} isBelow />
+          )}
 
-          {isEpisode && typeof media.seriesTitle === 'string' ? (
+          {isLettered ? null : (
+            <Text
+              numberOfLines={1}
+              style={[styles.name, !isFocused && !isEpisode && styles.hidden]}
+            >
+              {name}
+            </Text>
+          )}
+
+          {isEpisode && !isLettered && typeof media.seriesTitle === 'string' ? (
             <Text numberOfLines={1} style={styles.detail}>
               {whereItFalls(media)}
             </Text>

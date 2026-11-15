@@ -11,8 +11,9 @@ const HEIGHT = 8;
  *
  * @param fraction - How much of it has been watched, from nothing to all of it.
  * @param isInline - Whether it sits in a line of words rather than over a picture.
+ * @param isBelow - Whether it sits under a picture, centred, as the web's shelves show it.
  */
-const ProgressLine = ({ fraction, isInline = false }: ProgressLineProps) => (
+const ProgressLine = ({ fraction, isInline = false, isBelow = false }: ProgressLineProps) => (
   <View
     accessible
     accessibilityRole="progressbar"
@@ -22,7 +23,7 @@ const ProgressLine = ({ fraction, isInline = false }: ProgressLineProps) => (
       max: 100,
       now: Math.round(Math.min(Math.max(fraction, 0), 1) * 100),
     }}
-    style={[styles.track, isInline && styles.inline]}
+    style={[styles.track, isInline && styles.inline, isBelow && styles.below]}
   >
     <View style={[styles.watched, { flex: fraction }]} />
     <View style={{ flex: 1 - fraction }} />
@@ -39,12 +40,21 @@ const styles = StyleSheet.create({
     bottom: tokens.space.sm,
     height: HEIGHT,
     borderRadius: tokens.radii.round,
-    backgroundColor: tokens.colours.scrim,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     overflow: 'hidden',
     flexDirection: 'row',
   },
   inline: { position: 'relative', left: 0, right: 0, bottom: 0, width: 140, height: 6 },
-  watched: { backgroundColor: tokens.colours.accent },
+  below: {
+    position: 'relative',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '60%',
+    alignSelf: 'center',
+    marginTop: tokens.space.sm,
+  },
+  watched: { backgroundColor: '#ffffff' },
 });
 
 export { ProgressLine };

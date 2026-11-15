@@ -17,6 +17,7 @@ const WherePanel = ({ options, chosen, onChoose, onClose }: WherePanelProps) => 
 
   return (
     <ChoicePanel
+      onClose={onClose}
       title={say('common.where')}
       choices={options.map((option) => ({
         id: option.id,

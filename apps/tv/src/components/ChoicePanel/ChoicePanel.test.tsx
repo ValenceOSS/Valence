@@ -26,6 +26,23 @@ describe('ChoicePanel', () => {
     expect(drawn.getByRole('button', { name: 'The Institute, 5:00' })).toBeOnTheScreen();
   });
 
+  it('offers a close button only where it is told how to close', async () => {
+    const onClose = jest.fn();
+    const without = await render(
+      <ChoicePanel title="Speed" choices={SPEEDS} onChoose={jest.fn()} />,
+    );
+
+    expect(without.queryByRole('button', { name: 'Close' })).toBeNull();
+
+    const drawn = await render(
+      <ChoicePanel title="Speed" choices={SPEEDS} onChoose={jest.fn()} onClose={onClose} />,
+    );
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Close' }));
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
   it('hands back which was chosen', async () => {
     const onChoose = jest.fn();
     const drawn = await render(<ChoicePanel title="Speed" choices={SPEEDS} onChoose={onChoose} />);

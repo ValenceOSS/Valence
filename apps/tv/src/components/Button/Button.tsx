@@ -20,6 +20,7 @@ const LOOKS: Record<ButtonVariant, Look> = {
   },
   confirm: { face: '#ffffff', edge: 'transparent', ink: tokens.colours.onWhite },
   overlay: { face: 'rgba(128,128,128,0.5)', edge: 'transparent', ink: '#ffffff' },
+  glass: { face: 'rgba(255,255,255,0.16)', edge: 'transparent', ink: '#ffffff' },
   soft: { face: tokens.colours.hover, edge: 'transparent', ink: tokens.colours.text },
   ghost: { face: 'transparent', edge: 'transparent', ink: tokens.colours.text },
   danger: {
@@ -31,9 +32,11 @@ const LOOKS: Record<ButtonVariant, Look> = {
 
 const RING_GAP = 4;
 
-const HEIGHTS: Record<ButtonSize, number> = { md: 72, lg: 80, xl: 88 };
+const HEIGHTS: Record<ButtonSize, number> = { md: 72, lg: 80, xl: 88, play: 84 };
 
-const TEXT: Record<ButtonSize, number> = { md: 26, lg: 28, xl: 32 };
+const TEXT: Record<ButtonSize, number> = { md: 26, lg: 28, xl: 32, play: 28 };
+
+const PLAY_ROUND = 23;
 
 /**
  * ValenceUI's button, for a television: the same variants and shapes as the web's, sized for a room
@@ -49,11 +52,12 @@ const TEXT: Record<ButtonSize, number> = { md: 26, lg: 28, xl: 32 };
  * @param onFocus - Told when the remote lands on it.
  * @param onBlur - Told when the remote leaves it.
  * @param variant - Which of ValenceUI's variants it is.
- * @param size - How large.
+ * @param size - How large; `play` is the web's play button, bolder and rounder.
  * @param isPill - Whether it is rounded fully, rather than at ValenceUI's corner.
  * @param isLoading - Whether it is busy, which also stops it being pressed.
  * @param isDisabled - Whether it can be pressed.
  * @param isWide - Whether it fills its row.
+ * @param minWidth - The narrowest it may be, for a play button that leads its row.
  * @param isIconOnly - Whether it shows its icon alone, as a round button, its words still read out.
  * @param iconSize - How large its icon is, where it should not follow the size of its words.
  * @param hasPreferredFocus - Whether the remote starts here.
@@ -74,6 +78,7 @@ const Button = ({
   isLoading = false,
   isDisabled = false,
   isWide = false,
+  minWidth,
   isIconOnly = false,
   iconSize,
   hasPreferredFocus = false,
@@ -96,7 +101,12 @@ const Button = ({
       style={isWide ? styles.wide : undefined}
     >
       {(isFocused) => {
-        const corner = isPill || isIconOnly ? tokens.radii.round : tokens.radii.lg;
+        const corner =
+          isPill || isIconOnly
+            ? tokens.radii.round
+            : size === 'play'
+              ? PLAY_ROUND
+              : tokens.radii.lg;
 
         return (
           <View
@@ -113,6 +123,7 @@ const Button = ({
                 styles.face,
                 {
                   minHeight: HEIGHTS[size],
+                  ...(minWidth === undefined ? {} : { minWidth }),
                   ...(isIconOnly ? { width: HEIGHTS[size], paddingHorizontal: 0 } : {}),
                   borderRadius: corner,
                   backgroundColor: look.face,
@@ -129,7 +140,13 @@ const Button = ({
 
               {isIconOnly ? null : (
                 <View style={styles.words}>
-                  <Text style={[styles.label, { color: look.ink, fontSize: TEXT[size] }]}>
+                  <Text
+                    style={[
+                      styles.label,
+                      size === 'play' && styles.strong,
+                      { color: look.ink, fontSize: TEXT[size] },
+                    ]}
+                  >
                     {label}
                   </Text>
 
@@ -167,6 +184,7 @@ const styles = StyleSheet.create({
   heldOff: { opacity: 0.5 },
   words: { alignItems: 'center' },
   label: { fontWeight: '500' },
+  strong: { fontWeight: '700' },
   detail: { fontSize: tokens.type.small, opacity: 0.7 },
 });
 

@@ -30,6 +30,8 @@ import { Shade } from '@ValenceTv/components/Shade/Shade';
 
 const TAKES_TURNS_MS = 20_000;
 
+const PLAY_WIDTH = 540;
+
 const HEIGHT_SHARE = 0.86;
 
 /**
@@ -185,6 +187,8 @@ const Hero = ({
             }
             icon={Play}
             variant="confirm"
+            size="play"
+            minWidth={PLAY_WIDTH}
             onFocus={() => {
               setIsHeld(true);
               upToBar.arrive();
@@ -201,7 +205,8 @@ const Hero = ({
           <Button
             label={say('common.moreInfo')}
             icon={Info}
-            variant="overlay"
+            variant="glass"
+            size="play"
             onFocus={() => {
               setIsHeld(true);
               upToBar.arrive();

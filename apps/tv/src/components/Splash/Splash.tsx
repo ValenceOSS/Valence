@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text } from 'react-native';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { LOCKUP } from '@ValenceTv/theme/LOCKUP';
 import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { LayersMark } from '@ValenceTv/components/LayersMark/LayersMark';
 import { LoadingBar } from '@ValenceTv/components/LoadingBar/LoadingBar';
 import type { SplashProps } from './Splash.types';
 import { say } from '@ValenceI18n/say';
 
-const CAP_HEIGHT = 0.705;
+const MARK_HIGH = Math.round(tokens.type.hero * LOCKUP.capHeight);
 
-const MARK_HIGH = Math.round(tokens.type.hero * CAP_HEIGHT);
+const MARK = { width: Math.round(MARK_HIGH * LOCKUP.wider), height: MARK_HIGH };
 
-const MARK = { width: Math.round((MARK_HIGH * 140) / 132), height: MARK_HIGH };
+const GAP = Math.round(tokens.type.hero * LOCKUP.gapOfTheSize);
 
-const GAP = Math.round(tokens.type.hero / 4);
+const NAME_ROOM = tokens.type.hero * 8;
 
 const NAME_OPENS_MS = 420;
 
@@ -45,6 +46,7 @@ const Splash = ({ isDone, onGone }: SplashProps) => {
   const [leaving] = useState(() => new Animated.Value(0));
   const [barShown] = useState(() => new Animated.Value(BAR_DIMS_TO));
   const isStill = useKeepsStill();
+  const [name, setName] = useState({ drop: 0, wide: 0 });
 
   useEffect(() => {
     if (!isDone) {
@@ -98,6 +100,12 @@ const Splash = ({ isDone, onGone }: SplashProps) => {
           MARK,
           {
             transform: [
+              {
+                translateX: named.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -(GAP + name.wide) / 2],
+                }),
+              },
               { scale: leaving.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] }) },
             ],
           },
@@ -110,22 +118,32 @@ const Splash = ({ isDone, onGone }: SplashProps) => {
           label={say('common.valence')}
         />
 
-        <View style={styles.name}>
-          <View style={styles.room} />
+        <Animated.View
+          style={[
+            styles.name,
+            {
+              opacity: named,
+              transform: [
+                { translateY: name.drop },
+                { translateX: named.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) },
+              ],
+            },
+          ]}
+        >
+          <Text
+            numberOfLines={1}
+            style={styles.word}
+            onTextLayout={({ nativeEvent }) => {
+              const line = nativeEvent.lines[0];
 
-          <Animated.View
-            style={[
-              {
-                opacity: named,
-                transform: [
-                  { translateX: named.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) },
-                ],
-              },
-            ]}
+              if (line !== undefined) {
+                setName({ drop: MARK.height - (line.y + line.ascender), wide: line.width });
+              }
+            }}
           >
-            <Text style={styles.word}>{say('common.valence')}</Text>
-          </Animated.View>
-        </View>
+            {say('common.valence')}
+          </Text>
+        </Animated.View>
       </Animated.View>
 
       <Animated.View style={[styles.bar, { opacity: barShown }]}>
@@ -145,17 +163,15 @@ const styles = StyleSheet.create({
   },
   name: {
     position: 'absolute',
-    left: 0,
+    left: MARK.width + GAP,
     top: 0,
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    width: NAME_ROOM,
   },
-  room: { width: MARK.width + GAP, height: MARK.height },
   word: {
     color: tokens.colours.text,
     fontSize: tokens.type.hero,
-    fontWeight: '600',
-    letterSpacing: tokens.type.hero * -0.03,
+    fontWeight: '800',
+    letterSpacing: tokens.type.hero * LOCKUP.tracking,
   },
   bar: { position: 'absolute', bottom: BAR_FROM_THE_FOOT, alignItems: 'center' },
 });

@@ -139,7 +139,7 @@ describe('MediaCard', () => {
 
     await fireEvent(drawn.getByRole('button', { name: 'Dune' }), 'focus');
 
-    expect(drawn.getByText('Dune')).toHaveStyle({ opacity: 0 });
+    expect(drawn.queryByText('Dune')).toBeNull();
 
     const [logo] =
       drawn.root?.queryAll(
@@ -171,6 +171,36 @@ describe('MediaCard', () => {
     expect(drawn.getByRole('button', { name: 'Severance' })).toBeOnTheScreen();
     expect(drawn.getByText('Severance')).not.toHaveStyle({ opacity: 0 });
     expect(drawn.getByText('S1 · E2  Pilot')).toBeOnTheScreen();
+  });
+
+  it('says nothing under an episode whose programme is lettered on its picture', async () => {
+    const episode = {
+      ...FILM,
+      hasLogo: true,
+      title: 'Pilot',
+      seriesTitle: 'Severance',
+      seasonNumber: 1,
+      episodeNumber: 2,
+    };
+    const drawn = await render(<MediaCard media={episode} isEpisode onPress={jest.fn()} />, {
+      wrapper: CacheScope,
+    });
+
+    expect(drawn.queryByText('Severance')).toBeNull();
+    expect(drawn.queryByText('S1 · E2  Pilot')).toBeNull();
+  });
+
+  it('shows how much has been watched under the picture rather than over it', async () => {
+    const drawn = await render(
+      <MediaCard media={FILM} watchedFraction={0.4} onPress={jest.fn()} />,
+      {
+        wrapper: CacheScope,
+      },
+    );
+
+    expect(drawn.getByRole('progressbar', { name: 'Watched' })).toHaveStyle({
+      position: 'relative',
+    });
   });
 
   it('says only the episode title where its place in the programme is unknown', async () => {

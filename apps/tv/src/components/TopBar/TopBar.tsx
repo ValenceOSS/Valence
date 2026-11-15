@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Search } from '@keyline-icons/react-native';
 import { Broadcast, Film, Headphones, Home, MusicNote, Tv } from '@keyline-icons/react-native/fill';
 import { Face } from '@ValenceTv/components/Face/Face';
@@ -9,6 +9,7 @@ import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { TabBar } from '@ValenceTv/components/TabBar/TabBar';
 import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { LOCKUP } from '@ValenceTv/theme/LOCKUP';
 import { LayersMark } from '@ValenceTv/components/LayersMark/LayersMark';
 import type { Tab } from '@ValenceTv/navigation/Tab';
 import type { TopBarProps } from './TopBar.types';
@@ -29,7 +30,11 @@ const BOOKS: TopTab = { id: 'books', label: say('common.books'), icon: Headphone
 
 const LIVE: TopTab = { id: 'live', label: say('common.liveTv'), icon: Broadcast };
 
-const MARK = { width: 54, height: 40 };
+const NAME_SIZE = tokens.type.heading;
+
+const MARK_HIGH = Math.round(NAME_SIZE * LOCKUP.capHeight);
+
+const MARK = { width: Math.round(MARK_HIGH * LOCKUP.wider), height: MARK_HIGH };
 
 const FACE_SIZE = 52;
 
@@ -116,13 +121,16 @@ const TopBar = ({
 
   return (
     <View style={styles.bar} pointerEvents="box-none">
-      <View
-        ref={holdMark}
-        collapsable={false}
-        style={[styles.mark, isArriving && styles.hidden]}
-        onLayout={markLaidOut}
-      >
-        <LayersMark width={MARK.width} height={MARK.height} isAnimated />
+      <View style={styles.brand}>
+        <View
+          ref={holdMark}
+          collapsable={false}
+          style={isArriving && styles.hidden}
+          onLayout={markLaidOut}
+        >
+          <LayersMark width={MARK.width} height={MARK.height} isAnimated />
+        </View>
+        <Text style={styles.name}>{say('common.valence')}</Text>
       </View>
 
       <Glass cornerRadius={tokens.radii.round} style={styles.glass}>
@@ -208,7 +216,20 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
   },
-  mark: { position: 'absolute', left: tokens.space.edge, top: tokens.space.sm },
+  brand: {
+    position: 'absolute',
+    left: tokens.space.edge,
+    top: tokens.space.sm,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: NAME_SIZE * LOCKUP.gapOfTheSize,
+  },
+  name: {
+    color: tokens.colours.text,
+    fontSize: NAME_SIZE,
+    fontWeight: '800',
+    letterSpacing: NAME_SIZE * LOCKUP.tracking,
+  },
   capsule: {
     flexDirection: 'row',
     alignItems: 'center',

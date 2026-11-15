@@ -36,12 +36,14 @@ const FilterPanel = ({ groups, selected, onChange, onClose }: FilterPanelProps) 
     return (
       <ChoicePanel
         title={say('common.filters')}
+        onClose={onClose}
         choices={[
           ...groups.map((one) => ({
             id: one.name,
             label: one.name,
             detail:
               one.options.find((option) => selected.has(option.id))?.label ?? say('common.any'),
+            isSet: one.options.some((option) => selected.has(option.id)),
             isCurrent: false,
           })),
           ...(selected.size === 0
@@ -64,6 +66,7 @@ const FilterPanel = ({ groups, selected, onChange, onClose }: FilterPanelProps) 
   return (
     <ChoicePanel
       title={group.name}
+      onClose={onClose}
       choices={[
         {
           id: ANY,
