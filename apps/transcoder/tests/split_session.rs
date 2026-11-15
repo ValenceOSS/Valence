@@ -116,6 +116,7 @@ fn spec() -> SessionSpec {
         container: SegmentContainer::Fmp4,
         source_video_codec: Some("h264".into()),
         source_pixel_format: None,
+        fallback_bitrate_kbps: None,
         track: Track::Both,
         source_range: None,
         source_range_base: None,

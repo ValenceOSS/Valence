@@ -97,6 +97,21 @@ describe('planToSessionSpec', () => {
     expect(outcome).toMatchObject({ kind: 'ok', spec: { sourceVideoCodec: 'hevc' } });
   });
 
+  it('tells the media service what to encode at should a copy turn out to be impossible', () => {
+    const outcome = planToSessionSpec({
+      plan: directPlay,
+      inputPath: '/media/film.mkv',
+      sourceRange: 'SDR',
+      fallbackBitrateKbps: 8068,
+      capabilities,
+      startSeconds: 0,
+      segmentSeconds: 4,
+      container: 'fmp4',
+    });
+
+    expect(outcome).toMatchObject({ kind: 'ok', spec: { fallbackBitrateKbps: 8068 } });
+  });
+
   it('says nothing about a stream it is encoding rather than copying', () => {
     const outcome = planToSessionSpec({
       plan: { ...directPlay, video: transcodeVideo },

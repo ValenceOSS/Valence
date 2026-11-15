@@ -543,10 +543,11 @@ fn tone_maps(spec: &SessionSpec) -> bool {
 /// Turns a copy into an encode of the same picture.
 ///
 /// Only reached when the source's own keyframes cannot produce deliverable
-/// segments. Every limit is taken from the source, which is safe because the
+/// segments. The size is taken from the source, which is safe because the
 /// server only asked for a copy after deciding the source already satisfied
-/// the client: its size and its bitrate were acceptable, so an encode that
-/// matches them is acceptable too.
+/// the client. The bitrate is the server's figure for an encode where it sent
+/// one, since an H.264 encode at an HEVC source's own bitrate starves every
+/// demanding scene, and the source's own where it did not.
 ///
 /// Its range is the exception. The encode is H.264, which carries eight bits,
 /// and an HDR picture squeezed into eight bits under its own transfer curve
@@ -571,8 +572,9 @@ fn encode_instead(
         .or_else(|| video.map(|stream| (stream.width, stream.height)))
         .unwrap_or((1920, 1080));
 
-    let max_bitrate_kbps = video
-        .and_then(|stream| stream.bitrate_kbps)
+    let max_bitrate_kbps = spec
+        .fallback_bitrate_kbps
+        .or_else(|| video.and_then(|stream| stream.bitrate_kbps))
         .or(probe.bitrate_kbps)
         .unwrap_or(8_000);
 
@@ -2730,12 +2732,15 @@ pub async fn await_run(directory: &Path, timeout: Duration) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        classify_exit, classify_reuse, every_segment_is_there, is_another_viewer, is_segment_ready,
-        kept_with, release_device, releases_a_hold, resolve_segment, resume_from, run_has_closed,
-        run_is_writing, should_retry_in_software, ExitClass, Reuse, RunEnding, RunPosition,
-        SegmentPlan, Session, SessionConfig, SessionRegistry, COMPLETE_MARKER, ENDED_MARKER,
+        classify_exit, classify_reuse, encode_instead, every_segment_is_there, is_another_viewer,
+        is_segment_ready, kept_with, release_device, releases_a_hold, resolve_segment, resume_from,
+        run_has_closed, run_is_writing, should_retry_in_software, ExitClass, Reuse, RunEnding,
+        RunPosition, SegmentPlan, Session, SessionConfig, SessionRegistry, COMPLETE_MARKER,
+        ENDED_MARKER,
     };
     use crate::boundaries::{Boundaries, LAYOUT, LENGTHS_NAME};
+    use crate::capability::Capabilities;
+    use crate::media::{Container, MediaProbe};
     use crate::transcode_plan::{
         AudioAction, HardwareAccel, SegmentContainer, SessionSpec, SubtitleAction, Track,
         VideoAction,
@@ -2749,6 +2754,71 @@ mod tests {
 
     fn run(from: u64, head: Option<u64>) -> RunPosition {
         RunPosition { from, head }
+    }
+
+    fn copying(fallback_bitrate_kbps: Option<u32>) -> SessionSpec {
+        SessionSpec {
+            input_path: "/media/film.mkv".to_owned(),
+            start_seconds: 0,
+            segment_seconds: 2,
+            hardware_accel: HardwareAccel::None,
+            video: VideoAction::Copy,
+            audio: AudioAction::Copy,
+            audio_stream_index: None,
+            subtitles: SubtitleAction::None,
+            source_size: Some((1920, 800)),
+            container: SegmentContainer::Fmp4,
+            source_video_codec: Some("hevc".to_owned()),
+            source_pixel_format: None,
+            fallback_bitrate_kbps,
+            track: Track::Both,
+            source_range: None,
+            source_range_base: None,
+            needs_idr_keyframes: false,
+        }
+    }
+
+    fn probed_at(bitrate_kbps: u32) -> MediaProbe {
+        MediaProbe {
+            container: Container::Mkv,
+            duration_seconds: 7404.0,
+            bitrate_kbps: Some(bitrate_kbps),
+            video: None,
+            audio_streams: Vec::new(),
+            subtitle_streams: Vec::new(),
+            chapters: Vec::new(),
+            can_copy_segments: Some(false),
+        }
+    }
+
+    fn encode_ceiling(spec: &SessionSpec) -> Option<u32> {
+        match &spec.video {
+            VideoAction::Encode {
+                max_bitrate_kbps, ..
+            } => Some(*max_bitrate_kbps),
+            VideoAction::Copy => None,
+        }
+    }
+
+    /// An HEVC film encoded as H.264 at its own bitrate has about three fifths of the bits it
+    /// needs, so the server's figure for the encode is used where it sent one.
+    #[test]
+    fn encodes_a_film_that_cannot_be_copied_at_the_servers_figure() {
+        let spec = encode_instead(
+            copying(Some(8_068)),
+            &probed_at(4_841),
+            &Capabilities::default(),
+        );
+
+        assert_eq!(encode_ceiling(&spec), Some(8_068));
+    }
+
+    /// A server that does not send a figure gets what it always did.
+    #[test]
+    fn encodes_at_the_sources_own_bitrate_where_the_server_sent_no_figure() {
+        let spec = encode_instead(copying(None), &probed_at(4_841), &Capabilities::default());
+
+        assert_eq!(encode_ceiling(&spec), Some(4_841));
     }
 
     /// The muxer has named it, so it is whole and need not be waited on.
@@ -2970,6 +3040,7 @@ mod tests {
             container: SegmentContainer::Fmp4,
             source_video_codec: None,
             source_pixel_format: None,
+            fallback_bitrate_kbps: None,
             track: Track::Both,
             source_range: None,
             source_range_base: None,
@@ -3422,6 +3493,7 @@ mod tests {
             container: SegmentContainer::Fmp4,
             source_video_codec: None,
             source_pixel_format: None,
+            fallback_bitrate_kbps: None,
             track: Track::Both,
             source_range: None,
             source_range_base: None,

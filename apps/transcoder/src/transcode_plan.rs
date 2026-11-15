@@ -421,6 +421,16 @@ pub struct SessionSpec {
     /// than as an error. See [`crate::device_decode::device_decodes`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_pixel_format: Option<String>,
+    /// The ceiling to encode under should a copy turn out to be impossible, where the server
+    /// worked one out.
+    ///
+    /// A copy is asked for at the source's own bitrate, which suits copying and nothing else. When
+    /// the keyframes rule a copy out, the picture is encoded as H.264 instead, and an H.264 encode
+    /// of an HEVC film at the HEVC film's bitrate has about three fifths of the bits it needs. The
+    /// server reckons encodes against the codecs on both sides; this is its figure for this one.
+    /// Absent means a server that does not send it, and the source's own bitrate is used as before.
+    #[serde(default)]
+    pub fallback_bitrate_kbps: Option<u32>,
     /// Which streams the segments carry.
     ///
     /// Absent means both, which is what every caller outside the media service
@@ -532,6 +542,19 @@ impl SessionSpec {
     /// cannot share their segments. Left out when not asked for, and for every
     /// codec the need does not change, so those sessions keep sharing one
     /// address with every other client's.
+    /// Hashes the ceiling a copy would be encoded under, should it have to be.
+    ///
+    /// Two viewers asking to copy the same film share its segments, and a copy that turns out to be
+    /// impossible is encoded once for both. Without this a client that stated a lower ceiling would
+    /// join an encode made for one that stated none, and be sent more than it said it could take.
+    /// Only a copy carries one, and a spec without it hashes as it always did.
+    fn hash_fallback_bitrate(&self, hasher: &mut Sha256) {
+        if let (VideoAction::Copy, Some(kbps)) = (&self.video, self.fallback_bitrate_kbps) {
+            hasher.update(b"fallback-bitrate");
+            hasher.update(kbps.to_be_bytes());
+        }
+    }
+
     fn hash_idr_keyframes(&self, hasher: &mut Sha256) {
         if self.needs_idr_keyframes
             && self
@@ -680,6 +703,7 @@ impl SessionSpec {
         self.hash_track(&mut hasher);
         self.hash_tone_mapping(&mut hasher);
         self.hash_idr_keyframes(&mut hasher);
+        self.hash_fallback_bitrate(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -735,6 +759,7 @@ impl SessionSpec {
         self.hash_track(&mut hasher);
         self.hash_tone_mapping(&mut hasher);
         self.hash_idr_keyframes(&mut hasher);
+        self.hash_fallback_bitrate(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -3401,6 +3426,7 @@ mod tests {
             container: SegmentContainer::Fmp4,
             source_video_codec: None,
             source_pixel_format: None,
+            fallback_bitrate_kbps: None,
             track: Track::Both,
             source_range: None,
             source_range_base: None,
@@ -3966,10 +3992,12 @@ mod tests {
         };
         let ordinary = SessionSpec {
             source_pixel_format: Some("yuv420p".to_owned()),
+            fallback_bitrate_kbps: None,
             ..encoded.clone()
         };
         let four_four_four = SessionSpec {
             source_pixel_format: Some("yuv444p10le".to_owned()),
+            fallback_bitrate_kbps: None,
             ..encoded.clone()
         };
 
@@ -6823,6 +6851,50 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     #[test]
     fn identical_specifications_share_a_session_id() {
         assert_eq!(spec().session_id(), spec().session_id());
+    }
+
+    fn copy_with_fallback(kbps: Option<u32>) -> SessionSpec {
+        SessionSpec {
+            video: VideoAction::Copy,
+            fallback_bitrate_kbps: kbps,
+            ..spec()
+        }
+    }
+
+    /// A client that stated a lower ceiling must not join an encode made for one that stated
+    /// none, should the copy they both asked for turn out to be impossible.
+    #[test]
+    fn a_copy_under_a_different_fallback_ceiling_is_a_different_session() {
+        let open = copy_with_fallback(Some(8_068));
+        let capped = copy_with_fallback(Some(6_000));
+
+        assert_ne!(open.plan_id(), capped.plan_id());
+        assert_ne!(open.session_id(), capped.session_id());
+        assert_eq!(open.plan_id(), copy_with_fallback(Some(8_068)).plan_id());
+    }
+
+    /// A server that sends no figure gets the ids it always did, and a figure means nothing to a
+    /// session that is encoding already.
+    #[test]
+    fn only_a_copy_that_carries_a_fallback_ceiling_hashes_it() {
+        let without = copy_with_fallback(None);
+
+        let encoding = |kbps: Option<u32>| SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "libx264".into(),
+                max_bitrate_kbps: 4000,
+                max_width: 1280,
+                max_height: 720,
+                tone_map: None,
+                deinterlace: false,
+                square_pixels: false,
+            },
+            fallback_bitrate_kbps: kbps,
+            ..spec()
+        };
+
+        assert_ne!(without.plan_id(), copy_with_fallback(Some(8_068)).plan_id());
+        assert_eq!(encoding(None).plan_id(), encoding(Some(8_068)).plan_id());
     }
 
     #[test]

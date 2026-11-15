@@ -11,6 +11,7 @@ import type {
 import type { CreatePlaybackServiceOptions, MediaLookup } from './createPlaybackService';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
+import { fallbackEncodeKbpsFor } from '@ValenceCore/functions/fallbackEncodeKbpsFor';
 
 const MEDIA_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
@@ -365,6 +366,20 @@ describe('createPlaybackService', () => {
           video: { kind: 'transcode', reason: { code: 'VideoNotSegmentable' } },
         },
       },
+    });
+  });
+
+  it('gives the media service, and reports, an encode ceiling reckoned for H.264 rather than the source’s own', async () => {
+    const { service, startedSpecs } = harness('en', true);
+    const expected = fallbackEncodeKbpsFor(bilingual, capableProfile);
+
+    const outcome = await service.start(MEDIA_ID, capableProfile, 0);
+
+    expect(expected).toBeGreaterThan(bilingual.bitrateKbps);
+    expect(startedSpecs[0]).toMatchObject({ fallbackBitrateKbps: expected });
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: { plan: { video: { kind: 'transcode', maxBitrateKbps: expected } } },
     });
   });
 
