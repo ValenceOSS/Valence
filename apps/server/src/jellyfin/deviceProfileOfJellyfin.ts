@@ -116,7 +116,8 @@ const tenBitOf = (profile: JellyfinDeviceProfile, codecs: readonly string[]): st
 /**
  * What a Jellyfin app can play, said the way Valence's own apps say it, so Valence decides how to
  * play something for it exactly as it decides for them: handed over as it is where the app plays
- * it, and converted into what the app asked for where it does not. An app that sends no profile is
+ * it, and converted into what the app asked for where it does not. Surround is converted to Dolby
+ * Digital Plus where the app lists it among what it takes converted. An app that sends no profile is
  * taken to play what every current Jellyfin app plays.
  *
  * @param profile - The profile the app sent, where it sent one.
@@ -149,18 +150,18 @@ const deviceProfileOfJellyfin = (
           audioCodecs: ANY_AUDIO,
         }))
       : direct;
-  const converted = (asked.transcodingprofiles ?? [])
-    .filter(
-      (one) =>
-        (one.type ?? 'video').toLowerCase() === 'video' &&
-        (one.protocol ?? 'hls').toLowerCase() === 'hls',
-    )
-    .map((one) => ({
-      container: (one.container ?? 'ts').toLowerCase() === 'mp4' ? 'mp4' : 'ts',
-      videoCodec: namesIn(one.videocodec)[0] ?? 'h264',
-      audioCodec: namesIn(one.audiocodec)[0] ?? 'aac',
-      protocol: 'hls' as const,
-    }));
+  const streamed = (asked.transcodingprofiles ?? []).filter(
+    (one) =>
+      (one.type ?? 'video').toLowerCase() === 'video' &&
+      (one.protocol ?? 'hls').toLowerCase() === 'hls',
+  );
+  const converted = streamed.map((one) => ({
+    container: (one.container ?? 'ts').toLowerCase() === 'mp4' ? 'mp4' : 'ts',
+    videoCodec: namesIn(one.videocodec)[0] ?? 'h264',
+    audioCodec: namesIn(one.audiocodec)[0] ?? 'aac',
+    protocol: 'hls' as const,
+  }));
+  const takesDolbyDigitalPlus = namesIn(streamed[0]?.audiocodec).includes('eac3');
   const videoCodecs = [...new Set(playsDirectly.flatMap((one) => one.videoCodecs))];
   const bitrate = maxBitrate ?? asked.maxstreamingbitrate ?? null;
   const subtitles = (asked.subtitleprofiles ?? [])
@@ -175,6 +176,7 @@ const deviceProfileOfJellyfin = (
     maxHeight: limitOf(asked, 'height') ?? LARGEST.height,
     ...(bitrate === null ? {} : { maxBitrateKbps: Math.max(1, Math.floor(bitrate / 1000)) }),
     maxAudioChannels: maxAudioChannels ?? limitOf(asked, 'audiochannels') ?? LARGEST.channels,
+    ...(takesDolbyDigitalPlus ? { surroundAudioCodec: 'eac3' } : {}),
     supportedVideoRanges: rangesOf(asked),
     tenBitVideoCodecs: tenBitOf(asked, videoCodecs),
     supportedSubtitleFormats: subtitles.length === 0 ? ['srt', 'webvtt'] : [...new Set(subtitles)],

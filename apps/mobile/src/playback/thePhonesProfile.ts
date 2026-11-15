@@ -31,7 +31,8 @@ const H264_LEVEL = 52;
  * the speakers and throws away the only thing headphones could have done something with: a phone
  * handed six channels puts them around somebody wearing AirPods, and a phone handed two has
  * nothing to place. Folding down for the speakers is something iOS does anyway, and it does it
- * knowing what it is playing out of.
+ * knowing what it is playing out of. Surround that has to be converted, DTS above all, which no
+ * Apple player decodes, is asked for as Dolby Digital Plus, the codec Apple wants surround in.
  *
  * Android is held to less, by the same rule. Its phones are not one phone: which decoders one has
  * depends on who made it, ten-bit HEVC and HDR are missing from plenty, and Dolby audio is only
@@ -53,6 +54,7 @@ const thePhonesProfile = (): DeviceProfile => {
     maxWidth: Math.round(Math.max(screen.width, screen.height) * density),
     maxHeight: Math.round(Math.min(screen.width, screen.height) * density),
     maxAudioChannels: EVERY_CHANNEL_IT_DECODES,
+    ...(isAndroid ? {} : { surroundAudioCodec: 'eac3' }),
     supportedVideoRanges: isAndroid ? ['SDR'] : ['SDR', 'HDR10', 'HLG'],
     tenBitVideoCodecs: isAndroid ? [] : ['hevc'],
     maxVideoLevels: { h264: H264_LEVEL, hevc: HEVC_LEVEL },
