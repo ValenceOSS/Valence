@@ -832,7 +832,7 @@ describe('Player', () => {
       await userEvent.press(drawn.getByRole('button', { name: 'Watch party, Off' }));
       await userEvent.press(drawn.getByRole('button', { name: 'Start a watch party' }));
 
-      expect(watchParty.open).toHaveBeenCalledWith(MEDIA_ID, 'watch');
+      expect(watchParty.open).toHaveBeenCalledWith(MEDIA_ID, 'watch', expect.any(Boolean));
     });
 
     it('asks for the password a party wants, and Menu gives up on it', async () => {

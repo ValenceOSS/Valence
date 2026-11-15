@@ -1766,6 +1766,7 @@ const linkedServer = mysqlTable(
     allowsDownloads: boolean('allowsDownloads').notNull().default(false),
     takesTheirRequests: boolean('takesTheirRequests').notNull().default(false),
     playsDirect: boolean('playsDirect').notNull().default(false),
+    invitesTheirPeople: boolean('invitesTheirPeople').notNull().default(true),
     pictureAt: varchar('pictureAt', { length: 40 }),
   },
   (table) => [

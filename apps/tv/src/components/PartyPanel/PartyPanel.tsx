@@ -1,14 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
-import {
-  Crown,
-  DoorOpen,
-  KeyRound,
-  Play,
-  UserPlus,
-  UserX,
-  Users,
-} from '@keyline-icons/react-native';
+import { Crown, DoorOpen, KeyRound, Play, UserX, Users } from '@keyline-icons/react-native';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { QrCode } from '@ValenceTv/components/QrCode/QrCode';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
@@ -20,6 +12,10 @@ import { listeningInvitationTo } from '@ValenceClient/party/listeningInvitationT
 import { PARTY_WORDS } from '@ValenceClient/party/PARTY_WORDS';
 import { ROLE_NAMES } from '@ValenceClient/party/ROLE_NAMES';
 import { whoCanBeAsked } from '@ValenceClient/party/whoCanBeAsked';
+import { sayActivity } from '@ValenceClient/party/sayActivity';
+import { askableGroups } from '@ValenceClient/party/askableGroups';
+import { faceOfAskable } from '@ValenceClient/party/faceOfAskable';
+import { Face } from '@ValenceTv/components/Face/Face';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import type { PartyPanelProps } from './PartyPanel.types';
 import { say } from '@ValenceI18n/say';
@@ -41,8 +37,9 @@ const INVITATION_SIZE = 240;
  * @param mediaId - What is playing, which a new party gathers around, or nothing yet.
  * @param people - Everybody with an account here, to be asked along.
  * @param onLeave - Told they have left the party, or gone without its password.
+ * @param isPlaying - Whether the title is playing, which a party started here begins as.
  */
-const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelProps) => {
+const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave, isPlaying }: PartyPanelProps) => {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [asked, setAsked] = useState<readonly string[]>([]);
@@ -125,7 +122,7 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
           isDisabled={mediaId === null}
           onPress={() => {
             if (mediaId !== null) {
-              watchParty.open(mediaId, kind);
+              watchParty.open(mediaId, kind, isPlaying);
             }
           }}
         />
@@ -135,7 +132,6 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
 
   const me = party.members.find((member) => member.connectionId === meConnectionId);
   const timekeeper = party.members.find((member) => member.connectionId === party.timekeeperId);
-  const watching = party.members.filter((member) => member.isWatching).length;
   const isHost = me?.role === 'host';
   const mayAsk = isHost || me?.role === 'coHost';
   const elsewhere = whoCanBeAsked(party, people);
@@ -147,7 +143,9 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
 
   return (
     <SidePanel title={title}>
-      <Text style={styles.heading}>{sayCount(words.doing, watching)}</Text>
+      <Text style={styles.heading}>
+        {sayCount('common.partyPanel.countInTheParty', party.members.length)}
+      </Text>
 
       {!party.isHeld || waitingFor.length === 0 ? null : (
         <Text style={styles.warning}>
@@ -164,7 +162,7 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
         const detail = [
           ROLE_NAMES[member.role],
           member.connectionId === party.timekeeperId ? say('common.partyPanel.keepingTime') : null,
-          member.isWatching ? words.isDoing : words.notDoing,
+          sayActivity(member, party, words),
           drift,
         ]
           .filter((part) => part !== null)
@@ -217,18 +215,30 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
           <Text style={styles.heading}>{say('common.partyPanel.askAlong')}</Text>
           <Text style={styles.note}>{say('common.partyPanel.askSomebodyAlongTheyAreTold')}</Text>
 
-          {elsewhere.map((person) => (
-            <ActionRow
-              key={person.id}
-              label={say('common.partyPanel.askNameAlong', { name: person.name })}
-              icon={UserPlus}
-              {...(asked.includes(person.id) ? { detail: say('common.partyPanel.asked') } : {})}
-              isDisabled={asked.includes(person.id)}
-              onPress={() => {
-                setAsked((already) => [...already, person.id]);
-                watchParty.ask(person.id);
-              }}
-            />
+          {askableGroups(elsewhere).map((group) => (
+            <View key={group.server?.id ?? HERE}>
+              {group.server === null ? null : (
+                <Text style={styles.note}>
+                  {say('common.partyPanel.membersFromServer', { server: group.server.name })}
+                </Text>
+              )}
+
+              {group.people.map((person) => (
+                <ActionRow
+                  key={person.id}
+                  label={say('common.partyPanel.askNameAlong', {
+                    name: person.ownName ?? person.name,
+                  })}
+                  face={<Face profile={faceOfAskable(person)} size={FACE_SIZE} isRound />}
+                  {...(asked.includes(person.id) ? { detail: say('common.partyPanel.asked') } : {})}
+                  isDisabled={asked.includes(person.id)}
+                  onPress={() => {
+                    setAsked((already) => [...already, person.id]);
+                    watchParty.ask(person.id);
+                  }}
+                />
+              ))}
+            </View>
           ))}
         </>
       )}
@@ -237,20 +247,19 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
         <>
           <Text style={styles.heading}>{say('common.partyPanel.controls')}</Text>
           <ActionRow
-            label={say('common.partyPanel.everyoneCanPlayAndPause')}
+            label={say('common.partyPanel.everyoneCanPlayPause')}
             detail={party.everyoneMayPlayPause ? say('common.on') : say('common.off')}
             onPress={() => {
               watchParty.loosen({ everyoneMayPlayPause: !party.everyoneMayPlayPause });
             }}
           />
           <ActionRow
-            label={say('common.partyPanel.everyoneCanSkipAround')}
+            label={say('common.partyPanel.everyoneCanScrub')}
             detail={party.everyoneMaySeek ? say('common.on') : say('common.off')}
             onPress={() => {
               watchParty.loosen({ everyoneMaySeek: !party.everyoneMaySeek });
             }}
           />
-          <Text style={styles.note}>{say('common.partyPanel.skippingIsTheDisruptiveOneA')}</Text>
           <Text style={styles.note}>
             {party.hasPassword
               ? say('common.partyPanel.thisPartyHasAPasswordAnybody')
@@ -258,7 +267,7 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
           </Text>
           <TextField
             key={passwordsSet}
-            label={say('common.partyPanel.partyPassword')}
+            label={say('common.password')}
             value={newPassword}
             onChange={setNewPassword}
             onSubmit={() => {
@@ -306,6 +315,10 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
 };
 
 PartyPanel.displayName = 'PartyPanel';
+
+const HERE = 'here';
+
+const FACE_SIZE = 30;
 
 const styles = StyleSheet.create({
   heading: {

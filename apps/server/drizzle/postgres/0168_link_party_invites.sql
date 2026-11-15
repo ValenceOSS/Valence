@@ -1,0 +1,1 @@
+ALTER TABLE "linked_server" ADD COLUMN "invitesTheirPeople" boolean DEFAULT true NOT NULL;

@@ -25,6 +25,7 @@ import { peerMayReach } from '@ValenceServer/linking/peerMayReach';
 import { innerAddressOf } from '@ValenceServer/linking/innerAddressOf';
 import { whatAPeerMayAsk } from '@ValenceServer/linking/whatAPeerMayAsk';
 import { PEER_MEMBER } from '@ValenceServer/linking/parties/PEER_MEMBER';
+import { inNameOrder } from '@ValenceServer/linking/parties/inNameOrder';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { AskedAlongSchema } from '@ValenceContracts/schemas/LinkSharing';
 import { MediaRequestAskSchema } from '@ValenceContracts/schemas/MediaRequest';
@@ -493,20 +494,27 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       servers
         .filter((server) => server.state === 'linked')
         .map(async (server) =>
-          (await linkSharingStore.listPeople(server.id)).flatMap((person) =>
-            person.name === null || person.blockedAt !== null
-              ? []
-              : [
-                  {
-                    id: `${PEER_MEMBER}${server.id}~${person.id}`,
-                    name: say('common.nameFromServer', { name: person.name, server: server.name }),
-                  },
-                ],
-          ),
+          (await linkSharingStore.readSharing(server.id))?.invitesTheirPeople !== true
+            ? []
+            : (await linkSharingStore.listPeople(server.id)).flatMap((person) =>
+                person.name === null || person.blockedAt !== null
+                  ? []
+                  : [
+                      {
+                        id: `${PEER_MEMBER}${server.id}~${person.id}`,
+                        name: say('common.nameFromServer', {
+                          name: person.name,
+                          server: server.name,
+                        }),
+                        ownName: person.name,
+                        server: { id: server.id, name: server.name },
+                      },
+                    ],
+              ),
         ),
     );
 
-    return context.json({ people: people.flat() }, 200);
+    return context.json({ people: inNameOrder(people.flat()) }, 200);
   });
 
   app.openapi(catalogueRoute, async (context) => {

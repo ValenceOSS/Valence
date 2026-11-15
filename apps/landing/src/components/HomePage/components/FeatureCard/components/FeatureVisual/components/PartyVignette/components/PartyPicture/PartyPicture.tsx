@@ -3,7 +3,6 @@ import { PanelCard } from '@ValenceUI/PanelCard';
 import { SharedTimeline } from '@ValenceUI/SharedTimeline';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { TOGETHER_WITHIN_SECONDS } from '@ValenceCore/functions/whoIsHoldingUp';
-import { PARTY_WORDS } from '@ValenceClient/party/PARTY_WORDS';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { ShowcaseFace } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ShowcaseFace/ShowcaseFace';
@@ -29,7 +28,7 @@ const PartyPicture = ({ isInSync = false }: PartyPictureProps) => {
 
   return (
     <PanelCard
-      title={sayCount(PARTY_WORDS.watch.doing, PEOPLE.length)}
+      title={sayCount('common.partyPanel.countInTheParty', PEOPLE.length)}
       isFlush
       className="w-[17rem]"
     >

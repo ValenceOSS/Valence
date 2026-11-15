@@ -5727,11 +5727,6 @@
     "context": "The host's switch that turns a watch party's chat on (from `PartyChat`)."
   },
   {
-    "handler": "common.partyChat.keptForTheParty",
-    "text": "Los mensajes solo se guardan mientras dure la sesión y se borran al desactivar el chat.",
-    "context": "Under the chat switch (from `PartyChat`)."
-  },
-  {
     "handler": "common.partyChat.nothingSaidYet",
     "text": "Todavía no hay mensajes.",
     "context": "Shown in a watch party's chat before anybody has written (from `PartyChat`)."
@@ -5752,14 +5747,24 @@
     "context": "The heading of a popover panel in the party menu."
   },
   {
-    "handler": "common.partyMenu.watchPartyWatchingWatching",
-    "text": "Sesión de visionado en grupo · {watching} viendo",
-    "context": "Shown in the party menu. {watching} is filled in by the app."
+    "handler": "common.partyMenu.watchPartyCountInTheParty",
+    "text": "Watch party · {count} in the party",
+    "context": "The name of the watch party button while there is a party. {count} is how many people have joined it."
   },
   {
     "handler": "common.partyMenu.watchThisWithOtherPeopleHere",
     "text": "Mira esto sincronizado con otras personas de este servidor. Recibirás un enlace para enviárselo, y cuando alguien reproduzca, pause o salte, pasará para todos.",
     "context": "Text shown in the party menu."
+  },
+  {
+    "handler": "common.partyPanel.anyoneHereCanListenAlong",
+    "text": "Anyone with an account here can listen along with this link.",
+    "context": "Explains the invitation link of a listening party."
+  },
+  {
+    "handler": "common.partyPanel.anyoneHereCanWatchAlong",
+    "text": "Anyone with an account here can watch along with this link.",
+    "context": "Explains the invitation link of a watch party."
   },
   {
     "handler": "common.partyPanel.aPasswordAsksAnybodyOpeningThe",
@@ -5803,33 +5808,23 @@
     "context": "The title of a panel card in the party panel."
   },
   {
-    "handler": "common.partyPanel.countListening.one",
-    "text": "{count} escuchando",
-    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
+    "handler": "common.partyPanel.countInTheParty.one",
+    "text": "{count} in the party",
+    "context": "The title of a party's panel: how many people have joined it. {count} is the number."
   },
   {
-    "handler": "common.partyPanel.countListening.other",
-    "text": "{count} escuchando",
-    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
+    "handler": "common.partyPanel.countInTheParty.other",
+    "text": "{count} in the party",
+    "context": "The title of a party's panel: how many people have joined it. {count} is the number."
   },
   {
-    "handler": "common.partyPanel.countWatching.one",
-    "text": "{count} viendo",
-    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
-  },
-  {
-    "handler": "common.partyPanel.countWatching.other",
-    "text": "{count} viendo",
-    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
-  },
-  {
-    "handler": "common.partyPanel.everyoneCanPlayAndPause",
-    "text": "Todos pueden reproducir y pausar",
+    "handler": "common.partyPanel.everyoneCanPlayPause",
+    "text": "Everyone can play/pause",
     "context": "The label of a switch in the party panel."
   },
   {
-    "handler": "common.partyPanel.everyoneCanSkipAround",
-    "text": "Todos pueden saltar",
+    "handler": "common.partyPanel.everyoneCanScrub",
+    "text": "Everyone can scrub",
     "context": "The label of a switch in the party panel."
   },
   {
@@ -5868,6 +5863,11 @@
     "context": "Shown in the party panel."
   },
   {
+    "handler": "common.partyPanel.membersFromServer",
+    "text": "Members from {server}",
+    "context": "Heading over the people from one linked server in a watch party's invite list. {server} is that server's name."
+  },
+  {
     "handler": "common.partyPanel.nameYou",
     "text": "{name} (tú)",
     "context": "A member of a watch or listening party, marked as the person reading the list."
@@ -5888,11 +5888,6 @@
     "context": "Shown in the party panel."
   },
   {
-    "handler": "common.partyPanel.partyPassword",
-    "text": "Contraseña de la sesión",
-    "context": "The label of a text field in the party panel."
-  },
-  {
     "handler": "common.partyPanel.removeNameFromTheParty",
     "text": "Quitar a {name} de la sesión",
     "context": "The label of a button in the party panel. {name} is filled in by the app."
@@ -5908,16 +5903,6 @@
     "context": "How far a member of a watch party is behind whoever keeps time."
   },
   {
-    "handler": "common.partyPanel.sendThisToListenAlong",
-    "text": "Envíalo a cualquiera con una cuenta en este servidor. Lo añadirá a esta sesión para escuchar juntos.",
-    "context": "Explains the invitation link of a listening party."
-  },
-  {
-    "handler": "common.partyPanel.sendThisToWatchAlong",
-    "text": "Envíalo a cualquiera con una cuenta en este servidor. Lo añadirá a esta sesión para ver juntos.",
-    "context": "Explains the invitation link of a watch party."
-  },
-  {
     "handler": "common.partyPanel.set",
     "text": "Establecer",
     "context": "The label of a button in the party panel."
@@ -5931,11 +5916,6 @@
     "handler": "common.partyPanel.shareTheInvitation",
     "text": "Compartir enlace de invitación",
     "context": "Opens the system's share sheet with the link that puts somebody in this party."
-  },
-  {
-    "handler": "common.partyPanel.skippingIsTheDisruptiveOneA",
-    "text": "Saltar es el control más disruptivo, porque un movimiento accidental lleva a todos a otro punto de la película. Puedes desactivarlo y seguir permitiendo que todos pausen.",
-    "context": "Text shown in the party panel."
   },
   {
     "handler": "common.partyPanel.thisPartyHasAPasswordAnybody",
@@ -21244,6 +21224,11 @@
     "context": "Card title: making an invite for another Valence's admin."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.inviteTheirPeopleToParties",
+    "text": "Invite their people to watch parties",
+    "context": "Setting: whether this server's people may invite a linked server's people to a watch party here."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.lastHeardFrom",
     "text": "Última respuesta",
     "context": "Column heading in the list of linked servers: when each last answered."
@@ -21619,6 +21604,11 @@
     "context": "Explains a linked server's age limit."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.turnedOffNamesPeopleAreLeftOut",
+    "text": "Turned off, {name}’s people are left out of the invite list in a watch party, and an invitation to them is refused. You still see what they watch here.",
+    "context": "More detail on the watch party invitation setting for a linked server. {name} is that server."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.unlink",
     "text": "Desvincular",
     "context": "Button and confirmation ending a link with another server."
@@ -21687,6 +21677,11 @@
     "handler": "screens.adminArea.linkedServersPanel.youApproveThem",
     "text": "Los apruebas",
     "context": "Third step of linking servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.yourPeopleCanInviteNamesPeople",
+    "text": "Your people can invite {name}’s people to a watch party here.",
+    "context": "Explains the watch party invitation setting for a linked server. {name} is that server."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.addALiveTvSource",

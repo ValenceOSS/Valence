@@ -1820,6 +1820,7 @@ const Watching = ({
             kind="watch"
             watchParty={watchParty}
             mediaId={mediaId}
+            isPlaying={moving.isPlaying}
             people={household}
             onClose={() => {
               if (watchParty.passwordWanted !== null) {

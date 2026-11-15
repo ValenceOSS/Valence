@@ -36,12 +36,13 @@ describe('PartyPanel', () => {
         mediaId="a-film"
         people={[]}
         onLeave={jest.fn()}
+        isPlaying={false}
       />,
     );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Start a watch party' }));
 
-    expect(watchParty.open).toHaveBeenCalledWith('a-film', 'watch');
+    expect(watchParty.open).toHaveBeenCalledWith('a-film', 'watch', false);
   });
 
   it('says who is in it, who is behind, and who the room waits for', async () => {
@@ -74,7 +75,7 @@ describe('PartyPanel', () => {
 
     await userEvent.press(drawn.getByRole('button', { name: /^Make co-host/u }));
     await userEvent.press(drawn.getByRole('button', { name: /^Remove Jo from the party/u }));
-    await userEvent.press(drawn.getByRole('button', { name: /^Everyone can skip around/u }));
+    await userEvent.press(drawn.getByRole('button', { name: /^Everyone can scrub/u }));
 
     expect(watchParty.setRole).toHaveBeenCalledWith('them', 'coHost');
     expect(watchParty.remove).toHaveBeenCalledWith('them');
@@ -100,6 +101,25 @@ describe('PartyPanel', () => {
 
     expect(watchParty.ask).toHaveBeenCalledWith('kim');
     expect(drawn.queryByRole('button', { name: /^Invite Jo/u })).toBeNull();
+  });
+
+  it('heads the people from each linked server with where they are from', async () => {
+    const films = { id: 'films', name: 'KKONAW' };
+    const drawn = await render(
+      <PartyPanel
+        kind="watch"
+        watchParty={aWatchPartyStateWith(jest.fn, { party: HOSTING })}
+        mediaId="film-1"
+        people={[
+          { id: 'kim', name: 'Kim' },
+          { id: 'peer~films~nino', name: 'Nino from KKONAW', ownName: 'Nino', server: films },
+        ]}
+        onLeave={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getByText('Members from KKONAW')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: /^Invite Nino/u })).toBeTruthy();
   });
 
   it('asks for the password a party wants before it can be joined', async () => {
@@ -179,7 +199,7 @@ describe('PartyPanel', () => {
 
     await userEvent.press(playing.getByRole('button', { name: 'Start a listening party' }));
 
-    expect(watchParty.open).toHaveBeenCalledWith('song-1', 'listen');
+    expect(watchParty.open).toHaveBeenCalledWith('song-1', 'listen', undefined);
   });
 
   it('says who is listening', async () => {
@@ -195,8 +215,24 @@ describe('PartyPanel', () => {
       />,
     );
 
-    expect(drawn.getByText('1 listening')).toBeTruthy();
+    expect(drawn.getByText(/^\d+ in the party$/u)).toBeTruthy();
     expect(drawn.getByText('Host · Listening')).toBeTruthy();
+  });
+
+  it('says somebody is paused while the whole party is', async () => {
+    const drawn = await render(
+      <PartyPanel
+        kind="watch"
+        watchParty={aWatchPartyStateWith(jest.fn, {
+          party: aWatchParty({ isPlaying: false, members: [aPartyMember({ isWatching: false })] }),
+        })}
+        mediaId="film-1"
+        people={[]}
+        onLeave={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getByText(/Paused/u)).toBeTruthy();
   });
 
   it('offers no listening party to somebody already watching one', async () => {

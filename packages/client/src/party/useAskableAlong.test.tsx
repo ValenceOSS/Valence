@@ -17,7 +17,7 @@ vi.mock('@ValenceClient/linking/fetchAskableElsewhere', () => ({
 }));
 
 describe('useAskableAlong', () => {
-  it('names the household here, then the people from linked servers', async () => {
+  it('names the household here with their faces, then the people from linked servers', async () => {
     const { result } = renderHookInACache(() => useAskableAlong(true));
 
     await waitFor(() => {
@@ -25,7 +25,7 @@ describe('useAskableAlong', () => {
     });
 
     expect(result.current).toEqual([
-      { id: 'dan', name: 'Dan' },
+      { id: 'dan', name: 'Dan', colour: '#e8503a' },
       { id: 'peer~films~kai', name: 'Kai from Films' },
     ]);
   });
