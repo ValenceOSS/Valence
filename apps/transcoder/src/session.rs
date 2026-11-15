@@ -825,6 +825,24 @@ pub fn resolve_segment(
     SegmentPlan::Wait
 }
 
+/// Where to start a run for a segment nothing is going to reach.
+///
+/// One segment early where the one before it is not on disk. A player that
+/// asks for a place often asks next for the segment just behind it, as a
+/// watch party lines it up or a seek settles, and a run begun one segment
+/// late would be stopped and started again for it: a second cold start, and
+/// a player holding segments from two runs side by side. Never over a
+/// segment already written, because a run clears from where it starts and
+/// that segment may be on its way to somebody.
+#[must_use]
+pub fn run_start_for(wanted: u64, is_behind_on_disk: bool) -> u64 {
+    if is_behind_on_disk {
+        wanted
+    } else {
+        wanted.saturating_sub(1)
+    }
+}
+
 /// Whether the run that is writing has said this segment is whole.
 ///
 /// ffmpeg names a segment in its own playlist only once it has closed it, so
@@ -1571,9 +1589,9 @@ impl SessionRegistry {
     ///
     /// A seek that lands outside what the transcode is about to produce is
     /// answered here: the run walking through the wrong part of the film is
-    /// stopped and another is started where the viewer is. Nothing already on
-    /// disk is thrown away, so a viewer who seeks back into it waits for
-    /// nothing at all.
+    /// stopped and another is started at the segment asked for. Nothing
+    /// already on disk is thrown away, so a viewer who seeks back into it
+    /// waits for nothing at all.
     ///
     /// `false` means there is no such session.
     pub async fn restart_at(&self, id: &str, wanted: u64) -> bool {
@@ -1858,7 +1876,8 @@ impl SessionRegistry {
     ///
     /// The whole of the delivery model is here: a segment already written is
     /// served at once, one the transcode is coming to is waited for, and one
-    /// nothing is going to reach starts a run where the viewer is.
+    /// nothing is going to reach starts a run where the viewer is, a segment
+    /// early where nothing is written there ([`run_start_for`]).
     ///
     /// `false` means the wait ran out, which is a transcode that has stopped
     /// making progress rather than a segment that does not exist.
@@ -1888,7 +1907,20 @@ impl SessionRegistry {
             match resolve_segment(is_ready, run, wanted, view.segment_seconds) {
                 SegmentPlan::Serve => return true,
                 SegmentPlan::StartAt(index) => {
-                    if self.steers(id, wanted).await && !self.restart_at(id, index).await {
+                    let is_behind_on_disk = match index.checked_sub(1) {
+                        Some(behind) => tokio::fs::try_exists(view.directory.join(
+                            crate::playlist::segment_name(index_of(behind), view.container),
+                        ))
+                        .await
+                        .unwrap_or(true),
+                        None => true,
+                    };
+
+                    if self.steers(id, wanted).await
+                        && !self
+                            .restart_at(id, run_start_for(index, is_behind_on_disk))
+                            .await
+                    {
                         return false;
                     }
                 }
@@ -2988,6 +3020,42 @@ mod tests {
         assert_eq!(
             resolve_segment(false, Some(run(0, Some(3))), 300, 4),
             SegmentPlan::StartAt(300)
+        );
+    }
+
+    /// A run for a place nothing reaches begins a segment early, so the
+    /// segment just behind it is the same run's rather than another start.
+    #[test]
+    fn starts_a_run_one_segment_before_where_it_was_asked() {
+        assert_eq!(super::run_start_for(861, false), 860);
+    }
+
+    /// The segment behind is already written and may be on its way to
+    /// somebody, so the run begins where it was asked and leaves it alone.
+    #[test]
+    fn starts_where_asked_when_the_segment_behind_is_written() {
+        assert_eq!(super::run_start_for(861, true), 861);
+    }
+
+    /// The film's first segment has nothing behind it.
+    #[test]
+    fn starts_the_first_segment_where_asked() {
+        assert_eq!(super::run_start_for(0, false), 0);
+    }
+
+    /// Asked for the segment just behind a run that began a segment early,
+    /// the run is waited for rather than started over.
+    #[test]
+    fn waits_for_the_segment_behind_where_it_was_asked() {
+        let from = super::run_start_for(861, false);
+
+        assert_eq!(
+            resolve_segment(false, Some(run(from, None)), 860, 2),
+            SegmentPlan::Wait
+        );
+        assert_eq!(
+            resolve_segment(false, Some(run(from, None)), 861, 2),
+            SegmentPlan::Wait
         );
     }
 
