@@ -271,7 +271,18 @@ const TheVideoRemote = ({ onBack, onPlayHere }: TheVideoRemoteProps) => {
   const hasNoPoster = () => {
     setHasNoBarePoster(watching?.mediaId ?? null);
   };
-  const ground = cardTintOf(usePictureLights(picture)) ?? UNLIT;
+  const ground =
+    cardTintOf(
+      usePictureLights(
+        watching === null
+          ? null
+          : onThisServer(
+              isPoster
+                ? artworkUrl(watching.mediaId, 'poster', { isBare: true, size: 'small' })
+                : artworkUrl(watching.mediaId, 'backdrop', { size: 'small' }),
+            ),
+      ),
+    ) ?? UNLIT;
 
   if (shown === null) {
     return (

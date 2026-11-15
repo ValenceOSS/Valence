@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { SharedValue } from 'react-native-reanimated';
 
 type AStackedPage = {
   key: string;
@@ -23,4 +24,31 @@ type APageStackProps = {
   onStepBack?: () => void;
 };
 
-export type { ACardScroll, APageStackProps, AStackedPage };
+type AHeldStack = {
+  pages: readonly AStackedPage[];
+  slots: ReadonlyMap<string, string>;
+  places: ReadonlyMap<string, SharedValue<number>>;
+};
+
+type ACardSwap = {
+  gone: AStackedPage;
+  toKey: string;
+  isForward: boolean;
+};
+
+type AnActivity = 0 | 1 | 2;
+
+type AKeeping = {
+  activity: AnActivity;
+  isFrozen: boolean;
+};
+
+export type {
+  ACardScroll,
+  ACardSwap,
+  AHeldStack,
+  AKeeping,
+  AnActivity,
+  APageStackProps,
+  AStackedPage,
+};

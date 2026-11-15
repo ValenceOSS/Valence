@@ -107,4 +107,43 @@ describe('Screen', () => {
       expect(card.letGo).toHaveBeenCalledWith(200, 0);
     });
   });
+
+  it('draws a long run of rows only as they come near the screen, after what is on it', async () => {
+    const drawn = await render(
+      <Screen
+        scrolls
+        rows={{
+          count: 5_000,
+          keyOf: (at) => at.toString(),
+          draw: (at) => <Words>{`Row ${at.toString()}`}</Words>,
+        }}
+        afterRows={<Words>After</Words>}
+      >
+        <Words>Before</Words>
+      </Screen>,
+      { wrapper: CacheScope },
+    );
+
+    expect(drawn.getByText('Before')).toBeTruthy();
+    expect(drawn.getByText('Row 0')).toBeTruthy();
+    expect(drawn.queryByText('Row 4999')).toBeNull();
+  });
+
+  it('tells whoever asked when a page of rows leaves its top', async () => {
+    const onScrolled = jest.fn();
+    const drawn = await render(
+      <Screen
+        scrolls
+        onScrolled={onScrolled}
+        rows={{ count: 1, keyOf: () => 'one', draw: () => <Words>Row</Words> }}
+      >
+        <Words>Long</Words>
+      </Screen>,
+      { wrapper: CacheScope },
+    );
+
+    await fireEvent.scroll(drawn.getByText('Long'), { nativeEvent: { contentOffset: { y: 40 } } });
+
+    expect(onScrolled).toHaveBeenCalledWith(true);
+  });
 });

@@ -8,6 +8,15 @@ import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
 import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { setListeningParty } from '@ValenceClient/party/listeningParty';
 import { TheMusicPlayer } from './TheMusicPlayer';
+import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
+
+jest.mock('@ValenceMobile/hooks/usePictureLights', () => {
+  const { usePictureLights: actual } = jest.requireActual<{
+    usePictureLights: typeof usePictureLights;
+  }>('@ValenceMobile/hooks/usePictureLights');
+
+  return { usePictureLights: jest.fn(actual) };
+});
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
@@ -27,6 +36,19 @@ describe('TheMusicPlayer', () => {
     const drawn = await render(aPlayer(), { wrapper: CacheScope });
 
     expect(drawn.getByText('Nothing is playing')).toBeTruthy();
+  });
+
+  it('is lit by the colours of a narrowed copy of the cover, not the whole one it draws', async () => {
+    await act(() => {
+      thePhonesMusicPlayer().play([aTrack(1)], 0);
+    });
+    jest.mocked(usePictureLights).mockClear();
+    await render(aPlayer(), { wrapper: CacheScope });
+
+    const read = jest.mocked(usePictureLights).mock.calls.map(([url]) => url);
+
+    expect(read.length).toBeGreaterThan(0);
+    expect(read.every((url) => url?.endsWith('/artwork?size=small'))).toBe(true);
   });
 
   it('shows the song, opens its artist and its album, and skips on', async () => {

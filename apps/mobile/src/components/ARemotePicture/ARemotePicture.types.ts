@@ -7,6 +7,7 @@ type ARemotePictureProps = {
   isTopKept?: boolean;
   blur?: number;
   label?: string;
+  ground?: string;
   onMissing?: () => void;
   onLoad?: (size: { width: number; height: number }) => void;
 };

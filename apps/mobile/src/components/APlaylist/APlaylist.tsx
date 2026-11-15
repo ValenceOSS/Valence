@@ -20,6 +20,7 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useMayRequestMusic } from '@ValenceClient/requests/useMayRequestMusic';
 import { requestTheAlbumOf } from '@ValenceMobile/music/requestTheAlbumOf';
+import type { ScreenRows } from '@ValenceMobile/components/Screen/Screen.types';
 import type { ATrackListMissingSong } from '@ValenceMobile/components/ATrackList/ATrackList.types';
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
 import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
@@ -240,106 +241,8 @@ const APlaylist = ({
   ].filter((part) => part !== null);
   const mayChangeEntries = playlist.isMine && !playlist.isSmart;
 
-  return (
-    <AMusicScreen
-      title={playlist.name}
-      artwork={ownCover === null ? null : onThisServer(ownCover)}
-      {...(ownCover === null ? { albumIds: coverAlbumsOf(tracks) } : {})}
-      standIn={ListMusic}
-      onBack={onBack}
-    >
-      <AMusicHead
-        kind={playlist.isSmart ? say('common.smartPlaylist') : say('common.playlist')}
-        detail={detail.join(' · ')}
-        about={playlist.description}
-        canPlay={tracks.length > 0}
-        onPlay={() => {
-          player.play(tracks, 0, { source, isOrdered: playlist.isOrdered });
-        }}
-        onShuffle={() => {
-          player.play(tracks, Math.floor(Math.random() * tracks.length), {
-            source,
-            isShuffled: true,
-          });
-        }}
-      >
-        {playlist.isMine ? (
-          <AMenu
-            label={say('common.moreForName', { name: playlist.name })}
-            title={playlist.name}
-            items={whatToDo}
-          >
-            <ARoundAction icon={MoreHorizontal} says={say('common.more')} />
-          </AMenu>
-        ) : null}
-
-        {mayRequestMusic && missing.length > 0 ? (
-          <ARoundAction
-            icon={Plus}
-            says={say('common.requestMissingSongs')}
-            onPress={() => {
-              setIsAskingForMissing(true);
-            }}
-          />
-        ) : null}
-
-        {tracks.length === 0 ? null : (
-          <ADownloadToListen
-            isRound
-            kind="playlist"
-            id={playlist.id}
-            title={playlist.name}
-            tracks={tracks}
-            toKeep={(quality) => ({ kind: 'playlist', detail: { playlist, entries }, quality })}
-          />
-        )}
-      </AMusicHead>
-
-      {tracks.length === 0 && missing.length === 0 ? (
-        <ANothingHere
-          of={ListMusic}
-          title={say('common.nothingInThisPlaylistYet')}
-          detail={
-            playlist.isSmart
-              ? say('common.noSongKeepsItsRulesYet')
-              : say('common.addSongsToItFromThe')
-          }
-        />
-      ) : (
-        <ATrackList
-          tracks={tracks}
-          source={source}
-          isOrdered={playlist.isOrdered}
-          onAlbum={onAlbum}
-          onArtist={onArtist}
-          missing={missing}
-          {...(mayChangeEntries
-            ? {
-                editing: {
-                  onRemove: (at: number) => {
-                    const entryId = entryIds[at];
-
-                    if (entryId !== undefined) {
-                      void dropFromPlaylist(playlist.id, entryId).then(refresh);
-                    }
-                  },
-                  onMove: (from: number, to: number) => {
-                    const entryId = entryIds[from];
-
-                    if (entryId !== undefined) {
-                      void moveInPlaylist(
-                        playlist.id,
-                        entryId,
-                        whereAnEntryLands(entryIds, from, to),
-                      ).then(refresh);
-                    }
-                  },
-                },
-              }
-            : {})}
-        />
-      )}
-
+  const afterTheSongs = (
+    <>
       <APlaylistDetails
         isOpen={isEditing}
         editing={playlist}
@@ -364,7 +267,112 @@ const APlaylist = ({
         />
       ) : null}
       <APluginPanels on="playlist" subjectId={playlistId} />
-    </AMusicScreen>
+    </>
+  );
+
+  return (
+    <ATrackList
+      tracks={tracks}
+      source={source}
+      isOrdered={playlist.isOrdered}
+      onAlbum={onAlbum}
+      onArtist={onArtist}
+      missing={missing}
+      {...(mayChangeEntries
+        ? {
+            editing: {
+              onRemove: (at: number) => {
+                const entryId = entryIds[at];
+
+                if (entryId !== undefined) {
+                  void dropFromPlaylist(playlist.id, entryId).then(refresh);
+                }
+              },
+              onMove: (from: number, to: number) => {
+                const entryId = entryIds[from];
+
+                if (entryId !== undefined) {
+                  void moveInPlaylist(
+                    playlist.id,
+                    entryId,
+                    whereAnEntryLands(entryIds, from, to),
+                  ).then(refresh);
+                }
+              },
+            },
+          }
+        : {})}
+      drawnIn={(rows: ScreenRows) => (
+        <AMusicScreen
+          title={playlist.name}
+          artwork={ownCover === null ? null : onThisServer(ownCover)}
+          {...(ownCover === null ? { albumIds: coverAlbumsOf(tracks) } : {})}
+          standIn={ListMusic}
+          onBack={onBack}
+          rows={rows}
+          afterRows={afterTheSongs}
+        >
+          <AMusicHead
+            kind={playlist.isSmart ? say('common.smartPlaylist') : say('common.playlist')}
+            detail={detail.join(' · ')}
+            about={playlist.description}
+            canPlay={tracks.length > 0}
+            onPlay={() => {
+              player.play(tracks, 0, { source, isOrdered: playlist.isOrdered });
+            }}
+            onShuffle={() => {
+              player.play(tracks, Math.floor(Math.random() * tracks.length), {
+                source,
+                isShuffled: true,
+              });
+            }}
+          >
+            {playlist.isMine ? (
+              <AMenu
+                label={say('common.moreForName', { name: playlist.name })}
+                title={playlist.name}
+                items={whatToDo}
+              >
+                <ARoundAction icon={MoreHorizontal} says={say('common.more')} />
+              </AMenu>
+            ) : null}
+
+            {mayRequestMusic && missing.length > 0 ? (
+              <ARoundAction
+                icon={Plus}
+                says={say('common.requestMissingSongs')}
+                onPress={() => {
+                  setIsAskingForMissing(true);
+                }}
+              />
+            ) : null}
+
+            {tracks.length === 0 ? null : (
+              <ADownloadToListen
+                isRound
+                kind="playlist"
+                id={playlist.id}
+                title={playlist.name}
+                tracks={tracks}
+                toKeep={(quality) => ({ kind: 'playlist', detail: { playlist, entries }, quality })}
+              />
+            )}
+          </AMusicHead>
+
+          {tracks.length === 0 && missing.length === 0 ? (
+            <ANothingHere
+              of={ListMusic}
+              title={say('common.nothingInThisPlaylistYet')}
+              detail={
+                playlist.isSmart
+                  ? say('common.noSongKeepsItsRulesYet')
+                  : say('common.addSongsToItFromThe')
+              }
+            />
+          ) : null}
+        </AMusicScreen>
+      )}
+    />
   );
 };
 

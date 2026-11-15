@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -59,6 +59,11 @@ const TheTabs = ({
   const [aboveHigh, setAboveHigh] = useState(0);
   const clearOfAbove = aboveHigh > 0 ? aboveHigh + ABOVE_THE_BAR : 0;
   const latestOnBarHeight = useRef(onBarHeight);
+  const roomOverTheBar = useMemo(
+    () => ({ ...room, bottom: barHeight + clearOfAbove }),
+    [room, barHeight, clearOfAbove],
+  );
+  const roomAboveTheStrip = useMemo(() => ({ ...room, bottom: 0 }), [room]);
 
   useEffect(() => {
     latestOnBarHeight.current = onBarHeight;
@@ -80,7 +85,7 @@ const TheTabs = ({
             isFaceArriving={isFaceArriving}
             {...(onFaceAt === undefined ? {} : { onFaceAt })}
           >
-            <SafeAreaInsetsContext.Provider value={{ ...room, bottom: barHeight + clearOfAbove }}>
+            <SafeAreaInsetsContext.Provider value={roomOverTheBar}>
               {children}
             </SafeAreaInsetsContext.Provider>
           </AGlassTabs>
@@ -101,7 +106,7 @@ const TheTabs = ({
 
   return (
     <View style={[styles.whole, { backgroundColor: colours.surface }]}>
-      <SafeAreaInsetsContext.Provider value={{ ...room, bottom: 0 }}>
+      <SafeAreaInsetsContext.Provider value={roomAboveTheStrip}>
         <View style={styles.whole}>{children}</View>
       </SafeAreaInsetsContext.Provider>
 

@@ -113,7 +113,7 @@ const ABook = ({ bookId, onRead, onListen, onAskAbout, onBack }: ABookProps) => 
   const reading = useQuery(bookQueries.reading());
   const hasAudio = read.data?.book.hasAudio === true;
   const tint = usePictureTint(
-    read.data?.book.hasCover === true ? onThisServer(bookCoverUrl(bookId)) : null,
+    read.data?.book.hasCover === true ? onThisServer(bookCoverUrl(bookId, 'small')) : null,
   );
   const heard = useQuery({ ...bookQueries.listeningPlace(bookId), enabled: hasAudio });
   const listening = useQuery({ ...bookQueries.listening(), enabled: hasAudio });

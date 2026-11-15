@@ -1,9 +1,25 @@
 import { render, userEvent } from '@testing-library/react-native';
+import { createElement as mockCreateElement } from 'react';
+import { View as mockView } from 'react-native';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
+import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
+import { CARD_ORIGINS } from '@ValenceMobile/components/ACardOrigins/CARD_ORIGINS';
 import { ACard } from './ACard';
+
+const mockAskedFor = jest.fn<undefined, [string]>();
+
+jest.mock('expo-image', () => ({
+  Image: ({ source }: { source: { uri: string } }) => {
+    mockAskedFor(source.uri);
+
+    return mockCreateElement(mockView);
+  },
+}));
 
 const anEpisode = MediaSummarySchema.parse({
   id: '3fa85f64-5717-4562-b3fc-2c963f66afa1',
@@ -23,6 +39,7 @@ const anEpisode = MediaSummarySchema.parse({
 });
 
 beforeEach(() => {
+  mockAskedFor.mockClear();
   installPlatform(aFakePlatform());
 });
 
@@ -144,5 +161,75 @@ describe('ACard', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Good News About Hell, New episode' }));
 
     expect(onLookAt).toHaveBeenCalledWith(anEpisode.id);
+  });
+
+  it('asks for its logo no wider than a phone draws it', async () => {
+    const drawn = await render(
+      <ACard
+        media={{ ...anEpisode, hasBackdrop: true, hasLogo: true }}
+        asProgramme={false}
+        look="art"
+        onLookAt={jest.fn()}
+        onLookAtShow={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(drawn.getByRole('button', { name: 'Good News About Hell' })).toBeTruthy();
+    expect(mockAskedFor).toHaveBeenCalledWith(
+      onThisServer(artworkUrl(anEpisode.id, 'logo', { size: 'small' })),
+    );
+    expect(mockAskedFor).not.toHaveBeenCalledWith(
+      onThisServer(artworkUrl(anEpisode.id, 'logo', { size: 'medium' })),
+    );
+  });
+
+  it('names where it comes from as the shelf around it says, without asking itself', async () => {
+    const theirs = aLinkedServerFace({ name: 'Films' });
+    const drawn = await render(
+      <CARD_ORIGINS.Provider value={() => ({ ...theirs, initial: 'F', label: 'From Films' })}>
+        <ACard
+          media={anEpisode}
+          asProgramme={false}
+          onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
+        />
+      </CARD_ORIGINS.Provider>,
+    );
+
+    expect(drawn.getByRole('button', { name: 'Good News About Hell, From Films' })).toBeTruthy();
+  });
+
+  it('is not drawn again where it is given nothing new', async () => {
+    const originOf = jest.fn(() => null);
+    const onLookAt = jest.fn();
+    const onLookAtShow = jest.fn();
+    const drawn = await render(
+      <CARD_ORIGINS.Provider value={originOf}>
+        <ACard
+          media={anEpisode}
+          asProgramme={false}
+          onLookAt={onLookAt}
+          onLookAtShow={onLookAtShow}
+        />
+      </CARD_ORIGINS.Provider>,
+    );
+
+    await drawn.rerender(
+      <CARD_ORIGINS.Provider value={originOf}>
+        <ACard
+          media={anEpisode}
+          asProgramme={false}
+          onLookAt={onLookAt}
+          onLookAtShow={onLookAtShow}
+        />
+      </CARD_ORIGINS.Provider>,
+    );
+
+    expect(originOf).toHaveBeenCalledTimes(1);
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(ACard.displayName).toBe('ACard');
   });
 });

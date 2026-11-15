@@ -1,14 +1,16 @@
 import { createElement as mockCreateElement } from 'react';
 import { Image as mockNativeImage } from 'react-native';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
-import { fireEvent, render } from '@testing-library/react-native';
+import { heldCookies } from '@ValenceMobile/platform/heldCookies';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { theDrawnRoot } from '@ValenceMobile/testing/theDrawnRoot';
 import { ARemotePicture } from './ARemotePicture';
 
 type MockImageProps = {
   source: { uri: string; headers?: Record<string, string> };
   cachePolicy: string;
-  recyclingKey: string;
+  recyclingKey?: string;
+  transition?: number;
   contentPosition: string;
   accessible?: boolean;
   accessibilityLabel?: string;
@@ -45,6 +47,7 @@ const thePicture = () => {
 };
 
 beforeEach(() => {
+  heldCookies.forget();
   mockDrawnImage.mockClear();
   jest.mocked(theCookiesThisPhoneHolds).mockReset().mockResolvedValue(null);
 });
@@ -70,11 +73,44 @@ describe('ARemotePicture', () => {
     await render(<ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} />);
 
     expect(mockDrawnImage).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        cachePolicy: 'memory-disk',
-        recyclingKey: 'http://one.local/poster',
-      }),
+      expect.objectContaining({ cachePolicy: 'memory-disk' }),
     );
+  });
+
+  it('leaves recycling alone, since nothing it is drawn in hands its view to another picture', async () => {
+    await render(<ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} />);
+
+    expect(mockDrawnImage.mock.lastCall?.[0].recyclingKey).toBeUndefined();
+  });
+
+  it('fades the picture in briefly as it arrives', async () => {
+    await render(<ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} />);
+
+    expect(mockDrawnImage.mock.lastCall?.[0].transition).toBeGreaterThan(0);
+    expect(mockDrawnImage.mock.lastCall?.[0].transition).toBeLessThanOrEqual(200);
+  });
+
+  it('draws at once where the cookies for its server are already held, reading the jar no more', async () => {
+    jest.mocked(theCookiesThisPhoneHolds).mockResolvedValue('valence.session_token=abc');
+    await heldCookies.ask('http://one.local/first');
+    jest.mocked(theCookiesThisPhoneHolds).mockClear();
+    mockDrawnImage.mockClear();
+
+    await render(<ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} />);
+
+    expect(mockDrawnImage.mock.calls[0]?.[0].source).toEqual({
+      uri: 'http://one.local/poster',
+      headers: { Cookie: 'valence.session_token=abc' },
+    });
+    expect(theCookiesThisPhoneHolds).not.toHaveBeenCalled();
+  });
+
+  it('draws a file the phone keeps at once, since it needs no cookies', async () => {
+    jest.mocked(theCookiesThisPhoneHolds).mockReturnValue(new Promise(() => undefined));
+
+    await render(<ARemotePicture uri="file:///thumbnails/one.jpg" style={{ height: 90 }} />);
+
+    expect(thePicture()).toHaveProp('source', { uri: 'file:///thumbnails/one.jpg' });
   });
 
   it('sends the cookies the phone holds, since Android would not send them itself', async () => {
@@ -95,6 +131,32 @@ describe('ARemotePicture', () => {
 
     expect(theDrawnRoot().type).toBe('View');
     expect(theDrawnRoot()).toHaveStyle({ height: 90 });
+  });
+
+  it('holds its place in the colour it was given', async () => {
+    jest.mocked(theCookiesThisPhoneHolds).mockReturnValue(new Promise(() => undefined));
+
+    await render(
+      <ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} ground="#222222" />,
+    );
+
+    expect(theDrawnRoot()).toHaveStyle({ height: 90, backgroundColor: '#222222' });
+  });
+
+  it('asks again for the cookies once those held are let go of, as on signing out', async () => {
+    jest.mocked(theCookiesThisPhoneHolds).mockResolvedValue('valence.session_token=abc');
+
+    await render(<ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} />);
+
+    jest.mocked(theCookiesThisPhoneHolds).mockResolvedValue('valence.session_token=def');
+    await act(() => {
+      heldCookies.forget();
+    });
+
+    expect(thePicture()).toHaveProp('source', {
+      uri: 'http://one.local/poster',
+      headers: { Cookie: 'valence.session_token=def' },
+    });
   });
 
   it('says so where the picture cannot be had', async () => {

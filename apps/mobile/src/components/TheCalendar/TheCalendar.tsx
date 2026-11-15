@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -38,6 +38,10 @@ import type { TheCalendarProps } from './TheCalendar.types';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const UPCOMING_DAYS = 60;
+
+const DAYS_APART = 20;
+
+const MOST_TURNS = 8;
 
 const styles = StyleSheet.create({
   month: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
@@ -82,6 +86,10 @@ const TheCalendar = ({ onOpen, onBack, header, onScrolled }: TheCalendarProps) =
   const asked = useQuery(calendarQueries.releases(from ?? today, to ?? today, 'mine'));
   const entries = asked.data ?? [];
   const onTheDay = entries.filter((entry) => entry.date === day);
+  const days = useMemo(
+    () => (view === 'upcoming' && asked.data !== undefined ? groupCalendarByDay(asked.data) : []),
+    [view, asked.data],
+  );
   const first = `${day.slice(0, 7)}-01`;
 
   const open = (entry: CalendarEntry) => {
@@ -124,6 +132,46 @@ const TheCalendar = ({ onOpen, onBack, header, onScrolled }: TheCalendarProps) =
       isSeeThrough={header !== undefined}
       {...(onBack === undefined ? {} : { onBack })}
       {...(onScrolled === undefined ? {} : { onScrolled })}
+      rows={{
+        count: days.length,
+        keyOf: (at) => days[at]?.date ?? at.toString(),
+        draw: (at) => {
+          const group = days[at];
+
+          return group === undefined ? null : (
+            <ARising turn={Math.min(at, MOST_TURNS)}>
+              <AGroup title={nameTheDay(group.date, today)}>
+                {group.entries.map((entry) => (
+                  <ACalendarEntry key={`${entry.id}:${entry.date}`} entry={entry} onOpen={open} />
+                ))}
+              </AGroup>
+            </ARising>
+          );
+        },
+        apart: DAYS_APART,
+      }}
+      afterRows={
+        <>
+          {asked.isError ? <Words tone="danger">{say('common.thoseCouldNotBeRead')}</Words> : null}
+
+          <ACalendarSubscribeSheet
+            isOpen={isSubscribing}
+            onClose={() => {
+              setIsSubscribing(false);
+            }}
+          />
+
+          <ACalendarDaySheet
+            isOpen={isPicking}
+            day={day}
+            today={today}
+            onPick={setDay}
+            onClose={() => {
+              setIsPicking(false);
+            }}
+          />
+        </>
+      }
     >
       {header}
       {header === undefined ? (
@@ -281,36 +329,7 @@ const TheCalendar = ({ onOpen, onBack, header, onScrolled }: TheCalendarProps) =
           title={say('common.nothingComesOutOnTheseDays')}
           detail={say('common.episodesAndRequestsAppearHere')}
         />
-      ) : (
-        groupCalendarByDay(entries).map((group, turn) => (
-          <ARising key={group.date} turn={Math.min(turn, 8)}>
-            <AGroup title={nameTheDay(group.date, today)}>
-              {group.entries.map((entry) => (
-                <ACalendarEntry key={`${entry.id}:${entry.date}`} entry={entry} onOpen={open} />
-              ))}
-            </AGroup>
-          </ARising>
-        ))
-      )}
-
-      {asked.isError ? <Words tone="danger">{say('common.thoseCouldNotBeRead')}</Words> : null}
-
-      <ACalendarSubscribeSheet
-        isOpen={isSubscribing}
-        onClose={() => {
-          setIsSubscribing(false);
-        }}
-      />
-
-      <ACalendarDaySheet
-        isOpen={isPicking}
-        day={day}
-        today={today}
-        onPick={setDay}
-        onClose={() => {
-          setIsPicking(false);
-        }}
-      />
+      ) : null}
     </Screen>
   );
 };

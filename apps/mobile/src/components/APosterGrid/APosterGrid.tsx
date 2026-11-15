@@ -8,7 +8,7 @@ import { AnArrival } from '@ValenceMobile/components/AnArrival/AnArrival';
 import { ACardArrival } from '@ValenceMobile/components/ACardArrival/ACardArrival';
 import { BackArrow } from '@ValenceMobile/components/BackArrow/BackArrow';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import type { ListRenderItemInfo, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { APosterGridProps } from './APosterGrid.types';
 
 const SCROLLED = 4;
@@ -32,7 +32,8 @@ const SCREENFULS_KEPT = 5;
  * A screen that is a grid of posters, under whatever heads it, drawing only the rows in view.
  *
  * A library of thousands is drawn as quickly as one of ten, because the rows scrolled past are let
- * go and the rows not yet reached are not drawn. It fits as many posters across as the phone is
+ * go and the rows not yet reached are not drawn. A poster arrives the first time it is drawn and is
+ * simply there when it is scrolled back to. It fits as many posters across as the phone is
  * wide, and lays the header out as a screen would, so it sits among the other screens unnoticed.
  *
  * @param header - What sits above the posters and scrolls away with them.
@@ -65,22 +66,32 @@ const APosterGrid = <Item,>({
   const { across, cell } = useGridCells(asked);
   const wasScrolled = useRef<boolean | null>(null);
 
-  const seen = useRef(new Set<string>());
+  const arrived = useRef(new Set<string>());
 
   const renderItem = useCallback(
-    ({ item, index }: { item: Item; index: number }) => {
+    ({ item, index }: ListRenderItemInfo<Item>) => {
       const key = keyOf(item);
-      const isArrived = seen.current.has(key);
 
       return (
         <AnArrival>
-          <ACardArrival at={index < FIRST_SCREENFUL ? index : index % across} isArrived={isArrived}>
+          <ACardArrival
+            at={index < FIRST_SCREENFUL ? index : index % across}
+            isArrived={arrived.current.has(key)}
+            onArrived={() => {
+              arrived.current.add(key);
+            }}
+          >
             {drawn(item, cell)}
           </ACardArrival>
         </AnArrival>
       );
     },
     [drawn, cell, keyOf, across],
+  );
+
+  const footing = useMemo(
+    () => (footer === undefined ? undefined : <View style={styles.footer}>{footer}</View>),
+    [footer],
   );
 
   const head = useMemo(() => <View style={styles.header}>{header}</View>, [header]);
@@ -119,6 +130,7 @@ const APosterGrid = <Item,>({
       initialNumToRender={Math.ceil(FIRST_SCREENFUL / across)}
       maxToRenderPerBatch={ROWS_A_BATCH}
       windowSize={SCREENFULS_KEPT}
+      removeClippedSubviews
       ListHeaderComponent={head}
       {...(across > 1 ? { columnWrapperStyle: styles.row } : {})}
       contentContainerStyle={spacing}
@@ -129,9 +141,7 @@ const APosterGrid = <Item,>({
       {...(onNearTheEnd === undefined
         ? {}
         : { onEndReached: onNearTheEnd, onEndReachedThreshold: 1.5 })}
-      {...(footer === undefined
-        ? {}
-        : { ListFooterComponent: <View style={styles.footer}>{footer}</View> })}
+      {...(footing === undefined ? {} : { ListFooterComponent: footing })}
     />
   );
 

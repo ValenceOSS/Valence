@@ -4,6 +4,7 @@ import { forgetPlatform, installPlatform } from '@ValenceClient/platform/install
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { theDrawnRoot } from '@ValenceMobile/testing/theDrawnRoot';
+import { theColours } from '@ValenceMobile/theme/theColours';
 import { ACoverGrid } from './ACoverGrid';
 
 const thePictures = () => theDrawnRoot().queryAll((node) => node.type === 'Image');
@@ -33,6 +34,12 @@ describe('ACoverGrid', () => {
     expect(thePictures()[0]).toHaveProp('source', {
       uri: `http://one.local:8420${albumArtworkUrl('a')}`,
     });
+  });
+
+  it('stands each cover on the raised surface until it arrives', async () => {
+    await render(<ACoverGrid albumIds={['a']} standIn={MusicNote} iconSize={24} />);
+
+    expect(thePictures()[0]).toHaveStyle({ backgroundColor: theColours.light.surfaceRaised });
   });
 
   it('draws the stand-in where there is nothing to show', async () => {

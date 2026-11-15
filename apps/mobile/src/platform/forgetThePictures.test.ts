@@ -1,4 +1,6 @@
 import { Image } from 'expo-image';
+import { heldCookies } from '@ValenceMobile/platform/heldCookies';
+import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { forgetThePictures } from './forgetThePictures';
 
 const emptyingMemory = jest.spyOn(Image, 'clearMemoryCache');
@@ -21,5 +23,14 @@ describe('forgetThePictures', () => {
     emptyingDisk.mockRejectedValue(new Error('no disk'));
 
     await expect(forgetThePictures()).resolves.toBeUndefined();
+  });
+
+  it('lets go of the cookies the pictures were fetched with', async () => {
+    jest.mocked(theCookiesThisPhoneHolds).mockResolvedValue('valence.session_token=abc');
+    await heldCookies.ask('https://valence.example/poster');
+
+    await forgetThePictures();
+
+    expect(heldCookies.now('https://valence.example/poster')).toBeUndefined();
   });
 });

@@ -16,7 +16,7 @@ import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
-import { arrangeForBrowsing } from '@ValenceClient/library/arrangeForBrowsing';
+import { useEverythingToBrowse } from '@ValenceClient/library/useEverythingToBrowse';
 import {
   readBrowseArrangement,
   saveBrowseArrangement,
@@ -42,7 +42,6 @@ import { collectionQueries } from '@ValenceClient/query/collectionQueries';
 import { collectionsHolding } from '@ValenceClient/collections/collectionsHolding';
 import { TheBooks } from '@ValenceMobile/components/TheLibrary/components/TheBooks/TheBooks';
 import { TheMusic } from '@ValenceMobile/components/TheLibrary/components/TheMusic/TheMusic';
-import { TheClipBehind } from '@ValenceMobile/components/TheLibrary/components/TheClipBehind/TheClipBehind';
 import { useArtworkLights } from '@ValenceMobile/hooks/useArtworkLights';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { useTheBrand } from '@ValenceMobile/hooks/useTheBrand';
@@ -62,7 +61,6 @@ import { librariesChosen } from '@ValenceClient/library/librariesChosen';
 import { libraryOptionsFor } from '@ValenceClient/library/libraryOptionsFor';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { ReactNode } from 'react';
-import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -148,8 +146,8 @@ const styles = StyleSheet.create({
 /**
  * What is in this household's libraries, laid out as the web's are: a home page of shelves, and
  * films and programmes each as a grid of their own, over the web's lights — coloured on the home
- * page by its hero's backdrop, with the hero's clip itself blurred behind the page while it plays,
- * and the house colours elsewhere.
+ * page by its hero's backdrop, and the house colours elsewhere. The hero's clip plays only in its
+ * own card.
  *
  * Films and programmes each take the web's filters and order, the order remembered for each on this
  * phone, and where there is more than one library of a kind, a choice of which, and music is
@@ -257,31 +255,40 @@ const TheLibrary = ({
     }).start();
   }, [isAway, barAway]);
 
-  const followScroll = useCallback(
-    (y: number) => {
-      if (aside.current) {
-        return;
-      }
+  const following = useRef({ barTall, isBarAway });
 
-      if (y < barTall) {
-        turnedAt.current = y;
-        setIsBarAway(false);
+  useLayoutEffect(() => {
+    following.current = { barTall, isBarAway };
+  }, [barTall, isBarAway]);
 
-        return;
-      }
+  const followScroll = useCallback((y: number) => {
+    if (aside.current) {
+      return;
+    }
 
-      if (y - turnedAt.current > BAR_TURNS_AFTER) {
-        turnedAt.current = y;
-        setIsBarAway(true);
-      } else if (turnedAt.current - y > BAR_TURNS_AFTER) {
-        turnedAt.current = y;
-        setIsBarAway(false);
-      } else if (isBarAway ? y > turnedAt.current : y < turnedAt.current) {
-        turnedAt.current = y;
+    const turnTo = (isNowAway: boolean) => {
+      turnedAt.current = y;
+
+      if (following.current.isBarAway !== isNowAway) {
+        following.current = { ...following.current, isBarAway: isNowAway };
+        setIsBarAway(isNowAway);
       }
-    },
-    [barTall, isBarAway],
-  );
+    };
+
+    if (y < following.current.barTall) {
+      turnTo(false);
+
+      return;
+    }
+
+    if (y - turnedAt.current > BAR_TURNS_AFTER) {
+      turnTo(true);
+    } else if (turnedAt.current - y > BAR_TURNS_AFTER) {
+      turnTo(false);
+    } else if (following.current.isBarAway ? y > turnedAt.current : y < turnedAt.current) {
+      turnedAt.current = y;
+    }
+  }, []);
   const [scrolled, setScrolled] = useState<Readonly<Record<string, boolean>>>({});
   const isPast = scrolled[isAside ? side : part] === true;
   const room = useSafeAreaInsets();
@@ -320,7 +327,6 @@ const TheLibrary = ({
     [part],
   );
   const [heroic, setHeroic] = useState<string | null>(null);
-  const [clip, setClip] = useState<VideoPlayer | null>(null);
   const backdrop = useArtworkLights(part === 'home' ? heroic : null);
   const palette = part === 'home' ? backdrop : NO_LIGHTS;
   const onShowing = useCallback((media: MediaSummary | null) => {
@@ -372,47 +378,34 @@ const TheLibrary = ({
       : []),
   ];
 
-  const everything = useQuery({
-    ...libraryQueries.everything(reading, {
-      kind: part === 'shows' ? 'shows' : 'films',
-      ...filters.asked,
-    }),
-    enabled: reading.length > 0 && (part === 'films' || part === 'shows'),
-  });
   const isFinished = useCallback(
     (mediaId: string) => howFar.get(mediaId)?.isFinished === true,
     [howFar],
   );
-  const cells = useMemo(
-    (): readonly MediaSummary[] =>
-      part === 'films' || part === 'shows'
-        ? arrangeForBrowsing(everything.data ?? [], { ...arrangement, isFinished })
-        : [],
-    [part, everything.data, arrangement, isFinished],
-  );
+  const { found, cells, isWaiting } = useEverythingToBrowse({
+    libraryIds: reading,
+    kind: part === 'shows' ? 'shows' : 'films',
+    asked: filters.asked,
+    arrangement,
+    isFinished,
+    isWanted: part === 'films' || part === 'shows',
+  });
   const left = useMemo(
-    () => (part === 'shows' ? unwatchedByShow(everything.data ?? [], isFinished) : null),
-    [part, everything.data, isFinished],
+    () => (part === 'shows' ? unwatchedByShow(found, isFinished) : null),
+    [part, found, isFinished],
   );
-  const hasAnything = (everything.data ?? []).length > 0;
-  const isWaiting = everything.isPending && everything.fetchStatus !== 'idle';
+  const hasAnything = found.length > 0;
 
   /**
    * Draws a part of the library over its lights: on the home page, the colours of the hero's
-   * backdrop and, while its clip plays, the clip itself blurred behind everything; the house
-   * colours everywhere else.
+   * backdrop; the house colours everywhere else.
    *
    * @param drawn - The part.
    * @returns It, lit.
    */
   const lit = (drawn: ReactNode) => (
     <View style={styles.lit}>
-      <TheClipBehind
-        player={part === 'home' && !isAside && isOnTop ? clip : null}
-        veil={theVeilFor(colours)}
-      >
-        <AMoodBackground palette={palette} ground={colours.surface} veil={theVeilFor(colours)} />
-      </TheClipBehind>
+      <AMoodBackground palette={palette} ground={colours.surface} veil={theVeilFor(colours)} />
       <ARRIVING.Provider value={arriving}>{drawn}</ARRIVING.Provider>
       {bar}
     </View>
@@ -724,7 +717,6 @@ const TheLibrary = ({
           onLookAt={lookAt}
           onLookAtShow={lookAtShow}
           onShowing={onShowing}
-          onClip={setClip}
           onScrolled={homeScrolled}
           onScrolledTo={followScroll}
         />

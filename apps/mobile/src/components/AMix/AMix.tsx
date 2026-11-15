@@ -9,6 +9,7 @@ import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import type { ScreenRows } from '@ValenceMobile/components/Screen/Screen.types';
 import type { AMixProps } from './AMix.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -51,36 +52,38 @@ const AMix = ({ mixId, onAlbum, onArtist, onPlaylist, onBack }: AMixProps) => {
   const source = { kind: 'tracks' as const, id: mix.id, name: mix.title };
 
   return (
-    <AMusicScreen
-      title={mix.title}
-      artwork={null}
-      albumIds={covers}
-      standIn={Sparkles}
-      onBack={onBack}
-    >
-      <AMusicHead
-        kind={say('common.mixByValence')}
-        detail={`${mix.detail} · ${sayCount('common.count.songs', tracks.length)}`}
-        canPlay={tracks.length > 0}
-        onPlay={() => {
-          player.play(tracks, 0, { source });
-        }}
-        onShuffle={() => {
-          player.play(tracks, Math.floor(Math.random() * tracks.length), {
-            source,
-            isShuffled: true,
-          });
-        }}
-      />
-
-      <ATrackList
-        tracks={tracks}
-        source={source}
-        onAlbum={onAlbum}
-        onArtist={onArtist}
-        {...(onPlaylist === undefined ? {} : { onPlaylist })}
-      />
-    </AMusicScreen>
+    <ATrackList
+      tracks={tracks}
+      source={source}
+      onAlbum={onAlbum}
+      onArtist={onArtist}
+      {...(onPlaylist === undefined ? {} : { onPlaylist })}
+      drawnIn={(rows: ScreenRows) => (
+        <AMusicScreen
+          title={mix.title}
+          artwork={null}
+          albumIds={covers}
+          standIn={Sparkles}
+          onBack={onBack}
+          rows={rows}
+        >
+          <AMusicHead
+            kind={say('common.mixByValence')}
+            detail={`${mix.detail} · ${sayCount('common.count.songs', tracks.length)}`}
+            canPlay={tracks.length > 0}
+            onPlay={() => {
+              player.play(tracks, 0, { source });
+            }}
+            onShuffle={() => {
+              player.play(tracks, Math.floor(Math.random() * tracks.length), {
+                source,
+                isShuffled: true,
+              });
+            }}
+          />
+        </AMusicScreen>
+      )}
+    />
   );
 };
 

@@ -3,7 +3,16 @@ import { tracksOf } from '@ValenceClient/books/tracksOf';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import { aFakeAudiobookPlayer } from '@ValenceMobile/testing/aFakeAudiobookPlayer';
+import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { TheListeningPlayer } from './TheListeningPlayer';
+
+jest.mock('@ValenceMobile/hooks/usePictureLights', () => {
+  const { usePictureLights: actual } = jest.requireActual<{
+    usePictureLights: typeof usePictureLights;
+  }>('@ValenceMobile/hooks/usePictureLights');
+
+  return { usePictureLights: jest.fn(actual) };
+});
 
 let mockFake = aFakeAudiobookPlayer();
 
@@ -37,6 +46,16 @@ describe('TheListeningPlayer', () => {
 
     expect(drawn.getByText('Part 1')).toBeTruthy();
     expect(drawn.getByText('Red Rising · Pierce Brown')).toBeTruthy();
+  });
+
+  it('is lit by a narrowed copy of the cover, not the whole one it draws', async () => {
+    openTheBook();
+
+    await render(<TheListeningPlayer onBack={jest.fn()} />, { wrapper: CacheScope });
+
+    expect(usePictureLights).toHaveBeenLastCalledWith(
+      expect.stringMatching(/\/cover\?size=small$/u),
+    );
   });
 
   it('pauses, goes on thirty seconds, back fifteen, and to the next chapter', async () => {

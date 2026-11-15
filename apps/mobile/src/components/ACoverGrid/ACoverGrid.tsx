@@ -17,7 +17,8 @@ const styles = StyleSheet.create({
 /**
  * The cover of a list of songs, made of its albums' covers as the web makes a playlist's: four in
  * a grid once there are four, the first alone where there are fewer, and a stand-in where there
- * are none or the cover will not load. It fills whatever holds it.
+ * are none or the cover will not load. It fills whatever holds it, in the raised surface's colour
+ * until the covers arrive.
  *
  * @param albumIds - The albums whose covers to use, in the order their songs come up.
  * @param standIn - What is drawn where there is no cover.
@@ -43,6 +44,7 @@ const ACoverGrid = ({ albumIds, standIn, iconSize }: ACoverGridProps) => {
           key={albumId}
           style={tiles.length === 4 ? styles.quarter : styles.fills}
           uri={onThisServer(albumArtworkUrl(albumId))}
+          ground={colours.surfaceRaised}
           onMissing={() => {
             setIsMissing(tiles.length === 1);
           }}

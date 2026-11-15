@@ -1,28 +1,26 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Animated, PanResponder, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CARD_GOES_BACK } from '@ValenceMobile/components/APageStack/CARD_GOES_BACK';
-import { CARD_SCROLL } from '@ValenceMobile/components/APageStack/CARD_SCROLL';
-import { IS_A_CARD } from '@ValenceMobile/components/APageStack/IS_A_CARD';
-import { IS_ON_TOP } from '@ValenceMobile/components/APageStack/IS_ON_TOP';
-import { SHEETS_UP } from '@ValenceMobile/components/ABottomSheet/SHEETS_UP';
+import { GestureDetector, GestureStateManager, usePanGesture } from 'react-native-gesture-handler';
+import { ReduceMotion, useSharedValue, withSpring } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenContainer } from 'react-native-screens';
+import { scheduleOnRN } from 'react-native-worklets';
+import { ACardLayer } from '@ValenceMobile/components/APageStack/components/ACardLayer/ACardLayer';
+import { AStackLayer } from '@ValenceMobile/components/APageStack/components/AStackLayer/AStackLayer';
+import { PLACE } from '@ValenceMobile/components/APageStack/PLACE';
+import { howEachIsKept } from '@ValenceMobile/components/APageStack/howEachIsKept';
+import { stackAfter } from '@ValenceMobile/components/APageStack/stackAfter';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
-import type { APageStackProps, AStackedPage } from './APageStack.types';
-
-const PUSHED_UNDER = -1;
-
-const IN_PLACE = 0;
-
-const PUSHED_OFF = 1;
-
-const UNDER_SHIFT = 0.3;
-
-const UNDER_DIM = 0.25;
+import type { ACardMotion } from '@ValenceMobile/components/APageStack/components/ACardLayer/ACardLayer.types';
+import type { ACardSwap, AKeeping, APageStackProps, AStackedPage } from './APageStack.types';
 
 const EDGE = 24;
+
+const STARTS_AFTER = 8;
 
 const GOES_BACK_PAST = 0.35;
 
@@ -36,86 +34,128 @@ const CARD_GAP = 10;
 
 const STATUS_BAR_AT_LEAST = 36;
 
-const CARD_CORNER = 38;
-
-const UNDER_A_CARD_SCALE = 0.92;
-
-const UNDER_A_CARD_DIM = 0.4;
-
-const SWAPPED_SHIFT = 0.3;
-
-const GRABBER_WIDE = 56;
-
-const GRABBER_HIGH = 5;
-
 const KEPT_BENEATH = 2;
 
 const MILLISECONDS_A_SECOND = 1000;
 
-const MOVE = { ...SPRINGS.liquid, overshootClamping: true, useNativeDriver: true } as const;
+const MOVE = { ...SPRINGS.liquid, overshootClamping: true, reduceMotion: ReduceMotion.Never };
 
-const NOTHING_YET = {
-  top: null,
-  beneath: null,
-  width: 0,
-  height: 0,
-  onBack: () => undefined,
-  onStepBack: undefined,
-  canSwipe: false,
-  canDrop: false,
-} as const;
+const FROZEN: AKeeping = { activity: 0, isFrozen: true };
 
-const styles = StyleSheet.create({
-  card: {
-    borderTopLeftRadius: CARD_CORNER,
-    borderTopRightRadius: CARD_CORNER,
-    overflow: 'hidden',
-  },
-  dim: { backgroundColor: '#000000' },
-  hidden: { opacity: 0 },
-  grabber: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
-    borderRadius: GRABBER_HIGH / 2,
-    height: GRABBER_HIGH,
-    position: 'absolute',
-    top: 6,
-    width: GRABBER_WIDE,
-  },
-  lifted: {
-    shadowColor: '#000000',
-    shadowOffset: { height: 0, width: -6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-  },
-  underACard: { borderRadius: CARD_CORNER, overflow: 'hidden' },
-});
+const styles = StyleSheet.create({ whole: { ...StyleSheet.absoluteFill } });
 
 /**
- * Where a page stands — in place, pushed off to the right, or pushed under the one above it — made
- * the first time it is asked about.
- *
- * @param places - Every page's place, by key.
- * @param key - The page.
- * @param from - Where a page nobody has placed yet starts.
- * @returns Its place, which moves.
+ * Taps the phone lightly, as a page dragged far enough goes.
  */
-const placeIn = (
-  places: Map<string, Animated.Value>,
-  key: string,
-  from: number = IN_PLACE,
-): Animated.Value => {
-  const known = places.get(key);
+const feelItGo = (): void => {
+  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+};
 
-  if (known !== undefined) {
-    return known;
+/**
+ * Springs a place to where it is going, carrying on at the speed it was already moving.
+ *
+ * @param place - The place.
+ * @param to - Where it is going.
+ * @param velocity - How fast it was already moving there, in places a second.
+ * @param then - Told whether it got there, rather than being sent somewhere else on the way.
+ */
+const springTo = (
+  place: SharedValue<number>,
+  to: number,
+  velocity: number,
+  then?: (isThere: boolean) => void,
+): void => {
+  'worklet';
+  place.set(
+    withSpring(to, { ...MOVE, velocity }, (finished) => {
+      'worklet';
+      then?.(finished === true);
+    }),
+  );
+};
+
+/**
+ * Moves the page on top as far as a finger has pulled it, and the page beneath back with it.
+ *
+ * @param top - Where the page on top stands.
+ * @param beneath - Where the page beneath it stands, where it moves with it.
+ * @param pulled - How far it has been pulled, from in place to all the way off.
+ */
+const pullTo = (
+  top: SharedValue<number>,
+  beneath: SharedValue<number> | null,
+  pulled: number,
+): void => {
+  'worklet';
+  top.set(pulled);
+
+  if (beneath !== null) {
+    beneath.set(pulled - 1);
+  }
+};
+
+/**
+ * Lets go of the page on top, which goes if it was pulled far or fast enough and springs back
+ * otherwise, the page beneath following it.
+ *
+ * @param top - Where the page on top stands.
+ * @param beneath - Where the page beneath it stands, where it moves with it.
+ * @param isGoing - Whether it goes.
+ * @param velocity - How fast it was moving when let go, in places a second.
+ * @param onGone - Told once it has gone.
+ */
+const letGoOf = (
+  top: SharedValue<number>,
+  beneath: SharedValue<number> | null,
+  isGoing: boolean,
+  velocity: number,
+  onGone: () => void,
+): void => {
+  'worklet';
+
+  if (isGoing) {
+    scheduleOnRN(feelItGo);
   }
 
-  const made = new Animated.Value(from);
+  if (beneath !== null) {
+    springTo(beneath, isGoing ? PLACE.inPlace : PLACE.under, velocity);
+  }
 
-  places.set(key, made);
+  springTo(top, isGoing ? PLACE.off : PLACE.inPlace, velocity, (isThere) => {
+    'worklet';
 
-  return made;
+    if (isGoing && isThere) {
+      scheduleOnRN(onGone);
+    }
+  });
+};
+
+/**
+ * Puts the page on top back where it stood, and the page beneath back under it.
+ *
+ * @param top - Where the page on top stands.
+ * @param beneath - Where the page beneath it stands, where it moved with it.
+ */
+const putBack = (top: SharedValue<number>, beneath: SharedValue<number> | null): void => {
+  'worklet';
+  springTo(top, PLACE.inPlace, 0);
+
+  if (beneath !== null) {
+    springTo(beneath, PLACE.under, 0);
+  }
+};
+
+/**
+ * Where a share of the way a finger has moved lands, kept between none of it and all of it.
+ *
+ * @param moved - How far it moved.
+ * @param across - How far all the way is.
+ * @returns The share, from nought to one.
+ */
+const shareOf = (moved: number, across: number): number => {
+  'worklet';
+
+  return across === 0 ? 0 : Math.min(Math.max(moved / across, 0), 1);
 };
 
 /**
@@ -142,9 +182,12 @@ const placeIn = (
  * the page that would have asked for it — takes over where the one it replaced stood, sliding in if
  * that one still was, rather than starting again off to the side.
  *
- * Every page stays drawn beneath the one on top, so going back returns to it as it was left, scrolled
- * where it was scrolled; only the top one is told it is on top, so the rest can stop playing. Where
- * somebody has asked their phone for less motion, pages cross-fade instead of sliding.
+ * Every page stays mounted beneath the one on top, so going back returns to it as it was left,
+ * scrolled where it was scrolled; only the top one is told it is on top, so the rest can stop
+ * playing. The page beneath the top one stays live, so a swipe can reveal it, and every page below
+ * that is frozen and taken off the screen natively until it is gone back to, so it neither draws nor
+ * renders again while it is covered. Fingers are followed and pages moved on the interface thread.
+ * Where somebody has asked their phone for less motion, pages cross-fade instead of sliding.
  *
  * @param pages - The pages, bottom first; the first is what everything opens over.
  * @param onBack - Told somebody dragged the top page away.
@@ -155,186 +198,57 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isStill = usePrefersStillness();
-  const [places] = useState(() => new Map<string, Animated.Value>());
-  const [scrolls] = useState(() => new Map<string, boolean>());
-  const [grabbedAt] = useState(() => ({ dy: 0 }));
+  const [held, setHeld] = useState(() => stackAfter(null, pages, null));
   const [leaving, setLeaving] = useState<AStackedPage | null>(null);
-  const [first] = useState(() => new Set(pages.map((page) => page.key)));
-  const [held, setHeld] = useState(pages);
-  const [slots] = useState(() => new Map<string, string>());
-  const [swapping] = useState(() => new Animated.Value(1));
-  const [swap, setSwap] = useState<{
-    gone: AStackedPage;
-    toKey: string;
-    isForward: boolean;
-  } | null>(null);
-  const before = useRef<readonly AStackedPage[]>(pages);
-  const [peeling] = useState(() => new Animated.Value(0));
+  const [swap, setSwap] = useState<ACardSwap | null>(null);
   const [peeled, setPeeled] = useState<string | null>(null);
   const [arrivingKey, setArrivingKey] = useState<string | null>(null);
+  const swapping = useSharedValue(1);
+  const peeling = useSharedValue(0);
+  const canSwipe = useSharedValue(false);
+  const canDrop = useSharedValue(false);
+  const isTopAtItsTop = useSharedValue(true);
+  const fromX = useSharedValue(0);
+  const fromY = useSharedValue(0);
+  const lastDown = useSharedValue(0);
+  const grabbedAt = useSharedValue(0);
+  const before = useRef(pages);
+  const scrolls = useRef(new Map<string, boolean>());
+  const latest = useRef<{
+    top: AStackedPage | null;
+    topPlace: SharedValue<number> | null;
+    beneathPlace: SharedValue<number> | null;
+    height: number;
+    onBack: () => void;
+  }>({ top: null, topPlace: null, beneathPlace: null, height: 0, onBack });
+  const cardInsets = useMemo(() => ({ ...insets, top: 0 }), [insets]);
 
-  if (held !== pages) {
-    const gone = held.at(-1) ?? null;
+  if (held.pages !== pages) {
+    const gone = held.pages.at(-1) ?? null;
     const arrived = pages.at(-1) ?? null;
+    const isPopped = pages.length < held.pages.length && gone !== null && pages.length > 0;
 
-    if (pages.length < held.length && gone !== null && pages.length > 0) {
+    if (isPopped) {
       setLeaving(gone);
     }
 
     if (
-      pages.length === held.length &&
+      pages.length === held.pages.length &&
       gone !== null &&
       arrived !== null &&
-      gone.key !== arrived.key
+      gone.key !== arrived.key &&
+      gone.isCard === true &&
+      arrived.isCard === true
     ) {
-      const place = places.get(gone.key);
-
-      if (place !== undefined) {
-        places.set(arrived.key, place);
-        places.delete(gone.key);
-      }
-
-      if (gone.isCard === true && arrived.isCard === true) {
-        slots.set(arrived.key, slots.get(gone.key) ?? gone.key);
-
-        if (peeled === gone.key) {
-          setPeeled(null);
-        } else {
-          setSwap({
-            gone,
-            toKey: arrived.key,
-            isForward: (arrived.depth ?? 0) > (gone.depth ?? 0),
-          });
-        }
+      if (peeled === gone.key) {
+        setPeeled(null);
+      } else {
+        setSwap({ gone, toKey: arrived.key, isForward: (arrived.depth ?? 0) > (gone.depth ?? 0) });
       }
     }
 
-    setHeld(pages);
+    setHeld(stackAfter(held, pages, isPopped ? gone : leaving));
   }
-
-  /**
-   * Draws a page as a card draws it: without the clock's room at its top, told it is a card and
-   * whether it goes back to another, able to say when it is scrolled to its top, and able to hand
-   * the card a finger that scrolled it there and kept pulling.
-   *
-   * @param page - The page.
-   * @returns The page inside all a card tells it.
-   */
-  const inACard = (page: AStackedPage): ReactNode => (
-    <IS_A_CARD.Provider value>
-      <CARD_GOES_BACK.Provider value={page.goesBack === true}>
-        <SafeAreaInsetsContext.Provider value={{ ...insets, top: 0 }}>
-          <CARD_SCROLL.Provider
-            value={{
-              atTop: (isAtTop) => {
-                scrolls.set(page.key, isAtTop);
-              },
-              pullDown,
-              letGo,
-            }}
-          >
-            {page.page}
-          </CARD_SCROLL.Provider>
-        </SafeAreaInsetsContext.Provider>
-      </CARD_GOES_BACK.Provider>
-    </IS_A_CARD.Provider>
-  );
-
-  /**
-   * Draws a card's pages: the one it shows; the last few it took the place of, kept drawn but hidden
-   * beneath it, so going back finds them as they were left, scrolled where they were scrolled, while
-   * any further back are drawn afresh when gone back to, so a long run stays light; and
-   * while it is swapping one card's worth for another, the one leaving too — the new one sliding in over the old from the right going forward, and the
-   * old one sliding away to the right over the one coming back.
-   *
-   * @param page - The card's page now.
-   * @returns Its layers.
-   */
-  const cardLayers = (page: AStackedPage): ReactNode => {
-    const isSwapping = swap !== null && swap.toKey === page.key;
-    const trail = (page.trail ?? [])
-      .slice(-KEPT_BENEATH)
-      .filter((one) => !isSwapping || one.key !== swap.gone.key);
-    const layers = !isSwapping
-      ? [...trail, page]
-      : swap.isForward
-        ? [...trail, swap.gone, page]
-        : [...trail, page, swap.gone];
-
-    const isPeeled = !isSwapping && peeled === page.key;
-    const peeledTo = isPeeled ? (trail.at(-1)?.key ?? null) : null;
-
-    return layers.map((layer) => {
-      const isGoing = isSwapping && layer.key === swap.gone.key;
-      const isOnTop = isSwapping
-        ? swap.isForward
-          ? !isGoing
-          : isGoing
-        : isPeeled && layer.key === page.key;
-      const isMoving = isSwapping && (isGoing || layer.key === page.key);
-      const isPeeling = isPeeled && (layer.key === page.key || layer.key === peeledTo);
-      const isHidden = layer.key !== page.key && !isMoving && !isPeeling;
-      const motion = isHidden
-        ? styles.hidden
-        : isPeeling
-          ? isStill
-            ? layer.key === page.key
-              ? { opacity: peeling.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }
-              : null
-            : {
-                transform: [
-                  {
-                    translateX: peeling.interpolate({
-                      inputRange: [0, 1],
-                      outputRange:
-                        layer.key === page.key ? [0, width] : [-width * SWAPPED_SHIFT, 0],
-                    }),
-                  },
-                ],
-              }
-          : !isMoving
-            ? null
-            : isStill
-              ? {
-                  opacity: swapping.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: isGoing ? [1, 0] : [0, 1],
-                  }),
-                }
-              : {
-                  transform: [
-                    {
-                      translateX: swapping.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: swap.isForward
-                          ? isGoing
-                            ? [0, -width * SWAPPED_SHIFT]
-                            : [width, 0]
-                          : isGoing
-                            ? [0, width]
-                            : [-width * SWAPPED_SHIFT, 0],
-                      }),
-                    },
-                  ],
-                };
-
-      return (
-        <Animated.View
-          key={layer.key}
-          style={[StyleSheet.absoluteFill, motion, isOnTop && styles.lifted]}
-          pointerEvents={
-            isGoing || isHidden || (isPeeling && layer.key !== page.key) ? 'none' : 'auto'
-          }
-          accessibilityElementsHidden={isHidden}
-          importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
-        >
-          <IS_ON_TOP.Provider value={!isHidden && (pages.at(-1)?.key ?? null) === page.key}>
-            {inACard(layer)}
-          </IS_ON_TOP.Provider>
-        </Animated.View>
-      );
-    });
-  };
 
   const drawn =
     leaving === null || pages.some((page) => page.key === leaving.key)
@@ -342,46 +256,117 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
       : [...pages, leaving];
   const top = drawn.at(-1) ?? null;
   const beneath = drawn.at(-2) ?? null;
+  const topKey = pages.at(-1)?.key ?? null;
+  const keeping = howEachIsKept(drawn, pages);
+
+  /**
+   * Where a page stands in the stack as it is held now.
+   *
+   * @param key - The page.
+   * @returns Its place, or nothing for a page the stack does not hold.
+   */
+  const placeOf = (key: string): SharedValue<number> | null =>
+    held.places.get(held.slots.get(key) ?? key) ?? null;
+
+  const topPlace = top === null ? null : placeOf(top.key);
+  const beneathPlace = beneath === null ? null : placeOf(beneath.key);
+  const isTopACard = top?.isCard === true;
+  const swipedKey = top?.key ?? null;
+  const dropsBeneath = isTopACard ? beneathPlace : null;
+  const swipes =
+    top !== null &&
+    beneath !== null &&
+    top.rises !== true &&
+    (top.isCard !== true ||
+      (onStepBack !== undefined &&
+        top.goesBack === true &&
+        (top.trail?.length ?? 0) > 0 &&
+        swap === null)) &&
+    top.holdsTheEdge !== true &&
+    leaving === null;
+  const drops = top !== null && (top.rises === true || top.isCard === true) && leaving === null;
+
+  useLayoutEffect(() => {
+    canSwipe.set(swipes);
+    canDrop.set(drops);
+    isTopAtItsTop.set(top === null || scrolls.current.get(top.key) !== false);
+    latest.current = { top, topPlace, beneathPlace, height, onBack };
+  });
+
+  const forgetLeaving = useCallback((key: string) => {
+    setLeaving((still) => (still?.key === key ? null : still));
+  }, []);
+
+  const settleArriving = useCallback((key: string) => {
+    setArrivingKey((still) => (still === key ? null : still));
+  }, []);
+
+  const endSwap = useCallback(() => {
+    setSwap(null);
+  }, []);
+
+  const unpeel = useCallback(() => {
+    setPeeled(null);
+  }, []);
 
   useLayoutEffect(() => {
     if (swap === null) {
       return;
     }
 
-    swapping.setValue(0);
-    Animated.spring(swapping, { ...MOVE, toValue: 1 }).start(({ finished }) => {
-      if (finished) {
-        setSwap(null);
+    swapping.set(0);
+    springTo(swapping, 1, 0, (isThere) => {
+      'worklet';
+
+      if (isThere) {
+        scheduleOnRN(endSwap);
       }
     });
-  }, [swap, swapping]);
+  }, [swap, swapping, endSwap]);
 
   useLayoutEffect(() => {
-    first.clear();
-
     const was = before.current;
 
     before.current = pages;
 
+    /**
+     * Where a page stands in the stack as it was just changed.
+     *
+     * @param key - The page.
+     * @returns Its place, or nothing for a page the stack does not hold.
+     */
+    const placeNow = (key: string): SharedValue<number> | null =>
+      held.places.get(held.slots.get(key) ?? key) ?? null;
+
     const opened = pages.at(-1) ?? null;
     const under = pages.at(-2) ?? null;
+    const underPlace = under === null ? null : placeNow(under.key);
 
     if (pages.length > was.length && opened !== null) {
-      const arriving = placeIn(places, opened.key, PUSHED_OFF);
+      const arriving = placeNow(opened.key);
 
-      setArrivingKey(opened.key);
+      if (arriving === null) {
+        return undefined;
+      }
+
+      const openedKey = opened.key;
+
+      setArrivingKey(openedKey);
+
+      const settle = (): void => {
+        'worklet';
+        scheduleOnRN(settleArriving, openedKey);
+      };
 
       if (opened.rises === true || opened.isCard === true) {
         let hasRisen = false;
 
         const rise = () => {
           hasRisen = true;
-          Animated.spring(arriving, { ...MOVE, toValue: IN_PLACE }).start(() => {
-            setArrivingKey((still) => (still === opened.key ? null : still));
-          });
+          springTo(arriving, PLACE.inPlace, 0, settle);
 
-          if (opened.isCard === true && under !== null) {
-            Animated.spring(placeIn(places, under.key), { ...MOVE, toValue: PUSHED_UNDER }).start();
+          if (opened.isCard === true && underPlace !== null) {
+            springTo(underPlace, PLACE.under, 0);
           }
         };
 
@@ -397,388 +382,393 @@ const APageStack = ({ pages, onBack, onStepBack }: APageStackProps) => {
         };
       }
 
-      Animated.spring(arriving, { ...MOVE, toValue: IN_PLACE }).start(() => {
-        setArrivingKey((still) => (still === opened.key ? null : still));
-      });
+      springTo(arriving, PLACE.inPlace, 0, settle);
 
-      if (under !== null) {
-        Animated.spring(placeIn(places, under.key), { ...MOVE, toValue: PUSHED_UNDER }).start();
+      if (underPlace !== null) {
+        springTo(underPlace, PLACE.under, 0);
       }
 
       return undefined;
     }
 
     if (pages.length === was.length && opened !== null && opened.key !== was.at(-1)?.key) {
-      Animated.spring(placeIn(places, opened.key), { ...MOVE, toValue: IN_PLACE }).start();
+      const swappedIn = placeNow(opened.key);
 
-      return undefined;
-    }
+      if (swappedIn !== null) {
+        springTo(swappedIn, PLACE.inPlace, 0);
+      }
 
-    if (pages.length >= was.length) {
       return undefined;
     }
 
     const gone = was.at(-1) ?? null;
+    const gonePlace = gone === null ? null : placeNow(gone.key);
+    const openedPlace = opened === null ? null : placeNow(opened.key);
 
-    for (const page of was.slice(pages.length, -1)) {
-      places.delete(page.key);
-    }
-
-    if (gone === null) {
+    if (pages.length >= was.length || gone === null || opened === null) {
       return undefined;
     }
 
-    if (opened === null) {
-      places.delete(gone.key);
+    const openedKey = opened.key;
+    const goneKey = gone.key;
 
-      return undefined;
+    setArrivingKey(openedKey);
+
+    if (openedPlace !== null) {
+      springTo(openedPlace, PLACE.inPlace, 0, () => {
+        'worklet';
+        scheduleOnRN(settleArriving, openedKey);
+      });
     }
 
-    setArrivingKey(opened.key);
-    Animated.spring(placeIn(places, opened.key), { ...MOVE, toValue: IN_PLACE }).start(() => {
-      setArrivingKey((still) => (still === opened.key ? null : still));
-    });
-    Animated.spring(placeIn(places, gone.key), { ...MOVE, toValue: PUSHED_OFF }).start(() => {
-      places.delete(gone.key);
-      setLeaving((still) => (still?.key === gone.key ? null : still));
-    });
+    if (gonePlace !== null) {
+      springTo(gonePlace, PLACE.off, 0, () => {
+        'worklet';
+        scheduleOnRN(forgetLeaving, goneKey);
+      });
+    }
 
     return undefined;
-  }, [pages, first, places]);
+  }, [pages, held, settleArriving, forgetLeaving]);
 
-  const [latest] = useState(
-    () =>
-      new Map([
-        [
-          'now',
-          { top, beneath, width, height, onBack, onStepBack, canSwipe: false, canDrop: false },
-        ],
-      ]),
-  );
+  const [cardHands] = useState(() => ({
+    onAtTop: (key: string, isAtTop: boolean) => {
+      scrolls.current.set(key, isAtTop);
 
-  useLayoutEffect(() => {
-    latest.set('now', {
-      top,
-      beneath,
-      width,
-      height,
-      onBack,
-      onStepBack,
-      canSwipe:
-        top !== null &&
-        beneath !== null &&
-        top.rises !== true &&
-        (top.isCard !== true ||
-          (onStepBack !== undefined &&
-            top.goesBack === true &&
-            (top.trail?.length ?? 0) > 0 &&
-            swap === null)) &&
-        top.holdsTheEdge !== true &&
-        leaving === null,
-      canDrop: top !== null && (top.rises === true || top.isCard === true) && leaving === null,
-    });
-  });
-
-  /**
-   * Moves the page on top down with a finger dragging it, and the page beneath a card back up with it.
-   *
-   * @param dy - How far down the finger has dragged it.
-   */
-  const pullDown = (dy: number) => {
-    const { top, beneath, height } = latest.get('now') ?? NOTHING_YET;
-
-    if (top === null || height === 0) {
-      return;
-    }
-
-    const pulled = Math.min(Math.max(dy / height, 0), 1);
-
-    placeIn(places, top.key).setValue(pulled);
-
-    if (top.isCard === true && beneath !== null) {
-      placeIn(places, beneath.key).setValue(pulled - 1);
-    }
-  };
-
-  /**
-   * Lets go of the page on top, which goes away if it was dragged far or fast enough and springs back
-   * otherwise.
-   *
-   * @param dy - How far down it was dragged.
-   * @param vy - How fast it was moving down when let go, in points a millisecond.
-   */
-  const letGo = (dy: number, vy: number) => {
-    const { top, beneath, height, onBack } = latest.get('now') ?? NOTHING_YET;
-
-    if (top === null || height === 0) {
-      return;
-    }
-
-    const isGoing = dy / height > GOES_DOWN_PAST || vy > GOES_DOWN_FASTER_THAN;
-    const velocity = (vy * MILLISECONDS_A_SECOND) / height;
-
-    if (isGoing) {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-
-    if (top.isCard === true && beneath !== null) {
-      Animated.spring(placeIn(places, beneath.key), {
-        ...MOVE,
-        velocity,
-        toValue: isGoing ? IN_PLACE : PUSHED_UNDER,
-      }).start();
-    }
-
-    Animated.spring(placeIn(places, top.key), {
-      ...MOVE,
-      velocity,
-      toValue: isGoing ? PUSHED_OFF : IN_PLACE,
-    }).start(({ finished }) => {
-      if (isGoing && finished) {
-        onBack();
+      if (latest.current.top?.key === key) {
+        isTopAtItsTop.set(isAtTop);
       }
-    });
-  };
+    },
+    pullDown: (dy: number) => {
+      const now = latest.current;
 
-  const [dropping] = useState(() =>
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => {
-        const now = latest.get('now') ?? NOTHING_YET;
+      if (now.top === null || now.topPlace === null || now.height === 0) {
+        return;
+      }
 
-        return (
-          SHEETS_UP.size === 0 &&
-          now.canDrop &&
-          (now.top === null || scrolls.get(now.top.key) !== false) &&
-          gesture.vy >= 0 &&
-          gesture.dy > 8 &&
-          gesture.dy > Math.abs(gesture.dx) * 2
-        );
-      },
-      onPanResponderGrant: (_, gesture) => {
-        grabbedAt.dy = gesture.dy;
-      },
-      onPanResponderMove: (_, gesture) => {
-        pullDown(gesture.dy - grabbedAt.dy);
-      },
-      onPanResponderRelease: (_, gesture) => {
-        letGo(gesture.dy - grabbedAt.dy, gesture.vy);
-      },
-      onPanResponderTerminate: () => {
-        const { top, beneath } = latest.get('now') ?? NOTHING_YET;
+      pullTo(
+        now.topPlace,
+        now.top.isCard === true ? now.beneathPlace : null,
+        shareOf(dy, now.height),
+      );
+    },
+    letGo: (dy: number, vy: number) => {
+      const now = latest.current;
 
-        if (top !== null) {
-          Animated.spring(placeIn(places, top.key), { ...MOVE, toValue: IN_PLACE }).start();
-        }
+      if (now.top === null || now.topPlace === null || now.height === 0) {
+        return;
+      }
 
-        if (top?.isCard === true && beneath !== null) {
-          Animated.spring(placeIn(places, beneath.key), { ...MOVE, toValue: PUSHED_UNDER }).start();
-        }
-      },
-    }),
-  );
+      letGoOf(
+        now.topPlace,
+        now.top.isCard === true ? now.beneathPlace : null,
+        dy / now.height > GOES_DOWN_PAST || vy > GOES_DOWN_FASTER_THAN,
+        (vy * MILLISECONDS_A_SECOND) / now.height,
+        now.onBack,
+      );
+    },
+  }));
 
-  const [swiping] = useState(() =>
-    PanResponder.create({
-      onMoveShouldSetPanResponderCapture: (_, gesture) =>
-        SHEETS_UP.size === 0 &&
-        latest.get('now')?.canSwipe === true &&
-        gesture.x0 < EDGE &&
-        gesture.dx > 8 &&
-        Math.abs(gesture.dy) < gesture.dx,
-      onPanResponderGrant: () => {
-        const { top } = latest.get('now') ?? NOTHING_YET;
+  const swipeBack = usePanGesture({
+    testID: 'swipeBack',
+    manualActivation: true,
+    onTouchesDown: (event) => {
+      'worklet';
+      const touch = event.changedTouches[0];
 
-        if (top?.isCard === true) {
-          peeling.setValue(0);
-          setPeeled(top.key);
-        }
-      },
-      onPanResponderMove: (_, gesture) => {
-        const { top, beneath, width } = latest.get('now') ?? NOTHING_YET;
+      if (touch !== undefined) {
+        fromX.set(touch.absoluteX);
+        fromY.set(touch.absoluteY);
+      }
+    },
+    onTouchesMove: (event) => {
+      'worklet';
+      const touch = event.allTouches[0];
 
-        if (top === null || beneath === null) {
-          return;
-        }
+      if (touch === undefined) {
+        return;
+      }
 
-        const pulled = Math.min(Math.max(gesture.dx / width, 0), 1);
+      if (!canSwipe.get() || fromX.get() >= EDGE) {
+        GestureStateManager.fail(event.handlerTag);
 
-        if (top.isCard === true) {
-          peeling.setValue(pulled);
+        return;
+      }
 
-          return;
-        }
+      const dx = touch.absoluteX - fromX.get();
+      const dy = touch.absoluteY - fromY.get();
 
-        placeIn(places, top.key).setValue(pulled);
-        placeIn(places, beneath.key).setValue(pulled - 1);
-      },
-      onPanResponderRelease: (_, gesture) => {
-        const { top, beneath, width, onBack, onStepBack } = latest.get('now') ?? NOTHING_YET;
+      if (dx > STARTS_AFTER && Math.abs(dy) < dx) {
+        GestureStateManager.activate(event.handlerTag);
+      }
+    },
+    onActivate: () => {
+      'worklet';
 
-        if (top === null || beneath === null) {
-          return;
-        }
+      if (isTopACard && swipedKey !== null) {
+        peeling.set(0);
+        scheduleOnRN(setPeeled, swipedKey);
+      }
+    },
+    onUpdate: (event) => {
+      'worklet';
 
-        const isGoing = gesture.dx / width > GOES_BACK_PAST || gesture.vx > GOES_BACK_FASTER_THAN;
-        const velocity = (gesture.vx * MILLISECONDS_A_SECOND) / width;
+      if (topPlace === null || beneathPlace === null) {
+        return;
+      }
 
-        if (isGoing) {
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        }
+      const pulled = shareOf(event.translationX, width);
 
-        if (top.isCard === true) {
-          Animated.spring(peeling, { ...MOVE, velocity, toValue: isGoing ? 1 : 0 }).start(
-            ({ finished }) => {
-              if (!finished) {
-                return;
-              }
+      if (isTopACard) {
+        peeling.set(pulled);
 
-              if (isGoing) {
-                onStepBack?.();
+        return;
+      }
 
-                return;
-              }
+      pullTo(topPlace, beneathPlace, pulled);
+    },
+    onDeactivate: (event) => {
+      'worklet';
 
-              setPeeled(null);
-            },
-          );
+      if (topPlace === null || beneathPlace === null) {
+        return;
+      }
 
-          return;
-        }
-
-        Animated.spring(placeIn(places, beneath.key), {
-          ...MOVE,
-          velocity,
-          toValue: isGoing ? IN_PLACE : PUSHED_UNDER,
-        }).start();
-        Animated.spring(placeIn(places, top.key), {
-          ...MOVE,
-          velocity,
-          toValue: isGoing ? PUSHED_OFF : IN_PLACE,
-        }).start(({ finished }) => {
-          if (isGoing && finished) {
-            onBack();
-          }
-        });
-      },
-      onPanResponderTerminate: () => {
-        const { top, beneath } = latest.get('now') ?? NOTHING_YET;
-
-        if (top === null || beneath === null) {
-          return;
-        }
-
-        if (top.isCard === true) {
-          Animated.spring(peeling, { ...MOVE, toValue: 0 }).start(() => {
-            setPeeled(null);
+      if (event.canceled) {
+        if (isTopACard) {
+          springTo(peeling, 0, 0, () => {
+            'worklet';
+            scheduleOnRN(unpeel);
           });
 
           return;
         }
 
-        Animated.spring(placeIn(places, top.key), { ...MOVE, toValue: IN_PLACE }).start();
-        Animated.spring(placeIn(places, beneath.key), { ...MOVE, toValue: PUSHED_UNDER }).start();
-      },
-    }),
-  );
+        putBack(topPlace, beneathPlace);
 
-  return (
-    <View style={StyleSheet.absoluteFill} {...swiping.panHandlers}>
-      <View style={StyleSheet.absoluteFill} {...dropping.panHandlers}>
-        {drawn.map((page, index) => {
-          const place = placeIn(
-            places,
-            page.key,
-            index === drawn.length - 1
-              ? index === 0 || first.has(page.key)
-                ? IN_PLACE
-                : PUSHED_OFF
-              : PUSHED_UNDER,
-          );
-          const isTop = page.key === (pages.at(-1)?.key ?? null);
-          const isUnderACard = drawn[index + 1]?.isCard === true;
-          const rises = page.rises === true || page.isCard === true;
-          const across = rises ? height : width;
-          const moving = isStill
-            ? {
-                opacity: place.interpolate({
-                  inputRange: [PUSHED_UNDER, IN_PLACE, PUSHED_OFF],
-                  outputRange: [1, 1, 0],
-                  extrapolate: 'clamp',
-                }),
-              }
-            : {
-                transform: isUnderACard
-                  ? [
-                      {
-                        scale: place.interpolate({
-                          inputRange: [PUSHED_UNDER, IN_PLACE],
-                          outputRange: [UNDER_A_CARD_SCALE, 1],
-                          extrapolate: 'clamp',
-                        }),
-                      },
-                    ]
-                  : [
-                      rises
-                        ? {
-                            translateY: place.interpolate({
-                              inputRange: [IN_PLACE, PUSHED_OFF],
-                              outputRange: [0, across],
-                              extrapolate: 'clamp',
-                            }),
-                          }
-                        : {
-                            translateX: place.interpolate({
-                              inputRange: [PUSHED_UNDER, IN_PLACE, PUSHED_OFF],
-                              outputRange: [-across * UNDER_SHIFT, 0, across],
-                              extrapolate: 'clamp',
-                            }),
-                          },
-                    ],
-              };
-          const shape =
-            page.isCard === true
-              ? [styles.card, { top: Math.max(insets.top, STATUS_BAR_AT_LEAST) + CARD_GAP }]
-              : isUnderACard
-                ? styles.underACard
-                : null;
+        return;
+      }
+
+      const isGoing =
+        shareOf(event.translationX, width) > GOES_BACK_PAST ||
+        event.velocityX / MILLISECONDS_A_SECOND > GOES_BACK_FASTER_THAN;
+      const velocity = width === 0 ? 0 : event.velocityX / width;
+
+      if (!isTopACard) {
+        letGoOf(topPlace, beneathPlace, isGoing, velocity, onBack);
+
+        return;
+      }
+
+      if (isGoing) {
+        scheduleOnRN(feelItGo);
+      }
+
+      springTo(peeling, isGoing ? 1 : 0, velocity, (isThere) => {
+        'worklet';
+
+        if (!isThere) {
+          return;
+        }
+
+        if (!isGoing) {
+          scheduleOnRN(unpeel);
+        } else if (onStepBack !== undefined) {
+          scheduleOnRN(onStepBack);
+        }
+      });
+    },
+  });
+
+  const dragDown = usePanGesture({
+    testID: 'dragDown',
+    manualActivation: true,
+    onTouchesDown: (event) => {
+      'worklet';
+      const touch = event.changedTouches[0];
+
+      if (touch !== undefined) {
+        fromX.set(touch.absoluteX);
+        fromY.set(touch.absoluteY);
+        lastDown.set(0);
+      }
+    },
+    onTouchesMove: (event) => {
+      'worklet';
+      const touch = event.allTouches[0];
+
+      if (touch === undefined) {
+        return;
+      }
+
+      const dx = touch.absoluteX - fromX.get();
+      const dy = touch.absoluteY - fromY.get();
+      const isStillGoingDown = dy >= lastDown.get();
+
+      lastDown.set(dy);
+
+      if (
+        canDrop.get() &&
+        isTopAtItsTop.get() &&
+        isStillGoingDown &&
+        dy > STARTS_AFTER &&
+        dy > Math.abs(dx) * 2
+      ) {
+        GestureStateManager.activate(event.handlerTag);
+      }
+    },
+    onActivate: (event) => {
+      'worklet';
+      grabbedAt.set(event.translationY);
+    },
+    onUpdate: (event) => {
+      'worklet';
+
+      if (topPlace !== null) {
+        pullTo(topPlace, dropsBeneath, shareOf(event.translationY - grabbedAt.get(), height));
+      }
+    },
+    onDeactivate: (event) => {
+      'worklet';
+
+      if (topPlace === null || height === 0) {
+        return;
+      }
+
+      if (event.canceled) {
+        putBack(topPlace, dropsBeneath);
+
+        return;
+      }
+
+      const dy = event.translationY - grabbedAt.get();
+      const vy = event.velocityY / MILLISECONDS_A_SECOND;
+
+      letGoOf(
+        topPlace,
+        dropsBeneath,
+        dy / height > GOES_DOWN_PAST || vy > GOES_DOWN_FASTER_THAN,
+        event.velocityY / height,
+        onBack,
+      );
+    },
+  });
+
+  /**
+   * Draws a card's pages: the one it shows; the last few it took the place of, kept beneath it so
+   * going back finds them as they were left, the one it steps back to kept live for a swipe to reveal
+   * and the rest frozen and off the screen, while any further back are drawn afresh when gone back
+   * to, so a long run stays light; and while it is swapping one card's worth for another, the one
+   * leaving too.
+   *
+   * @param page - The card's page now.
+   * @param kept - How the card itself is kept.
+   * @returns Its layers.
+   */
+  const cardLayers = (page: AStackedPage, kept: AKeeping): ReactNode => {
+    const isSwapping = swap !== null && swap.toKey === page.key;
+    const trail = (page.trail ?? [])
+      .slice(-KEPT_BENEATH)
+      .filter((one) => !isSwapping || one.key !== swap.gone.key);
+    const layers = !isSwapping
+      ? [...trail, page]
+      : swap.isForward
+        ? [...trail, swap.gone, page]
+        : [...trail, page, swap.gone];
+    const isPeeled = !isSwapping && peeled === page.key;
+    const stepsBackTo = trail.at(-1)?.key ?? null;
+    const isTopCard = topKey === page.key;
+
+    return (
+      <ScreenContainer style={styles.whole}>
+        {layers.map((layer) => {
+          const isGoing = isSwapping && layer.key === swap.gone.key;
+          const isShown = layer.key === page.key;
+          const isMoving = isSwapping && (isGoing || isShown);
+          const isPeeling = isPeeled && (isShown || layer.key === stepsBackTo);
+          const isHidden = !isShown && !isMoving && !isPeeling;
+          const isLive = !isHidden || (isTopCard && layer.key === stepsBackTo);
+          const motion: ACardMotion = isHidden
+            ? 'hidden'
+            : isPeeling
+              ? isShown
+                ? 'peelingAway'
+                : 'peeledTo'
+              : !isMoving
+                ? 'shown'
+                : isGoing
+                  ? swap.isForward
+                    ? 'goingForward'
+                    : 'goingBack'
+                  : swap.isForward
+                    ? 'arrivingForward'
+                    : 'arrivingBack';
 
           return (
-            <IS_ON_TOP.Provider key={slots.get(page.key) ?? page.key} value={isTop}>
-              <Animated.View
-                style={[StyleSheet.absoluteFill, shape, moving]}
-                renderToHardwareTextureAndroid={
-                  !isTop || page.key === arrivingKey || page.key === leaving?.key
-                }
-                pointerEvents={isTop ? 'auto' : 'none'}
-                accessibilityElementsHidden={!isTop}
-                importantForAccessibility={isTop ? 'auto' : 'no-hide-descendants'}
-              >
-                {page.isCard === true ? cardLayers(page) : page.page}
-
-                {page.isCard === true ? <View pointerEvents="none" style={styles.grabber} /> : null}
-
-                {isStill ? null : (
-                  <Animated.View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFill,
-                      styles.dim,
-                      {
-                        opacity: place.interpolate({
-                          inputRange: [PUSHED_UNDER, IN_PLACE],
-                          outputRange: [isUnderACard ? UNDER_A_CARD_DIM : UNDER_DIM, 0],
-                          extrapolate: 'clamp',
-                        }),
-                      },
-                    ]}
-                  />
-                )}
-              </Animated.View>
-            </IS_ON_TOP.Provider>
+            <ACardLayer
+              key={layer.key}
+              layer={layer}
+              motion={motion}
+              keeping={{
+                activity: isShown ? 2 : isLive ? 1 : 0,
+                isFrozen: kept.isFrozen || !isLive,
+              }}
+              isOnTop={!isHidden && isTopCard}
+              isLifted={isSwapping ? (swap.isForward ? !isGoing : isGoing) : isPeeled && isShown}
+              isTouchable={!isGoing && !isHidden && (!isPeeling || isShown)}
+              isStill={isStill}
+              width={width}
+              swapping={swapping}
+              peeling={peeling}
+              insets={cardInsets}
+              onAtTop={cardHands.onAtTop}
+              pullDown={cardHands.pullDown}
+              letGo={cardHands.letGo}
+            />
           );
         })}
+      </ScreenContainer>
+    );
+  };
+
+  return (
+    <GestureDetector gesture={swipeBack}>
+      <View style={styles.whole} collapsable={false}>
+        <GestureDetector gesture={dragDown}>
+          <View style={styles.whole} collapsable={false}>
+            <ScreenContainer style={styles.whole}>
+              {drawn.map((page, index) => {
+                const place = placeOf(page.key);
+                const kept = keeping.get(page.key) ?? FROZEN;
+
+                return place === null ? null : (
+                  <AStackLayer
+                    key={held.slots.get(page.key) ?? page.key}
+                    place={place}
+                    keeping={kept}
+                    isTop={page.key === topKey}
+                    isCard={page.isCard === true}
+                    isUnderACard={drawn[index + 1]?.isCard === true}
+                    rises={page.rises === true}
+                    isStill={isStill}
+                    isMoving={page.key === arrivingKey || page.key === leaving?.key}
+                    cardTop={Math.max(insets.top, STATUS_BAR_AT_LEAST) + CARD_GAP}
+                    width={width}
+                    height={height}
+                  >
+                    {page.isCard === true ? (
+                      cardLayers(page, kept)
+                    ) : (
+                      <Fragment key={page.key}>{page.page}</Fragment>
+                    )}
+                  </AStackLayer>
+                );
+              })}
+            </ScreenContainer>
+          </View>
+        </GestureDetector>
       </View>
-    </View>
+    </GestureDetector>
   );
 };
 

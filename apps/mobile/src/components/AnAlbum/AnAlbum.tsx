@@ -17,6 +17,7 @@ import { askWhichPlaylist } from '@ValenceMobile/music/askWhichPlaylist';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import type { ScreenRows } from '@ValenceMobile/components/Screen/Screen.types';
 import type { AnAlbumProps } from './AnAlbum.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -64,71 +65,72 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
   ].filter((part) => part !== null);
 
   return (
-    <AMusicScreen
-      title={album.title}
-      artwork={album.hasArtwork ? onThisServer(albumArtworkUrl(album.id)) : null}
-      standIn={Record}
-      onBack={onBack}
-    >
-      <AMusicHead
-        kind={album.isCompilation ? say('common.compilation') : say('common.album')}
-        detail={detail.join(' · ')}
-        canPlay={tracks.length > 0}
-        onPlay={() => {
-          player.play(tracks, 0, { source });
-        }}
-        onShuffle={() => {
-          player.play(tracks, Math.floor(Math.random() * tracks.length), {
-            source,
-            isShuffled: true,
-          });
-        }}
-      >
-        <ARoundAction
-          icon={User}
-          says={say('common.artist')}
-          onPress={() => {
-            onArtist(album.artist.id);
-          }}
-        />
-        {tracks.length === 0 ? null : (
-          <ARoundAction
-            icon={ListPlus}
-            says={say('common.addToPlaylist')}
-            onPress={() => {
-              askWhichPlaylist(
-                album.title,
-                () => Promise.resolve(tracks.map((track) => track.id)),
-                playlists.mine,
-                playlists.changed,
-                onPlaylist,
-              );
+    <ATrackList
+      tracks={tracks}
+      source={source}
+      isAnAlbum
+      onAlbum={onAlbum}
+      onArtist={onArtist}
+      {...(onPlaylist === undefined ? {} : { onPlaylist })}
+      drawnIn={(rows: ScreenRows) => (
+        <AMusicScreen
+          title={album.title}
+          artwork={album.hasArtwork ? onThisServer(albumArtworkUrl(album.id)) : null}
+          standIn={Record}
+          onBack={onBack}
+          rows={rows}
+          afterRows={<APluginPanels on="album" subjectId={albumId} />}
+        >
+          <AMusicHead
+            kind={album.isCompilation ? say('common.compilation') : say('common.album')}
+            detail={detail.join(' · ')}
+            canPlay={tracks.length > 0}
+            onPlay={() => {
+              player.play(tracks, 0, { source });
             }}
-          />
-        )}
-        {tracks.length === 0 ? null : (
-          <ADownloadToListen
-            isRound
-            kind="album"
-            id={album.id}
-            title={album.title}
-            tracks={tracks}
-            toKeep={(quality) => ({ kind: 'album', detail: { album, tracks }, quality })}
-          />
-        )}
-      </AMusicHead>
-
-      <ATrackList
-        tracks={tracks}
-        source={source}
-        isAnAlbum
-        onAlbum={onAlbum}
-        onArtist={onArtist}
-        {...(onPlaylist === undefined ? {} : { onPlaylist })}
-      />
-
-      <APluginPanels on="album" subjectId={albumId} />
-    </AMusicScreen>
+            onShuffle={() => {
+              player.play(tracks, Math.floor(Math.random() * tracks.length), {
+                source,
+                isShuffled: true,
+              });
+            }}
+          >
+            <ARoundAction
+              icon={User}
+              says={say('common.artist')}
+              onPress={() => {
+                onArtist(album.artist.id);
+              }}
+            />
+            {tracks.length === 0 ? null : (
+              <ARoundAction
+                icon={ListPlus}
+                says={say('common.addToPlaylist')}
+                onPress={() => {
+                  askWhichPlaylist(
+                    album.title,
+                    () => Promise.resolve(tracks.map((track) => track.id)),
+                    playlists.mine,
+                    playlists.changed,
+                    onPlaylist,
+                  );
+                }}
+              />
+            )}
+            {tracks.length === 0 ? null : (
+              <ADownloadToListen
+                isRound
+                kind="album"
+                id={album.id}
+                title={album.title}
+                tracks={tracks}
+                toKeep={(quality) => ({ kind: 'album', detail: { album, tracks }, quality })}
+              />
+            )}
+          </AMusicHead>
+        </AMusicScreen>
+      )}
+    />
   );
 };
 
