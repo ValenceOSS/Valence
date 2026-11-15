@@ -21,6 +21,11 @@ describe('isDecodedByFetch', () => {
     expect(isDecodedByFetch('gzip, compress')).toBe(false);
   });
 
+  it('takes an empty coding between commas as unknown, as fetch does', () => {
+    expect(isDecodedByFetch('gzip,')).toBe(false);
+    expect(isDecodedByFetch(', gzip')).toBe(false);
+  });
+
   it('says not past five codings, which fetch refuses', () => {
     expect(isDecodedByFetch('gzip, gzip, gzip, gzip, gzip')).toBe(true);
     expect(isDecodedByFetch('gzip, gzip, gzip, gzip, gzip, gzip')).toBe(false);

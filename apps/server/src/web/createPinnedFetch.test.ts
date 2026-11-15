@@ -6,9 +6,12 @@ import { createPinnedFetch } from './createPinnedFetch';
 
 const LONG_ANSWER_BYTES = 8 * 1024 * 1024;
 
+const PACKED = gzipSync('hello, unpacked');
+
 /**
  * Runs a test against a server on this machine that answers `/long` with eight megabytes,
- * `/packed` with a few words gzipped, and every other request with a few words.
+ * `/packed` with a few words gzipped, `/packed-oddly` with the same under a coding list ending in
+ * an empty coding, `/unchanged` with a 304, and every other request with a few words.
  *
  * @param test - The test, given the port, how many requests have come in and how many
  *   connections were opened.
@@ -27,14 +30,19 @@ const withAServer = async (
       return;
     }
 
-    if (request.url === '/packed') {
-      const packed = gzipSync('hello, unpacked');
-
+    if (request.url === '/packed' || request.url === '/packed-oddly') {
       response.writeHead(200, {
-        'content-encoding': 'gzip',
-        'content-length': String(packed.byteLength),
+        'content-encoding': request.url === '/packed' ? 'gzip' : 'gzip,',
+        'content-length': String(PACKED.byteLength),
       });
-      response.end(packed);
+      response.end(PACKED);
+
+      return;
+    }
+
+    if (request.url === '/unchanged') {
+      response.writeHead(304, { 'content-encoding': 'gzip', 'content-length': '123' });
+      response.end();
 
       return;
     }
@@ -182,6 +190,27 @@ describe('createPinnedFetch', () => {
       expect(answer.headers.get('content-encoding')).toBeNull();
       expect(answer.headers.get('content-length')).toBeNull();
       expect(await answer.text()).toBe('hello, unpacked');
+    });
+  });
+
+  it('keeps the coding and length of answers it has not unpacked', async () => {
+    await withAServer(async (port) => {
+      const pinned = createPinnedFetch(
+        (address) => address === '127.0.0.1',
+        () => new Error('no'),
+      );
+      const headed = await pinned(`http://127.0.0.1:${port}/packed`, { method: 'HEAD' });
+      const unchanged = await pinned(`http://127.0.0.1:${port}/unchanged`);
+      const oddly = await pinned(`http://127.0.0.1:${port}/packed-oddly`);
+
+      expect(headed.headers.get('content-encoding')).toBe('gzip');
+      expect(headed.headers.get('content-length')).toBe(String(PACKED.byteLength));
+      expect(unchanged.status).toBe(304);
+      expect(unchanged.headers.get('content-encoding')).toBe('gzip');
+      expect(unchanged.headers.get('content-length')).toBe('123');
+      expect(oddly.headers.get('content-encoding')).toBe('gzip,');
+      expect(oddly.headers.get('content-length')).toBe(String(PACKED.byteLength));
+      expect(Buffer.from(await oddly.arrayBuffer()).equals(PACKED)).toBe(true);
     });
   });
 });

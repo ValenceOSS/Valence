@@ -56,13 +56,10 @@ const createPinnedFetch = (
     try {
       const answer = await fetch(url, { ...init, redirect: 'manual', dispatcher: agent });
       const { body } = answer;
-      const isDecoded = isDecodedByFetch(answer.headers.get('content-encoding'));
       const meta = {
         status: answer.status,
         statusText: answer.statusText,
-        headers: [...answer.headers].filter(
-          ([name]) => !isDecoded || (name !== 'content-encoding' && name !== 'content-length'),
-        ),
+        headers: [...answer.headers],
       };
 
       if (body === null || WITHOUT_BODY.has(answer.status)) {
@@ -71,7 +68,14 @@ const createPinnedFetch = (
         return new Response(null, meta);
       }
 
-      return new Response(body.pipeThrough(new TransformStream()), meta);
+      const isDecoded = isDecodedByFetch(answer.headers.get('content-encoding'));
+
+      return new Response(body.pipeThrough(new TransformStream()), {
+        ...meta,
+        headers: meta.headers.filter(
+          ([name]) => !isDecoded || (name !== 'content-encoding' && name !== 'content-length'),
+        ),
+      });
     } catch (error) {
       throw error instanceof Error && error.cause instanceof Error && refusals.has(error.cause)
         ? error.cause
