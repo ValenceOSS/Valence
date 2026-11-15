@@ -263,6 +263,49 @@ describe('issuing a command', () => {
 
     expect(registry.find(opened.id)?.mediaId).toBe('other');
   });
+
+  it('starts everybody at the beginning of the next title, not ready until they say so', () => {
+    const registry = createWorld();
+    const opened = openWith(registry);
+    const atTheEnd = {
+      positionSeconds: 2700,
+      bufferedAheadSeconds: 0,
+      isWatching: false,
+      isReady: true,
+    };
+
+    registry.join({ partyId: opened.id, ...someone('sam', 'Sam') });
+    registry.report('host', atTheEnd);
+    registry.report('sam', atTheEnd);
+    registry.issue(opened.id, 'host', { kind: 'changeWhatIsPlaying', mediaId: 'episode-2' }, 1);
+
+    expect(registry.find(opened.id)?.members).toEqual([
+      expect.objectContaining({ positionSeconds: 0, isWatching: false, isReady: false }),
+      expect.objectContaining({ positionSeconds: 0, isWatching: false, isReady: false }),
+    ]);
+  });
+
+  it('leaves where everybody is when a party for listening moves on to another song', () => {
+    const registry = createWorld();
+    const party = registry.open({
+      mediaId: 'a-song',
+      host: someone('host', 'Dan'),
+      kind: 'listen',
+    });
+
+    registry.report('host', {
+      positionSeconds: 200,
+      bufferedAheadSeconds: 5,
+      isWatching: true,
+      isReady: true,
+    });
+    registry.issue(party.id, 'host', { kind: 'changeWhatIsPlaying', mediaId: 'next-song' }, 1);
+
+    expect(registry.find(party.id)?.members[0]).toMatchObject({
+      positionSeconds: 200,
+      isReady: true,
+    });
+  });
 });
 
 describe('who may change the party itself', () => {

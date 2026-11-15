@@ -521,6 +521,7 @@ const VideoPlayer = ({
           frameSkewSeconds: () => frameSkewRef.current,
           bufferedAheadSeconds: () => bufferedAhead(element),
           isPaused: () => element.paused,
+          isEnded: () => element.ended,
           isSeeking: () => element.seeking,
           seekTo: (seconds) => {
             placeRef.current?.seek(seconds);

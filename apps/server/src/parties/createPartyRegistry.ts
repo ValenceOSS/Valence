@@ -120,6 +120,10 @@ const REFUSED_ONESELF = saying('server.parties.partyRegistry.youCannotRemoveYour
  * What a party permits is decided here and nowhere else. A client hiding a button is presentation;
  * this refusing the command is the permission.
  *
+ * A watch party moving on to another title starts everybody in it at the beginning of that title,
+ * not ready until they say so, so nobody begins the next episode where the last one ended and the
+ * room waits for everybody to have it before it plays.
+ *
  * A party for listening together starts with only its host driving it — what plays and where it
  * has got to are theirs to choose, while everybody keeps their own volume, since that never
  * travels. The host can loosen that like any other party.
@@ -343,7 +347,26 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
 
       const party =
         command.kind === 'changeWhatIsPlaying'
-          ? save({ ...intended, mediaId: command.mediaId }, sequence, holding)
+          ? save(
+              {
+                ...intended,
+                mediaId: command.mediaId,
+                members: intended.members.map((one) =>
+                  intended.kind !== 'watch'
+                    ? one
+                    : {
+                        ...one,
+                        positionSeconds: 0,
+                        reportedAtMs: Date.now(),
+                        isWatching: false,
+                        isReady: false,
+                        bufferedAheadSeconds: 0,
+                      },
+                ),
+              },
+              sequence,
+              holding,
+            )
           : save(intended, sequence, holding);
 
       return {

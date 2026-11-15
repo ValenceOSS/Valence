@@ -2,6 +2,9 @@ import { screen, act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { aShell } from '@ValenceClient/testing/aShell';
+import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
+import { aPartyMember } from '@ValenceClient/testing/aPartyMember';
+import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { WatchPage } from './WatchPage';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { VideoPlayerProps } from '@ValenceScreens/components/VideoPlayer/VideoPlayer.types';
@@ -447,5 +450,138 @@ describe('WatchPage', () => {
     );
 
     expect(window.location.search).toContain(`item=${ARRIVAL.id}`);
+  });
+
+  describe('in a watch party', () => {
+    const episode = (id: string, episodeNumber: number) => ({
+      ...ARRIVAL,
+      id,
+      title: `Episode ${episodeNumber.toString()}`,
+      durationSeconds: 1800,
+      seriesId: 'b7a1c2d3-0000-4000-8000-000000000001',
+      seriesTitle: 'A Show',
+      seasonNumber: 1,
+      episodeNumber,
+    });
+    const first = episode('a1a1a1a1-0000-4000-8000-000000000001', 1);
+    const second = episode('a1a1a1a1-0000-4000-8000-000000000002', 2);
+    const inAPartyOn = (mediaId: string, role: 'host' | 'guest') => {
+      const send = vi.fn();
+      const leave = vi.fn();
+
+      window.history.replaceState(null, '', `/watch/${mediaId}?party=p-1`);
+
+      return {
+        send,
+        leave,
+        watchParty: aWatchPartyStateWith(() => vi.fn(), {
+          party: aWatchParty({ id: 'p-1', mediaId, members: [aPartyMember({ role })] }),
+          send,
+          leave,
+        }),
+      };
+    };
+
+    it('stays at the end of a film rather than leaving it for the room to bring back', async () => {
+      const party = inAPartyOn(ARRIVAL.id, 'host');
+
+      renderInAShell(<WatchPage />, { known, watchParty: party.watchParty });
+
+      await vi.waitFor(() => {
+        expect(drawn.player).not.toBeNull();
+      });
+      act(() => {
+        drawn.player?.onEnded?.();
+      });
+
+      expect(window.location.pathname).toBe(`/watch/${ARRIVAL.id}`);
+      expect(party.leave).not.toHaveBeenCalled();
+    });
+
+    it('moves the whole party on to the next episode where the viewer may', async () => {
+      const party = inAPartyOn(first.id, 'host');
+
+      renderInAShell(<WatchPage />, {
+        known: new Map([first, second].map((one) => [one.id, one])),
+        watchParty: party.watchParty,
+      });
+
+      await vi.waitFor(() => {
+        expect(drawn.player?.willCarryOn).toBe(true);
+      });
+      act(() => {
+        drawn.player?.onEnded?.();
+      });
+
+      expect(party.send).toHaveBeenCalledWith({ kind: 'changeWhatIsPlaying', mediaId: second.id });
+      expect(window.location.pathname).toBe(`/watch/${first.id}`);
+    });
+
+    it('waits at the end for the room where the viewer may not move the party', async () => {
+      const party = inAPartyOn(first.id, 'guest');
+
+      renderInAShell(<WatchPage />, {
+        known: new Map([first, second].map((one) => [one.id, one])),
+        watchParty: party.watchParty,
+      });
+
+      await vi.waitFor(() => {
+        expect(drawn.player).not.toBeNull();
+      });
+
+      expect(drawn.player?.willCarryOn).toBe(false);
+
+      act(() => {
+        drawn.player?.onEnded?.();
+      });
+
+      expect(party.send).not.toHaveBeenCalled();
+      expect(window.location.pathname).toBe(`/watch/${first.id}`);
+    });
+
+    it('leaves the party when the viewer says they have stopped watching', async () => {
+      const party = inAPartyOn(first.id, 'host');
+      const watcher: ViewerProfile = {
+        id: '00000000-0000-4000-8000-000000000002',
+        name: 'Viewer',
+        colour: '#3a8ee8',
+        avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+        askStillWatchingAfter: 1,
+        showsWhatIamWatching: false,
+        discordPresence: DEFAULT_DISCORD_PRESENCE,
+        prefersBestCopy: false,
+        language: null,
+        isOwner: true,
+        hasPin: false,
+        mayRequest: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+
+      renderInAShell(<WatchPage />, {
+        known: new Map([first, second].map((one) => [one.id, one])),
+        watchParty: party.watchParty,
+        watcher,
+      });
+
+      await vi.waitFor(() => {
+        expect(drawn.player).not.toBeNull();
+      });
+      act(() => {
+        drawn.player?.onEnded?.();
+      });
+      act(() => {
+        drawn.player?.onEnded?.();
+      });
+
+      await vi.waitFor(() => {
+        expect(drawn.player?.stillWatching).toBeDefined();
+      });
+      act(() => {
+        drawn.player?.stillWatching?.onStop();
+      });
+
+      expect(party.leave).toHaveBeenCalled();
+    });
   });
 });

@@ -6,6 +6,7 @@ type ExpoPlayer = {
   playbackRate: number;
   readonly status: string;
   readonly bufferedPosition: number;
+  readonly duration: number;
   play: () => void;
   pause: () => void;
 };
@@ -14,11 +15,15 @@ const READY = 4;
 
 const LOADING = 1;
 
+const AT_THE_END_WITHIN_SECONDS = 0.25;
+
 /**
  * Lets a watch party drive the player a phone or a television plays a stream in, through the few
  * things the party asks of any player. Expo's player has no ready state of the browser's kind, so
  * its status stands in: ready to play as able to play now, loading as knowing where it is but not
- * yet able to play. It never reports a seek in progress, since it moves at once.
+ * yet able to play. It never reports a seek in progress, since it moves at once, and it has reached
+ * the end where it has stopped within a moment of its duration, since it has no word of its own for
+ * that.
  *
  * @param player - The client's Expo player.
  * @param frameSkewSeconds - How far the frame on screen sits from the playback clock, where known.
@@ -31,6 +36,10 @@ const roomPlayerOfExpo = (player: ExpoPlayer, frameSkewSeconds = 0): RoomPlayer 
   frameSkewSeconds: () => frameSkewSeconds,
   bufferedAheadSeconds: () => Math.max(0, player.bufferedPosition - player.currentTime),
   isPaused: () => !player.playing,
+  isEnded: () =>
+    !player.playing &&
+    player.duration > 0 &&
+    player.currentTime >= player.duration - AT_THE_END_WITHIN_SECONDS,
   isSeeking: () => false,
   seekTo: (seconds) => {
     player.currentTime = seconds;

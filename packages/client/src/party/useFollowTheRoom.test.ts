@@ -5,7 +5,7 @@ import type { FollowTheRoom } from './useFollowTheRoom';
 import type { PartyPlayback } from './PartyPlayback';
 import type { RoomPlayer } from './RoomPlayer';
 
-type FakePlayer = RoomPlayer & { at: number; paused: boolean; rate: number };
+type FakePlayer = RoomPlayer & { at: number; paused: boolean; ended: boolean; rate: number };
 
 /**
  * A player standing at a moment, paused or not, that remembers what it was asked to do.
@@ -18,12 +18,14 @@ const aPlayer = (at: number, paused = false): FakePlayer => {
   const player: FakePlayer = {
     at,
     paused,
+    ended: false,
     rate: 1,
     readyState: () => 4,
     currentSeconds: () => player.at,
     frameSkewSeconds: () => 0,
     bufferedAheadSeconds: () => 10,
     isPaused: () => player.paused,
+    isEnded: () => player.ended,
     isSeeking: () => false,
     seekTo: vi.fn((seconds: number) => {
       player.at = seconds;
@@ -151,6 +153,32 @@ describe('useFollowTheRoom', () => {
     change(aParty({ isHeld: true }));
 
     expect(player.pause).toHaveBeenCalled();
+  });
+
+  it('leaves a player that has reached the end there while the room still plays', () => {
+    const player = aPlayer(7200, true);
+
+    player.ended = true;
+
+    const { change } = follow(player, aParty());
+
+    change(aParty({ referenceSeconds: 7200 }));
+
+    expect(player.play).not.toHaveBeenCalled();
+  });
+
+  it('runs a player the room has sent back from the end', () => {
+    const player = aPlayer(7200, true);
+
+    player.ended = true;
+
+    const { change } = follow(player, aParty());
+
+    player.ended = false;
+    player.at = 3600;
+    change(aParty({ referenceSeconds: 3600 }));
+
+    expect(player.play).toHaveBeenCalled();
   });
 
   it('reports where it is every second, and stops reporting on leaving', () => {
