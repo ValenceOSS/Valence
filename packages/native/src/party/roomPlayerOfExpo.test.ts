@@ -13,12 +13,25 @@ const anExpoPlayer = (change: Partial<ExpoPlayer> = {}): ExpoPlayer => ({
   playbackRate: 1,
   status: 'readyToPlay',
   bufferedPosition: 75,
+  duration: 7200,
   play: jest.fn(),
   pause: jest.fn(),
   ...change,
 });
 
 describe('roomPlayerOfExpo', () => {
+  it('has reached the end where it has stopped at its duration', () => {
+    expect(roomPlayerOfExpo(anExpoPlayer({ currentTime: 7199.9 })).isEnded()).toBe(true);
+  });
+
+  it('has not reached the end while it plays, or stopped short of it, or knows no duration', () => {
+    expect(roomPlayerOfExpo(anExpoPlayer({ currentTime: 7199.9, playing: true })).isEnded()).toBe(
+      false,
+    );
+    expect(roomPlayerOfExpo(anExpoPlayer({ currentTime: 7000 })).isEnded()).toBe(false);
+    expect(roomPlayerOfExpo(anExpoPlayer({ currentTime: 0, duration: 0 })).isEnded()).toBe(false);
+  });
+
   it('reads where it is, how much is buffered ahead and whether it is paused', () => {
     const room = roomPlayerOfExpo(anExpoPlayer());
 

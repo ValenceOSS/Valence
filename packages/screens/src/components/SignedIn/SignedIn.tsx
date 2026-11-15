@@ -50,6 +50,7 @@ import type { StartOverride } from '@ValenceClient/shell/shell.types';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import { useAudiobookRemote } from '@ValenceClient/books/useAudiobookRemote';
 import { useListenAlong } from '@ValenceClient/party/useListenAlong';
+import { whereThePartyTakes } from '@ValenceClient/party/whereThePartyTakes';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
@@ -347,14 +348,18 @@ const SignedIn = ({ title }: SignedInProps) => {
   }, [place.playing, place.inspecting, known, rememberItems, replace, cache]);
 
   useEffect(() => {
-    if (
-      watchParty.party !== null &&
-      watchParty.party.kind === 'watch' &&
-      place.party !== watchParty.party.id
-    ) {
-      replace({ playing: watchParty.party.mediaId, party: watchParty.party.id });
+    const taken = whereThePartyTakes(watchParty.party, place);
+
+    if (taken === null) {
+      return;
     }
-  }, [watchParty.party, place.party, replace]);
+
+    if (taken.isFromTheStart) {
+      setStartOverride({ mediaId: taken.mediaId, seconds: 0 });
+    }
+
+    replace({ playing: taken.mediaId, party: taken.partyId });
+  }, [watchParty.party, place, replace]);
 
   const { notice: partyNotice, forgetNotice: forgetPartyNotice } = watchParty;
 

@@ -4,6 +4,7 @@ type RoomPlayer = {
   frameSkewSeconds: () => number;
   bufferedAheadSeconds: () => number;
   isPaused: () => boolean;
+  isEnded: () => boolean;
   isSeeking: () => boolean;
   seekTo: (seconds: number) => void;
   play: () => Promise<void>;
