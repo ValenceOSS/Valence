@@ -1,5 +1,5 @@
-import { act, render } from '@testing-library/react';
-import { MotionConfig, MotionGlobalConfig } from 'motion/react';
+import { render, waitFor } from '@testing-library/react';
+import { MotionConfig } from 'motion/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LandingSplash } from './LandingSplash';
 
@@ -20,18 +20,17 @@ describe('LandingSplash', () => {
     expect(sessionStorage.getItem('valence-splash-seen')).toBe('yes');
   });
 
-  it('goes after a moment, so it never stands in the way', () => {
-    MotionGlobalConfig.skipAnimations = true;
+  it('goes after a moment, so it never stands in the way', async () => {
+    vi.useRealTimers();
 
     const { container } = render(<LandingSplash />);
 
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
-
-    MotionGlobalConfig.skipAnimations = false;
-
-    expect(container).toBeEmptyDOMElement();
+    await waitFor(
+      () => {
+        expect(container).toBeEmptyDOMElement();
+      },
+      { timeout: 4000 },
+    );
   });
 
   it('does not show again in a tab that has already seen it', () => {
