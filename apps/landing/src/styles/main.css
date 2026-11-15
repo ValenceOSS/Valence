@@ -8,10 +8,18 @@
   --color-phone-floor: #0a0d16;
 }
 
+.valence-hero-mark {
+  opacity: 0.32;
+  mix-blend-mode: screen;
+  mask-image: linear-gradient(to left, black 25%, transparent 85%);
+  -webkit-mask-image: linear-gradient(to left, black 25%, transparent 85%);
+}
+
 :root {
+  --font-body: var(--font-sans);
   --site-nav: 6.5rem;
-  --page-hero-top: 4rem;
-  --page-hero-top-wide: 5.5rem;
+  --page-hero-top: 2.5rem;
+  --page-hero-top-wide: 3rem;
 }
 
 @keyframes valence-band-run {

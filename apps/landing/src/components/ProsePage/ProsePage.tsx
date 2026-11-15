@@ -1,4 +1,4 @@
-import { PageHero } from '@ValenceUI/PageHero';
+import { LandingPageHero } from '@ValenceLanding/components/LandingPageHero/LandingPageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import type { ProsePageProps } from './ProsePage.types';
 
@@ -13,7 +13,7 @@ import type { ProsePageProps } from './ProsePage.types';
  */
 const ProsePage = ({ eyebrow, title, children }: ProsePageProps) => (
   <>
-    <PageHero eyebrow={eyebrow} lead={title} />
+    <LandingPageHero eyebrow={eyebrow} lead={title} />
 
     <SectionCard>
       <div className="mx-auto flex max-w-2xl flex-col gap-10 px-5 py-14 text-text-muted sm:px-10 sm:py-20">

@@ -190,16 +190,22 @@ const OptionMenu = ({
               ? JOINED_LOOKS.secondary
               : triggerShape === 'raisedJoined'
                 ? JOINED_LOOKS.raised
-                : triggerShape === 'field'
-                  ? cn(FIELD_TRIGGER.base, FIELD_TRIGGER[size])
-                  : triggerShape === 'fieldJoined'
-                    ? JOINED_LOOKS.field
-                    : triggerShape === 'segment'
-                      ? JOINED_LOOKS.segment
-                      : cn(
-                          'size-8 justify-center rounded-lg',
-                          'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
-                        ),
+                : triggerShape === 'confirmParted'
+                  ? JOINED_LOOKS.confirmParted
+                  : triggerShape === 'secondaryParted'
+                    ? JOINED_LOOKS.secondaryParted
+                    : triggerShape === 'raisedParted'
+                      ? JOINED_LOOKS.raisedParted
+                      : triggerShape === 'field'
+                        ? cn(FIELD_TRIGGER.base, FIELD_TRIGGER[size])
+                        : triggerShape === 'fieldJoined'
+                          ? JOINED_LOOKS.field
+                          : triggerShape === 'segment'
+                            ? JOINED_LOOKS.segment
+                            : cn(
+                                'size-8 justify-center rounded-lg',
+                                'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
+                              ),
           className,
         )}
       >

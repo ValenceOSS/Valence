@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { ComponentRef } from 'react';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
-import { ADeckMark } from '@ValenceMobile/components/ADeckMark/ADeckMark';
+import { ALayersMark } from '@ValenceMobile/components/ALayersMark/ALayersMark';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { pictureOnThisServer } from '@ValenceMobile/platform/pictureOnThisServer';
 import { readRememberedAppearance } from '@ValenceClient/appearance/readRememberedAppearance';
@@ -11,6 +11,7 @@ import { ALoadingBar } from '@ValenceMobile/components/ALoadingBar/ALoadingBar';
 import { THE_MARKS_PLACE } from '@ValenceMobile/components/ACarriedMark/THE_MARKS_PLACE';
 import { AWordOpening } from '@ValenceMobile/components/ASplash/components/AWordOpening/AWordOpening';
 import { THE_SPLASH_LANDS } from '@ValenceMobile/components/ASplash/THE_SPLASH_LANDS';
+import { LOCKUP } from '@ValenceMobile/theme/LOCKUP';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import { theColours } from '@ValenceMobile/theme/theColours';
@@ -22,9 +23,9 @@ const GROUND = { dark: '#1c1c1c', light: '#ffffff' } as const;
 
 const MARK_HIGH = 36;
 
-const WIDER_BY = 484.56 / 363.62;
+const WIDER_BY = 140 / 132;
 
-const NAME_SIZE = 38;
+const NAME_SIZE = MARK_HIGH / LOCKUP.capHeight;
 
 const MARK_RISES_MS = 220;
 
@@ -76,9 +77,9 @@ const styles = StyleSheet.create({
 
 /**
  * What Valence shows as it opens, a copy of the web's: the mark rises into place on a card filling
- * the screen and the deck of cards fans out, gathering back up and fanning out again for as long as
- * the first screen is being got ready, with a slim bar at the foot sliding along. Once it is ready,
- * the bar fades, the deck fans out and stays, and the name opens out beside it letter by letter
+ * the screen and its three layers stack, lifting away and stacking again for as long as the first
+ * screen is being got ready, with a slim bar at the foot sliding along. Once it is ready, the bar
+ * fades, the layers stack and stay, and the name opens out beside it letter by letter
  * while the card's edges draw in from the edges of the screen and its corners round.
  *
  * Once the name has opened and held a moment, the ground around the card fades to
@@ -381,11 +382,10 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
                     }}
                   >
                     {brand.logo === null ? (
-                      <ADeckMark
+                      <ALayersMark
                         width={MARK_HIGH * WIDER_BY}
                         height={MARK_HIGH}
                         ink={colours.text}
-                        ground={colours.surface}
                         isAnimated
                         loops={!isReady}
                         label={say('common.valence')}
@@ -404,13 +404,13 @@ const ASplash = ({ isReady, isDark, onGone }: ASplashProps) => {
                     word={name}
                     isShown={hasLanded}
                     isStill={isStill}
-                    before={13}
+                    before={NAME_SIZE * LOCKUP.gapOfTheSize}
                     onWide={setWordWide}
                     style={{
                       color: colours.text,
-                      fontFamily: FONTS.sans.semibold,
+                      fontFamily: FONTS.sans.extrabold,
                       fontSize: NAME_SIZE,
-                      letterSpacing: NAME_SIZE * -0.03,
+                      letterSpacing: NAME_SIZE * LOCKUP.tracking,
                     }}
                   />
                 </Animated.View>

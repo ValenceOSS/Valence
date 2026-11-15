@@ -1,6 +1,6 @@
 import { DownloadSection } from '@ValenceLanding/components/DownloadsPage/components/DownloadSection/DownloadSection';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
-import { PageHero } from '@ValenceUI/PageHero';
+import { LandingPageHero } from '@ValenceLanding/components/LandingPageHero/LandingPageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
 
 /**
@@ -10,7 +10,7 @@ import { SectionCard } from '@ValenceUI/SectionCard';
  */
 const DownloadsPage = () => (
   <>
-    <PageHero
+    <LandingPageHero
       eyebrow="Download"
       lead="Valence for"
       accent="every"

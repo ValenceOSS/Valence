@@ -9,7 +9,7 @@ import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { holdTheSession } from '@ValenceTv/session/holdTheSession';
 import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
 import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
-import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
+import { LayersMark } from '@ValenceTv/components/LayersMark/LayersMark';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { EnterPasswordProps } from './EnterPassword.types';
 import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
@@ -125,7 +125,7 @@ const EnterPassword = ({
         style={[styles.mark, isArriving && styles.hidden]}
         onLayout={markLaidOut}
       >
-        <DeckMark width={MARK.width} height={MARK.height} />
+        <LayersMark width={MARK.width} height={MARK.height} />
       </View>
 
       <View style={styles.choices}>

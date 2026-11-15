@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { WordReveal } from '@ValenceUI/WordReveal';
 import { BrandLogo } from '@ValenceScreens/components/BrandLogo/BrandLogo';
-import { DeckMark } from '@ValenceUI/DeckMark';
+import { StackingMark } from '@ValenceUI/StackingMark';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
 import type { BrandMarkProps } from './BrandMark.types';
 import { useQuery } from '@tanstack/react-query';
@@ -10,8 +10,8 @@ import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { say } from '@ValenceI18n/say';
 
 const LOOKS = {
-  md: { mark: 28, word: 'ps-2.5 text-xl font-semibold' },
-  sm: { mark: 24, word: 'ps-2 text-base font-semibold' },
+  md: { mark: 28, cap: 'h-[0.875rem]', word: 'ps-2.5 text-xl font-semibold' },
+  sm: { mark: 24, cap: 'h-[0.7rem]', word: 'ps-2 text-base font-semibold' },
 } as const;
 
 /**
@@ -36,7 +36,7 @@ const BrandMark = ({ hasMark, marksPlace, size = 'md' }: BrandMarkProps) => {
   const word = brand?.name ?? say('common.valence');
   const mark =
     (brand?.logo ?? null) === null ? (
-      <DeckMark size={Math.round(look.mark * 1.4)} isAnimated />
+      <StackingMark className={look.cap} />
     ) : (
       <BrandLogo logo={brand?.logo ?? null} size={look.mark} />
     );

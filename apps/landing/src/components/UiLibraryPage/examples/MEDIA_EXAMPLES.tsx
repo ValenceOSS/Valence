@@ -19,7 +19,7 @@ import { PictureFramerDemo } from '@ValenceLanding/components/UiLibraryPage/exam
 import { VideoSurfaceDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/VideoSurfaceDemo';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { ReaderVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ReaderVignette/ReaderVignette';
-import { DeckMark } from '@ValenceUI/DeckMark';
+import { StackingMark } from '@ValenceUI/StackingMark';
 import type { UiExample } from './UiExample.types';
 
 const ART = '/valence.jpg';
@@ -170,10 +170,14 @@ const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
       ),
     },
   ],
-  DeckMark: [
+  StackingMark: [
     {
-      title: 'The deck, fanning out as it arrives',
-      render: () => <DeckMark size={96} isAnimated label="Valence" />,
+      title: 'The layers, stacking as they arrive',
+      render: () => <StackingMark label="Valence" className="h-24" />,
+    },
+    {
+      title: 'Stacking and lifting away for ever, for a screen that waits',
+      render: () => <StackingMark isLooping className="h-24" />,
     },
   ],
   Icon: [

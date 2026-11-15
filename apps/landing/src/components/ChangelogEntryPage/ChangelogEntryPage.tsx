@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ArrowLeft as ArrowLeftIcon, ArrowRight as ArrowRightIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { ChangelogPicture } from '@ValenceLanding/components/ChangelogPage/components/ChangelogPicture/ChangelogPicture';
-import { PageHero } from '@ValenceUI/PageHero';
+import { LandingPageHero } from '@ValenceLanding/components/LandingPageHero/LandingPageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import { describeReleaseDate } from '@ValenceLanding/content/changelog/describeReleaseDate';
 import { usePagePathname } from '@ValenceLanding/components/LandingShell/usePagePathname';
@@ -32,7 +32,7 @@ const ChangelogEntryPage = () => {
 
   return (
     <>
-      <PageHero
+      <LandingPageHero
         eyebrow={
           <>
             {entry.version} &middot;{' '}

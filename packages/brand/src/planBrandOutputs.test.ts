@@ -8,7 +8,9 @@ describe('planBrandOutputs', () => {
     expect(
       outputs.filter(
         (output) =>
-          output.kind === 'copy' && output.to.startsWith('apps/') && output.from.endsWith('.svg'),
+          output.kind === 'copy' &&
+          output.to.startsWith('apps/') &&
+          output.to.endsWith('valence-logo.svg'),
       ),
     ).toEqual(
       ['web', 'desktop', 'docs', 'landing', 'metrics'].map((app) => ({
@@ -17,6 +19,57 @@ describe('planBrandOutputs', () => {
         to: `apps/${app}/public/valence-logo.svg`,
       })),
     );
+  });
+
+  it('copies each of the mark’s three layers to every app that draws it stacking', () => {
+    for (const layer of ['top', 'middle', 'base']) {
+      expect(
+        outputs.filter((output) => output.kind === 'copy' && output.from.endsWith(`-${layer}.svg`)),
+      ).toEqual(
+        ['web', 'desktop', 'docs', 'landing', 'metrics'].map((app) => ({
+          kind: 'copy',
+          from: `assets/valence-layers-${layer}.svg`,
+          to: `apps/${app}/public/valence-layers-${layer}.svg`,
+        })),
+      );
+    }
+  });
+
+  it('draws each layer for the phone and the television to tint', () => {
+    expect(
+      outputs.flatMap((output) =>
+        output.kind === 'mark' && output.to.includes('valence-layer-') ? [output.to] : [],
+      ),
+    ).toEqual([
+      'apps/mobile/src/assets/valence-layer-top.png',
+      'apps/tv/src/assets/valence-layer-top.png',
+      'apps/mobile/src/assets/valence-layer-middle.png',
+      'apps/tv/src/assets/valence-layer-middle.png',
+      'apps/mobile/src/assets/valence-layer-base.png',
+      'apps/tv/src/assets/valence-layer-base.png',
+    ]);
+  });
+
+  it('renders the light and dark pictures Discord shows beside the desktop app', () => {
+    expect(
+      outputs.filter((output) => output.to.startsWith('packages/ui/src/assets/discord')),
+    ).toEqual([
+      {
+        kind: 'icon',
+        from: 'assets/valence-icon.icon',
+        to: 'packages/ui/src/assets/discord/valence-desktop.png',
+        pixels: 512,
+        margin: 0,
+      },
+      {
+        kind: 'icon',
+        from: 'assets/valence-icon.icon',
+        to: 'packages/ui/src/assets/discord/valence-desktop-dark.png',
+        pixels: 512,
+        margin: 0,
+        rendition: 'Dark',
+      },
+    ]);
   });
 
   it('copies the logo to the marks BrandGlyph draws', () => {
@@ -51,7 +104,7 @@ describe('planBrandOutputs', () => {
     });
   });
 
-  it('gives the desktop the bundle for the Mac, a flat icon, round light and dark ones for Windows, and a dock icon with the Mac margin', () => {
+  it('gives the desktop the bundle for the Mac, a flat icon, round light and dark ones for Windows, and a dev orange dock icon with the Mac margin', () => {
     expect(outputs.filter((output) => output.to.startsWith('apps/desktop/build'))).toEqual([
       { kind: 'copy', from: 'assets/valence-icon.icon', to: 'apps/desktop/build/icon.icon' },
       {
@@ -77,7 +130,7 @@ describe('planBrandOutputs', () => {
       },
       {
         kind: 'icon',
-        from: 'assets/valence-icon.icon',
+        from: 'assets/valence-icon-dev.icon',
         to: 'apps/desktop/build/icon-dev.png',
         pixels: 1024,
         margin: 100,
@@ -106,7 +159,7 @@ describe('planBrandOutputs', () => {
   it('draws the logo for the phone and television in the logo’s own proportions', () => {
     for (const output of outputs) {
       if (output.kind === 'mark') {
-        expect(output.width / output.height).toBeCloseTo(624 / 458, 1);
+        expect(output.width / output.height).toBeCloseTo(140 / 132, 1);
       }
     }
   });

@@ -3,7 +3,7 @@ import { say } from '@ValenceI18n/say';
 
 const STYLE_ID = 'valence-brand';
 
-const VALENCE_ICON = '/icon.png';
+const VALENCE_ICON = '/icon.png?v=layers';
 
 /**
  * Whether a colour is light enough that words on it should be dark.

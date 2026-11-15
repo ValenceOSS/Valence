@@ -16,7 +16,7 @@ import {
 import { DISCORD_URL } from '@ValenceCore/project/DISCORD_URL';
 import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
-import { DeckMark } from '@ValenceUI/DeckMark';
+import { StackingMark } from '@ValenceUI/StackingMark';
 import { Button } from '@ValenceUI/Button';
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
@@ -377,16 +377,16 @@ const SiteNav = ({ here, pathname, InSiteLink, starCount, banner, dock }: SiteNa
               target={HOME}
               here={here}
               InSiteLink={InSiteLink}
-              className="relative z-10 flex items-center gap-2.5 justify-self-start rounded-md no-underline outline-none focus-visible:focus-ring"
+              className="relative z-10 flex items-baseline gap-[0.25em] justify-self-start rounded-md text-lg no-underline outline-none focus-visible:focus-ring"
               onClick={closeAll}
             >
               <motion.span className="flex text-text" {...popArrival(0, isStill)}>
-                <DeckMark size={40} isAnimated={!isStill} />
+                <StackingMark className="h-[1cap]" />
               </motion.span>
               <span className="sr-only">{say('common.valence')}</span>
               <span
                 aria-hidden
-                className="flex whitespace-pre text-lg font-semibold tracking-tight text-text"
+                className="flex whitespace-pre font-extrabold tracking-[-0.045em] text-text"
               >
                 {[...say('common.valence')].map((letter, at) => (
                   <motion.span

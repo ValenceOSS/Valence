@@ -34,7 +34,7 @@ const DownloadDesktop = ({ release, platform, isArm }: DownloadDesktopProps) => 
   return (
     <SplitButton
       tone="raised"
-      className="[&_button]:border-transparent!"
+      shape="parted"
       size="lg"
       choiceLabel="Other computers"
       choiceName="Download for"

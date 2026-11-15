@@ -34,6 +34,7 @@ import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMood
 import { TheSearchBox } from '@ValenceMobile/components/TheSearch/components/TheSearchBox/TheSearchBox';
 import { TheLiveTv } from '@ValenceMobile/components/TheLiveTv/TheLiveTv';
 import { useHasLiveChannels } from '@ValenceClient/live/useHasLiveChannels';
+import { LOCKUP } from '@ValenceMobile/theme/LOCKUP';
 import { ACarriedMark } from '@ValenceMobile/components/ACarriedMark/ACarriedMark';
 import { TheFilters } from '@ValenceMobile/components/TheLibrary/components/TheFilters/TheFilters';
 import { TheHome } from '@ValenceMobile/components/TheLibrary/components/TheHome/TheHome';
@@ -121,7 +122,11 @@ const PARTS_BELOW_BY = 12;
 const NO_COLLECTIONS: readonly Collection[] = [];
 
 const styles = StyleSheet.create({
-  brand: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+  brand: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    gap: LOCKUP.nameSize * LOCKUP.gapOfTheSize,
+  },
   arriving: { gap: 20 },
   hidden: { opacity: 0 },
   bar: {
@@ -456,7 +461,7 @@ const TheLibrary = ({
       >
         <View style={styles.topRow}>
           <View style={styles.brand}>
-            <ACarriedMark isHandedOn={false} />
+            <ACarriedMark isHandedOn={false} high={LOCKUP.markHigh} />
             <AWrittenName key={brand.name ?? ''} name={brand.name ?? say('common.valence')} />
           </View>
           {corner}

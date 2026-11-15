@@ -11,10 +11,8 @@ import {
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { Doodle } from '@ValenceUI/Doodle';
-import { GradientAscii } from '@ValenceUI/GradientAscii';
 import { Icon } from '@ValenceUI/Icon';
 import { SplitButton } from '@ValenceUI/SplitButton';
-import { LIT_TEXT } from '@ValenceUI/tokens/LIT_TEXT';
 import { CHANGELOG } from '@ValenceLanding/content/changelog/CHANGELOG';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
@@ -26,12 +24,18 @@ import { ValenceBand } from '@ValenceLanding/components/HomePage/components/Vale
 import { DownloadDesktop } from './components/DownloadDesktop/DownloadDesktop';
 import { HeroSteps } from './components/HeroSteps/HeroSteps';
 import { HeroWindow } from './components/HeroWindow/HeroWindow';
+import { CyclingWord } from './components/CyclingWord/CyclingWord';
+import { HeroGround } from '@ValenceLanding/components/HeroGround/HeroGround';
 import { HERO_STEPS } from './HERO_STEPS';
 import { useStepCycle } from '@ValenceLanding/components/HomePage/useStepCycle';
 
 const NEWEST = CHANGELOG[0];
 
 const HEADLINE = 'Your films, shows, music and books, on your own server.';
+
+const KINDS = ['films', 'shows', 'music', 'books'] as const;
+
+const KIND_STAYS_MS = 2200;
 
 const STEP_STAYS_MS = 6000;
 
@@ -45,7 +49,6 @@ const STARTS = [
   {
     id: 'install',
     label: 'Get started',
-    detail: 'Run it on your own server',
     go: (isStill: boolean) => {
       document
         .getElementById('download')
@@ -55,7 +58,6 @@ const STARTS = [
   {
     id: 'docs',
     label: 'Read the docs',
-    detail: 'The quick start, step by step',
     go: () => {
       window.location.assign(`${DOCS_URL}/start/quick-start`);
     },
@@ -63,7 +65,6 @@ const STARTS = [
   {
     id: 'demo',
     label: 'Try the demo',
-    detail: 'A server already running, to look round',
     go: () => {
       window.location.assign(DEMO_URL);
     },
@@ -106,38 +107,35 @@ const HomeHero = () => {
       animate="shown"
       className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:min(24rem,18vw)]"
     >
-      <div className="relative isolate overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+2.5rem)] sm:rounded-[2.5rem] sm:pb-[calc(var(--app-peek)+3.5rem)]">
-        <GradientAscii
-          gradientOpacity={0.5}
-          glyphOpacity={0.6}
-          glow={0.12}
-          className="absolute inset-0 -z-10"
-        />
+      <div className="relative isolate overflow-hidden rounded-[2rem] pb-[calc(var(--app-peek)+2.5rem)] sm:rounded-[2.5rem] sm:pb-[calc(var(--app-peek)+3.5rem)]">
+        <HeroGround />
 
         <div className="mx-auto w-full max-w-[87rem] px-5 pt-12 sm:px-10 sm:pt-20 lg:pt-24">
           <motion.p
             variants={rise}
             transition={settle}
-            className={cn('font-mono text-xs uppercase tracking-[0.2em] text-on-scrim/75', LEGIBLE)}
+            className={cn(
+              'text-xs font-bold uppercase tracking-[0.22em] text-on-scrim/75',
+              LEGIBLE,
+            )}
           >
-            Self-hosted &middot; Open source &middot; Yours
+            Meet Valence
           </motion.p>
 
           <motion.h1
             variants={rise}
             transition={settle}
             className={cn(
-              'mt-5 max-w-[21ch] text-balance text-[clamp(2.5rem,5vw,4.5rem)] font-semibold leading-[1.04] tracking-[-0.025em] text-on-scrim',
+              'mt-5 max-w-[19ch] text-balance text-[clamp(2.5rem,5vw,4.75rem)] font-[800] leading-[1.02] tracking-[-0.04em] text-on-scrim',
               LEGIBLE,
             )}
           >
             <span className="sr-only">{HEADLINE}</span>
-            {HEADLINE.split(' ').map((word, at) => (
-              <span key={`${word}-${at.toString()}`} aria-hidden>
-                {at === 0 ? null : ' '}
-                <span className={cn('inline-block', LIT_TEXT)}>{word}</span>
-              </span>
-            ))}
+            <span aria-hidden>
+              Your <CyclingWord words={KINDS} staysMs={KIND_STAYS_MS} isStill={isStill} />
+              <br />
+              on your own server.
+            </span>
           </motion.h1>
 
           <motion.div
@@ -146,27 +144,8 @@ const HomeHero = () => {
             className="mt-6 flex flex-col gap-4 sm:mt-8 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8"
           >
             <p className={cn('text-pretty text-base text-on-scrim/75 sm:text-lg', LEGIBLE)}>
-              A self-hosted streaming platform for the whole house. Free, open source, and yours.
+              A self-hosted streaming platform for the whole house. Free, with no subscription.
             </p>
-
-            {NEWEST === undefined ? null : (
-              <Link
-                to="/changelog/$slug"
-                params={{ slug: NEWEST.slug }}
-                className={cn(
-                  'group inline-flex shrink-0 items-center gap-2 self-start text-sm text-on-scrim/75 transition-colors hover:text-on-scrim sm:self-auto sm:text-base',
-                  LEGIBLE,
-                )}
-              >
-                <span className="font-medium text-on-scrim">New</span>
-                <span>{NEWEST.version}</span>
-                <Icon
-                  of={ArrowRightIcon}
-                  size={15}
-                  className="transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5"
-                />
-              </Link>
-            )}
           </motion.div>
 
           <motion.div
@@ -176,10 +155,11 @@ const HomeHero = () => {
           >
             <SplitButton
               tone="confirm"
+              shape="parted"
               size="lg"
               choiceLabel="Other ways to start"
               choiceName="Start by"
-              options={STARTS.map(({ id, label, detail }) => ({ id, label, detail }))}
+              options={STARTS.map(({ id, label }) => ({ id, label }))}
               selectedId={start.id}
               onSelect={(id) => {
                 setStartId(id);
@@ -193,7 +173,8 @@ const HomeHero = () => {
             <DownloadDesktop release={LATEST} platform={platform} isArm={isArm} />
             <Button
               variant="raised"
-              size="lg"
+              size="none"
+              className="h-11 gap-2 rounded-[0.75rem] px-4 text-[0.9375rem] font-semibold"
               onClick={() => {
                 void navigate({ to: '/features' });
               }}
@@ -218,6 +199,25 @@ const HomeHero = () => {
                 open sourced, and always will be
               </motion.span>
             </span>
+
+            {NEWEST === undefined ? null : (
+              <Link
+                to="/changelog/$slug"
+                params={{ slug: NEWEST.slug }}
+                className={cn(
+                  'group ms-auto hidden shrink-0 items-center gap-2 text-sm text-on-scrim/75 transition-colors hover:text-on-scrim sm:inline-flex sm:text-base',
+                  LEGIBLE,
+                )}
+              >
+                <span className="font-medium text-on-scrim">New</span>
+                <span>{NEWEST.version}</span>
+                <Icon
+                  of={ArrowRightIcon}
+                  size={15}
+                  className="transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5"
+                />
+              </Link>
+            )}
           </motion.div>
         </div>
       </div>

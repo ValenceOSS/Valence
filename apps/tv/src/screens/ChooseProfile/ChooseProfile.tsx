@@ -11,7 +11,7 @@ import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
-import { DeckMark } from '@ValenceTv/components/DeckMark/DeckMark';
+import { LayersMark } from '@ValenceTv/components/LayersMark/LayersMark';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ChooseProfileProps } from './ChooseProfile.types';
 import { say } from '@ValenceI18n/say';
@@ -104,7 +104,7 @@ const ChooseProfile = ({
           style={[styles.mark, isArriving && styles.hidden]}
           onLayout={markLaidOut}
         >
-          <DeckMark width={MARK.width} height={MARK.height} />
+          <LayersMark width={MARK.width} height={MARK.height} />
         </View>
 
         <FadeIn isFilling={false}>
@@ -201,7 +201,7 @@ const ChooseProfile = ({
         style={[styles.mark, isArriving && styles.hidden]}
         onLayout={markLaidOut}
       >
-        <DeckMark width={MARK.width} height={MARK.height} />
+        <LayersMark width={MARK.width} height={MARK.height} />
       </View>
 
       <View style={styles.side}>

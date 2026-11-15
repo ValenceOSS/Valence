@@ -47,7 +47,10 @@ type OptionMenuProps = {
     | 'quiet'
     | 'confirmJoined'
     | 'secondaryJoined'
-    | 'raisedJoined';
+    | 'raisedJoined'
+    | 'confirmParted'
+    | 'secondaryParted'
+    | 'raisedParted';
 };
 
 export type { ManyOfMenuGroup, MenuOption, MenuGroup, OneOfMenuGroup, OptionMenuProps };

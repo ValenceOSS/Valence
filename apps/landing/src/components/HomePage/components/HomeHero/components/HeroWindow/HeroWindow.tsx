@@ -27,7 +27,7 @@ const HeroWindow = ({ shots, active, isStill, className }: HeroWindowProps) => (
           <img
             key={shot.id}
             src={shot.src}
-            srcSet={webpSourcesOf(shot.src, [800, 1600, 2400])}
+            srcSet={webpSourcesOf(shot.src, [800, 1600, 2400, 3840])}
             sizes="(min-width: 84rem) 82rem, 100vw"
             width={2400}
             height={1350}

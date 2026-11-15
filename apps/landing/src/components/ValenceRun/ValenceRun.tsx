@@ -31,9 +31,9 @@ const ValenceRun = ({
   const runner = useRef<HTMLDivElement>(null);
   const isSeen = useInView(runner);
   const run = Array.from({ length: repeats }, (_, at) => (
-    <span key={at.toString()} className="flex shrink-0 items-center gap-[0.35em] pr-[0.35em]">
+    <span key={at.toString()} className="flex shrink-0 items-baseline gap-[0.25em] pr-[0.2em]">
       <span>Valence</span>
-      <Logo isCurrentColour className="h-[0.5em] translate-y-[0.03em]" />
+      <Logo isCurrentColour className="h-[1cap]" />
     </span>
   ));
 

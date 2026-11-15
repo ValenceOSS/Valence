@@ -27,6 +27,19 @@ describe('ProgressLine', () => {
     expect(drawn.root).toHaveStyle({ position: 'relative', width: 140 });
   });
 
+  it('sits centred under a picture, as the web’s shelves show it, when it is below', async () => {
+    const drawn = await render(<ProgressLine fraction={0.5} isBelow />);
+
+    expect(drawn.root).toHaveStyle({ position: 'relative', width: '60%', alignSelf: 'center' });
+  });
+
+  it('fills in white', async () => {
+    const drawn = await render(<ProgressLine fraction={0.5} />);
+    const [watched] = partsOf(drawn);
+
+    expect(watched).toHaveStyle({ backgroundColor: '#ffffff' });
+  });
+
   it('is read out as how much has been watched', async () => {
     const drawn = await render(<ProgressLine fraction={0.426} />);
 

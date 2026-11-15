@@ -8,6 +8,8 @@ type PageHeroProps = {
   description?: ReactNode;
   actions?: ReactNode;
   aside?: ReactNode;
+  ground?: ReactNode;
+  isFlat?: boolean;
 };
 
 export type { PageHeroProps };

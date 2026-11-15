@@ -4,7 +4,7 @@ const HERO_STEPS = [
     title: 'Everything on one shelf.',
     detail: 'Films, shows, music and books from your own server, in one place.',
     src: '/tour/home.jpg',
-    alt: "The Valence web app's home page, with a film in the featured row",
+    alt: "The Valence web app's home page, with a show in the featured row",
   },
   {
     id: 'library',
@@ -18,7 +18,7 @@ const HERO_STEPS = [
     title: 'Read and listen too.',
     detail: 'Books, comics and audiobooks sit beside your films.',
     src: '/tour/books.jpg',
-    alt: 'A shelf of books in the web app, each with its cover, title and author',
+    alt: 'The book being read, with a button to carry on, above a row of others part-read',
   },
 ] as const;
 

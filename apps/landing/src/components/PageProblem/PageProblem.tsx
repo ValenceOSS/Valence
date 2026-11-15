@@ -1,5 +1,5 @@
 import { Button } from '@ValenceUI/Button';
-import { PageHero } from '@ValenceUI/PageHero';
+import { LandingPageHero } from '@ValenceLanding/components/LandingPageHero/LandingPageHero';
 
 /**
  * What is shown where a page has failed, instead of the whole site going white: the opening card
@@ -7,7 +7,7 @@ import { PageHero } from '@ValenceUI/PageHero';
  */
 const PageProblem = () => (
   <div role="alert">
-    <PageHero
+    <LandingPageHero
       eyebrow="Something went wrong"
       lead="This page stopped working"
       description="Something on this page went wrong. Try it again."

@@ -1,4 +1,5 @@
 import { StyleSheet, Text } from 'react-native';
+import { LOCKUP } from '@ValenceMobile/theme/LOCKUP';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { WordsProps } from './Words.types';
@@ -12,6 +13,11 @@ const styles = StyleSheet.create({
   centred: { textAlign: 'center' },
   heading: { fontFamily: FONTS.sans.semibold, fontSize: 19, letterSpacing: -0.2 },
   lead: { fontFamily: FONTS.sans.semibold, fontSize: 17 },
+  name: {
+    fontFamily: FONTS.sans.extrabold,
+    fontSize: LOCKUP.nameSize,
+    letterSpacing: LOCKUP.nameSize * LOCKUP.tracking,
+  },
   leadLeading: { lineHeight: 25 },
   prose: { fontFamily: FONTS.sans.semibold, letterSpacing: 0.08 },
   proseLeading: { lineHeight: 21 },
@@ -82,11 +88,13 @@ const Words = ({
           ? styles.title
           : size === 'heading'
             ? styles.heading
-            : size === 'lead'
-              ? styles.lead
-              : size === 'small'
-                ? styles.small
-                : styles.body,
+            : size === 'name'
+              ? styles.name
+              : size === 'lead'
+                ? styles.lead
+                : size === 'small'
+                  ? styles.small
+                  : styles.body,
         { color: colour },
         (isProse || tone === 'muted') && size !== 'title' && size !== 'heading' && styles.prose,
         (isProse || tone === 'muted') && size === 'body' && styles.proseLeading,

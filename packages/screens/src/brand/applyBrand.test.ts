@@ -35,7 +35,9 @@ describe('applyBrand', () => {
 
     expect(document.title).toBe('Valence');
     expect(document.head.querySelector('meta[name="description"]')).toBeNull();
-    expect(document.head.querySelector('link[rel="icon"]')?.getAttribute('href')).toBe('/icon.png');
+    expect(document.head.querySelector('link[rel="icon"]')?.getAttribute('href')).toBe(
+      '/icon.png?v=layers',
+    );
     expect(document.getElementById('valence-brand')).toBeNull();
   });
 

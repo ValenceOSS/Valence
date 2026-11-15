@@ -8,11 +8,12 @@ type ButtonVariant =
   | 'glossy'
   | 'confirm'
   | 'overlay'
+  | 'glass'
   | 'soft'
   | 'ghost'
   | 'danger';
 
-type ButtonSize = 'md' | 'lg' | 'xl';
+type ButtonSize = 'md' | 'lg' | 'xl' | 'play';
 
 type ButtonProps = {
   label: string;
@@ -28,6 +29,7 @@ type ButtonProps = {
   isLoading?: boolean;
   isDisabled?: boolean;
   isWide?: boolean;
+  minWidth?: number;
   isIconOnly?: boolean;
   iconSize?: number;
   hasPreferredFocus?: boolean;

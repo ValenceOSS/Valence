@@ -37,7 +37,7 @@ const progressShown = (drawn: Drawn): number[] =>
   (drawn.root?.queryAll((node) => node.props.style !== undefined) ?? []).flatMap((node) => {
     const style = FillSchema.safeParse(StyleSheet.flatten(node.props.style));
 
-    return style.success && style.data.backgroundColor === '#3a8ee8' ? [style.data.flex] : [];
+    return style.success && style.data.backgroundColor === '#ffffff' ? [style.data.flex] : [];
   });
 
 describe('Shelf', () => {

@@ -27,18 +27,19 @@ describe('HomePage', () => {
 
     expect(
       screen.getByRole('img', {
-        name: "The Valence web app's home page, with a film in the featured row",
+        name: "The Valence web app's home page, with a show in the featured row",
       }),
     ).toHaveAttribute('src', '/tour/home.jpg');
   });
 
-  it('runs from the screens it plays on, to every feature group, to the phone app', async () => {
+  it('runs from the screens it plays on, to every feature group, to the phone and the television', async () => {
     await renderWithRoutes(HomePage);
 
     const order = [
       screen.getByRole('region', { name: 'Screens Valence plays on' }),
       screen.getByRole('region', { name: 'Viewing' }),
       screen.getByRole('region', { name: 'Valence on a phone' }),
+      screen.getByRole('region', { name: 'Valence on a television' }),
     ];
 
     order.slice(1).forEach((section, at) => {
@@ -54,10 +55,10 @@ describe('HomePage', () => {
     expect(screen.queryByRole('region', { name: 'Linked servers' })).not.toBeInTheDocument();
   });
 
-  it('shows the newest releases, and ends asking whether you are ready', async () => {
+  it('ends asking whether you are ready, leaving releases to the changelog', async () => {
     await renderWithRoutes(HomePage);
 
-    expect(screen.getByRole('region', { name: 'Changelog' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Changelog' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Get started' })).toBeInTheDocument();
   });
 

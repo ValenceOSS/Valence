@@ -23,7 +23,9 @@ import type { Restyle } from './restyleIcon';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 
-const LOGO_WIDTH = 485;
+const LOGO_WIDTH = 140;
+
+const SRGB_PROFILE = '/System/Library/ColorSync/Profiles/sRGB Profile.icc';
 
 const RENDER_PIXELS = 2048;
 
@@ -110,6 +112,12 @@ const renderIcon = (
 
   if (outcome.error !== undefined || outcome.status !== 0) {
     throw new Error(`Icon Composer could not render ${bundle}: ${outcome.stderr}`);
+  }
+
+  const matched = spawnSync('sips', ['--matchTo', SRGB_PROFILE, file], { encoding: 'utf8' });
+
+  if (matched.error !== undefined || matched.status !== 0) {
+    throw new Error(`ColorSync could not turn ${bundle} into sRGB: ${matched.stderr}`);
   }
 
   const picture = readFileSync(file);
@@ -229,12 +237,13 @@ const make = async (
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 },
         })
+        .negate({ alpha: false })
         .png()
         .toFile(to);
 
       return;
     case 'icon':
-      await sharp(renderIcon(ictool, from, output.pixels - output.margin * 2))
+      await sharp(renderIcon(ictool, from, output.pixels - output.margin * 2, output.rendition))
         .extend({
           top: output.margin,
           bottom: output.margin,
