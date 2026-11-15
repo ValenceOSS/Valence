@@ -295,6 +295,12 @@ describe('a build that claims Dolby it cannot decode', () => {
     ).not.toContain('eac3');
   });
 
+  it('asks for surround in Dolby Digital Plus only where its own decoders are believed', () => {
+    expect(build(dolby, { platform: 'MacIntel' }).surroundAudioCodec).toBe('eac3');
+    expect(build(dolby, { platform: 'Linux x86_64' }).surroundAudioCodec).toBeUndefined();
+    expect(build(supporting('avc1', 'mp4a')).surroundAudioCodec).toBeUndefined();
+  });
+
   it('keeps everything else it said it could play, since only Dolby is in question', () => {
     const profile = build(dolby, { platform: 'Linux x86_64' });
 

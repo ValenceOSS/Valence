@@ -78,6 +78,8 @@ Valence decides how to deliver each file to each device, one part at a time: con
 | Direct stream | The picture is passed through and only the sound is re-encoded.                                 | The sound codec or channel layout is not supported, for example a surround track the browser cannot decode.                                                           |
 | Transcode     | The picture is re-encoded.                                                                      | The picture codec, profile, level, HDR range, frame rate or interlacing is not supported, you pinned a lower quality, or an image based subtitle has to be burned in. |
 
+Sound that has to be re-encoded becomes AAC. The iPhone, iPad and Apple TV apps, Safari, and Android TVs and Jellyfin apps that play Dolby Digital Plus get surround of up to six channels in it instead, at 640 kbps. Apple's players decode no DTS and expect surround in Dolby Digital Plus. A 7.1 track stays AAC, because Dolby Digital Plus would lose two channels, and so does sound under a pinned quality step.
+
 Every decision carries a reason (for example "Client does not support the mkv container" or "Quality step limits resolution to 1280x720"), and the administrator can see how each live session is being delivered in the admin **Sessions** panel. Transcoding uses your server's processor or graphics card, so prefer direct play where you can. If the server has a supported graphics card, see [Hardware transcoding](/install/hardware-transcoding).
 
 ### Playing more in the browser

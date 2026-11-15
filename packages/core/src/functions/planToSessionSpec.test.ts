@@ -178,6 +178,27 @@ describe('planToSessionSpec', () => {
     });
   });
 
+  it('encodes surround planned as Dolby Digital Plus with its encoder, whether or not the picture is copied', () => {
+    const audio: PlaybackPlan['audio'] = {
+      kind: 'transcode',
+      streamIndex: 1,
+      codec: 'eac3',
+      channels: 6,
+      maxBitrateKbps: 640,
+      reason,
+    };
+
+    for (const outcome of [
+      build({ ...directPlay, audio }),
+      build({ ...directPlay, video: transcodeVideo, audio }),
+    ]) {
+      expect(outcome).toMatchObject({
+        kind: 'ok',
+        spec: { audio: { kind: 'encode', encoder: 'eac3', channels: 6, maxBitrateKbps: 640 } },
+      });
+    }
+  });
+
   it('chooses a hardware encoder when the video must be re-encoded', () => {
     const outcome = build({ ...directPlay, video: transcodeVideo });
 

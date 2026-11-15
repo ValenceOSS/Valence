@@ -10,6 +10,7 @@ describe('theTvsProfile', () => {
     expect(profile.maxAudioChannels).toBe(8);
     expect(profile.supportedVideoRanges).toContain('DolbyVision');
     expect(profile.directPlayProfiles.map((each) => each.container)).toEqual(['mp4', 'mov']);
+    expect(profile.surroundAudioCodec).toBe('eac3');
   });
 
   it('holds an Android TV that cannot say what it plays to what every one decodes', () => {
@@ -20,6 +21,7 @@ describe('theTvsProfile', () => {
     expect(profile.tenBitVideoCodecs).toEqual([]);
     expect(profile.directPlayProfiles.map((each) => each.container)).toEqual(['mp4', 'mkv']);
     expect(profile.directPlayProfiles[0]?.audioCodecs).not.toContain('ac3');
+    expect(profile.surroundAudioCodec).toBeUndefined();
     expect(profile.transcodingProfiles).toEqual([
       expect.objectContaining({ container: 'ts', videoCodec: 'h264', protocol: 'hls' }),
     ]);
@@ -47,6 +49,7 @@ describe('theTvsProfile', () => {
       videoCodecs: ['h264', 'hevc'],
       audioCodecs: ['aac', 'eac3', 'truehd', 'opus'],
     });
+    expect(profile.surroundAudioCodec).toBe('eac3');
   });
 
   it('claims no HDR on an Android TV whose decoders take only eight bits', () => {

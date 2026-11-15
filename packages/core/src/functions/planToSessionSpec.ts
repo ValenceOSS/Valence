@@ -5,6 +5,7 @@ import type { ToneMapping } from '@ValenceContracts/schemas/ToneMapping';
 import { selectEncoder } from '@ValenceCore/functions/selectEncoder';
 import type { Capabilities } from '@ValenceCore/functions/selectEncoder';
 import type { SegmentContainer } from './segmentContainerFor';
+import { audioEncoderOf } from './audioEncoderOf';
 
 type SessionSpec = {
   inputPath: string;
@@ -109,8 +110,6 @@ const planToneMapping = (
   return { toneMap: capability, warnings: [], deliveredRange: targetRange };
 };
 
-const AUDIO_ENCODER = 'aac';
-
 /**
  * Turns a negotiated plan into the instruction the media service actually runs: which file, which
  * encoder, what ceilings, which streams, where to start and how long each segment should be. This
@@ -195,7 +194,7 @@ const planToSessionSpec = ({
           plan.audio.kind === 'transcode'
             ? {
                 kind: 'encode',
-                encoder: AUDIO_ENCODER,
+                encoder: audioEncoderOf(plan.audio.codec),
                 channels: plan.audio.channels,
                 maxBitrateKbps: plan.audio.maxBitrateKbps,
               }
@@ -260,7 +259,7 @@ const planToSessionSpec = ({
         plan.audio.kind === 'transcode'
           ? {
               kind: 'encode',
-              encoder: AUDIO_ENCODER,
+              encoder: audioEncoderOf(plan.audio.codec),
               channels: plan.audio.channels,
               maxBitrateKbps: plan.audio.maxBitrateKbps,
             }

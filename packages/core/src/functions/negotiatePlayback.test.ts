@@ -541,6 +541,77 @@ describe('negotiatePlayback', () => {
     expect(plan.audio).toMatchObject({ kind: 'transcode', codec: 'aac', channels: 2 });
   });
 
+  describe('for a client that asks for surround in Dolby Digital Plus', () => {
+    const dts = {
+      ...media,
+      audioStreams: [
+        { index: 1, codec: 'dts', channels: 6, language: 'eng', isDefault: true, isAtmos: false },
+      ],
+    };
+
+    const apple: DeviceProfile = {
+      ...profile,
+      surroundAudioCodec: 'eac3',
+      directPlayProfiles: [
+        { container: 'mkv', videoCodecs: ['hevc', 'h264'], audioCodecs: ['aac', 'eac3'] },
+      ],
+    };
+
+    it('encodes a 5.1 track it cannot play as Dolby Digital Plus at 640 kb/s', () => {
+      const plan = negotiatePlayback(dts, apple);
+
+      expect(plan.audio).toMatchObject({
+        kind: 'transcode',
+        codec: 'eac3',
+        channels: 6,
+        maxBitrateKbps: 640,
+        reason: { code: 'AudioCodecNotSupported' },
+      });
+    });
+
+    it('keeps AAC for a client that did not ask', () => {
+      const plan = negotiatePlayback(dts, { ...apple, surroundAudioCodec: undefined });
+
+      expect(plan.audio).toMatchObject({ kind: 'transcode', codec: 'aac', maxBitrateKbps: 384 });
+    });
+
+    it('keeps AAC where the encode is stereo', () => {
+      const plan = negotiatePlayback(dts, { ...apple, maxAudioChannels: 2 });
+
+      expect(plan.audio).toMatchObject({ kind: 'transcode', codec: 'aac', channels: 2 });
+    });
+
+    it('keeps AAC for a 7.1 track rather than lose two channels', () => {
+      const wide = {
+        ...media,
+        audioStreams: [
+          { index: 1, codec: 'dts', channels: 8, language: 'eng', isDefault: true, isAtmos: false },
+        ],
+      };
+
+      const plan = negotiatePlayback(wide, apple);
+
+      expect(plan.audio).toMatchObject({ kind: 'transcode', codec: 'aac', channels: 8 });
+    });
+
+    it('keeps AAC where the viewer pinned a quality, at the ceiling it sets', () => {
+      const plan = negotiatePlayback(dts, apple, {
+        maxWidth: 1920,
+        maxHeight: 1080,
+        maxVideoBitrateKbps: 8000,
+        maxAudioBitrateKbps: 192,
+      });
+
+      expect(plan.audio).toMatchObject({ kind: 'transcode', codec: 'aac', maxBitrateKbps: 192 });
+    });
+
+    it('keeps AAC where the client could not play the sound it was sent', () => {
+      const plan = negotiatePlayback(dts, apple, null, null, null, 'pictureAndSound');
+
+      expect(plan.audio).toMatchObject({ kind: 'transcode', codec: 'aac' });
+    });
+  });
+
   it('passes a picture larger than the screen through, rather than re-encoding it to fit', () => {
     const hd: DeviceProfile = { ...profile, maxWidth: 1920, maxHeight: 1080 };
 
