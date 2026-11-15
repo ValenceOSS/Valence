@@ -21,13 +21,16 @@ describe('LandingSplash', () => {
   });
 
   it('sets itself to go after a moment, and forgets that if it is taken away first', () => {
+    const setting = vi.spyOn(globalThis, 'setTimeout');
+    const clearing = vi.spyOn(globalThis, 'clearTimeout');
     const { unmount } = render(<LandingSplash />);
+    const leaving = setting.mock.results[setting.mock.calls.findIndex((call) => call[1] === 1450)];
 
-    expect(vi.getTimerCount()).toBeGreaterThan(0);
+    expect(leaving).toBeDefined();
 
     unmount();
 
-    expect(vi.getTimerCount()).toBe(0);
+    expect(clearing).toHaveBeenCalledWith(leaving?.value);
   });
 
   it('does not show again in a tab that has already seen it', () => {
