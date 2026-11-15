@@ -1,5 +1,4 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { VideoPlayer } from 'expo-video';
 
 type TheFeaturedProps = {
   items: readonly MediaSummary[];
@@ -7,7 +6,6 @@ type TheFeaturedProps = {
   onLookAt: (mediaId: string) => void;
   onLookAtShow: (libraryId: string, showId: string) => void;
   onShowing?: (media: MediaSummary | null) => void;
-  onClip?: (player: VideoPlayer | null) => void;
   isInView?: boolean;
 };
 

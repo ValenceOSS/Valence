@@ -1,4 +1,5 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { act, render, userEvent } from '@testing-library/react-native';
+import { Animated } from 'react-native';
 import { fetchMediaDetail } from '@ValenceClient/library/fetchLibrary';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -72,6 +73,7 @@ describe('AFeature', () => {
         width={390}
         height={507}
         isShowing={false}
+        clipPlayer={null}
         resumeAt={null}
         onEnded={jest.fn()}
         onPlay={onPlay}
@@ -94,6 +96,7 @@ describe('AFeature', () => {
         width={390}
         height={507}
         isShowing={false}
+        clipPlayer={null}
         resumeAt={null}
         onEnded={jest.fn()}
         onPlay={jest.fn()}
@@ -115,6 +118,7 @@ describe('AFeature', () => {
         width={300}
         height={420}
         isShowing={false}
+        clipPlayer={null}
         resumeAt={null}
         onEnded={jest.fn()}
         onPlay={jest.fn()}
@@ -131,5 +135,35 @@ describe('AFeature', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'More info' }));
 
     expect(onMoreInfo).toHaveBeenCalled();
+  });
+
+  it('folds the lines about it away once they have been read, moving rather than laying out', async () => {
+    jest.useFakeTimers();
+    const timing = jest.spyOn(Animated, 'timing');
+    const drawn = await render(
+      <AFeature
+        media={aTitle({ hasLogo: true })}
+        width={390}
+        height={507}
+        isShowing
+        clipPlayer={null}
+        resumeAt={null}
+        onEnded={jest.fn()}
+        onPlay={jest.fn()}
+        onMoreInfo={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(await drawn.findByText(ABOUT)).toBeTruthy();
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(10_000);
+    });
+
+    expect(drawn.queryByText(ABOUT)).toBeNull();
+    expect(timing.mock.calls.every(([, config]) => config.useNativeDriver)).toBe(true);
+    timing.mockRestore();
+    jest.useRealTimers();
   });
 });

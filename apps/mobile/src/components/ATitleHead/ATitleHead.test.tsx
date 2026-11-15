@@ -18,7 +18,7 @@ describe('ATitleHead', () => {
       { wrapper: CacheScope },
     );
 
-    expect(drawn.getByLabelText('Arrival')).toBeTruthy();
+    expect(await drawn.findByLabelText('Arrival')).toBeTruthy();
   });
 
   it('draws something the library does not hold from where its pictures are', async () => {
