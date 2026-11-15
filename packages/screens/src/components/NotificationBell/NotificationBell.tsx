@@ -44,7 +44,7 @@ const NotificationBell = ({
     hasSurface={false}
     isBare={!isInTheWindowBar}
     isOverDialogs={isInTheWindowBar}
-    triggerLook={isInTheWindowBar ? 'smallIcon' : 'icon'}
+    triggerLook={isInTheWindowBar ? 'smallIcon' : 'inline'}
     onOpenChange={(isOpen) => {
       if (isOpen) {
         onOpen();
@@ -55,7 +55,7 @@ const NotificationBell = ({
         className={
           isInTheWindowBar
             ? 'relative flex size-6 items-center justify-center'
-            : 'relative flex size-9 items-center justify-center'
+            : 'relative flex size-8.5 items-center justify-center coarse:size-11'
         }
       >
         <Icon of={InboxFilledIcon} size={isInTheWindowBar ? 15 : 20} />
@@ -67,7 +67,7 @@ const NotificationBell = ({
             className={
               isInTheWindowBar
                 ? 'absolute -top-1 -end-1.5 h-3.5 min-w-3.5 justify-center rounded-full px-1 text-[0.5625rem] leading-none ring-2 ring-[var(--frame-back)]'
-                : 'absolute top-0 end-0 ring-2 ring-[var(--frame-back)]'
+                : 'absolute top-1 end-0.5 h-3.5 min-w-3.5 justify-center rounded-full px-1 text-[0.5625rem] leading-none ring-2 ring-[var(--frame-back)]'
             }
           >
             <FormattedNumber

@@ -281,7 +281,7 @@ describe('NavBar', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Search' })).toHaveClass('size-9', 'rounded-full');
+    expect(screen.getByRole('button', { name: 'Search' })).toHaveClass('size-8.5', 'rounded-full');
   });
 
   it('names every place for anybody who cannot see the icons', () => {
