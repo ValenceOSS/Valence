@@ -1,6 +1,8 @@
 import { act, render as draw } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement, ReactNode } from 'react';
+import { aMediaSummary } from '@ValenceClient/testing/aMediaSummary';
+import { aPartyMember } from '@ValenceClient/testing/aPartyMember';
 import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
 import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { WAIT_FOR_THE_ROOM_MS } from '@ValenceClient/party/whereToBegin';
@@ -57,6 +59,7 @@ describe('PlayingTogether', () => {
         carriedOn={0}
         onLeave={jest.fn()}
         onNext={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
     );
 
@@ -74,6 +77,7 @@ describe('PlayingTogether', () => {
         carriedOn={0}
         onLeave={jest.fn()}
         onNext={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
     );
 
@@ -89,6 +93,7 @@ describe('PlayingTogether', () => {
         carriedOn={0}
         onLeave={jest.fn()}
         onNext={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
     );
 
@@ -107,6 +112,7 @@ describe('PlayingTogether', () => {
         carriedOn={0}
         onLeave={jest.fn()}
         onNext={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
     );
 
@@ -130,6 +136,7 @@ describe('PlayingTogether', () => {
         carriedOn={0}
         onLeave={onLeave}
         onNext={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
     );
 
@@ -139,6 +146,82 @@ describe('PlayingTogether', () => {
 
     expect(watchParty.leave).toHaveBeenCalled();
     expect(onLeave).toHaveBeenCalled();
+  });
+
+  it('goes on to the title the party has moved to, staying in it', async () => {
+    const onPartyMovesTo = jest.fn();
+    const watchParty = aWatchPartyStateWith(jest.fn, {
+      party: aWatchParty({ mediaId: 'episode-1' }),
+    });
+    const playing = (party: typeof watchParty) => (
+      <PlayingTogether
+        watchParty={party}
+        invitedTo={null}
+        mediaId="episode-1"
+        startSeconds={0}
+        carriedOn={0}
+        onLeave={jest.fn()}
+        onNext={jest.fn()}
+        onPartyMovesTo={onPartyMovesTo}
+      />
+    );
+    const drawn = await render(playing(watchParty));
+
+    await drawn.rerender(playing({ ...watchParty, party: aWatchParty({ mediaId: 'episode-2' }) }));
+
+    expect(onPartyMovesTo).toHaveBeenCalledWith('episode-2');
+    expect(watchParty.leave).not.toHaveBeenCalled();
+  });
+
+  it('moves the whole party on to the next episode, for whoever may', async () => {
+    const onNext = jest.fn();
+    const watchParty = aWatchPartyStateWith(jest.fn, {
+      party: aWatchParty({ mediaId: 'episode-1', members: [aPartyMember({ role: 'host' })] }),
+    });
+
+    await render(
+      <PlayingTogether
+        watchParty={watchParty}
+        invitedTo={null}
+        mediaId="episode-1"
+        startSeconds={0}
+        carriedOn={0}
+        onLeave={jest.fn()}
+        onNext={onNext}
+        onPartyMovesTo={jest.fn()}
+      />,
+    );
+
+    await act(() => {
+      playerAsDrawn()?.onNext?.(aMediaSummary({ id: 'episode-2' }), 1);
+    });
+
+    expect(watchParty.send).toHaveBeenCalledWith({
+      kind: 'changeWhatIsPlaying',
+      mediaId: 'episode-2',
+    });
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('offers a guest nothing to follow on to, since they wait for the party', async () => {
+    const watchParty = aWatchPartyStateWith(jest.fn, {
+      party: aWatchParty({ mediaId: 'episode-1', members: [aPartyMember({ role: 'guest' })] }),
+    });
+
+    await render(
+      <PlayingTogether
+        watchParty={watchParty}
+        invitedTo={null}
+        mediaId="episode-1"
+        startSeconds={0}
+        carriedOn={0}
+        onLeave={jest.fn()}
+        onNext={jest.fn()}
+        onPartyMovesTo={jest.fn()}
+      />,
+    );
+
+    expect(playerAsDrawn()?.onNext).toBeUndefined();
   });
 
   it('leaves a party watching something else, such as the episode before', async () => {
@@ -155,6 +238,7 @@ describe('PlayingTogether', () => {
         carriedOn={0}
         onLeave={jest.fn()}
         onNext={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
     );
 
@@ -174,6 +258,7 @@ describe('PlayingTogether', () => {
         carriedOn={0}
         onLeave={jest.fn()}
         onNext={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
     );
 

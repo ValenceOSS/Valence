@@ -9,7 +9,7 @@ import { PartyPasswordDialog } from '@ValenceScreens/components/PartyPasswordDia
 import { useWhereToBegin } from '@ValenceClient/party/useWhereToBegin';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
 import { invitationTo } from '@ValenceClient/party/invitationTo';
-import { powersOf } from '@ValenceContracts/schemas/WatchParty';
+import { mayMoveTheParty } from '@ValenceClient/party/mayMoveTheParty';
 import { countCarriedOn } from '@ValenceClient/playback/countCarriedOn';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
@@ -96,17 +96,13 @@ const WatchPage = () => {
   });
 
   const partyPlayback = usePartyPlayback(watchParty, playing?.id ?? null);
-  const mayMoveTheParty =
-    filmParty !== null &&
-    powersOf(
-      filmParty.members.find((member) => member.connectionId === watchParty.meConnectionId)?.role ??
-        'guest',
-    ).includes('changeWhatIsPlaying');
+  const mayMove = mayMoveTheParty(filmParty, watchParty.meConnectionId);
+  const mayChooseWhatPlays = filmParty === null || mayMove;
   const moveThePartyTo = (mediaId: string) => {
     watchParty.send({ kind: 'changeWhatIsPlaying', mediaId });
   };
   const carryOnTo = (episode: MediaSummary) => {
-    if (filmParty !== null && !mayMoveTheParty) {
+    if (filmParty !== null && !mayMove) {
       return;
     }
 
@@ -246,16 +242,16 @@ const WatchPage = () => {
           />
         )}
         {...(partyPlayback === null ? {} : { party: partyPlayback })}
-        episodes={showEpisodes}
-        following={following}
+        episodes={mayChooseWhatPlays ? showEpisodes : []}
+        following={mayChooseWhatPlays ? following : null}
         onSelectEpisode={(episode) => {
           if (filmParty === null) {
             go({ playing: episode.id });
-          } else if (mayMoveTheParty) {
+          } else if (mayMove) {
             moveThePartyTo(episode.id);
           }
         }}
-        willCarryOn={decided.kind === 'play' && (filmParty === null || mayMoveTheParty)}
+        willCarryOn={decided.kind === 'play' && mayChooseWhatPlays}
         {...(askingAbout === null
           ? {}
           : {
@@ -294,7 +290,7 @@ const WatchPage = () => {
           });
         }}
         onEnded={() => {
-          if (filmParty !== null && (decided.kind === 'nothing' || !mayMoveTheParty)) {
+          if (filmParty !== null && (decided.kind === 'nothing' || !mayMove)) {
             return;
           }
 
