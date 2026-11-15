@@ -200,6 +200,8 @@ const qualityLabelOf = (quality: QualityPreference): string =>
  *   right as it starts so the room knows where it came from.
  * @param onLeave - Told when the title ends with nothing after it, or somebody gives up on it.
  * @param onNext - Told to play the next episode, and how many will then have followed on untouched.
+ *   Without it nothing is offered to follow on, for a guest in a watch party, who waits for the
+ *   party to move on.
  * @param watchParty - The watch party this television holds. Where it is watching this, the film is
  * kept in step with the room — Play/Pause, skipping and scrubbing go to the room rather than
  * straight to the player, and what the others did is said over the picture — and the party is
@@ -248,10 +250,10 @@ const Player = ({
 
   const episodes = useMemo(
     () =>
-      show.data === undefined || show.data === null
+      show.data === undefined || show.data === null || onNext === undefined
         ? []
         : show.data.seasons.flatMap((season) => season.episodes),
-    [show.data],
+    [show.data, onNext],
   );
 
   const following = useMemo(
@@ -968,7 +970,7 @@ const Player = ({
     (followedOn: boolean) => {
       if (following !== null) {
         isFollowingOn.current = followedOn;
-        onNext(following, followedOn ? carriedOn + 1 : 0);
+        onNext?.(following, followedOn ? carriedOn + 1 : 0);
       }
     },
     [following, onNext, carriedOn],
@@ -1090,7 +1092,7 @@ const Player = ({
 
     if (stepsBy === 'episode') {
       if (before !== undefined) {
-        onNext(before, 0);
+        onNext?.(before, 0);
       }
 
       return;
@@ -1564,7 +1566,7 @@ const Player = ({
               return;
             }
 
-            onNext(chosen, 0);
+            onNext?.(chosen, 0);
           }}
         />
       ) : null}

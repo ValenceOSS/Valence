@@ -34,6 +34,7 @@ import {
   getRealtimeClient,
 } from '@ValenceClient/realtime/getRealtimeClient';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
+import { mayMoveTheParty } from '@ValenceClient/party/mayMoveTheParty';
 import { useListenAlong } from '@ValenceClient/party/useListenAlong';
 import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
 import type { PartyInvitation } from '@ValenceClient/party/readPartyInvitation';
@@ -505,8 +506,21 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     });
   };
 
+  const filmParty = watchParty.party?.kind === 'watch' ? watchParty.party : null;
+  const mayMove = mayMoveTheParty(filmParty, watchParty.meConnectionId);
+  const mayChooseWhatPlays = filmParty === null || mayMove;
+
   const whenItEnds = () => {
     const decided = whatFollows();
+
+    if (filmParty !== null) {
+      if (decided.kind === 'play' && mayMove) {
+        setCarriedOn((was) => was + 1);
+        watchParty.send({ kind: 'changeWhatIsPlaying', mediaId: decided.episode.id });
+      }
+
+      return;
+    }
 
     if (decided.kind === 'nothing') {
       stopWatchingIt();
@@ -1006,11 +1020,22 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         startSeconds={watching.startSeconds}
         onDone={stopWatchingIt}
         onEnded={whenItEnds}
-        willCarryOn={whatFollows().kind === 'play'}
-        seasons={series.data?.seasons ?? []}
-        onChooseEpisode={(chosen) => {
-          choose(chosen, resumeFor(byMediaId(watched.data ?? []), chosen) ?? 0);
+        onPartyMovesTo={(mediaId) => {
+          setWatching({ mediaId, startSeconds: 0 });
         }}
+        willCarryOn={whatFollows().kind === 'play' && mayChooseWhatPlays}
+        seasons={series.data?.seasons ?? []}
+        {...(mayChooseWhatPlays
+          ? {
+              onChooseEpisode: (chosen: string) => {
+                if (filmParty === null) {
+                  choose(chosen, resumeFor(byMediaId(watched.data ?? []), chosen) ?? 0);
+                } else {
+                  watchParty.send({ kind: 'changeWhatIsPlaying', mediaId: chosen });
+                }
+              },
+            }
+          : {})}
       />
     ) : null;
   const isCovered = covering !== null;

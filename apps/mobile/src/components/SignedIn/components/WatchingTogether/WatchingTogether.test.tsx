@@ -34,6 +34,7 @@ describe('WatchingTogether', () => {
         mediaId="a-film"
         startSeconds={30}
         onDone={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
       { wrapper: CacheScope },
     );
@@ -50,6 +51,7 @@ describe('WatchingTogether', () => {
         mediaId="film-1"
         startSeconds={30}
         onDone={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
       { wrapper: CacheScope },
     );
@@ -64,6 +66,7 @@ describe('WatchingTogether', () => {
         mediaId="film-1"
         startSeconds={30}
         onDone={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
     );
 
@@ -80,6 +83,7 @@ describe('WatchingTogether', () => {
         mediaId="film-1"
         startSeconds={30}
         onDone={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
       { wrapper: CacheScope },
     );
@@ -100,6 +104,7 @@ describe('WatchingTogether', () => {
         invitedTo={null}
         mediaId="film-1"
         onDone={onDone}
+        onPartyMovesTo={jest.fn()}
       />,
       { wrapper: CacheScope },
     );
@@ -122,6 +127,7 @@ describe('WatchingTogether', () => {
         invitedTo="p-1"
         mediaId="film-1"
         onDone={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
       { wrapper: CacheScope },
     );
@@ -148,11 +154,34 @@ describe('WatchingTogether', () => {
         invitedTo={null}
         mediaId="episode-2"
         onDone={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
       { wrapper: CacheScope },
     );
 
     expect(watchParty.leave).toHaveBeenCalled();
+  });
+
+  it('goes on to the title the party has moved to, staying in it', async () => {
+    const onPartyMovesTo = jest.fn();
+    const watchParty = aWatchPartyStateWith(jest.fn, {
+      party: aWatchParty({ mediaId: 'episode-1' }),
+    });
+    const watching = (party: typeof watchParty) => (
+      <WatchingTogether
+        watchParty={party}
+        invitedTo={null}
+        mediaId="episode-1"
+        onDone={jest.fn()}
+        onPartyMovesTo={onPartyMovesTo}
+      />
+    );
+    const drawn = await render(watching(watchParty), { wrapper: CacheScope });
+
+    await drawn.rerender(watching({ ...watchParty, party: aWatchParty({ mediaId: 'episode-2' }) }));
+
+    expect(onPartyMovesTo).toHaveBeenCalledWith('episode-2');
+    expect(watchParty.leave).not.toHaveBeenCalled();
   });
 
   it('stays in a party watching this', async () => {
@@ -164,6 +193,7 @@ describe('WatchingTogether', () => {
         invitedTo={null}
         mediaId="film-1"
         onDone={jest.fn()}
+        onPartyMovesTo={jest.fn()}
       />,
       { wrapper: CacheScope },
     );

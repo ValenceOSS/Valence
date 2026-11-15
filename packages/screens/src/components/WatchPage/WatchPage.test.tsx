@@ -539,6 +539,22 @@ describe('WatchPage', () => {
       expect(window.location.pathname).toBe(`/watch/${first.id}`);
     });
 
+    it('offers a guest no episodes to pick and nothing coming up, since the party moves on', async () => {
+      const party = inAPartyOn(first.id, 'guest');
+
+      renderInAShell(<WatchPage />, {
+        known: new Map([first, second].map((one) => [one.id, one])),
+        watchParty: party.watchParty,
+      });
+
+      await vi.waitFor(() => {
+        expect(drawn.player).not.toBeNull();
+      });
+
+      expect(drawn.player?.episodes).toEqual([]);
+      expect(drawn.player?.following).toBeNull();
+    });
+
     it('leaves the party when the viewer says they have stopped watching', async () => {
       const party = inAPartyOn(first.id, 'host');
       const watcher: ViewerProfile = {
