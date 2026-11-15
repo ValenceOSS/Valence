@@ -3465,6 +3465,21 @@ mod tests {
         (session, stopped)
     }
 
+    /// A path as a shell script reads it whatever is in it, for the stand-in
+    /// ffmpegs the tests write.
+    fn quoted_for_the_shell(path: &std::path::Path) -> String {
+        format!("'{}'", path.display().to_string().replace('\'', "'\\''"))
+    }
+
+    /// A path with quotes and spaces in it is still one word to the shell.
+    #[test]
+    fn quotes_a_path_with_quotes_and_spaces_in_it() {
+        assert_eq!(
+            quoted_for_the_shell(std::path::Path::new("/tmp/it's here")),
+            "'/tmp/it'\\''s here'"
+        );
+    }
+
     /// A run hands the next the run before it, and only for its own directory.
     #[test]
     fn hands_each_run_the_one_before_it_in_the_same_directory() {
@@ -3508,8 +3523,8 @@ mod tests {
         tokio::fs::write(
             &ffmpeg,
             format!(
-                "#!/bin/sh\necho $$ > '{}'\nexec sleep 30\n",
-                pid_file.display()
+                "#!/bin/sh\necho $$ > {}\nexec sleep 30\n",
+                quoted_for_the_shell(&pid_file)
             ),
         )
         .await
@@ -3603,7 +3618,10 @@ mod tests {
         let launched = directory.join("launched");
         tokio::fs::write(
             &ffmpeg,
-            format!("#!/bin/sh\ntouch '{}'\nexec sleep 30\n", launched.display()),
+            format!(
+                "#!/bin/sh\ntouch {}\nexec sleep 30\n",
+                quoted_for_the_shell(&launched)
+            ),
         )
         .await
         .expect("writes the stand-in ffmpeg");
