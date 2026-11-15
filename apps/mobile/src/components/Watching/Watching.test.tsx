@@ -265,6 +265,10 @@ describe('Watching', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
+        undefined,
+        'opened',
       );
     });
   });
@@ -544,6 +548,10 @@ describe('Watching', () => {
         undefined,
         'picture',
         undefined,
+        undefined,
+        undefined,
+        undefined,
+        'converting',
       );
     });
   });
@@ -635,6 +643,10 @@ describe('Watching', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
+        undefined,
+        'opened',
       );
     });
   });
@@ -697,6 +709,7 @@ describe('Watching', () => {
       expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBe('english');
     });
     expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[3]).toBe(900);
+    expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[12]).toBe('subtitles');
 
     await act(() => {
       theFakePlayer.say('isExternalPlaybackActiveChange', { isExternalPlaybackActive: false });

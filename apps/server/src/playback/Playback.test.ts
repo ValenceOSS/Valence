@@ -293,9 +293,12 @@ const post = (path: string, body: object) =>
  */
 const aRecordingLog = () => {
   const warnings: { source: string; message: string; aside: object | undefined }[] = [];
+  const infos: { source: string; message: string; aside: object | undefined }[] = [];
   const log: Logger = {
     debug: () => {},
-    info: () => {},
+    info: (source, message, aside) => {
+      infos.push({ source, message, aside });
+    },
     warn: (source, message, aside) => {
       warnings.push({ source, message, aside });
     },
@@ -304,7 +307,7 @@ const aRecordingLog = () => {
     flush: () => Promise.resolve(),
   };
 
-  return { log, warnings };
+  return { log, warnings, infos };
 };
 
 const aReport = {
@@ -424,6 +427,74 @@ describe('reporting what stopped playing', () => {
   });
 });
 
+describe('noting what a player put right by itself', () => {
+  it('writes a recovery to the playback log, against the session', async () => {
+    const { log, infos } = aRecordingLog();
+    const { app } = build({ log });
+
+    const response = await app.request(
+      post('/api/playback/notes?clientId=tab-1', {
+        kind: 'recovered',
+        mediaId: MEDIA_ID,
+        sessionId: 'session-1',
+        atSeconds: 1669,
+      }),
+    );
+
+    expect(response.status).toBe(204);
+    expect(infos).toHaveLength(1);
+    expect(infos[0]?.source).toBe('playback');
+    expect(infos[0]?.message).toMatch(/^Playback recovered by itself at 27:49 for /u);
+    expect(infos[0]?.aside).toStrictEqual({
+      context: { mediaId: MEDIA_ID, sessionId: 'session-1' },
+    });
+  });
+
+  it('writes a watch party moving somebody to the playback log', async () => {
+    const { log, infos } = aRecordingLog();
+    const { app } = build({ log });
+
+    await app.request(
+      post('/api/playback/notes?clientId=tab-1', {
+        kind: 'caughtUp',
+        partyId: 'p-1',
+        fromSeconds: 0,
+        toSeconds: 1424,
+        because: 'drifted',
+      }),
+    );
+
+    expect(infos).toHaveLength(1);
+    expect(infos[0]?.message).toMatch(
+      /^Watch party p-1 moved .+ from 0:00 to 23:44, after drifting$/u,
+    );
+  });
+
+  it('stops listening to a device that notes over and over', async () => {
+    const { log, infos } = aRecordingLog();
+    const { app } = build({ log });
+    const answers = [];
+
+    for (let note = 0; note < 61; note += 1) {
+      answers.push(
+        (
+          await app.request(
+            post('/api/playback/notes?clientId=tab-1', {
+              kind: 'recovered',
+              mediaId: MEDIA_ID,
+              sessionId: null,
+              atSeconds: note,
+            }),
+          )
+        ).status,
+      );
+    }
+
+    expect(answers.at(-1)).toBe(429);
+    expect(infos).toHaveLength(60);
+  });
+});
+
 describe('playback explain', () => {
   it('explains a real library item', async () => {
     const { app } = build();
@@ -532,6 +603,29 @@ describe('playback sessions', () => {
     expect(body.delivery.kind === 'hls' && body.delivery.manifestUrl).toContain(
       '/api/playback/session/',
     );
+  });
+
+  it('writes where a session started, how and why to the playback log', async () => {
+    const { log, infos } = aRecordingLog();
+    const { app } = build({ log });
+
+    const response = await app.request(
+      post(`/api/playback/${MEDIA_ID}/session`, {
+        deviceProfile: modestProfile,
+        startSeconds: 1669,
+        startedBecause: 'recovering',
+      }),
+    );
+    const body = StartSchema.parse(await response.json());
+
+    expect(infos).toHaveLength(1);
+    expect(infos[0]?.source).toBe('playback');
+    expect(infos[0]?.message).toMatch(
+      /^Playback started at 27:49 \(Transcode\) for .+: recovering from a failure$/u,
+    );
+    expect(infos[0]?.aside).toStrictEqual({
+      context: { mediaId: MEDIA_ID, sessionId: body.sessionId },
+    });
   });
 
   it('reports the mode and plan alongside the session', async () => {

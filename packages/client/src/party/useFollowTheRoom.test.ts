@@ -4,6 +4,15 @@ import { useFollowTheRoom } from './useFollowTheRoom';
 import type { FollowTheRoom } from './useFollowTheRoom';
 import type { PartyPlayback } from './PartyPlayback';
 import type { RoomPlayer } from './RoomPlayer';
+import { reportPlaybackNote } from '@ValenceClient/playback/reportPlaybackNote';
+
+vi.mock('@ValenceClient/playback/reportPlaybackNote', () => ({
+  reportPlaybackNote: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock('@ValenceClient/platform/installPlatform', () => ({
+  platformInUse: () => ({ thisClientId: () => 'tab-1' }),
+}));
 
 type FakePlayer = RoomPlayer & { at: number; paused: boolean; ended: boolean; rate: number };
 
@@ -104,6 +113,7 @@ const follow = (player: FakePlayer, party: PartyPlayback | undefined) => {
 
 beforeEach(() => {
   vi.useFakeTimers();
+  vi.mocked(reportPlaybackNote).mockClear();
 });
 
 afterEach(() => {
@@ -123,6 +133,11 @@ describe('useFollowTheRoom', () => {
     follow(near, aParty({ referenceSeconds: 600 }));
 
     expect(near.seekTo).not.toHaveBeenCalled();
+    expect(reportPlaybackNote).toHaveBeenCalledTimes(1);
+    expect(reportPlaybackNote).toHaveBeenCalledWith(
+      { kind: 'caughtUp', partyId: 'a-party', fromSeconds: 10, toSeconds: 600, because: 'joined' },
+      'tab-1',
+    );
   });
 
   it('applies a command once, by its sequence, and says who sent it', () => {
@@ -216,6 +231,10 @@ describe('useFollowTheRoom', () => {
 
     expect(player.at).toBe(110);
     expect(player.rate).toBe(1);
+    expect(reportPlaybackNote).toHaveBeenCalledWith(
+      expect.objectContaining({ toSeconds: 110, because: 'drifted' }),
+      'tab-1',
+    );
   });
 
   it('lines everybody up on the room’s frame while the room is held', () => {

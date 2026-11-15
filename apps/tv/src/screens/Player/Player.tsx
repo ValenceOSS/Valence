@@ -1214,6 +1214,8 @@ const Player = ({
           undefined,
           false,
           true,
+          false,
+          'next',
         ),
       };
     });

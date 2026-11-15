@@ -11,6 +11,7 @@ import { say } from '@ValenceI18n/say';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import { PlaybackProblemSchema } from '@ValenceContracts/schemas/PlaybackProblem';
 import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
+import type { PlaybackStartReason } from '@ValenceContracts/schemas/PlaybackStartReason';
 
 const DeliverySchema = z.union([
   z.object({
@@ -74,6 +75,8 @@ const PROBLEMS_BY_STATUS: Readonly<Record<number, PlaybackProblem>> = {
  * @param picksItsOwnSound - Whether this client can choose the sound itself from the whole file,
  *   so the server hands it over whole where it can, and delivers the track asked for where it
  *   cannot, in the one request.
+ * @param startedBecause - Why this stream is being asked for, for the server's log: opening the
+ *   title, a change somebody made, or putting playback right after something went wrong.
  * @returns The session, or why there is not one.
  */
 const startPlaybackSession = async (
@@ -89,6 +92,7 @@ const startPlaybackSession = async (
   isCast?: boolean,
   isReadiedAhead?: boolean,
   picksItsOwnSound?: boolean,
+  startedBecause?: PlaybackStartReason,
 ): Promise<StartOutcome> => {
   const response = await fetch(`/api/playback/${mediaId}/session`, {
     method: 'POST',
@@ -110,6 +114,7 @@ const startPlaybackSession = async (
       ...(isCast === true ? { isCast } : {}),
       ...(isReadiedAhead === true ? { isReadiedAhead } : {}),
       ...(picksItsOwnSound === true ? { picksItsOwnSound } : {}),
+      ...(startedBecause === undefined ? {} : { startedBecause }),
     }),
   }).catch(() => null);
 

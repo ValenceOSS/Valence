@@ -97,6 +97,11 @@ describe('usePlaybackSession', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'opened',
     );
   });
 

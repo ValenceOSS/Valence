@@ -12,6 +12,8 @@ import {
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
 import { signedHeadersFor } from '@ValenceTv/platform/theSessionToken';
 import { theTvsProfile } from '@ValenceTv/playback/theTvsProfile';
+import { whyItAsksAgain } from '@ValenceTv/playback/whyItAsksAgain';
+import type { Asked } from '@ValenceTv/playback/whyItAsksAgain';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
@@ -70,6 +72,7 @@ const usePlaybackSession = (
   const [session, setSession] = useState<Session>({ kind: 'starting' });
   const asking = useRef(isPlaying);
   const measuring = useRef(measure);
+  const askedBefore = useRef<Asked | null>(null);
 
   useEffect(() => {
     asking.current = isPlaying;
@@ -82,7 +85,10 @@ const usePlaybackSession = (
     let isAbandoned = false;
     let sessionId: string | null = null;
     const timers: ReturnType<typeof setInterval>[] = [];
+    const askedNow = { mediaId, audioStreamIndex, requestedQuality, converted, attempt };
+    const startedBecause = whyItAsksAgain(askedBefore.current, askedNow);
 
+    askedBefore.current = askedNow;
     setSession({ kind: 'starting' });
 
     const readied =
@@ -111,6 +117,11 @@ const usePlaybackSession = (
             requestedQuality,
             undefined,
             converted,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            startedBecause,
           )
         : Promise.resolve({ kind: 'started' as const, session: readied })
     ).then((outcome) => {

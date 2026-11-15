@@ -58,11 +58,16 @@ const serverUpMock = vi.hoisted(() => vi.fn());
 const reportMock = vi.hoisted(() =>
   vi.fn<(report: PlaybackProblemReport, clientId: string) => Promise<void>>(),
 );
+const noteMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 
 vi.mock('@ValenceClient/session/isTheServerUp', () => ({ isTheServerUp: serverUpMock }));
 
 vi.mock('@ValenceClient/playback/reportPlaybackProblem', () => ({
   reportPlaybackProblem: reportMock,
+}));
+
+vi.mock('@ValenceClient/playback/reportPlaybackNote', () => ({
+  reportPlaybackNote: noteMock,
 }));
 
 vi.mock('@ValenceClient/playback/beginReadiedSession', () => ({
@@ -383,6 +388,7 @@ describe('VideoPlayer', () => {
         undefined,
         undefined,
         false,
+        'opened',
       );
     });
   });
@@ -555,6 +561,7 @@ describe('VideoPlayer', () => {
         undefined,
         undefined,
         false,
+        'converting',
       );
     });
   });
@@ -663,6 +670,10 @@ describe('VideoPlayer', () => {
 
       expect(element).toHaveProperty('currentTime', 1700);
       expect(startMock).toHaveBeenCalledTimes(1);
+      expect(noteMock).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'recovered', mediaId: media.id, atSeconds: 1700 }),
+        'client-1',
+      );
     });
 
     it('stops where it fails a third time within seconds of starting again', async () => {
@@ -726,6 +737,7 @@ describe('VideoPlayer', () => {
       });
       expect(startMock.mock.calls.at(-1)?.[3]).toBe(1702);
       expect(startMock.mock.calls.at(-1)?.[7]).toBeUndefined();
+      expect(startMock.mock.calls.at(-1)?.[12]).toBe('recovering');
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
@@ -885,6 +897,7 @@ describe('VideoPlayer', () => {
         undefined,
         undefined,
         false,
+        'converting',
       );
     });
   });
@@ -2482,6 +2495,7 @@ describe('VideoPlayer', () => {
         undefined,
         undefined,
         false,
+        'audio',
       );
     });
   });

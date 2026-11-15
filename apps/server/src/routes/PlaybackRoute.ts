@@ -7,6 +7,8 @@ import {
   PlaybackProblemSchema,
 } from '@ValenceContracts/schemas/PlaybackProblem';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
+import { PlaybackNoteSchema } from '@ValenceContracts/schemas/PlaybackNote';
+import { PlaybackStartReasonSchema } from '@ValenceContracts/schemas/PlaybackStartReason';
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
 import { ConvertedSchema } from '@ValenceContracts/schemas/Converted';
@@ -51,6 +53,9 @@ const StartRequest = z
       .describe(
         'Whether this is the next episode, made ready before the one playing ends so it can follow on with no gap. It is not counted as playing until the client says it has begun.',
       ),
+    startedBecause: PlaybackStartReasonSchema.optional().describe(
+      'Why the client is asking for a stream: opening the title, a quality or track change, or putting playback right after something went wrong. Written to the server log beside the start.',
+    ),
   })
   .openapi('PlaybackStartRequest');
 
@@ -59,6 +64,7 @@ const ExplainRequest = StartRequest.omit({
   isCast: true,
   isReadiedAhead: true,
   picksItsOwnSound: true,
+  startedBecause: true,
 }).openapi('PlaybackExplainRequest');
 
 const DeliverySchema = z
@@ -305,6 +311,29 @@ const problemRoute = createRoute({
   },
 });
 
+const noteRoute = createRoute({
+  method: 'post',
+  path: '/api/playback/notes',
+  tags: ['Playback'],
+  summary:
+    'Note something a player put right by itself, such as a recovery or a watch party catching it up, for the server log',
+  request: {
+    query: z.object({ clientId: z.string().min(1).optional() }),
+    body: { content: { 'application/json': { schema: PlaybackNoteSchema } } },
+  },
+  responses: {
+    204: { description: 'The note was written to the server log' },
+    403: {
+      description: 'The device named belongs to another account',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
+    429: {
+      description: 'This device has sent too many notes lately',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
+  },
+});
+
 const directFileRoute = createRoute({
   method: 'get',
   path: '/api/playback/{mediaId}/file',
@@ -415,4 +444,5 @@ export {
   heartbeatRoute,
   beginRoute,
   problemRoute,
+  noteRoute,
 };
