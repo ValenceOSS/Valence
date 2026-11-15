@@ -10820,6 +10820,11 @@
     "context": "A refusal the server answers with (HTTP 429) when an account's simultaneous-stream limit stops a stream. {count} is the limit (from `servePlayback`)."
   },
   {
+    "handler": "error.playback.tooManyNotes",
+    "text": "This device has sent too many playback notes lately.",
+    "context": "An error the server answers with (HTTP 429) in the app on the server (from `servePlayback`), when a device sends too many notes of things its player put right by itself, such as recovering from a failure."
+  },
+  {
     "handler": "error.playback.tooManyProblemReports",
     "text": "Acest dispozitiv a raportat prea multe erori de redare recent.",
     "context": "An error the server answers with (HTTP 429) in the app on the server (from `servePlayback`), when a device sends too many reports of playback stopping."

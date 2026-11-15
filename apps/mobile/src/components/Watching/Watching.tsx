@@ -124,6 +124,7 @@ import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 import { whatToConvertNext } from '@ValenceClient/playback/whatToConvertNext';
+import type { PlaybackStartReason } from '@ValenceContracts/schemas/PlaybackStartReason';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
@@ -423,6 +424,7 @@ const Watching = ({
     subtitleStreamIndex?: number | undefined;
     burnInSubtitleId?: string | undefined;
     converted?: Converted;
+    startedBecause?: PlaybackStartReason;
   }>(() => ({
     from:
       kept === undefined
@@ -442,8 +444,12 @@ const Watching = ({
     setAskingFor(mediaId);
     setAsking((asked) =>
       asked.requestedQuality === undefined
-        ? { from: startSeconds }
-        : { from: startSeconds, requestedQuality: asked.requestedQuality },
+        ? { from: startSeconds, startedBecause: 'opened' }
+        : {
+            from: startSeconds,
+            requestedQuality: asked.requestedQuality,
+            startedBecause: 'opened',
+          },
     );
     setStoppedBy(null);
     setIsReconnecting(false);
@@ -600,6 +606,10 @@ const Watching = ({
           asking.subtitleStreamIndex,
           asking.converted,
           asking.burnInSubtitleId,
+          undefined,
+          undefined,
+          undefined,
+          asking.startedBecause ?? 'opened',
         );
       })
       .then((outcome) => {
@@ -712,7 +722,11 @@ const Watching = ({
         stopWaiting.current = null;
         refusedSession.current = null;
         setIsReconnecting(false);
-        setAsking((asked) => ({ ...asked, from: Math.max(resumeAt, asked.from) }));
+        setAsking((asked) => ({
+          ...asked,
+          from: Math.max(resumeAt, asked.from),
+          startedBecause: 'reconnected',
+        }));
       },
       onGaveUp: () => {
         stopWaiting.current = null;
@@ -778,7 +792,12 @@ const Watching = ({
       const next = whatToConvertNext({ plan: playing.plan, converted: already, fault: null });
 
       if (next !== null) {
-        setAsking((asked) => ({ ...asked, converted: next, from: at }));
+        setAsking((asked) => ({
+          ...asked,
+          converted: next,
+          from: at,
+          startedBecause: 'converting',
+        }));
 
         return;
       }
@@ -895,6 +914,8 @@ const Watching = ({
           undefined,
           false,
           true,
+          false,
+          'next',
         ),
       };
     });
@@ -956,13 +977,18 @@ const Watching = ({
     }
 
     if (source === null) {
-      setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn }));
+      setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn, startedBecause: 'subtitles' }));
 
       return;
     }
 
     staysPaused.current = !player.playing;
-    setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn, from: player.currentTime }));
+    setAsking((asked) => ({
+      ...asked,
+      burnInSubtitleId: toBurnIn,
+      from: player.currentTime,
+      startedBecause: 'subtitles',
+    }));
   }, [toBurnIn, asking.burnInSubtitleId, player, source]);
 
   useEventListener(player, 'playToEnd', () => {
@@ -1070,6 +1096,7 @@ const Watching = ({
         ...asked,
         subtitleStreamIndex: burning,
         from: player.currentTime,
+        startedBecause: 'subtitles',
       }));
     },
     [tracks.data, asking.subtitleStreamIndex, player],
@@ -1078,7 +1105,12 @@ const Watching = ({
   const askAgain = useCallback(
     (changed: { audioStreamIndex?: number; requestedQuality?: QualityPreference }) => {
       setPanel(null);
-      setAsking((asked) => ({ ...asked, ...changed, from: player.currentTime }));
+      setAsking((asked) => ({
+        ...asked,
+        ...changed,
+        from: player.currentTime,
+        startedBecause: changed.audioStreamIndex === undefined ? 'quality' : 'audio',
+      }));
     },
     [player],
   );
@@ -1833,6 +1865,7 @@ const Watching = ({
               setAsking((asked) => ({
                 ...asked,
                 from: Math.max(Math.floor(player.currentTime), asked.from),
+                startedBecause: 'retried',
               }));
             }}
             onSignIn={() => {

@@ -286,6 +286,10 @@ describe('SignedIn', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
+        undefined,
+        'opened',
       );
     });
   });

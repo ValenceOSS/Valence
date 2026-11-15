@@ -2471,6 +2471,7 @@ const ENGLISH = {
   'error.playback.theThumbnailsCouldNotBeRendered': 'Couldn’t create the thumbnails.',
   'error.playback.thisAccountIsAlreadyStreaming':
     'This account is already streaming as many times as it may at once ({count}). Stop one of the others to play this.',
+  'error.playback.tooManyNotes': 'This device has sent too many playback notes lately.',
   'error.playback.tooManyProblemReports':
     'This device has reported too many playback errors lately.',
   'error.pluginCalls.noCallIsWaitingFor': 'No plugin call is waiting for that answer.',

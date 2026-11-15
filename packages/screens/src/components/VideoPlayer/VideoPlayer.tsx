@@ -150,6 +150,8 @@ import type { Recoveries } from '@ValenceClient/playback/recoverOrGiveUp';
 import { followPlace } from '@ValenceScreens/playback/followPlace';
 import type { FollowedPlace } from '@ValenceScreens/playback/followPlace';
 import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
+import { reportPlaybackNote } from '@ValenceClient/playback/reportPlaybackNote';
+import type { PlaybackStartReason } from '@ValenceContracts/schemas/PlaybackStartReason';
 import { useKeepsTheScreenOn } from '@ValenceScreens/playback/useKeepsTheScreenOn';
 import { waitForTheServer } from '@ValenceClient/session/waitForTheServer';
 import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
@@ -464,11 +466,13 @@ const VideoPlayer = ({
     converted?: Converted;
     isCast?: boolean;
     hasPlayed?: true;
+    startedBecause: PlaybackStartReason;
   }>({
     mediaId: media.id,
     startSeconds: Math.floor(startSeconds),
     requestedQuality: readQualityPreference(),
     autoRung: 'original',
+    startedBecause: 'opened',
   });
   const [heldFrame, setHeldFrame] = useState<{ url: string; isItemChange: boolean } | null>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
@@ -708,6 +712,7 @@ const VideoPlayer = ({
       ...asked,
       burnInSubtitleId: toBurnIn,
       startSeconds: Math.floor(at ?? asked.startSeconds),
+      startedBecause: 'subtitles',
     }));
   }, [toBurnIn, request.burnInSubtitleId]);
 
@@ -730,6 +735,7 @@ const VideoPlayer = ({
       ...asked,
       isCast: toCast,
       startSeconds: Math.floor(at ?? asked.startSeconds),
+      startedBecause: 'cast',
     }));
   }, [toCast, request.isCast]);
 
@@ -899,6 +905,7 @@ const VideoPlayer = ({
     setRequest((asked) => ({
       ...asked,
       startSeconds: Math.floor(at ?? asked.startSeconds),
+      startedBecause: 'cast',
     }));
   }, [castState, session, request.isCast]);
 
@@ -968,6 +975,7 @@ const VideoPlayer = ({
       requestedQuality: request.requestedQuality,
       autoRung: request.autoRung,
       ...(request.isCast === true ? { isCast: true } : {}),
+      startedBecause: 'opened',
     });
   }
 
@@ -1075,6 +1083,7 @@ const VideoPlayer = ({
           setRequest((asked) => ({
             ...asked,
             startSeconds: resumeAt ?? asked.startSeconds,
+            startedBecause: 'reconnected',
           }));
         },
         onGaveUp: () => {
@@ -1170,6 +1179,7 @@ const VideoPlayer = ({
           request.isCast,
           undefined,
           picksSound,
+          request.startedBecause,
         );
       const readied =
         keptSource === undefined &&
@@ -1235,7 +1245,7 @@ const VideoPlayer = ({
       ) {
         abandonStartedSession(startedId, clientId);
         engineRefusedRef.current = true;
-        setRequest((asked) => ({ ...asked }));
+        setRequest((asked) => ({ ...asked, startedBecause: 'engine' }));
 
         return;
       }
@@ -1266,7 +1276,12 @@ const VideoPlayer = ({
         }
 
         recoveriesRef.current = recovering.recoveries;
-        setRequest((asked) => ({ ...asked, startSeconds: Math.floor(atSeconds), hasPlayed: true }));
+        setRequest((asked) => ({
+          ...asked,
+          startSeconds: Math.floor(atSeconds),
+          hasPlayed: true,
+          startedBecause: 'recovering',
+        }));
 
         return true;
       };
@@ -1287,6 +1302,7 @@ const VideoPlayer = ({
           ...asked,
           converted: next,
           startSeconds: Math.floor(atSeconds ?? asked.startSeconds),
+          startedBecause: 'converting',
         }));
 
         return true;
@@ -1376,6 +1392,7 @@ const VideoPlayer = ({
             setRequest((asked) => ({
               ...asked,
               startSeconds: Math.floor(at ?? asked.startSeconds),
+              startedBecause: 'engine',
             }));
           };
           const toPlay = {
@@ -1401,7 +1418,7 @@ const VideoPlayer = ({
           if (attached === null) {
             if (!isAbandoned()) {
               engineRefusedRef.current = true;
-              setRequest((asked) => ({ ...asked }));
+              setRequest((asked) => ({ ...asked, startedBecause: 'engine' }));
             }
 
             return;
@@ -1580,6 +1597,16 @@ const VideoPlayer = ({
               }
 
               recoveriesRef.current = recovering.recoveries;
+
+              void reportPlaybackNote(
+                {
+                  kind: 'recovered',
+                  mediaId: request.mediaId,
+                  sessionId: startedId,
+                  atSeconds: Math.max(0, refusedAtSeconds),
+                },
+                clientId,
+              );
 
               if (
                 Math.abs(element.currentTime - refusedAtSeconds) > BACK_WHERE_IT_WAS_WITHIN_SECONDS
@@ -2289,6 +2316,7 @@ const VideoPlayer = ({
         ...(wanted === undefined ? {} : { subtitleStreamIndex: wanted }),
         ...(request.converted === undefined ? {} : { converted: request.converted }),
         ...(request.isCast === true ? { isCast: true } : {}),
+        startedBecause: 'subtitles',
       });
     },
     [
@@ -2342,6 +2370,7 @@ const VideoPlayer = ({
         ...asked,
         startSeconds: Math.floor(at ?? asked.startSeconds),
         autoRung: rung,
+        startedBecause: 'quality',
       }));
     },
     [hold],
@@ -2442,6 +2471,7 @@ const VideoPlayer = ({
           : { burnInSubtitleId: request.burnInSubtitleId }),
         ...(request.converted === undefined ? {} : { converted: request.converted }),
         ...(request.isCast === true ? { isCast: true } : {}),
+        startedBecause: 'audio',
       });
     },
     [
@@ -2481,6 +2511,7 @@ const VideoPlayer = ({
           : { burnInSubtitleId: request.burnInSubtitleId }),
         ...(request.converted === undefined ? {} : { converted: request.converted }),
         ...(request.isCast === true ? { isCast: true } : {}),
+        startedBecause: 'quality',
       });
     },
     [
@@ -3036,6 +3067,8 @@ const VideoPlayer = ({
           undefined,
           false,
           true,
+          false,
+          'next',
         ),
       };
     });
@@ -3177,6 +3210,7 @@ const VideoPlayer = ({
             setRequest((asked) => ({
               ...asked,
               startSeconds: Math.floor(at ?? asked.startSeconds),
+              startedBecause: 'retried',
             }));
           }}
           onSignIn={() => {
