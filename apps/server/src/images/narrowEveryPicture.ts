@@ -2,6 +2,8 @@ import { ARTWORK_WIDTHS } from '@ValenceContracts/constants/ARTWORK_WIDTHS';
 
 const AT_ONCE = 4;
 
+const NARROWED_AHEAD = [ARTWORK_WIDTHS.small, ARTWORK_WIDTHS.medium] as const;
+
 type NarrowEveryPictureOptions = {
   listArtworkUrls: () => Promise<(string | null)[]>;
   read: (url: string, width: number) => Promise<object | null>;
@@ -15,7 +17,8 @@ type NarrowEveryPictureOptions = {
 /**
  * Makes the narrowed copy of every picture the libraries show, at every width a card asks for,
  * so the first person to scroll past a title finds its picture already made and served from disk
- * rather than fetched and narrowed while they wait. A copy already made is read back and kept, so
+ * rather than fetched and narrowed while they wait. The large copy a hero asks for is made when it
+ * is first asked for instead, since only a handful of pictures are ever drawn that large. A copy already made is read back and kept, so
  * running it again costs little. It waits while the job is paused, and stops once it is cancelled.
  *
  * @param options - Which pictures there are, how one is narrowed, how many at once, and whether the
@@ -32,9 +35,7 @@ const narrowEveryPicture = async ({
   onProgress,
 }: NarrowEveryPictureOptions): Promise<{ made: number; failed: number }> => {
   const urls = [...new Set(await listArtworkUrls())].filter((url): url is string => url !== null);
-  const asks = urls.flatMap((url) =>
-    Object.values(ARTWORK_WIDTHS).map((width) => ({ url, width })),
-  );
+  const asks = urls.flatMap((url) => NARROWED_AHEAD.map((width) => ({ url, width })));
   const tally = { made: 0, failed: 0, next: 0 };
 
   /**

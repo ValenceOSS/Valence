@@ -134,6 +134,7 @@ describe('fetchMusic', () => {
   it('builds the addresses audio and pictures are read from', () => {
     expect(trackStreamUrl('t', 'low')).toBe('/api/music/tracks/t/stream?quality=low');
     expect(albumArtworkUrl('a')).toBe('/api/music/albums/a/artwork');
+    expect(albumArtworkUrl('a', 'small')).toBe('/api/music/albums/a/artwork?size=small');
     expect(artistImageUrl('b')).toBe('/api/music/artists/b/image');
   });
 

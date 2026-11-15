@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { OpenAPIHono } from '@hono/zod-openapi';
@@ -288,6 +289,23 @@ describe('the music routes', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('image/webp');
+  });
+
+  it('serve an album’s cover narrowed where a narrowed copy is asked for', async () => {
+    const me = await listening(context);
+    const cover = await sharp({
+      create: { width: 1000, height: 1000, channels: 3, background: '#336699' },
+    })
+      .png()
+      .toBuffer();
+
+    vi.mocked(context.music.readImage).mockResolvedValueOnce(new Uint8Array(cover));
+
+    const response = await me.ask(`/api/music/albums/${ALBUM_ID}/artwork?size=small`);
+    const read = await sharp(Buffer.from(await response.arrayBuffer())).metadata();
+
+    expect(response.status).toBe(200);
+    expect(read.width).toBe(342);
   });
 
   it('stream a track at the quality asked for, passing the range through', async () => {

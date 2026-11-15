@@ -52,6 +52,10 @@ describe('bookCoverUrl', () => {
   it('names the cover', () => {
     expect(bookCoverUrl('a-book')).toBe('/api/books/a-book/cover');
   });
+
+  it('names a narrowed copy of the cover', () => {
+    expect(bookCoverUrl('a-book', 'small')).toBe('/api/books/a-book/cover?size=small');
+  });
 });
 
 describe('saveReadingProgress', () => {

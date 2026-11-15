@@ -23,6 +23,7 @@ import type {
 } from '@ValenceContracts/schemas/Music';
 import type { MusicSearchResult } from '@ValenceContracts/schemas/MusicSearch';
 import { inGroupsOf } from '@ValenceCore/functions/inGroupsOf';
+import type { ARTWORK_WIDTHS } from '@ValenceContracts/constants/ARTWORK_WIDTHS';
 import { MOST_IDS_IN_AN_ADDRESS } from '@ValenceClient/query/MOST_IDS_IN_AN_ADDRESS';
 
 type AlbumOrder = 'recent' | 'title' | 'year' | 'played';
@@ -232,12 +233,15 @@ const trackStreamUrl = (trackId: string, quality: AudioQuality): string =>
   `/api/music/tracks/${trackId}/stream?quality=${quality}`;
 
 /**
- * Where an album's cover is read from.
+ * Where an album's cover is read from, whole or narrowed. A server too old to narrow it sends it
+ * whole.
  *
  * @param albumId - The album.
+ * @param size - The narrowed copy wanted, or nothing for the whole cover.
  * @returns The address.
  */
-const albumArtworkUrl = (albumId: string): string => `/api/music/albums/${albumId}/artwork`;
+const albumArtworkUrl = (albumId: string, size?: keyof typeof ARTWORK_WIDTHS): string =>
+  `/api/music/albums/${albumId}/artwork${size === undefined ? '' : `?size=${size}`}`;
 
 /**
  * Where an artist's picture is read from.

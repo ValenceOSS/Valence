@@ -22,9 +22,9 @@ const mediaImageRoute = createRoute({
         description:
           'Asks for a poster with no lettering on it, for a page that writes the title over the picture itself; there is none where the library’s catalogue holds no such poster, and none of any other kind',
       }),
-      size: z.enum(['small', 'medium']).optional().openapi({
+      size: z.enum(['small', 'medium', 'large']).optional().openapi({
         description:
-          'Asks for the picture narrowed, as WebP, rather than whole: small for a grid, medium for a wide card; a server that does not know it sends the whole picture',
+          'Asks for the picture narrowed, as WebP, rather than whole: small for a grid, medium for a wide card, large for a picture across a phone or a hero; a server that does not know it sends the whole picture, and one that does not report the `library.largeArtwork` feature does not know large',
       }),
     }),
   },
