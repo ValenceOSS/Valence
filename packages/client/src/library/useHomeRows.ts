@@ -156,6 +156,41 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
   (right.rating ?? -1) - (left.rating ?? -1);
 
 /**
+ * Whether a row holds the same things, in the same order, under the same name as it did.
+ *
+ * @param was - The row as it was drawn.
+ * @param now - The row as it has just been put together.
+ * @returns Whether drawing it again would draw the same thing.
+ */
+const isTheSameRail = (was: Rail, now: Rail): boolean =>
+  was.title === now.title &&
+  was.showOf === now.showOf &&
+  was.standsForShows === now.standsForShows &&
+  was.items.length === now.items.length &&
+  was.items.every((media, at) => media === now.items[at]);
+
+/**
+ * Hands back each row as it was drawn wherever it still holds the same things, and the rows as they
+ * were wherever none of them changed, so a shelf is drawn again only when what it holds has.
+ *
+ * @param before - The rows as they were drawn.
+ * @param now - The rows as they have just been put together.
+ * @returns The rows, keeping what was drawn before wherever it is unchanged.
+ */
+const keptSteady = (before: Rail[], now: Rail[]): Rail[] => {
+  const drawn = new Map(before.map((rail) => [rail.id, rail]));
+  const steady = now.map((rail) => {
+    const was = drawn.get(rail.id);
+
+    return was !== undefined && isTheSameRail(was, rail) ? was : rail;
+  });
+
+  return steady.length === before.length && steady.every((rail, at) => rail === before[at])
+    ? before
+    : steady;
+};
+
+/**
  * Asks the server for the front page's rows, each as its own small question, and puts them together.
  *
  * One question per row rather than one for everything, so no row waits on the size of the library:
@@ -567,7 +602,7 @@ const useHomeRows = (
     enabled: canAsk && hasPluginRows === true,
   });
 
-  const rails = useMemo(() => {
+  const built = useMemo(() => {
     const leanings = new Set(taste.slice(0, TASTE_DEPTH));
     const candidates = hasShelves
       ? shelves.flatMap((one) =>
@@ -644,6 +679,15 @@ const useHomeRows = (
     encores,
     byEncore,
   ]);
+
+  const [drawnBefore, setDrawnBefore] = useState<Rail[]>([]);
+  const rails = useMemo(() => keptSteady(drawnBefore, built), [drawnBefore, built]);
+
+  useEffect(() => {
+    if (rails !== drawnBefore) {
+      setDrawnBefore(rails);
+    }
+  }, [rails, drawnBefore]);
 
   const isReadingFirst =
     canAsk &&

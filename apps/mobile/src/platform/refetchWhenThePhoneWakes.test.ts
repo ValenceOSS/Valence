@@ -17,4 +17,22 @@ describe('refetchWhenThePhoneWakes', () => {
     told?.('active');
     expect(focusManager.isFocused()).toBe(true);
   });
+
+  it('does not count a glance at the notifications as leaving, so nothing is asked again', () => {
+    const listening = jest.spyOn(AppState, 'addEventListener');
+    const refocused = jest.fn();
+
+    refetchWhenThePhoneWakes();
+    focusManager.setFocused(true);
+
+    const stopListening = focusManager.subscribe(refocused);
+    const told = listening.mock.calls.at(-1)?.[1];
+
+    told?.('inactive');
+    told?.('active');
+
+    expect(focusManager.isFocused()).toBe(true);
+    expect(refocused).not.toHaveBeenCalled();
+    stopListening();
+  });
 });
