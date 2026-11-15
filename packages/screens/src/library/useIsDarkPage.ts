@@ -1,16 +1,17 @@
 import { useMatchesMedia } from '@ValenceUI/useMatchesMedia';
+import { useTheme } from '@ValenceClient/shell/useTheme';
 
 /**
- * Whether the page is dark: the theme somebody chose, or else what their system prefers.
+ * Whether the page is dark: the theme somebody chose, or else what their system prefers, answered
+ * again whenever either changes.
  *
  * @returns Whether it is dark.
  */
 const useIsDarkPage = (): boolean => {
   const prefersDark = useMatchesMedia('(prefers-color-scheme: dark)');
-  const chosen =
-    typeof document === 'undefined' ? null : document.documentElement.getAttribute('data-theme');
+  const { theme } = useTheme();
 
-  return chosen === 'dark' || (chosen !== 'light' && prefersDark);
+  return theme === 'dark' || (theme === 'system' && prefersDark);
 };
 
 export { useIsDarkPage };
