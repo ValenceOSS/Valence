@@ -519,6 +519,13 @@
       "when": 1794665816884,
       "tag": "0073_profiles_choose_a_language",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "5",
+      "when": 1794768996795,
+      "tag": "0074_link_party_invites",
+      "breakpoints": true
     }
   ]
 }

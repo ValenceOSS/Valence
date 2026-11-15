@@ -28,6 +28,7 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param isDisabled - Whether it can be opened at all.
  * @param isBare - Whether the surrounding chrome already draws the hover, so this must not draw a
  * second one.
+ * @param isPill - Whether an icon trigger is round rather than square, to sit among round buttons.
  * @param triggerLook - An icon square that is lit when pointed at, a smaller one for a strip as
  *   thin as a window bar, a button of the standard kind with room for a word beside its icon, one
  *   part of a joined row of them, or
@@ -54,6 +55,7 @@ const PopoverPanel = ({
   align = 'end',
   isDisabled = false,
   isBare = false,
+  isPill = false,
   triggerLook = 'icon',
   tone = 'default',
   isOverDialogs = false,
@@ -88,7 +90,8 @@ const PopoverPanel = ({
                   : triggerLook === 'inline'
                     ? 'inline-flex min-w-0 items-center rounded-full text-current outline-none focus-visible:focus-ring'
                     : cn(
-                        'inline-flex shrink-0 items-center justify-center rounded-md',
+                        'inline-flex shrink-0 items-center justify-center',
+                        isPill ? 'rounded-full' : 'rounded-md',
                         triggerLook === 'smallIcon' ? 'size-6' : 'size-10',
                         'text-current outline-none',
                         'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',

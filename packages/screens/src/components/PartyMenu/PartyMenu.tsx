@@ -1,6 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { Users as UsersIcon } from '@keyline-icons/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { Button } from '@ValenceUI/Button';
 import { PartyPanel } from '@ValenceScreens/components/PartyPanel/PartyPanel';
@@ -34,6 +34,8 @@ import { say } from '@ValenceI18n/say';
  * @param onWrite - Called with something to say in the party's chat; without it there is no chat.
  * @param onCopyInvitation - Called to put the invitation on the clipboard.
  * @param onOpenChange - Called as the menu opens or closes, so the bar stays put while it is open.
+ * @param startedHere - The party this client started, which the menu opens on by itself once it
+ *   arrives, wherever it was started from, and not on a party joined from a link.
  */
 const PartyMenu = ({
   party,
@@ -55,8 +57,10 @@ const PartyMenu = ({
   onCopyInvitation,
   onOpenChange,
   isHidden = false,
+  startedHere = null,
 }: PartyMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const shownFor = useRef<string | null>(null);
 
   const show = (next: boolean) => {
     setIsOpen(next);
@@ -69,16 +73,29 @@ const PartyMenu = ({
     }
   }, [isHidden]);
 
-  const watching = party === null ? 0 : party.members.filter((member) => member.isWatching).length;
+  const partyId = party?.id ?? null;
+
+  useEffect(() => {
+    if (partyId === null || partyId !== startedHere || shownFor.current === partyId || isHidden) {
+      return;
+    }
+
+    shownFor.current = partyId;
+    setIsOpen(true);
+    onOpenChange?.(true);
+  }, [partyId, startedHere, isHidden, onOpenChange]);
 
   return (
     <PopoverPanel
       tone="default"
+      isPill
       offset={PLAYER_MENU_OFFSET}
       label={
         party === null
           ? say('common.partyMenu.watchParty')
-          : say('common.partyMenu.watchPartyWatchingWatching', { watching: watching.toString() })
+          : say('common.partyMenu.watchPartyCountInTheParty', {
+              count: party.members.length.toString(),
+            })
       }
       heading={say('common.partyMenu.watchParty')}
       isDisabled={isDisabled}
@@ -90,7 +107,7 @@ const PartyMenu = ({
       className="mb-7.5"
     >
       {party === null ? (
-        <div className="flex w-72 max-w-full flex-col gap-3 text-text">
+        <div className="flex w-96 max-w-[calc(100vw-3rem)] flex-col gap-3 px-1 text-text">
           <p className="text-xs leading-relaxed text-text-muted">
             {say('common.partyMenu.watchThisWithOtherPeopleHere')}
           </p>
@@ -99,7 +116,6 @@ const PartyMenu = ({
             variant="secondary"
             size="sm"
             onClick={() => {
-              show(false);
               onOpen?.();
             }}
           >

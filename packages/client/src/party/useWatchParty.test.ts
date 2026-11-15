@@ -178,6 +178,24 @@ describe('useWatchParty', () => {
     expect(result.current.meConnectionId).toBe('sam');
   });
 
+  it('knows which party it started itself, and not one it joined', () => {
+    const world = createWorld();
+    const { result } = renderHook(() => useWatchParty(world.client));
+
+    act(() => {
+      world.tell(party({ id: 'joined' }));
+    });
+
+    expect(result.current.startedHere).toBeNull();
+
+    act(() => {
+      result.current.open('a-film');
+      world.tell(party({ id: 'started' }));
+    });
+
+    expect(result.current.startedHere).toBe('started');
+  });
+
   it('reads the timekeeper as where they will be now, not where they were when they said so', () => {
     const world = createWorld();
     const { result } = renderHook(() => useWatchParty(world.client));

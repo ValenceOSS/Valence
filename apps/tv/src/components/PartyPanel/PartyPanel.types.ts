@@ -8,6 +8,7 @@ type PartyPanelProps = {
   mediaId: string | null;
   people: readonly Askable[];
   onLeave: () => void;
+  isPlaying?: boolean;
 };
 
 export type { PartyPanelProps };

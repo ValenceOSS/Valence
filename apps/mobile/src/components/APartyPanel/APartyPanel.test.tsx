@@ -38,13 +38,14 @@ describe('APartyPanel', () => {
         mediaId="a-film"
         people={[]}
         onClose={jest.fn()}
+        isPlaying={false}
       />,
       { wrapper: CacheScope },
     );
 
     await userEvent.press(drawn.getByLabelText('Start a watch party'));
 
-    expect(watchParty.open).toHaveBeenCalledWith('a-film', 'watch');
+    expect(watchParty.open).toHaveBeenCalledWith('a-film', 'watch', false);
   });
 
   it('says who is in it, who is behind, and who the room waits for', async () => {
@@ -111,6 +112,28 @@ describe('APartyPanel', () => {
     );
     expect(watchParty.ask).toHaveBeenCalledWith('kim');
     expect(drawn.queryByLabelText('Invite Jo')).toBeNull();
+  });
+
+  it('heads the people from each linked server with where they are from', async () => {
+    const films = { id: 'films', name: 'KKONAW' };
+    const drawn = await render(
+      <APartyPanel
+        kind="watch"
+        watchParty={aWatchPartyStateWith(jest.fn, { party: HOSTING })}
+        mediaId="film-1"
+        people={[
+          { id: 'kim', name: 'Kim' },
+          { id: 'peer~films~nino', name: 'Nino from KKONAW', ownName: 'Nino', server: films },
+        ]}
+        onClose={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(drawn.getByText('Members from KKONAW')).toBeTruthy();
+    expect(drawn.getByText('Nino')).toBeTruthy();
+    expect(drawn.queryByText('Nino from KKONAW')).toBeNull();
+    expect(drawn.getByLabelText('Invite Nino from KKONAW')).toBeTruthy();
   });
 
   it('asks for the password a party wants before it can be joined', async () => {
@@ -186,7 +209,7 @@ describe('APartyPanel', () => {
 
     await userEvent.press(playing.getByLabelText('Start a listening party'));
 
-    expect(watchParty.open).toHaveBeenCalledWith('song-1', 'listen');
+    expect(watchParty.open).toHaveBeenCalledWith('song-1', 'listen', undefined);
   });
 
   it('shares an invitation into the music, and says who is listening', async () => {
@@ -206,13 +229,30 @@ describe('APartyPanel', () => {
       { wrapper: CacheScope },
     );
 
-    expect(drawn.getByText('1 listening')).toBeTruthy();
+    expect(drawn.getByText(/^\d+ in the party$/u)).toBeTruthy();
 
     await userEvent.press(drawn.getByLabelText('Share invite link'));
 
     expect(share).toHaveBeenCalledWith(
       expect.objectContaining({ url: 'https://valence.home/music?party=p-1' }),
     );
+  });
+
+  it('says somebody is paused while the whole party is', async () => {
+    const drawn = await render(
+      <APartyPanel
+        kind="watch"
+        watchParty={aWatchPartyStateWith(jest.fn, {
+          party: aWatchParty({ isPlaying: false, members: [aPartyMember({ isWatching: false })] }),
+        })}
+        mediaId="film-1"
+        people={[]}
+        onClose={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(drawn.getByText(/Paused/u)).toBeTruthy();
   });
 
   it('offers no listening party to somebody already watching one', async () => {

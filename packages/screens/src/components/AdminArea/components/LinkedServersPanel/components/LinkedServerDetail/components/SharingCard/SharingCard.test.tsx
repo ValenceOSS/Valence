@@ -90,6 +90,7 @@ describe('SharingCard', () => {
   it.each([
     ['Accept their requests', { takesTheirRequests: true }],
     ['Stream directly from their server', { playsDirect: true }],
+    ['Invite their people to watch parties', { invitesTheirPeople: false }],
     ['Allow downloads', { allowsDownloads: true }],
     ['Let their admin pause and message your people', { takesTheirControls: false }],
   ])('switches %s', async (name, change) => {

@@ -18,6 +18,7 @@ const UP_TO_TWELVE: LinkSharing = {
   allowsDownloads: false,
   takesTheirRequests: false,
   playsDirect: false,
+  invitesTheirPeople: true,
 };
 
 const STARTING_THE_DATABASE_MS = 60_000;

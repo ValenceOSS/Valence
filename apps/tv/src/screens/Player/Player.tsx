@@ -1446,8 +1446,8 @@ const Player = ({
                     value:
                       watchParty.party?.kind === 'watch'
                         ? sayCount(
-                            'common.partyPanel.countWatching',
-                            watchParty.party.members.filter((member) => member.isWatching).length,
+                            'common.partyPanel.countInTheParty',
+                            watchParty.party.members.length,
                           )
                         : say('common.off'),
                   },
@@ -1490,6 +1490,7 @@ const Player = ({
           kind="watch"
           watchParty={watchParty}
           mediaId={mediaId}
+          isPlaying={isPlaying}
           people={household}
           onLeave={closeMenu}
         />

@@ -21,10 +21,18 @@ import { listeningInvitationTo } from '@ValenceClient/party/listeningInvitationT
 import { PARTY_WORDS } from '@ValenceClient/party/PARTY_WORDS';
 import { ROLE_NAMES } from '@ValenceClient/party/ROLE_NAMES';
 import { whoCanBeAsked } from '@ValenceClient/party/whoCanBeAsked';
+import { sayActivity } from '@ValenceClient/party/sayActivity';
+import { askableGroups } from '@ValenceClient/party/askableGroups';
+import { faceOfAskable } from '@ValenceClient/party/faceOfAskable';
+import { AFace } from '@ValenceMobile/components/AFace/AFace';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import type { APartyPanelProps } from './APartyPanel.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+
+const HERE = 'here';
+
+const FACE_SIDE = 28;
 
 const styles = StyleSheet.create({
   whole: {
@@ -45,6 +53,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   member: { gap: 2, paddingVertical: 6 },
+  serverHeading: { paddingBottom: 2, paddingTop: 12 },
   section: { gap: 10 },
   setting: { alignItems: 'center', flexDirection: 'row', gap: 10, paddingVertical: 6 },
   warning: { color: '#f5c451', fontSize: 13, paddingBottom: 4 },
@@ -67,10 +76,12 @@ const styles = StyleSheet.create({
  * @param people - Everybody with an account here, to be asked along.
  * @param onClose - Told they are done with it.
  * @param isOpen - Whether a listening party's sheet is out, so it can slide away when put away.
+ * @param isPlaying - Whether the title is playing, which a party started here begins as.
  */
 const APartyPanel = ({
   kind,
   watchParty,
+  isPlaying,
   mediaId,
   people,
   onClose,
@@ -183,7 +194,7 @@ const APartyPanel = ({
           isDisabled={mediaId === null}
           onPress={() => {
             if (mediaId !== null) {
-              watchParty.open(mediaId, kind);
+              watchParty.open(mediaId, kind, isPlaying);
             }
           }}
           says={words.start}
@@ -194,7 +205,6 @@ const APartyPanel = ({
 
   const me = party.members.find((member) => member.connectionId === meConnectionId);
   const timekeeper = party.members.find((member) => member.connectionId === party.timekeeperId);
-  const watching = party.members.filter((member) => member.isWatching).length;
   const isHost = me?.role === 'host';
   const mayAsk = isHost || me?.role === 'coHost';
   const elsewhere = whoCanBeAsked(party, people);
@@ -207,7 +217,9 @@ const APartyPanel = ({
   return panel(
     <>
       <View>
-        <Text style={styles.heading}>{sayCount(words.doing, watching)}</Text>
+        <Text style={styles.heading}>
+          {sayCount('common.partyPanel.countInTheParty', party.members.length)}
+        </Text>
 
         {!party.isHeld || waitingFor.length === 0 ? null : (
           <Text style={styles.warning}>
@@ -253,7 +265,7 @@ const APartyPanel = ({
                     member.connectionId === party.timekeeperId
                       ? say('common.partyPanel.keepingTime')
                       : null,
-                    member.isWatching ? words.isDoing : words.notDoing,
+                    sayActivity(member, party, words),
                     drift,
                   ]
                     .filter((part) => part !== null)
@@ -310,28 +322,39 @@ const APartyPanel = ({
           <Text style={styles.heading}>{say('common.partyPanel.askAlong')}</Text>
           <Text style={styles.note}>{say('common.partyPanel.askSomebodyAlongTheyAreTold')}</Text>
 
-          {elsewhere.map((person) => (
-            <Button
-              key={person.id}
-              tone="bare"
-              isDisabled={asked.includes(person.id)}
-              label={say('common.partyPanel.askNameAlong', { name: person.name })}
-              onPress={() => {
-                setAsked((already) => [...already, person.id]);
-                watchParty.ask(person.id);
-              }}
-            >
-              <View style={[styles.row, asked.includes(person.id) && styles.disabledRow]}>
-                <Text style={styles.label} numberOfLines={1}>
-                  {person.name}
+          {askableGroups(elsewhere).map((group) => (
+            <View key={group.server?.id ?? HERE}>
+              {group.server === null ? null : (
+                <Text style={[styles.detail, styles.serverHeading]}>
+                  {say('common.partyPanel.membersFromServer', { server: group.server.name })}
                 </Text>
-                <Text style={styles.detail}>
-                  {asked.includes(person.id)
-                    ? say('common.partyPanel.asked')
-                    : say('common.partyPanel.ask')}
-                </Text>
-              </View>
-            </Button>
+              )}
+
+              {group.people.map((person) => (
+                <Button
+                  key={person.id}
+                  tone="bare"
+                  isDisabled={asked.includes(person.id)}
+                  label={say('common.partyPanel.askNameAlong', { name: person.name })}
+                  onPress={() => {
+                    setAsked((already) => [...already, person.id]);
+                    watchParty.ask(person.id);
+                  }}
+                >
+                  <View style={[styles.row, asked.includes(person.id) && styles.disabledRow]}>
+                    <AFace profile={faceOfAskable(person)} side={FACE_SIDE} />
+                    <Text style={styles.label} numberOfLines={1}>
+                      {person.ownName ?? person.name}
+                    </Text>
+                    <Text style={styles.detail}>
+                      {asked.includes(person.id)
+                        ? say('common.partyPanel.asked')
+                        : say('common.partyPanel.ask')}
+                    </Text>
+                  </View>
+                </Button>
+              ))}
+            </View>
           ))}
         </View>
       )}
@@ -384,9 +407,9 @@ const APartyPanel = ({
           <Text style={styles.heading}>{say('common.partyPanel.controls')}</Text>
 
           <View style={styles.setting}>
-            <Text style={styles.label}>{say('common.partyPanel.everyoneCanPlayAndPause')}</Text>
+            <Text style={styles.label}>{say('common.partyPanel.everyoneCanPlayPause')}</Text>
             <Toggle
-              label={say('common.partyPanel.everyoneCanPlayAndPause')}
+              label={say('common.partyPanel.everyoneCanPlayPause')}
               isOn={party.everyoneMayPlayPause}
               onToggle={(isOn) => {
                 watchParty.loosen({ everyoneMayPlayPause: isOn });
@@ -395,17 +418,15 @@ const APartyPanel = ({
           </View>
 
           <View style={styles.setting}>
-            <Text style={styles.label}>{say('common.partyPanel.everyoneCanSkipAround')}</Text>
+            <Text style={styles.label}>{say('common.partyPanel.everyoneCanScrub')}</Text>
             <Toggle
-              label={say('common.partyPanel.everyoneCanSkipAround')}
+              label={say('common.partyPanel.everyoneCanScrub')}
               isOn={party.everyoneMaySeek}
               onToggle={(isOn) => {
                 watchParty.loosen({ everyoneMaySeek: isOn });
               }}
             />
           </View>
-
-          <Text style={styles.note}>{say('common.partyPanel.skippingIsTheDisruptiveOneA')}</Text>
 
           {kind !== 'watch' ? null : (
             <>
@@ -419,8 +440,6 @@ const APartyPanel = ({
                   }}
                 />
               </View>
-
-              <Text style={styles.note}>{say('common.partyChat.keptForTheParty')}</Text>
             </>
           )}
 
@@ -430,10 +449,10 @@ const APartyPanel = ({
               : say('common.partyPanel.aPasswordAsksAnybodyOpeningThe')}
           </Text>
 
-          <Text style={styles.heading}>{say('common.partyPanel.partyPassword')}</Text>
+          <Text style={styles.heading}>{say('common.password')}</Text>
 
           <TextField
-            label={say('common.partyPanel.partyPassword')}
+            label={say('common.password')}
             isLabelHidden
             value={newPassword}
             onValueChange={setNewPassword}

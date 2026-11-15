@@ -61,6 +61,7 @@ const ChapterMenu = ({
   return (
     <PopoverPanel
       tone="default"
+      isPill
       offset={PLAYER_MENU_OFFSET}
       label={say('common.chapters')}
       isDisabled={isDisabled}

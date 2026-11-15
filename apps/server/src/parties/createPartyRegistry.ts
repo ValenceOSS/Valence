@@ -36,6 +36,7 @@ type PartyRegistry = {
     mediaId: string;
     host: Omit<Joining, 'partyId'>;
     kind?: PartyKind;
+    isPlaying?: boolean;
     onClosed?: (party: WatchParty) => void;
   }) => WatchParty;
   join: (joining: Joining) => Joined;
@@ -229,7 +230,7 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
   };
 
   return {
-    open: ({ mediaId, host, kind = 'watch', onClosed }) => {
+    open: ({ mediaId, host, kind = 'watch', isPlaying = true, onClosed }) => {
       const atMs = Date.now();
       const isShared = kind === 'watch';
 
@@ -241,7 +242,7 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
         everyoneMaySeek: isShared,
         everyoneMayPlayPause: isShared,
         hasPassword: false,
-        isPlaying: true,
+        isPlaying,
         isHeld: false,
         members: [asMember(host, 'host', atMs)],
         timekeeperId: null,

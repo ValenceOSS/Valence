@@ -208,16 +208,17 @@ const WatchPage = () => {
         startSeconds={beginning.kind === 'wait' ? 0 : beginning.atSeconds}
         partyNotice={watchParty.notice}
         isImmersive
-        renderPartyMenu={({ isHidden, onOpenChange }) => (
+        renderPartyMenu={({ isHidden, isPlaying, onOpenChange }) => (
           <PartyMenu
             party={filmParty}
             durationSeconds={shown.durationSeconds}
             meConnectionId={watchParty.meConnectionId}
+            startedHere={watchParty.startedHere}
             waitingFor={watchParty.waitingFor}
             isHidden={isHidden}
             onOpenChange={onOpenChange}
             onOpen={() => {
-              watchParty.open(shown.id);
+              watchParty.open(shown.id, 'watch', isPlaying);
             }}
             onSetRole={watchParty.setRole}
             onLoosen={watchParty.loosen}

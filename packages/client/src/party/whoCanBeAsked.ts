@@ -8,6 +8,8 @@ type Askable = {
   colour?: ProfileColour;
   avatar?: Avatar;
   updatedAt?: string;
+  ownName?: string;
+  server?: { id: string; name: string };
 };
 
 /**

@@ -9,6 +9,7 @@ type APartyPanelProps = {
   people: readonly Askable[];
   onClose: () => void;
   isOpen?: boolean;
+  isPlaying?: boolean;
 };
 
 export type { APartyPanelProps };

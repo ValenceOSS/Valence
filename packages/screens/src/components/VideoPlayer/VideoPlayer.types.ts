@@ -33,6 +33,7 @@ type VideoPlayerProps = {
   partyNotice?: string | null;
   renderPartyMenu?: (options: {
     isHidden: boolean;
+    isPlaying: boolean;
     onOpenChange: (isOpen: boolean) => void;
   }) => ReactNode;
   keptDownloadId?: string;

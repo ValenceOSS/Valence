@@ -90,6 +90,14 @@ describe('handlePartyMessage', () => {
     expect(world.lastTold()?.to).toEqual(['dan']);
   });
 
+  it('opens a party paused where its host had paused', () => {
+    const world = createWorld();
+
+    world.say({ kind: 'partyOpen', mediaId: 'a-film', isPlaying: false }, someone('dan', 'Dan'));
+
+    expect(world.lastTold()?.payload).toMatchObject({ party: { isPlaying: false } });
+  });
+
   it('opens a party for listening together when asked for one', () => {
     const world = createWorld();
 

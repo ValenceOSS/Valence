@@ -687,6 +687,7 @@ describe('the linked server routes', () => {
       allowsDownloads: true,
       takesTheirRequests: true,
       playsDirect: true,
+      invitesTheirPeople: false,
     });
 
     expect(LinkSharingSchema.parse(await changed.json())).toMatchObject({
@@ -696,6 +697,7 @@ describe('the linked server routes', () => {
       allowsDownloads: true,
       takesTheirRequests: true,
       playsDirect: true,
+      invitesTheirPeople: false,
     });
   });
 
@@ -752,9 +754,39 @@ describe('the linked server routes', () => {
       await (await anime.request(`/api/linked-servers/${guestAtHost}/people`)).json(),
     ).people;
 
-    expect((await askable()).map((person) => person.name)).toEqual(['Sam from films.example']);
+    expect(await askable()).toEqual([
+      expect.objectContaining({
+        name: 'Sam from films.example',
+        ownName: 'Sam',
+        server: { id: guestAtHost, name: 'films.example' },
+      }),
+    ]);
 
     await anime.request(`/api/linked-servers/${guestAtHost}/people/${sam?.id ?? ''}/block`, 'PUT');
+
+    expect(await askable()).toEqual([]);
+  });
+
+  it('names nobody from a linked server whose people this server chose not to invite', async () => {
+    const network = aNetwork();
+    const anime = await network.serverAt('https://anime.example');
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+
+    await films.askAt(hostAtGuest, '/libraries', 'GET', undefined, {
+      profileId: 'sam',
+      name: 'Sam',
+    });
+
+    const askable = async () =>
+      AskableElsewhereSchema.parse(await (await anime.request('/api/linked-servers/people')).json())
+        .people;
+
+    expect(await askable()).toHaveLength(1);
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      invitesTheirPeople: false,
+    });
 
     expect(await askable()).toEqual([]);
   });

@@ -25,6 +25,7 @@ type PartyMenuProps = {
   onWrite?: (text: string) => void;
   onCopyInvitation?: (invitation: string) => Promise<void>;
   onOpenChange?: (isOpen: boolean) => void;
+  startedHere?: string | null;
 };
 
 export type { PartyMenuProps };

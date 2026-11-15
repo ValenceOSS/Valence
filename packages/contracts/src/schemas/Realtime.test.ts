@@ -170,6 +170,14 @@ describe('FromClientSchema', () => {
     ).toEqual({ kind: 'partyOpen', mediaId: 'm1', partyKind: 'listen' });
   });
 
+  it('reads whether a party is opened around something playing', () => {
+    expect(FromClientSchema.parse({ kind: 'partyOpen', mediaId: 'm1', isPlaying: false })).toEqual({
+      kind: 'partyOpen',
+      mediaId: 'm1',
+      isPlaying: false,
+    });
+  });
+
   it('reads a party opened as ever, without saying what kind', () => {
     expect(FromClientSchema.parse({ kind: 'partyOpen', mediaId: 'm1' })).toEqual({
       kind: 'partyOpen',

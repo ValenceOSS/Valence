@@ -32,7 +32,7 @@ type PartyWatcher = {
 };
 
 type PartyClient = {
-  open: (mediaId: string, kind?: PartyKind) => void;
+  open: (mediaId: string, kind?: PartyKind, isPlaying?: boolean) => void;
   join: (partyId: string, password?: string) => void;
   leave: () => void;
   send: (command: PartyCommand) => void;
@@ -130,11 +130,12 @@ const createPartyClient = ({
   };
 
   return {
-    open: (mediaId, kind) => {
+    open: (mediaId, kind, isPlaying) => {
       client.sendParty({
         kind: 'partyOpen',
         mediaId,
         ...(kind === undefined ? {} : { partyKind: kind }),
+        ...(isPlaying === undefined ? {} : { isPlaying }),
       });
     },
 

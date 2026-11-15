@@ -137,6 +137,23 @@ describe('PopoverPanel', () => {
     expect(screen.getByRole('button', { name: 'Filters' })).not.toHaveClass('size-10');
   });
 
+  it('rounds its icon control where it sits among round buttons, and squares it otherwise', () => {
+    render(
+      <>
+        <PopoverPanel label="Episodes" isPill trigger={<span>E</span>}>
+          x
+        </PopoverPanel>
+        <PopoverPanel label="Filters" trigger={<span>F</span>}>
+          x
+        </PopoverPanel>
+      </>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Episodes' })).toHaveClass('rounded-full');
+    expect(screen.getByRole('button', { name: 'Episodes' })).not.toHaveClass('rounded-md');
+    expect(screen.getByRole('button', { name: 'Filters' })).toHaveClass('rounded-md');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(PopoverPanel.displayName).toBe('PopoverPanel');
   });

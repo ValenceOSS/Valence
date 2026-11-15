@@ -63,6 +63,16 @@ describe('opening a party', () => {
   it('opens a party for watching when it is not told what kind', () => {
     expect(openWith(createWorld()).kind).toBe('watch');
   });
+
+  it('starts paused where the host had paused, and playing where it is not told', () => {
+    const registry = createWorld();
+
+    expect(
+      registry.open({ mediaId: 'a-film', host: someone('host', 'Dan'), isPlaying: false })
+        .isPlaying,
+    ).toBe(false);
+    expect(openWith(createWorld()).isPlaying).toBe(true);
+  });
 });
 
 describe('joining', () => {

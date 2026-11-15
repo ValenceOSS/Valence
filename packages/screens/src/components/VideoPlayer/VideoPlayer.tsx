@@ -321,7 +321,8 @@ const EMPTY_HEALTH: PlaybackHealth = {
  * @param watchedFractionFor - How to ask how far through a given episode the viewer already is.
  * @param party - The watch party this viewing is part of, where it is part of one.
  * @param partyNotice - Something the party has to say, which may outlive the party itself.
- * @param renderPartyMenu - How to draw the watch party control in the bar, told when the bar has gone.
+ * @param renderPartyMenu - How to draw the watch party control in the bar, told when the bar has gone
+ *   and whether the film is playing, which a party started from it begins as.
  * @param keptDownloadId - The download of a copy kept on this device, which is played, and scrubbed
  * through with its own thumbnails, instead of asking the server for a session.
  */
@@ -3487,6 +3488,7 @@ const VideoPlayer = ({
               : {
                   partyMenu: renderPartyMenu({
                     isHidden: !isBarUp,
+                    isPlaying,
                     onOpenChange: setIsMenuOpen,
                   }),
                 })}
