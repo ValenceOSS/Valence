@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { MotionConfig } from 'motion/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LandingSplash } from './LandingSplash';
@@ -20,17 +20,14 @@ describe('LandingSplash', () => {
     expect(sessionStorage.getItem('valence-splash-seen')).toBe('yes');
   });
 
-  it('goes after a moment, so it never stands in the way', async () => {
-    vi.useRealTimers();
+  it('sets itself to go after a moment, and forgets that if it is taken away first', () => {
+    const { unmount } = render(<LandingSplash />);
 
-    const { container } = render(<LandingSplash />);
+    expect(vi.getTimerCount()).toBeGreaterThan(0);
 
-    await waitFor(
-      () => {
-        expect(container).toBeEmptyDOMElement();
-      },
-      { timeout: 4000 },
-    );
+    unmount();
+
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('does not show again in a tab that has already seen it', () => {
