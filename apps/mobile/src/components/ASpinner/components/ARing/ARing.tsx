@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { ASegment } from '@ValenceMobile/components/ASpinner/components/ASegment/ASegment';
+import { glowOverATurn } from '@ValenceMobile/components/ASpinner/components/ARing/glowOverATurn';
 import { segmentsLitAt } from '@ValenceCore/functions/segmentsLitAt';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ARingProps } from './ARing.types';
 import { say } from '@ValenceI18n/say';
 
@@ -12,22 +14,26 @@ const TICK_MILLISECONDS = 360;
 
 const FINISH_TICK_MILLISECONDS = 45;
 
+const FADES_OVER = 300;
+
+const DIM = 0.18;
+
 const GAP_SHARE = 0.38;
 
 const ICON_SHARE = 0.8;
+
+const HELD_STILL = { from: 0, lit: SEGMENTS - 2 };
 
 const styles = StyleSheet.create({
   whole: { alignSelf: 'center' },
 });
 
 /**
- * The ring Valence's loading mark is drawn with, in whatever colour it is given, as the web draws it: eight short segments round a ring, lighting one
- * by one until it is full and then going dark from where they began. Held still, most of the way
- * lit, for somebody who asked for less movement. Told the wait is over, it fills the rest of the ring
- * quickly, as the web's does, and says so once it is whole, so whoever shows it can let it go then.
- *
- * It centres itself across whatever holds it, so a wait on an otherwise empty page sits in its
- * middle rather than against one side.
+ * The ring Valence's loading mark is drawn with, in whatever colour it is given, as the web draws
+ * it: eight short segments round a ring, lighting one by one until it is full and then going dark
+ * from where they began, turned by a native animation rather than drawn again each tick. Held
+ * still, most of the way lit, for somebody who asked for less movement. Told the wait is over, it
+ * fills the rest of the ring quickly and says so once it is whole.
  *
  * @param colour - The colour of the lit segments.
  * @param size - How wide it is drawn.
@@ -43,9 +49,43 @@ const ARing = ({
   onFilled,
 }: ARingProps) => {
   const isStill = usePrefersStillness();
-  const [ticks, setTicks] = useState(0);
+  const [turning] = useState(() => new Animated.Value(0));
+  const [segments] = useState(() =>
+    Array.from({ length: SEGMENTS }, (_, at) => ({
+      turned: turning.interpolate({
+        ...glowOverATurn(at, SEGMENTS, FADES_OVER / TICK_MILLISECONDS, DIM, EASINGS.outCubic),
+        extrapolate: 'clamp',
+      }),
+      held: new Animated.Value(DIM),
+    })),
+  );
   const [finish, setFinish] = useState<{ from: number; lit: number } | null>(null);
-  const shown = useRef({ from: 0, lit: 0 });
+  const turnedFrom = useRef<number | null>(null);
+  const wasLit = useRef<readonly boolean[]>([]);
+  const held = finish ?? (isStill ? HELD_STILL : null);
+
+  useEffect(() => {
+    if (isStill || isFinishing) {
+      return undefined;
+    }
+
+    const turn = Animated.loop(
+      Animated.timing(turning, {
+        toValue: SEGMENTS * 2,
+        duration: SEGMENTS * 2 * TICK_MILLISECONDS,
+        easing: EASINGS.linear,
+        useNativeDriver: true,
+      }),
+    );
+
+    turning.setValue(0);
+    turnedFrom.current = Date.now();
+    turn.start();
+
+    return () => {
+      turn.stop();
+    };
+  }, [isStill, isFinishing, turning]);
 
   useEffect(() => {
     if (!isFinishing) {
@@ -60,7 +100,16 @@ const ARing = ({
       return undefined;
     }
 
-    setFinish((was) => was ?? shown.current);
+    const started = turnedFrom.current;
+
+    setFinish(
+      (was) =>
+        was ??
+        segmentsLitAt(
+          started === null ? 0 : Math.floor((Date.now() - started) / TICK_MILLISECONDS),
+          SEGMENTS,
+        ),
+    );
 
     const timer = setInterval(() => {
       setFinish((was) => {
@@ -82,31 +131,38 @@ const ARing = ({
   }, [isFinishing, isStill, onFilled]);
 
   useEffect(() => {
+    if (held === null) {
+      wasLit.current = [];
+
+      return;
+    }
+
+    const isFirst = wasLit.current.length === 0;
+    const lit = segments.map((_, at) => at >= held.from && at < held.lit);
+
+    segments.forEach((segment, at) => {
+      const isLit = lit[at] === true;
+
+      if (isFirst) {
+        segment.held.setValue(isLit ? 1 : DIM);
+      } else if (wasLit.current[at] !== isLit) {
+        Animated.timing(segment.held, {
+          toValue: isLit ? 1 : DIM,
+          duration: FADES_OVER,
+          easing: EASINGS.outCubic,
+          useNativeDriver: true,
+        }).start();
+      }
+    });
+    wasLit.current = lit;
+  }, [held, segments]);
+
+  useEffect(() => {
     if (finish !== null && finish.lit === SEGMENTS && finish.from === 0) {
       onFilled?.();
     }
   }, [finish, onFilled]);
 
-  useEffect(() => {
-    if (isStill || isFinishing) {
-      return undefined;
-    }
-
-    const timer = setInterval(() => {
-      setTicks((was) => was + 1);
-    }, TICK_MILLISECONDS);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, [isStill, isFinishing]);
-
-  const { from, lit } =
-    finish ?? (isStill ? { from: 0, lit: SEGMENTS - 2 } : segmentsLitAt(ticks, SEGMENTS));
-
-  useEffect(() => {
-    shown.current = { from, lit };
-  });
   const drawn = size * ICON_SHARE;
   const stroke = Math.max(1.5, drawn / 9);
   const radius = (drawn - stroke) / 2;
@@ -118,10 +174,10 @@ const ARing = ({
       accessibilityRole="progressbar"
       accessibilityLabel={label}
     >
-      {Array.from({ length: SEGMENTS }, (_, at) => (
+      {segments.map((segment, at) => (
         <ASegment
           key={at}
-          isLit={at >= from && at < lit}
+          glow={held === null ? segment.turned : segment.held}
           colour={colour}
           at={at}
           count={SEGMENTS}

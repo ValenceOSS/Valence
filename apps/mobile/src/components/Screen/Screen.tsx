@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 import { Animated, DeviceEventEmitter, Keyboard, StyleSheet, TextInput, View } from 'react-native';
-import type { GestureResponderEvent, ScrollViewInstance } from 'react-native';
+import type { FlatList, GestureResponderEvent, ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
@@ -41,12 +41,15 @@ const ROOM_BELOW_THE_FIELD = 120;
 
 const SPEED_OVER = 100;
 
+const NO_ROWS: readonly number[] = [];
+
 const styles = StyleSheet.create({
   centred: { flex: 1, gap: 16, justifyContent: 'center' },
   centredScrolling: { flexGrow: 1, justifyContent: 'center' },
   corner: { position: 'absolute', right: 12 },
   foot: { alignItems: 'center', left: SCREEN_EDGE, position: 'absolute', right: SCREEN_EDGE },
   inside: { gap: 20, paddingHorizontal: SCREEN_EDGE },
+  row: { paddingHorizontal: SCREEN_EDGE },
   whole: { flex: 1 },
 });
 
@@ -89,6 +92,9 @@ const styles = StyleSheet.create({
  * @param centres - Whether the little there is belongs in the middle, which a page that scrolls
  *   keeps until there is more of it than fits. One that does not scroll keeps the same room above
  *   and below, so what is in it sits in the true middle rather than below the way back.
+ * @param rows - A long run of rows for a page that scrolls, drawn after what is on it only as they
+ *   come near the screen, each the same width as the rest of the page.
+ * @param afterRows - What follows those rows.
  */
 const Screen = ({
   children,
@@ -103,6 +109,8 @@ const Screen = ({
   onBack,
   goesBackDown = false,
   onScrolled,
+  rows,
+  afterRows,
 }: ScreenProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
@@ -127,6 +135,12 @@ const Screen = ({
   };
 
   const scroller = useRef<ScrollViewInstance>(null);
+  const lister = useRef<FlatList<number>>(null);
+  const rowCount = rows?.count ?? 0;
+  const eachRow = useMemo(
+    () => (rowCount === 0 ? NO_ROWS : Array.from({ length: rowCount }, (_, at) => at)),
+    [rowCount],
+  );
   const isHeadless = head === undefined;
   const latest = useRef({ barFrom, headTall, isHeadless, onScrolled });
   const wasScrolled = useRef<boolean | null>(null);
@@ -269,7 +283,7 @@ const Screen = ({
 
     const clearTheField = () => {
       const focused = TextInput.State.currentlyFocusedInput() ?? null;
-      const list = scroller.current;
+      const list = scroller.current ?? lister.current?.getNativeScrollRef() ?? null;
       const inside = list?.getInnerViewRef() ?? null;
       const top = keyboardTop;
 
@@ -315,60 +329,108 @@ const Screen = ({
       <View style={[styles.foot, { bottom: room.bottom + FOOT_ABOVE_THE_EDGE }]}>{foot}</View>
     );
 
-  const page = scrolls ? (
-    <Animated.ScrollView
-      ref={scroller}
-      style={[styles.whole, ground]}
-      showsVerticalScrollIndicator={false}
-      scrollEventThrottle={16}
-      automaticallyAdjustKeyboardInsets
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="interactive"
-      {...(hasBar
-        ? { onScroll: withBar }
-        : onScrolled === undefined && tellCard === null && tellTabs === null
-          ? {}
-          : { onScroll: followAlone })}
-      {...(tellCard === null ? {} : glides)}
-      bounces={tellCard === null || !isAtTop}
-      contentContainerStyle={
-        head === undefined
-          ? [styles.inside, spacing, centres && styles.centredScrolling]
-          : { paddingBottom: spacing.paddingBottom }
-      }
-    >
-      {head === undefined ? (
-        children
-      ) : (
-        <>
+  const scrolling = {
+    style: [styles.whole, ground],
+    showsVerticalScrollIndicator: false,
+    scrollEventThrottle: 16,
+    automaticallyAdjustKeyboardInsets: true,
+    keyboardShouldPersistTaps: 'handled',
+    keyboardDismissMode: 'interactive',
+    ...(hasBar
+      ? { onScroll: withBar }
+      : onScrolled === undefined && tellCard === null && tellTabs === null
+        ? {}
+        : { onScroll: followAlone }),
+    ...(tellCard === null ? {} : glides),
+    bounces: tellCard === null || !isAtTop,
+  } as const;
+
+  const headOnTop =
+    head === undefined ? null : (
+      <View
+        onLayout={({ nativeEvent }) => {
+          setHeadTall(nativeEvent.layout.height);
+        }}
+      >
+        <SCROLLED_BY.Provider value={hasBar ? scrolled : null}>{head}</SCROLLED_BY.Provider>
+      </View>
+    );
+
+  const page =
+    scrolls && rows !== undefined ? (
+      <Animated.FlatList
+        ref={lister}
+        {...scrolling}
+        data={eachRow}
+        extraData={rows}
+        keyExtractor={(at) => rows.keyOf(at)}
+        renderItem={({ item: at }) => (
           <View
-            onLayout={({ nativeEvent }) => {
-              setHeadTall(nativeEvent.layout.height);
-            }}
+            style={[styles.row, at > 0 && rows.apart !== undefined && { paddingTop: rows.apart }]}
           >
-            <SCROLLED_BY.Provider value={hasBar ? scrolled : null}>{head}</SCROLLED_BY.Provider>
+            {rows.draw(at)}
           </View>
-          <View style={styles.inside}>{children}</View>
-        </>
-      )}
-      {atTheFoot}
-    </Animated.ScrollView>
-  ) : (
-    <View
-      style={[
-        styles.whole,
-        ground,
-        styles.inside,
-        centres
-          ? { paddingVertical: Math.max(spacing.paddingTop, spacing.paddingBottom) }
-          : spacing,
-        centres && styles.centred,
-      ]}
-    >
-      {children}
-      {atTheFoot}
-    </View>
-  );
+        )}
+        contentContainerStyle={
+          head === undefined ? spacing : { paddingBottom: spacing.paddingBottom }
+        }
+        ListHeaderComponent={
+          <>
+            {headOnTop}
+            <View style={styles.inside}>
+              {children}
+              {rowCount > 0 ? <View /> : null}
+            </View>
+          </>
+        }
+        ListFooterComponent={
+          <>
+            {afterRows === undefined ? null : (
+              <View style={styles.inside}>
+                <View />
+                {afterRows}
+              </View>
+            )}
+            {atTheFoot}
+          </>
+        }
+      />
+    ) : scrolls ? (
+      <Animated.ScrollView
+        ref={scroller}
+        {...scrolling}
+        contentContainerStyle={
+          head === undefined
+            ? [styles.inside, spacing, centres && styles.centredScrolling]
+            : { paddingBottom: spacing.paddingBottom }
+        }
+      >
+        {head === undefined ? (
+          children
+        ) : (
+          <>
+            {headOnTop}
+            <View style={styles.inside}>{children}</View>
+          </>
+        )}
+        {atTheFoot}
+      </Animated.ScrollView>
+    ) : (
+      <View
+        style={[
+          styles.whole,
+          ground,
+          styles.inside,
+          centres
+            ? { paddingVertical: Math.max(spacing.paddingTop, spacing.paddingBottom) }
+            : spacing,
+          centres && styles.centred,
+        ]}
+      >
+        {children}
+        {atTheFoot}
+      </View>
+    );
 
   if (onBack === undefined && behind === undefined) {
     return page;

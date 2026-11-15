@@ -127,7 +127,7 @@ const TheNowPlayingBar = ({ onOpen, isRoomOnly = false }: TheNowPlayingBarProps)
   const tint = tintOf(
     usePictureLights(
       track !== null && track.album.hasArtwork
-        ? onThisServer(albumArtworkUrl(track.album.id))
+        ? onThisServer(albumArtworkUrl(track.album.id, 'small'))
         : null,
     ),
   );

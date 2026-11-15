@@ -7,7 +7,9 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { theArtworkFor } from '@ValenceMobile/components/APoster/theArtworkFor';
 import { theStillFor } from '@ValenceMobile/components/APoster/theStillFor';
 import { Button } from '@ValenceMobile/components/Button/Button';
-import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { memo, useContext } from 'react';
+import { CARD_ORIGINS } from '@ValenceMobile/components/ACardOrigins/CARD_ORIGINS';
+import { AnOriginHere } from '@ValenceMobile/components/ACard/components/AnOriginHere/AnOriginHere';
 import type { ACardProps } from './ACard.types';
 
 /**
@@ -17,6 +19,10 @@ import type { ACardProps } from './ACard.types';
  * is part way through, is named for the programme and opens it rather than the episode. Drawn as a
  * still, an episode that stands for itself is named for its programme with which episode it is
  * beneath, as the television's cards are.
+ *
+ * It is drawn again only when what it is given changes. Where it comes from is read from the shelf
+ * or grid around it, which works that out once for every card, or worked out for itself where it
+ * stands alone.
  *
  * @param media - What it is.
  * @param asProgramme - Whether an episode stands for its programme here.
@@ -31,24 +37,35 @@ import type { ACardProps } from './ACard.types';
  * @param onLookAtShow - Told to open a programme.
  * @param onHold - Told it was held down, for something else to do with it.
  */
-const ACard = ({
-  media,
-  asProgramme,
-  watched = 0,
-  count = 0,
-  wide,
-  isStill = false,
-  look = 'poster',
-  flag = null,
-  onLookAt,
-  onLookAtShow,
-  onHold,
-}: ACardProps) => {
+const ACardDrawn = (props: ACardProps) => {
+  const originOf = useContext(CARD_ORIGINS);
+
+  if (originOf === null) {
+    return (
+      <AnOriginHere>
+        <ACardDrawn {...props} />
+      </AnOriginHere>
+    );
+  }
+
+  const {
+    media,
+    asProgramme,
+    watched = 0,
+    count = 0,
+    wide,
+    isStill = false,
+    look = 'poster',
+    flag = null,
+    onLookAt,
+    onLookAtShow,
+    onHold,
+  } = props;
   const showId = asProgramme ? showIdOf(media) : null;
   const isAnEpisode = showId === null && isStill && typeof media.seriesTitle === 'string';
   const title = showId === null && !isAnEpisode ? media.title : (media.seriesTitle ?? media.title);
   const detail = isAnEpisode ? whereItFalls(media) : null;
-  const origin = useOriginOf()(media.libraryId);
+  const origin = originOf(media.libraryId);
 
   return (
     <Button
@@ -76,7 +93,7 @@ const ACard = ({
           title={media.seriesTitle ?? media.title}
           artwork={theStillFor(media)}
           logo={
-            media.hasLogo ? onThisServer(artworkUrl(media.id, 'logo', { size: 'medium' })) : null
+            media.hasLogo ? onThisServer(artworkUrl(media.id, 'logo', { size: 'small' })) : null
           }
           flag={flag}
           watched={showId === null ? watched : 0}
@@ -98,6 +115,8 @@ const ACard = ({
     </Button>
   );
 };
+
+const ACard = memo(ACardDrawn);
 
 ACard.displayName = 'ACard';
 

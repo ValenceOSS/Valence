@@ -80,7 +80,9 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
   const [panel, setPanel] = useState<ListeningPanel | null>(null);
   const { book } = state;
   const cover = book?.hasCover === true ? onThisServer(bookCoverUrl(book.id)) : null;
-  const lights = usePictureLights(cover);
+  const lights = usePictureLights(
+    book?.hasCover === true ? onThisServer(bookCoverUrl(book.id, 'small')) : null,
+  );
   const high = Math.max(Math.min((width - SCREEN_EDGE * 2) * TALL, topHigh - 90), 0);
 
   if (book === null) {

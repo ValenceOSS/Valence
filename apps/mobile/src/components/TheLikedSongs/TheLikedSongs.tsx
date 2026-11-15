@@ -11,6 +11,7 @@ import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer'
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
+import type { ScreenRows } from '@ValenceMobile/components/Screen/Screen.types';
 import type { TheLikedSongsProps } from './TheLikedSongs.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -43,55 +44,57 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
   }
 
   return (
-    <AMusicScreen
-      title={say('common.likedSongs')}
-      artwork={null}
-      albumIds={covers}
-      standIn={Heart}
-      onBack={onBack}
-    >
-      <AMusicHead
-        kind={say('common.playlist')}
-        detail={sayCount('common.count.songs', tracks.length)}
-        canPlay={tracks.length > 0}
-        onPlay={() => {
-          player.play(tracks, 0, { source: SOURCE });
-        }}
-        onShuffle={() => {
-          player.play(tracks, Math.floor(Math.random() * tracks.length), {
-            source: SOURCE,
-            isShuffled: true,
-          });
-        }}
-      >
-        {tracks.length === 0 ? null : (
-          <ADownloadToListen
-            isRound
-            kind="liked"
-            id="liked"
-            title={say('common.likedSongs')}
-            tracks={tracks}
-            toKeep={(quality) => ({ kind: 'liked', tracks, quality })}
-          />
-        )}
-      </AMusicHead>
+    <ATrackList
+      tracks={tracks}
+      source={SOURCE}
+      onAlbum={onAlbum}
+      onArtist={onArtist}
+      {...(onPlaylist === undefined ? {} : { onPlaylist })}
+      drawnIn={(rows: ScreenRows) => (
+        <AMusicScreen
+          title={say('common.likedSongs')}
+          artwork={null}
+          albumIds={covers}
+          standIn={Heart}
+          onBack={onBack}
+          rows={rows}
+        >
+          <AMusicHead
+            kind={say('common.playlist')}
+            detail={sayCount('common.count.songs', tracks.length)}
+            canPlay={tracks.length > 0}
+            onPlay={() => {
+              player.play(tracks, 0, { source: SOURCE });
+            }}
+            onShuffle={() => {
+              player.play(tracks, Math.floor(Math.random() * tracks.length), {
+                source: SOURCE,
+                isShuffled: true,
+              });
+            }}
+          >
+            {tracks.length === 0 ? null : (
+              <ADownloadToListen
+                isRound
+                kind="liked"
+                id="liked"
+                title={say('common.likedSongs')}
+                tracks={tracks}
+                toKeep={(quality) => ({ kind: 'liked', tracks, quality })}
+              />
+            )}
+          </AMusicHead>
 
-      {tracks.length === 0 ? (
-        <ANothingHere
-          of={Heart}
-          title={say('phone.theLikedSongs.noLikedSongsYet')}
-          detail={say('phone.theLikedSongs.songsYouLikeWillBeHere')}
-        />
-      ) : (
-        <ATrackList
-          tracks={tracks}
-          source={SOURCE}
-          onAlbum={onAlbum}
-          onArtist={onArtist}
-          {...(onPlaylist === undefined ? {} : { onPlaylist })}
-        />
+          {tracks.length === 0 ? (
+            <ANothingHere
+              of={Heart}
+              title={say('phone.theLikedSongs.noLikedSongsYet')}
+              detail={say('phone.theLikedSongs.songsYouLikeWillBeHere')}
+            />
+          ) : null}
+        </AMusicScreen>
       )}
-    </AMusicScreen>
+    />
   );
 };
 

@@ -1,5 +1,6 @@
 import type { MoodLight } from '@ValenceUI/MoodBackground.types';
-import { READ_AT, readLights } from '@ValenceScreens/library/readLights';
+import { READ_AT } from '@ValenceCore/pictures/lightsOfPixels';
+import { readLights } from '@ValenceScreens/library/readLights';
 
 /**
  * Reads the lights in a picture or a playing video without holding up the page: the browser shrinks

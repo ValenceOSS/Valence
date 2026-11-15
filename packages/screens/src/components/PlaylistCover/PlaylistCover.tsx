@@ -27,7 +27,9 @@ const PlaylistCover = ({
   const tiles =
     artwork !== null
       ? [artwork]
-      : (albumIds.length >= 4 ? albumIds.slice(0, 4) : albumIds.slice(0, 1)).map(albumArtworkUrl);
+      : (albumIds.length >= 4 ? albumIds.slice(0, 4) : albumIds.slice(0, 1)).map((albumId) =>
+          albumArtworkUrl(albumId),
+        );
 
   return (
     <span

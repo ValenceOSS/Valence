@@ -1,7 +1,16 @@
 import { Film, FolderOpen } from '@keyline-icons/react-native';
 import { RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { useAskToDismiss } from '@ValenceNative/library/useAskToDismiss';
-import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { freshFlags } from '@ValenceClient/library/freshFlags';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -57,7 +66,12 @@ const keyOfShelf = (shelf: AShelfOf): string =>
  * part way through, what is coming up, what was picked for them, what is new
  * and acclaimed, and a shelf for each genre and decade, more of them arriving as they scroll.
  *
- * Only the shelves in view are drawn, so the ones that keep arriving cost nothing until reached.
+ * Only the shelves in view are drawn, so the ones that keep arriving cost nothing until reached,
+ * and a shelf is drawn again only when what it holds changes: which titles are flagged as new is
+ * worked out afresh as shelves arrive, but handed down anew only when the flags themselves change.
+ *
+ * Scrolling does as little as it can: what is told the page and the tabs is told as it scrolls, but
+ * the page is drawn again only when the hero passes in or out of view or the page leaves its top.
  *
  * @param header - What sits above it all and scrolls away with it.
  * @param watchable - The libraries holding films and programmes.
@@ -68,7 +82,6 @@ const keyOfShelf = (shelf: AShelfOf): string =>
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
  * @param onShowing - Told which title the hero is showing, so the page can take its colours.
- * @param onClip - Told the hero's clip while it plays.
  * @param onScrolled - Told whether the page has been scrolled from its top.
  * @param onScrolledTo - Told how far down it has been scrolled, as it scrolls.
  * @param isOnScreen - Whether home is the part showing, rather than kept hidden behind another.
@@ -81,7 +94,6 @@ const TheHomePage = ({
   onLookAt,
   onLookAtShow,
   onShowing,
-  onClip,
   onScrolled,
   onScrolledTo,
   isOnScreen = true,
@@ -106,12 +118,31 @@ const TheHomePage = ({
   const wasScrolled = useRef<boolean | null>(null);
   const heroEnds = useRef<number | null>(null);
   const [isHeroInView, setIsHeroInView] = useState(true);
+  const isHeroSeen = useRef(true);
   const [openedAt] = useState(() => Date.now());
-  const flagOf = useMemo(
-    () =>
-      freshFlags([...(sample.data ?? []), ...home.rails.flatMap((rail) => rail.items)], openedAt),
-    [sample.data, home.rails, openedAt],
+  const everyTitle = useMemo(
+    () => [...(sample.data ?? []), ...home.rails.flatMap((rail) => rail.items)],
+    [sample.data, home.rails],
   );
+  const fresh = useMemo(() => freshFlags(everyTitle, openedAt), [everyTitle, openedAt]);
+  const flagged = useMemo(
+    () =>
+      everyTitle
+        .flatMap((media) => {
+          const flag = fresh(media);
+
+          return flag === null ? [] : [`${media.id}=${flag}`];
+        })
+        .join('|'),
+    [everyTitle, fresh],
+  );
+  const [flags, setFlags] = useState(() => ({ flagged, flagOf: fresh }));
+
+  if (flags.flagged !== flagged) {
+    setFlags({ flagged, flagOf: fresh });
+  }
+
+  const { flagOf } = flags;
 
   const withComingUp = useMemo(() => {
     const shelves = home.rails.flatMap((rail): AShelfOf[] =>
@@ -150,25 +181,30 @@ const TheHomePage = ({
   );
 
   const tellTabs = useContext(TABS_FOLLOW_SCROLLING);
+  const told = useRef({ onScrolled, onScrolledTo, tellTabs });
 
-  const onScroll = useCallback(
-    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const isScrolled = nativeEvent.contentOffset.y > SCROLLED;
+  useLayoutEffect(() => {
+    told.current = { onScrolled, onScrolledTo, tellTabs };
+  }, [onScrolled, onScrolledTo, tellTabs]);
 
-      onScrolledTo?.(nativeEvent.contentOffset.y);
-      tellTabs?.(nativeEvent.contentOffset.y);
-      const isHeroSeen =
-        heroEnds.current === null || nativeEvent.contentOffset.y < heroEnds.current - STILL_SEEN_BY;
+  const onScroll = useCallback(({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = nativeEvent.contentOffset.y;
+    const isScrolled = y > SCROLLED;
+    const isSeen = heroEnds.current === null || y < heroEnds.current - STILL_SEEN_BY;
 
-      setIsHeroInView(isHeroSeen);
+    told.current.onScrolledTo?.(y);
+    told.current.tellTabs?.(y);
 
-      if (isScrolled !== wasScrolled.current) {
-        wasScrolled.current = isScrolled;
-        onScrolled?.(isScrolled);
-      }
-    },
-    [onScrolled, onScrolledTo, tellTabs],
-  );
+    if (isSeen !== isHeroSeen.current) {
+      isHeroSeen.current = isSeen;
+      setIsHeroInView(isSeen);
+    }
+
+    if (isScrolled !== wasScrolled.current) {
+      wasScrolled.current = isScrolled;
+      told.current.onScrolled?.(isScrolled);
+    }
+  }, []);
 
   useEffect(() => {
     if (!home.isReading) {
@@ -199,7 +235,6 @@ const TheHomePage = ({
               items={featured}
               isInView={isHeroInView && isOnScreen}
               onShowing={onShowing}
-              onClip={onClip}
               onWatch={onWatch}
               onLookAt={onLookAt}
               onLookAtShow={onLookAtShow}
@@ -213,7 +248,6 @@ const TheHomePage = ({
       header,
       featured,
       onShowing,
-      onClip,
       onWatch,
       onLookAt,
       onLookAtShow,

@@ -1,5 +1,7 @@
+import type { Animated } from 'react-native';
+
 type ASegmentProps = {
-  isLit: boolean;
+  glow: Animated.Value | Animated.AnimatedInterpolation<number>;
   colour: string;
   at: number;
   count: number;

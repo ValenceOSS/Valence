@@ -1,18 +1,11 @@
 import { Children, isValidElement } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { ReactNode } from 'react';
-import { ACardArrival } from '@ValenceMobile/components/ACardArrival/ACardArrival';
+import { AShelfRow } from '@ValenceMobile/components/AShelf/components/AShelfRow/AShelfRow';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import type { AShelfProps } from './AShelf.types';
 import { say } from '@ValenceI18n/say';
-
-const FIRST_CARDS = 4;
-
-const CARDS_A_BATCH = 4;
-
-const SCREENFULS_KEPT = 3;
 
 /**
  * The key a card on a shelf is drawn under: the one it was given, or its place where it has none.
@@ -24,10 +17,16 @@ const SCREENFULS_KEPT = 3;
 const keyOfCard = (card: ReactNode, at: number): string =>
   isValidElement(card) && card.key !== null ? card.key : at.toString();
 
+/**
+ * A card handed to a shelf already drawn, as it was handed.
+ *
+ * @param card - The card.
+ * @returns The card.
+ */
+const asItWasHanded = (card: ReactNode): ReactNode => card;
+
 const styles = StyleSheet.create({
-  bleeding: { marginHorizontal: -SCREEN_EDGE },
   head: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  row: { gap: 14, paddingHorizontal: SCREEN_EDGE },
   whole: { gap: 10 },
 });
 
@@ -41,37 +40,39 @@ const styles = StyleSheet.create({
  * Only the cards on screen and a little either side are drawn. A shelf of forty titles used to draw
  * all forty, pictures and all, when three fit on a phone, which was most of what a home page cost.
  *
- * @param title - What the shelf is called.
- * @param onSeeAll - Told somebody wants everything the shelf only shows the start of, where it does.
- * @param children - What sits on it.
+ * It is handed either its cards already drawn, or what they are for and how to draw one. The second
+ * draws a card only when it scrolls into view and draws it again only when what it is for changes,
+ * where cards handed already drawn are all drawn again whenever the shelf is.
+ *
+ * @param props - What the shelf is called, what to do where somebody wants everything it only shows
+ *   the start of, and either its cards or what they are for, what tells them apart, how to draw one
+ *   and, where they are all one width, how wide.
  */
-const AShelf = ({ title, onSeeAll, children }: AShelfProps) => (
+const AShelf = <Item,>(props: AShelfProps<Item>) => (
   <View style={styles.whole}>
     <View style={styles.head}>
-      <Words size="heading">{title}</Words>
-      {onSeeAll === undefined ? null : (
+      <Words size="heading">{props.title}</Words>
+      {props.onSeeAll === undefined ? null : (
         <Button
           tone="quiet"
-          label={say('phone.aShelf.seeAllTitle', { title: title.toLowerCase() })}
-          onPress={onSeeAll}
+          label={say('phone.aShelf.seeAllTitle', { title: props.title.toLowerCase() })}
+          onPress={props.onSeeAll}
         >
           {say('common.seeAll')}
         </Button>
       )}
     </View>
 
-    <FlatList
-      horizontal
-      data={Children.toArray(children)}
-      keyExtractor={keyOfCard}
-      renderItem={({ item, index }) => <ACardArrival at={index}>{item}</ACardArrival>}
-      initialNumToRender={FIRST_CARDS}
-      maxToRenderPerBatch={CARDS_A_BATCH}
-      windowSize={SCREENFULS_KEPT}
-      showsHorizontalScrollIndicator={false}
-      style={styles.bleeding}
-      contentContainerStyle={styles.row}
-    />
+    {props.items === undefined ? (
+      <AShelfRow items={Children.toArray(props.children)} keyOf={keyOfCard} drawn={asItWasHanded} />
+    ) : (
+      <AShelfRow
+        items={props.items}
+        keyOf={props.keyOf}
+        drawn={props.drawn}
+        {...(props.cardWidth === undefined ? {} : { cardWidth: props.cardWidth })}
+      />
+    )}
   </View>
 );
 

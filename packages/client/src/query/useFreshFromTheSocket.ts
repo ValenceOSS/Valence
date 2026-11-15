@@ -1,49 +1,36 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
-import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { announcementQueries } from '@ValenceClient/query/announcementQueries';
-import { collectionQueries } from '@ValenceClient/query/collectionQueries';
-import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import { PresenceEventSchema } from '@ValenceClient/presence/PresenceEventSchema';
+import { gatherMediaNews } from '@ValenceClient/query/gatherMediaNews';
+import { freshenAfterMedia } from '@ValenceClient/query/freshenAfterMedia';
+import type { MediaNews } from '@ValenceClient/query/gatherMediaNews';
 
 type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
 
+const MEDIA_SETTLES_AFTER_MS = 3_000;
+
+const MEDIA_WAITS_AT_MOST_MS = 12_000;
+
 /**
- * Throws away what the server has just said is out of date.
+ * Throws away what the server has just said is out of date, gathering a run of media events into
+ * one refresh once they settle and refreshing only what they name.
  *
- * A cache is only as good as the moment it stops trusting itself, and the usual answer — a timer
- * that guesses — is the wrong one here: this application already holds a socket that says when the
- * library was scanned, when a notification arrived, when somebody's permissions changed, when a
- * request moved along. Being told beats guessing, so the socket does the invalidating and the
- * polling intervals go.
- *
- * Each topic throws away only what it says something about. Somebody watching moves the sessions
- * topic with every heartbeat, and throwing away the whole admin area with it would ask for every
- * open list, statistic, folder size and the audit log again every second for as long as anyone was
- * watching.
- *
- * A reconnection invalidates everything, because a tab that was asleep missed whatever happened
- * while it was gone and has no way to find out what. What is already being asked for again is left
- * to finish rather than asked for a second time.
- *
- * Nothing here is worth knowing before somebody is signed in — a socket opened to watch for changes
- * nobody may see yet is a connection with nothing to say, held open against a server that has
- * already refused everything else this tab asked it before it had a session. Passed `null`, this
- * listens for nothing and leaves the shared socket unopened, rather than starting it the moment
- * anything on the page happens to mount.
+ * Each topic throws away only what it says something about. A reconnection asks again for whatever
+ * is on screen and already stale, since it missed whatever happened while it was gone; what is
+ * fresh, or already being asked for, is left alone.
  *
  * @param client - Whatever says what changed, which is the shared socket, or `null` where there is
- *   nobody signed in yet to hear about a change.
+ *   nobody signed in yet to hear about a change, which listens for nothing.
  */
 const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClient()): void => {
   const cache = useQueryClient();
@@ -53,14 +40,33 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
       return;
     }
 
+    let gathered: MediaNews | null = null;
+    let firstAt: number | null = null;
+    let settling: ReturnType<typeof setTimeout> | undefined;
+
+    const settle = () => {
+      const news = gathered;
+
+      gathered = null;
+      firstAt = null;
+      settling = undefined;
+
+      if (news !== null) {
+        freshenAfterMedia(cache, news);
+      }
+    };
+
     const stopWatching = [
-      client.subscribe('media', () => {
-        void cache.invalidateQueries({ queryKey: libraryQueries.key });
-        void cache.invalidateQueries({ queryKey: musicQueries.key });
-        void cache.invalidateQueries({ queryKey: musicQueries.playlistsKey });
-        void cache.invalidateQueries({ queryKey: collectionQueries.key });
-        void cache.invalidateQueries({ queryKey: requestsQueries.key });
-        void cache.invalidateQueries({ queryKey: viewingQueries.becauseYouWatched(true).queryKey });
+      client.subscribe('media', (event) => {
+        const now = Date.now();
+
+        gathered = gatherMediaNews(gathered, event);
+        firstAt ??= now;
+        clearTimeout(settling);
+        settling = setTimeout(
+          settle,
+          Math.max(0, Math.min(MEDIA_SETTLES_AFTER_MS, firstAt + MEDIA_WAITS_AT_MOST_MS - now)),
+        );
       }),
 
       client.subscribe('notifications', () => {
@@ -118,6 +124,8 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
     ];
 
     return () => {
+      clearTimeout(settling);
+
       for (const stop of stopWatching) {
         stop();
       }
@@ -125,4 +133,4 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
   }, [cache, client]);
 };
 
-export { useFreshFromTheSocket };
+export { MEDIA_SETTLES_AFTER_MS, MEDIA_WAITS_AT_MOST_MS, useFreshFromTheSocket };

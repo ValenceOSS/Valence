@@ -1,8 +1,10 @@
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { useState } from 'react';
+import { View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
+import { useArtworkSize } from '@ValenceMobile/hooks/useArtworkSize';
 import type { ATitleLogoProps } from './ATitleLogo.types';
 
 /**
@@ -11,7 +13,8 @@ import type { ATitleLogoProps } from './ATitleLogo.types';
  *
  * Drawn as wide as the lettering is for its height, so it sits against the left edge the way the
  * web draws it rather than centred in a box of its own. Until it has loaded and said how wide it
- * is, it takes the widest it may.
+ * is, it takes the widest it may. The library's own lettering is asked for narrowed to the widest
+ * it may be drawn, rather than whole.
  *
  * @param mediaId - Whose lettering to draw, or nothing where there is none.
  * @param uri - Where the lettering is, for something the library does not hold, in place of
@@ -34,7 +37,16 @@ const ATitleLogo = ({
 }: ATitleLogoProps) => {
   const [wide, setWide] = useState<number | null>(null);
   const [missing, setMissing] = useState<string | null>(null);
-  const lettering = uri ?? (mediaId === null ? null : onThisServer(artworkUrl(mediaId, 'logo')));
+  const size = useArtworkSize(widest);
+  const lettering =
+    uri ??
+    (mediaId === null || size === null
+      ? null
+      : onThisServer(artworkUrl(mediaId, 'logo', size === 'whole' ? {} : { size })));
+
+  if ((uri ?? null) === null && mediaId !== null && size === null) {
+    return <View style={{ height: high, width: widest }} />;
+  }
 
   if (lettering === null || missing === lettering) {
     return (

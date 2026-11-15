@@ -1,5 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import { ArtworkSizeSchema } from '@ValenceServer/routes/ArtworkSizeSchema';
 import {
   AudioQualitySchema,
   LyricsSchema,
@@ -100,7 +101,15 @@ const readAlbumArtworkRoute = createRoute({
   path: '/api/music/albums/{albumId}/artwork',
   tags: ['Music'],
   summary: 'Read an album’s cover',
-  request: { params: z.object({ albumId: z.string().uuid() }) },
+  request: {
+    params: z.object({ albumId: z.string().uuid() }),
+    query: z.object({
+      size: ArtworkSizeSchema.optional().openapi({
+        description:
+          'Asks for the cover narrowed, as WebP, rather than whole; a server that does not know it sends the whole cover',
+      }),
+    }),
+  },
   responses: { 200: { description: 'The cover' }, ...refused },
 });
 

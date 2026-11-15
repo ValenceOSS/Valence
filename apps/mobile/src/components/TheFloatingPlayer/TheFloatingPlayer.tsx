@@ -48,7 +48,7 @@ const TheFloatingPlayer = ({ isShown, liftedBy, onOpen }: TheFloatingPlayerProps
   usePictureLights(
     track === null || !track.album.hasArtwork
       ? null
-      : onThisServer(albumArtworkUrl(track.album.id)),
+      : onThisServer(albumArtworkUrl(track.album.id, 'small')),
   );
   const isUp = isShown && heard !== null;
   const [shown] = useState(() => new Animated.Value(isUp ? 1 : 0));

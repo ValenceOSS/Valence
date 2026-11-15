@@ -1,6 +1,7 @@
 type ALight = {
   colour: string;
   at: string;
+  weight?: number;
 };
 
 type AMoodBackgroundProps = {

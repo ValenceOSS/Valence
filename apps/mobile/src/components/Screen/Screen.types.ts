@@ -1,5 +1,12 @@
 import type { ReactNode } from 'react';
 
+type ScreenRows = {
+  count: number;
+  keyOf: (at: number) => string;
+  draw: (at: number) => ReactNode;
+  apart?: number;
+};
+
 type ScreenProps = {
   children: ReactNode;
   head?: ReactNode;
@@ -13,6 +20,8 @@ type ScreenProps = {
   onBack?: () => void;
   goesBackDown?: boolean;
   onScrolled?: (isScrolled: boolean) => void;
+  rows?: ScreenRows;
+  afterRows?: ReactNode;
 };
 
-export type { ScreenProps };
+export type { ScreenProps, ScreenRows };

@@ -22,6 +22,7 @@ import { registerListeningRoutes } from '@ValenceServer/books/registerListeningR
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { narrowAsAsked } from '@ValenceServer/images/narrowAsAsked';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -128,8 +129,10 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.book.noCoverForThatBook'), 404);
     }
 
-    return context.body(cover.bytes.slice().buffer, 200, {
-      'content-type': cover.contentType,
+    const narrowed = await narrowAsAsked(cover.bytes, context.req.valid('query').size);
+
+    return context.body((narrowed ?? cover.bytes).slice().buffer, 200, {
+      'content-type': narrowed === null ? cover.contentType : 'image/webp',
       'cache-control': 'public, max-age=604800, immutable',
     });
   });

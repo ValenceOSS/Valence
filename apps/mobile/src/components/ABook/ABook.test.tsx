@@ -8,8 +8,17 @@ import { aListening } from '@ValenceClient/testing/aListening';
 import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import { aFakeAudiobookPlayer } from '@ValenceMobile/testing/aFakeAudiobookPlayer';
 import { aBook } from '@ValenceMobile/testing/aBook';
+import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { aChapter } from '@ValenceMobile/testing/aChapter';
 import { ABook } from './ABook';
+
+jest.mock('@ValenceMobile/hooks/usePictureLights', () => {
+  const { usePictureLights: actual } = jest.requireActual<{
+    usePictureLights: typeof usePictureLights;
+  }>('@ValenceMobile/hooks/usePictureLights');
+
+  return { usePictureLights: jest.fn(actual) };
+});
 
 jest.mock('@ValenceClient/books/fetchBooks', () => ({
   ...jest.requireActual<object>('@ValenceClient/books/fetchBooks'),
@@ -51,6 +60,22 @@ const aReading = (isFinished: boolean) => ({
 });
 
 describe('ABook', () => {
+  it('takes its tint from a narrowed copy of the cover, not the whole one', async () => {
+    jest
+      .mocked(fetchBook)
+      .mockResolvedValue({ book: aBook({ hasCover: true }), chapters: [aChapter(1)] });
+    jest.mocked(fetchReading).mockResolvedValue([]);
+    const drawn = await render(
+      <ABook bookId={aBook().id} onRead={jest.fn()} onListen={jest.fn()} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
+    );
+
+    expect(await drawn.findByText('Dune')).toBeTruthy();
+    expect(usePictureLights).toHaveBeenLastCalledWith(
+      expect.stringMatching(/\/cover\?size=small$/u),
+    );
+  });
+
   it('shows the book and starts it where nobody has', async () => {
     jest.mocked(fetchBook).mockResolvedValue({ book: aBook(), chapters: [aChapter(1)] });
     jest.mocked(fetchReading).mockResolvedValue([]);

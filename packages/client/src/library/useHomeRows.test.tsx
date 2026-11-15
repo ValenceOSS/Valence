@@ -657,6 +657,41 @@ describe('useHomeRows', () => {
     expect(result.current.rails).toBe(before);
   });
 
+  it('keeps each row it already drew, and its things, when more rows arrive below them', async () => {
+    const genres = Array.from({ length: 9 }, (_, at) => `Genre ${at.toString()}`);
+
+    facetsMock.mockResolvedValue({ genres, decades: [], maxRating: 10 });
+    aLibrary({
+      recent: films('new', 5, 'Genre 0'),
+      byGenre: Object.fromEntries(genres.map((genre) => [genre, films(genre, 5, genre)])),
+    });
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(firstTime(result.current.rails)).toContain('genre:Genre 5');
+    });
+
+    const before = new Map(result.current.rails.map((rail) => [rail.id, rail]));
+
+    act(() => {
+      result.current.showMore();
+    });
+
+    await waitFor(() => {
+      expect(firstTime(result.current.rails)).toContain('genre:Genre 8');
+    });
+
+    const recent = result.current.rails.find((rail) => rail.id === 'recent');
+    const first = result.current.rails.find((rail) => rail.id === 'genre:Genre 0');
+
+    expect(recent).toBe(before.get('recent'));
+    expect(first).toBe(before.get('genre:Genre 0'));
+    expect(first?.items).toBe(before.get('genre:Genre 0')?.items);
+  });
+
   it('asks the genres somebody leans towards for first', async () => {
     facetsMock.mockResolvedValue({ genres: ['Comedy', 'Drama'], decades: [], maxRating: 10 });
     favouritesMock.mockResolvedValue(['kept']);

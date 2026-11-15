@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated } from 'react-native';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
@@ -21,7 +21,8 @@ const FADES_OVER = 180;
  * overshoots a touch, just after the row's heading and after the card before it, so a row lands left
  * to right rather than appearing at once. The wait stops growing past a ceiling, so a long row is not
  * still arriving after somebody has started reading it. Somebody who asked their phone for less
- * motion sees it fade in where it belongs, and a card already seen is simply there.
+ * motion sees it fade in where it belongs, and a card already seen when it is first drawn is simply
+ * there; one seen while it is arriving goes on arriving.
  *
  * @param at - Where the card sits in its row, counting from nothing.
  * @param isArrived - Whether it has arrived before, and so shows without moving.
@@ -29,7 +30,8 @@ const FADES_OVER = 180;
  */
 const ACardArrival = ({ children, at, isArrived = false, onArrived }: ACardArrivalProps) => {
   const isStill = usePrefersStillness();
-  const [arriving] = useState(() => new Animated.Value(isArrived ? 1 : 0));
+  const [hadArrived] = useState(isArrived);
+  const [arriving] = useState(() => new Animated.Value(hadArrived ? 1 : 0));
   const told = useRef(onArrived);
 
   useEffect(() => {
@@ -37,9 +39,7 @@ const ACardArrival = ({ children, at, isArrived = false, onArrived }: ACardArriv
   });
 
   useEffect(() => {
-    if (isArrived) {
-      arriving.setValue(1);
-
+    if (hadArrived) {
       return undefined;
     }
 
@@ -59,27 +59,26 @@ const ACardArrival = ({ children, at, isArrived = false, onArrived }: ACardArriv
     return () => {
       moving.stop();
     };
-  }, [arriving, at, isArrived, isStill]);
+  }, [arriving, at, hadArrived, isStill]);
 
-  return (
-    <Animated.View
-      style={{
-        opacity: arriving.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 1],
-          extrapolate: 'clamp',
-        }),
-        transform: isStill
-          ? []
-          : [
-              { translateY: arriving.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] }) },
-              { scale: arriving.interpolate({ inputRange: [0, 1], outputRange: [POP, 1] }) },
-            ],
-      }}
-    >
-      {children}
-    </Animated.View>
+  const look = useMemo(
+    () => ({
+      opacity: arriving.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+      }),
+      transform: isStill
+        ? []
+        : [
+            { translateY: arriving.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] }) },
+            { scale: arriving.interpolate({ inputRange: [0, 1], outputRange: [POP, 1] }) },
+          ],
+    }),
+    [arriving, isStill],
   );
+
+  return <Animated.View style={look}>{children}</Animated.View>;
 };
 
 ACardArrival.displayName = 'ACardArrival';

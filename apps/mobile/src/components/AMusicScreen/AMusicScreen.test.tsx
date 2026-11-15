@@ -40,4 +40,28 @@ describe('AMusicScreen', () => {
     expect(JSON.stringify(drawn.toJSON())).not.toContain('cover.jpg');
     expect(drawn.getByText('The tracks')).toBeTruthy();
   });
+
+  it('draws its songs as rows beneath the head, and what follows them after', async () => {
+    const drawn = await render(
+      <AMusicScreen
+        title="Even In Arcadia"
+        artwork={null}
+        standIn={Record}
+        onBack={jest.fn()}
+        rows={{
+          count: 2,
+          keyOf: (at) => at.toString(),
+          draw: (at) => <Words>{`Song ${at.toString()}`}</Words>,
+        }}
+        afterRows={<Words>Panels</Words>}
+      >
+        <Words>The head</Words>
+      </AMusicScreen>,
+      { wrapper: CacheScope },
+    );
+
+    expect(drawn.getByText('The head')).toBeTruthy();
+    expect(drawn.getByText('Song 1')).toBeTruthy();
+    expect(drawn.getByText('Panels')).toBeTruthy();
+  });
 });

@@ -28,6 +28,7 @@ import {
   MediaSummarySchema,
 } from '@ValenceContracts/schemas/Library';
 import { scanACode } from '@ValenceMobile/platform/scanACode';
+import { useNotificationTaps } from '@ValenceMobile/push/useNotificationTaps';
 import { SignedIn } from './SignedIn';
 import type { ReactNode } from 'react';
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
@@ -39,6 +40,7 @@ import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFon
 
 jest.mock('@ValenceClient/session/auth');
 jest.mock('@ValenceMobile/platform/scanACode', () => ({ scanACode: jest.fn() }));
+jest.mock('@ValenceMobile/push/useNotificationTaps', () => ({ useNotificationTaps: jest.fn() }));
 jest.mock('@ValenceMobile/components/ATelevisionToSignIn/ATelevisionToSignIn', () => ({
   ATelevisionToSignIn: ({ code, askedFrom }: { code: string; askedFrom: string | null }) =>
     mockCreateElement(mockText, null, `Signing in ${code} from ${askedFrom ?? 'nowhere'}`),
@@ -269,6 +271,40 @@ describe('SignedIn', () => {
     expect(
       await drawn.findByText('Signing in ABCD1234 from http://192.168.1.20:8420'),
     ).toBeTruthy();
+  });
+
+  it('opens the title a tapped notification leads to', async () => {
+    withOneTitle();
+
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+    const [[followTap] = []] = jest.mocked(useNotificationTaps).mock.calls.slice(-1);
+
+    await act(() => {
+      followTap?.(`/?item=${ARRIVAL.id}`);
+    });
+
+    await waitFor(() => {
+      expect(drawn.getByText('Linguists meet a ship.')).toBeTruthy();
+    });
+  });
+
+  it('opens the player over everything for the watch party a tapped invitation asks them into', async () => {
+    withOneTitle();
+
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+
+    expect(await drawn.findByLabelText('What to show')).toBeTruthy();
+
+    const [[followTap] = []] = jest.mocked(useNotificationTaps).mock.calls.slice(-1);
+
+    await act(() => {
+      followTap?.(`/watch/${ARRIVAL.id}?party=p-1`);
+    });
+
+    await waitFor(() => {
+      expect(drawn.queryByLabelText('What to show')).toBeNull();
+    });
+    expect(drawn.getByLabelText('What to show', { includeHiddenElements: true })).toBeTruthy();
   });
 
   it('opens a title when somebody presses its poster', async () => {

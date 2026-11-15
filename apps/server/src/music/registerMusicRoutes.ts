@@ -42,6 +42,7 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { MusicServices } from './MusicServices';
 import { refuse } from '@ValenceI18n/refuse';
+import { narrowAsAsked } from '@ValenceServer/images/narrowAsAsked';
 import { createRateLimiter } from '@ValenceServer/linking/createRateLimiter';
 import { isCatalogueId } from './isCatalogueId';
 import { isShortLookup } from './isShortLookup';
@@ -164,11 +165,13 @@ const registerMusicRoutes = (
     }
 
     const path = await music.library.readAlbumArtwork(viewer, context.req.valid('param').albumId);
-    const bytes = path === null ? null : await music.readImage(path);
+    const whole = path === null ? null : await music.readImage(path);
 
-    if (bytes === null) {
+    if (whole === null) {
       return context.json(refuse('error.music.noCoverForThatAlbum'), 404);
     }
+
+    const bytes = (await narrowAsAsked(whole, context.req.valid('query').size)) ?? whole;
 
     return context.body(bytes.slice().buffer, 200, {
       'content-type': 'image/webp',

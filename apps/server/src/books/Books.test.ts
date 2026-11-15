@@ -232,6 +232,12 @@ describe('reading an ebook over HTTP', () => {
     expect((await ask(`/api/books/${NOVEL_ID}/cover`)).status).toBe(200);
   });
 
+  it('serves the cover of an ebook narrowed, where a narrowed copy is asked for', async () => {
+    const response = await ask(`/api/books/${NOVEL_ID}/cover?size=small`);
+
+    expect(response.status).toBe(200);
+  });
+
   it('remembers how far through a book somebody is, as a fraction of it', async () => {
     const asking = await asSomebody();
 

@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheDotsProps } from './TheDots.types';
 
@@ -10,19 +9,49 @@ const DOT = 6;
 
 const PILL = 24;
 
+const GAP = 6;
+
+const STRETCH = PILL - DOT;
+
+const DIM = 0.22;
+
 const GROWS_OVER = 220;
 
 const styles = StyleSheet.create({
-  dot: { borderRadius: DOT / 2, height: DOT, overflow: 'hidden' },
-  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center' },
-  fill: { ...StyleSheet.absoluteFill, borderRadius: DOT / 2, transformOrigin: 'left center' },
+  dots: { alignSelf: 'center', height: DOT },
+  place: { height: DOT, position: 'absolute', top: 0, width: PILL },
+  dim: { ...StyleSheet.absoluteFill, opacity: DIM },
+  cap: { borderRadius: DOT / 2, height: DOT, left: 0, position: 'absolute', top: 0, width: DOT },
+  body: {
+    height: DOT,
+    left: DOT / 2,
+    position: 'absolute',
+    top: 0,
+    transformOrigin: 'left center',
+    width: STRETCH,
+  },
+  filling: { ...StyleSheet.absoluteFill, borderRadius: DOT / 2, overflow: 'hidden' },
+  fill: { ...StyleSheet.absoluteFill, transformOrigin: 'left center' },
 });
+
+/**
+ * How far grown each dot starts, the one showing a pill and the rest dots.
+ *
+ * @param count - How many dots there are.
+ * @param at - Which one is showing.
+ * @returns How grown each is, from a dot at nothing to a pill at one.
+ */
+const grownFrom = (count: number, at: number): Animated.Value[] =>
+  Array.from({ length: count }, (_, index) => new Animated.Value(index === at ? 1 : 0));
 
 /**
  * Which of the featured titles is showing, as the web's hero says it: a dot for each, the one
  * showing grown into a pill that fills from its left as the title plays, so it can be seen how long
- * is left before the next comes round. The fill is scaled on the native side; only the pill's
- * growing and shrinking, a few points across, is laid out.
+ * is left before the next comes round.
+ *
+ * Nothing is laid out again as the pill grows or the next dot takes over: each dot is two round ends
+ * and a stretch between them, the far end slid out and the stretch scaled to make the pill, and the
+ * dots after it slid along to make room, all on the native side, as is the fill.
  *
  * @param count - How many titles there are.
  * @param at - Which one is showing.
@@ -31,80 +60,110 @@ const styles = StyleSheet.create({
 const TheDots = ({ count, at, filled }: TheDotsProps) => {
   const colours = useTheColours();
   const isStill = usePrefersStillness();
-  const [widths] = useState(() => new Map<number, Animated.Value>());
+  const [grown, setGrown] = useState(() => ({ count, values: grownFrom(count, at) }));
 
-  const widthOf = useCallback(
-    (index: number) => {
-      const known = widths.get(index);
+  if (grown.count !== count) {
+    setGrown({ count, values: grownFrom(count, at) });
+  }
 
-      if (known !== undefined) {
-        return known;
-      }
+  const moves = useMemo(() => {
+    const stretches = grown.values.map((value) =>
+      value.interpolate({ inputRange: [0, 1], outputRange: [0, STRETCH] }),
+    );
 
-      const made = new Animated.Value(index === at ? PILL : DOT);
-
-      widths.set(index, made);
-
-      return made;
-    },
-    [widths, at],
-  );
-
-  useEffect(
-    () => () => {
-      widths.forEach((width) => {
-        width.stopAnimation();
-      });
-    },
-    [widths],
-  );
+    return stretches.map((stretch, index) => ({
+      stretch,
+      along: stretches
+        .slice(0, index)
+        .reduce<Animated.AnimatedInterpolation<number> | Animated.AnimatedAddition | null>(
+          (sum, before) => (sum === null ? before : Animated.add(sum, before)),
+          null,
+        ),
+    }));
+  }, [grown]);
 
   useEffect(() => {
-    Array.from({ length: count }, (_, index) => index).forEach((index) => {
-      const toValue = index === at ? PILL : DOT;
-      const width = widthOf(index);
+    const growing = grown.values.map((value, index) => {
+      const toValue = index === at ? 1 : 0;
 
       if (isStill) {
-        width.setValue(toValue);
+        value.setValue(toValue);
 
-        return;
+        return null;
       }
 
-      Animated.timing(width, {
+      const grow = Animated.timing(value, {
         toValue,
         duration: GROWS_OVER,
         easing: EASINGS.outCubic,
-        useNativeDriver: false,
-      }).start();
+        useNativeDriver: true,
+      });
+
+      grow.start();
+
+      return grow;
     });
-  }, [at, count, isStill, widthOf]);
+
+    return () => {
+      growing.forEach((grow) => {
+        grow?.stop();
+      });
+    };
+  }, [at, isStill, grown]);
 
   if (count <= 1) {
     return null;
   }
 
   return (
-    <View style={styles.dots}>
-      {Array.from({ length: count }, (_, index) => index).map((index) => (
-        <Animated.View
-          key={index}
-          testID="dot"
-          style={[
-            styles.dot,
-            { backgroundColor: withAlpha(colours.text, 0.22), width: widthOf(index) },
-          ]}
-        >
-          {index === at ? (
-            <Animated.View
-              testID="dot-fill"
-              style={[
-                styles.fill,
-                { backgroundColor: colours.text, transform: [{ scaleX: filled }] },
-              ]}
-            />
-          ) : null}
-        </Animated.View>
-      ))}
+    <View style={[styles.dots, { width: (count - 1) * (DOT + GAP) + PILL }]}>
+      {grown.values.map((value, index) => {
+        const move = moves[index];
+
+        return (
+          <Animated.View
+            key={index}
+            testID="dot"
+            style={[
+              styles.place,
+              { left: index * (DOT + GAP) },
+              move?.along === null || move === undefined
+                ? null
+                : { transform: [{ translateX: move.along }] },
+            ]}
+          >
+            <View style={styles.dim} needsOffscreenAlphaCompositing>
+              <View style={[styles.cap, { backgroundColor: colours.text }]} />
+              <Animated.View
+                style={[
+                  styles.body,
+                  { backgroundColor: colours.text, transform: [{ scaleX: value }] },
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.cap,
+                  {
+                    backgroundColor: colours.text,
+                    transform: [{ translateX: move?.stretch ?? 0 }],
+                  },
+                ]}
+              />
+            </View>
+            {index === at ? (
+              <Animated.View style={[styles.filling, { opacity: value }]}>
+                <Animated.View
+                  testID="dot-fill"
+                  style={[
+                    styles.fill,
+                    { backgroundColor: colours.text, transform: [{ scaleX: filled }] },
+                  ]}
+                />
+              </Animated.View>
+            ) : null}
+          </Animated.View>
+        );
+      })}
     </View>
   );
 };

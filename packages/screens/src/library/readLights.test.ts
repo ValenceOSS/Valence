@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { readLights, READ_AT, ZONES } from './readLights';
+import { READ_AT, ZONES } from '@ValenceCore/pictures/lightsOfPixels';
+import { readLights } from './readLights';
 
 /**
  * A canvas holding a picture divided into quarters, red, green, blue and white, that answers for
