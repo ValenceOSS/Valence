@@ -43,7 +43,8 @@ const party = (over?: Partial<WatchParty>): WatchParty => ({
   ...over,
 });
 
-const createWorld = (meConnectionId = 'sam') => {
+const createWorld = (meConnectionId: string | null = 'sam') => {
+  let me = meConnectionId;
   const sent: { kind: string; partyId?: string }[] = [];
   const resumed: (() => void)[] = [];
   let heard: ((event: RealtimeEvent) => void) | null = null;
@@ -70,7 +71,7 @@ const createWorld = (meConnectionId = 'sam') => {
       return () => {};
     },
     isLive: () => true,
-    connectionId: () => meConnectionId,
+    connectionId: () => me,
     sendParty: (message) => {
       sent.push(message);
     },
@@ -89,6 +90,9 @@ const createWorld = (meConnectionId = 'sam') => {
   return {
     client,
     sent,
+    welcome: (connectionId: string) => {
+      me = connectionId;
+    },
     resume: () => {
       for (const run of resumed) {
         run();
@@ -158,6 +162,20 @@ describe('useWatchParty', () => {
     });
 
     expect(result.current.party?.id).toBe('party-1');
+  });
+
+  it('knows which member it is when the socket says so only after it first drew', () => {
+    const world = createWorld(null);
+    const { result } = renderHook(() => useWatchParty(world.client));
+
+    expect(result.current.meConnectionId).toBeNull();
+
+    act(() => {
+      world.welcome('sam');
+      world.tell(party());
+    });
+
+    expect(result.current.meConnectionId).toBe('sam');
   });
 
   it('reads the timekeeper as where they will be now, not where they were when they said so', () => {
