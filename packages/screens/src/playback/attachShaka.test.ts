@@ -1,3 +1,4 @@
+import { followPlace } from '@ValenceScreens/playback/followPlace';
 import { describe, expect, it, vi } from 'vitest';
 import { attachShaka, deliveredFormat, faultFrom, CRITICAL } from './attachShaka';
 import type { ShakaModule, ShakaPlayer, ShakaStats, ShakaVariant } from './attachShaka';
@@ -355,6 +356,56 @@ describe('attachShaka', () => {
     recover();
 
     expect(onRecovered).toHaveBeenLastCalledWith(40);
+  });
+
+  it('reads the place the player keeps where it is given one, seeks and all', async () => {
+    const { module, raise, recover } = engine();
+    const onFault = vi.fn();
+    const onRecovered = vi.fn();
+    const video = element();
+    const place = followPlace(video, 4);
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onFault,
+      onRecovered,
+      place,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 1731;
+    video.dispatchEvent(new Event('timeupdate'));
+    video.currentTime = 0;
+    video.dispatchEvent(new Event('error'));
+    place.seek(0.5);
+    recover();
+    raise({ severity: CRITICAL, category: 3, code: 3014 });
+
+    expect(onRecovered).toHaveBeenCalledWith(0.5);
+    expect(onFault).toHaveBeenCalledWith(expect.objectContaining({ code: 3014 }), 0.5);
+  });
+
+  it('leaves following the place it was given to whoever gave it', async () => {
+    const { module } = engine();
+    const video = element();
+    const place = followPlace(video, 4);
+    const attached = await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      place,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    await attached.detach();
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 40;
+    video.dispatchEvent(new Event('timeupdate'));
+
+    expect(place.read()).toBe(40);
   });
 
   it('says where it began where the element was never refused', async () => {

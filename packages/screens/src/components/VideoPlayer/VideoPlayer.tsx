@@ -1535,6 +1535,7 @@ const VideoPlayer = ({
                 : (source?.bitrateKbps ?? null),
             ),
             connections: readPlaybackPreferences().connections,
+            place,
             onFault: (fault, atSeconds) => {
               if (fault.severity < CRITICAL || isAbandoned() || convertInstead(fault, atSeconds)) {
                 return;

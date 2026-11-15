@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { deliveredBitrateKbps } from '@ValenceClient/playback/deliveredBitrateKbps';
 import { teachShakaOurScheme } from '@ValenceScreens/playback/teachShakaOurScheme';
 import { followPlace } from '@ValenceScreens/playback/followPlace';
+import type { FollowedPlace } from '@ValenceScreens/playback/followPlace';
 import type { ShakaNetworking } from '@ValenceScreens/playback/teachShakaOurScheme';
 import type shaka from 'shaka-player/dist/shaka-player.compiled';
 import type { Buffer } from '@ValenceClient/playback/bufferFor';
@@ -86,6 +87,7 @@ type AttachOptions = {
   connections?: number;
   onFault?: (fault: PlaybackFault, atSeconds: number) => void;
   onRecovered?: (refusedAtSeconds: number) => void;
+  place?: FollowedPlace;
   loadShaka?: () => Promise<ShakaModule>;
 };
 
@@ -212,7 +214,8 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  *   stream is one Valence did not make, how much to hold ahead and behind, how many segments to
  *   fetch at once, how to report a fault the engine could not recover from with the last place the
  *   element had a picture or was sent to, and what to do once it has started the element again after
- *   the browser refused to decode what it was sent.
+ *   the browser refused to decode what it was sent, and the place the player keeps, where it keeps
+ *   one, so the engine reads the same place the player does.
  * @returns A handle carrying the teardown to call — an orphaned engine keeps buffering and holds
  *   the element open — a reading of what the engine is actually being sent, its estimate of what
  *   the connection carries, and how many qualities it can switch between on its own. A stream that
@@ -255,6 +258,7 @@ const attachShaka = async ({
   connections = ONE_AT_A_TIME,
   onFault,
   onRecovered,
+  place: given,
   loadShaka = loadShakaPlayer,
 }: AttachOptions): Promise<AttachedStream> => {
   const shaka = await loadShaka();
@@ -282,7 +286,7 @@ const attachShaka = async ({
     streaming: { segmentPrefetchLimit: Math.max(connections, ONE_AT_A_TIME) - ONE_AT_A_TIME },
   });
 
-  const place = followPlace(element, startSeconds);
+  const place = given ?? followPlace(element, startSeconds);
 
   player.addEventListener?.('error', (event) => {
     const fault = faultFrom(event);
@@ -297,7 +301,9 @@ const attachShaka = async ({
   });
 
   const detach = () => {
-    place.stop();
+    if (given === undefined) {
+      place.stop();
+    }
 
     return player.destroy();
   };

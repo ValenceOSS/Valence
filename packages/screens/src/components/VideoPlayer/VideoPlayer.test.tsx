@@ -729,6 +729,25 @@ describe('VideoPlayer', () => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
+    it('hands the engine the place it keeps, so both read the same one', async () => {
+      startMock.mockResolvedValue(fullyConverted);
+      const attached: { place?: { read: () => number } | undefined } = {};
+
+      attachMock.mockImplementation((options: typeof attached) => {
+        attached.place = options.place;
+
+        return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+      });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(attached.place).toBeDefined();
+      });
+      await playedTo(1700);
+
+      expect(attached.place?.read()).toBe(1700);
+    });
+
     it('gives a new film a fresh allowance of recoveries', async () => {
       startMock.mockResolvedValue(fullyConverted);
       const attached: { onRecovered?: ((refusedAtSeconds: number) => void) | undefined } = {};
