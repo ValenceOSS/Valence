@@ -106,7 +106,7 @@ import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
 import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
 import type { StoppedBy, WatchingProps } from './Watching.types';
-import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
+import type { VideoPlayer, VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
@@ -124,6 +124,7 @@ import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 import { whatToConvertNext } from '@ValenceClient/playback/whatToConvertNext';
+import type { PlaybackStartReason } from '@ValenceContracts/schemas/PlaybackStartReason';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
@@ -272,6 +273,13 @@ const styles = StyleSheet.create({
  * screen shows it by its name and poster — as they were known when the stream began, since telling
  * the player anything new about its source starts the film again.
  *
+ * The floating picture cannot show the lines this screen draws, so the subtitles being read are
+ * drawn into a stream of their own while it floats, and out of it again when it comes back. That
+ * stream is handed over while the one before it carries on playing: emptying the player in between,
+ * as every other change of stream does, closes the floating picture on an iPhone and stops the
+ * film. The stream it replaces is let go once the new one has loaded, and a stream with the lines
+ * drawn in that cannot be started leaves the film playing without them.
+ *
  * This is the one screen a phone is turned for, and it turns itself: almost everything a household
  * watches was shot wide, and a phone held upright shows it as a strip across the middle.
  *
@@ -377,6 +385,10 @@ const Watching = ({
   const whereTheyGotTo = useRef<{ positionSeconds: number; durationSeconds: number } | null>(null);
   const knownLength = useRef(0);
   const picture = useRef<VideoViewRef | null>(null);
+  const handingOver = useRef(false);
+  const retiring = useRef<string[]>([]);
+  const showing = useRef<string | null>(null);
+  const playerNow = useRef<VideoPlayer | null>(null);
   const [isPoppedOut, setIsPoppedOut] = useState(false);
   const staysPaused = useRef(false);
   const [areControlsUp, setAreControlsUp] = useState(true);
@@ -423,6 +435,7 @@ const Watching = ({
     subtitleStreamIndex?: number | undefined;
     burnInSubtitleId?: string | undefined;
     converted?: Converted;
+    startedBecause?: PlaybackStartReason;
   }>(() => ({
     from:
       kept === undefined
@@ -442,8 +455,12 @@ const Watching = ({
     setAskingFor(mediaId);
     setAsking((asked) =>
       asked.requestedQuality === undefined
-        ? { from: startSeconds }
-        : { from: startSeconds, requestedQuality: asked.requestedQuality },
+        ? { from: startSeconds, startedBecause: 'opened' }
+        : {
+            from: startSeconds,
+            requestedQuality: asked.requestedQuality,
+            startedBecause: 'opened',
+          },
     );
     setStoppedBy(null);
     setIsReconnecting(false);
@@ -559,8 +576,13 @@ const Watching = ({
     let started: string | null = null;
     let leftAlready = false;
     const letGo = holdWatching(clientId);
+    const isHandedOver = handingOver.current;
 
-    setSource(null);
+    handingOver.current = false;
+
+    if (!isHandedOver) {
+      setSource(null);
+    }
 
     const rememberedAudio = asking.audioStreamIndex === undefined ? readAudioLanguage() : null;
 
@@ -600,11 +622,15 @@ const Watching = ({
           asking.subtitleStreamIndex,
           asking.converted,
           asking.burnInSubtitleId,
+          undefined,
+          undefined,
+          undefined,
+          asking.startedBecause ?? 'opened',
         );
       })
       .then((outcome) => {
         if (outcome.kind === 'failed') {
-          if (leftAlready) {
+          if (leftAlready || isHandedOver) {
             return;
           }
 
@@ -641,8 +667,13 @@ const Watching = ({
             return;
           }
 
-          setSeekTo(asking.from);
+          if (isHandedOver && playerNow.current !== null) {
+            staysPaused.current = !playerNow.current.playing;
+          }
+
+          setSeekTo(isHandedOver ? (playerNow.current?.currentTime ?? asking.from) : asking.from);
           setSessionId(wasStarted);
+          showing.current = wasStarted;
           const artwork = onThisServer(artworkUrl(mediaId, 'poster', { size: 'medium' }));
           const told = {
             uri,
@@ -656,7 +687,9 @@ const Watching = ({
     return () => {
       leftAlready = true;
 
-      if (started !== null) {
+      if (started !== null && handingOver.current) {
+        retiring.current.push(started);
+      } else if (started !== null) {
         void stopPlaybackSession(started, clientId);
       }
 
@@ -664,11 +697,24 @@ const Watching = ({
     };
   }, [mediaId, asking, clientId, isKept, cache]);
 
+  useEffect(
+    () => () => {
+      for (const gone of retiring.current.splice(0)) {
+        void stopPlaybackSession(gone, clientId);
+      }
+    },
+    [clientId],
+  );
+
   const player = useVideoPlayer(source, (ready) => {
     ready.timeUpdateEventInterval = HOW_OFTEN_IT_SAYS_WHERE_IT_IS;
     ready.showNowPlayingNotification = true;
     ready.staysActiveInBackground = true;
   });
+
+  useEffect(() => {
+    playerNow.current = player;
+  }, [player]);
 
   const status = useEvent(player, 'statusChange', { status: player.status });
   const refusedSession = useRef<string | null>(null);
@@ -712,7 +758,11 @@ const Watching = ({
         stopWaiting.current = null;
         refusedSession.current = null;
         setIsReconnecting(false);
-        setAsking((asked) => ({ ...asked, from: Math.max(resumeAt, asked.from) }));
+        setAsking((asked) => ({
+          ...asked,
+          from: Math.max(resumeAt, asked.from),
+          startedBecause: 'reconnected',
+        }));
       },
       onGaveUp: () => {
         stopWaiting.current = null;
@@ -778,7 +828,12 @@ const Watching = ({
       const next = whatToConvertNext({ plan: playing.plan, converted: already, fault: null });
 
       if (next !== null) {
-        setAsking((asked) => ({ ...asked, converted: next, from: at }));
+        setAsking((asked) => ({
+          ...asked,
+          converted: next,
+          from: at,
+          startedBecause: 'converting',
+        }));
 
         return;
       }
@@ -811,6 +866,14 @@ const Watching = ({
     }
 
     staysPaused.current = false;
+
+    const stillShown = retiring.current.filter((one) => one === showing.current);
+
+    for (const gone of retiring.current.filter((one) => one !== showing.current)) {
+      void stopPlaybackSession(gone, clientId);
+    }
+
+    retiring.current = stillShown;
   });
 
   useEffect(() => {
@@ -895,6 +958,8 @@ const Watching = ({
           undefined,
           false,
           true,
+          false,
+          'next',
         ),
       };
     });
@@ -956,13 +1021,19 @@ const Watching = ({
     }
 
     if (source === null) {
-      setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn }));
+      setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn, startedBecause: 'subtitles' }));
 
       return;
     }
 
     staysPaused.current = !player.playing;
-    setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn, from: player.currentTime }));
+    handingOver.current = true;
+    setAsking((asked) => ({
+      ...asked,
+      burnInSubtitleId: toBurnIn,
+      from: player.currentTime,
+      startedBecause: 'subtitles',
+    }));
   }, [toBurnIn, asking.burnInSubtitleId, player, source]);
 
   useEventListener(player, 'playToEnd', () => {
@@ -1070,6 +1141,7 @@ const Watching = ({
         ...asked,
         subtitleStreamIndex: burning,
         from: player.currentTime,
+        startedBecause: 'subtitles',
       }));
     },
     [tracks.data, asking.subtitleStreamIndex, player],
@@ -1078,7 +1150,12 @@ const Watching = ({
   const askAgain = useCallback(
     (changed: { audioStreamIndex?: number; requestedQuality?: QualityPreference }) => {
       setPanel(null);
-      setAsking((asked) => ({ ...asked, ...changed, from: player.currentTime }));
+      setAsking((asked) => ({
+        ...asked,
+        ...changed,
+        from: player.currentTime,
+        startedBecause: changed.audioStreamIndex === undefined ? 'quality' : 'audio',
+      }));
     },
     [player],
   );
@@ -1788,6 +1865,7 @@ const Watching = ({
             kind="watch"
             watchParty={watchParty}
             mediaId={mediaId}
+            isPlaying={moving.isPlaying}
             people={household}
             onClose={() => {
               if (watchParty.passwordWanted !== null) {
@@ -1833,6 +1911,7 @@ const Watching = ({
               setAsking((asked) => ({
                 ...asked,
                 from: Math.max(Math.floor(player.currentTime), asked.from),
+                startedBecause: 'retried',
               }));
             }}
             onSignIn={() => {

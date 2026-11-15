@@ -12,6 +12,7 @@ const NOTHING_SHARED: LinkSharing = {
   allowsDownloads: false,
   takesTheirRequests: false,
   playsDirect: false,
+  invitesTheirPeople: true,
 };
 
 export { NOTHING_SHARED };

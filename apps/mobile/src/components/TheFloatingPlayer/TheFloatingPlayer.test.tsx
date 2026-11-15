@@ -8,6 +8,15 @@ import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { aFakeAudiobookPlayer } from '@ValenceMobile/testing/aFakeAudiobookPlayer';
 import { TheFloatingPlayer } from './TheFloatingPlayer';
+import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
+
+jest.mock('@ValenceMobile/hooks/usePictureLights', () => {
+  const { usePictureLights: actual } = jest.requireActual<{
+    usePictureLights: typeof usePictureLights;
+  }>('@ValenceMobile/hooks/usePictureLights');
+
+  return { usePictureLights: jest.fn(actual) };
+});
 
 let mockFake = aFakeAudiobookPlayer();
 
@@ -30,6 +39,19 @@ describe('TheFloatingPlayer', () => {
     });
 
     expect(drawn.getByText('Track 1')).toBeTruthy();
+  });
+
+  it('reads ahead the colours of the narrowed cover the player is lit by, not the whole one', async () => {
+    await act(() => {
+      thePhonesMusicPlayer().play([aTrack(1)], 0);
+    });
+    await render(<TheFloatingPlayer isShown liftedBy={0} onOpen={jest.fn()} />, {
+      wrapper: CacheScope,
+    });
+
+    expect(usePictureLights).toHaveBeenLastCalledWith(
+      expect.stringMatching(/\/artwork\?size=small$/u),
+    );
   });
 
   it('carries a book being heard too', async () => {

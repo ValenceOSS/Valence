@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react';
 import type { QueueSource } from '@ValenceClient/music/playQueue';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
+import type { ScreenRows } from '@ValenceMobile/components/Screen/Screen.types';
 
 type ATrackListMissingSong = {
   key: string;
@@ -24,6 +26,7 @@ type ATrackListProps = {
     onMove: (from: number, to: number) => void;
   };
   missing?: readonly ATrackListMissingSong[];
+  drawnIn?: (rows: ScreenRows) => ReactNode;
 };
 
 export type { ATrackListMissingSong, ATrackListProps };

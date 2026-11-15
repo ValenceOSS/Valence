@@ -44,14 +44,29 @@ describe('PartyPanel', () => {
     expect(screen.getByText(/Sam/)).toBeInTheDocument();
   });
 
-  it('counts how many are actually watching, not how many joined', () => {
+  it('counts everybody in the party, watching or not', () => {
     const mixed = party({
       members: [member(), member({ connectionId: 'sam', name: 'Sam', isWatching: false })],
     });
 
     render(<PartyPanel party={mixed} meConnectionId="dan" />);
 
-    expect(screen.getByText(/1 watching/)).toBeInTheDocument();
+    expect(screen.getByText('2 in the party')).toBeInTheDocument();
+  });
+
+  it('says somebody is paused while the whole party is, and not watching only when it plays on', () => {
+    const away = member({ connectionId: 'sam', name: 'Sam', isWatching: false });
+    const { rerender } = render(
+      <PartyPanel party={party({ isPlaying: false, members: [away] })} meConnectionId="dan" />,
+    );
+
+    expect(screen.getByText('Paused')).toBeInTheDocument();
+
+    rerender(
+      <PartyPanel party={party({ isPlaying: true, members: [away] })} meConnectionId="dan" />,
+    );
+
+    expect(screen.getByText('Not watching')).toBeInTheDocument();
   });
 
   it('says who is watching and who is not, since those are different things', () => {
@@ -73,7 +88,7 @@ describe('PartyPanel', () => {
 
     render(<PartyPanel party={mixed} meConnectionId="dan" invitation="https://v/music?party=p" />);
 
-    expect(screen.getByText(/1 listening/)).toBeInTheDocument();
+    expect(screen.getByText('2 in the party')).toBeInTheDocument();
     expect(screen.getByText('Listening')).toBeInTheDocument();
     expect(screen.getByText('Not listening')).toBeInTheDocument();
     expect(screen.getByText(/listen along/)).toBeInTheDocument();
@@ -88,7 +103,7 @@ describe('PartyPanel', () => {
   it('says who is keeping time', () => {
     render(<PartyPanel party={party()} meConnectionId="dan" />);
 
-    expect(screen.getByText('Sync leader')).toBeInTheDocument();
+    expect(screen.getByText('Host · Sync leader')).toBeInTheDocument();
   });
 
   it('draws nobody on a timeline until it knows how long the title is', () => {
@@ -198,8 +213,8 @@ describe('PartyPanel', () => {
   it('says which role each holds', () => {
     render(<PartyPanel party={party()} meConnectionId="dan" />);
 
-    expect(screen.getByText('Host')).toBeInTheDocument();
-    expect(screen.getByText('Guest')).toBeInTheDocument();
+    expect(screen.getByText(/^Host/)).toBeInTheDocument();
+    expect(screen.getByText(/^Guest/)).toBeInTheDocument();
   });
 
   it('lets the host promote somebody', async () => {
@@ -207,7 +222,8 @@ describe('PartyPanel', () => {
     const onSetRole = vi.fn();
 
     render(<PartyPanel party={party()} meConnectionId="dan" onSetRole={onSetRole} />);
-    await actor.click(screen.getByRole('button', { name: 'Make co-host' }));
+    await actor.click(screen.getByRole('button', { name: 'Actions for Sam' }));
+    await actor.click(screen.getByRole('menuitem', { name: /Make co-host/ }));
 
     expect(onSetRole).toHaveBeenCalledWith('sam', 'coHost');
   });
@@ -221,7 +237,7 @@ describe('PartyPanel', () => {
   it('does not offer a guest the switches for loosening it', () => {
     render(<PartyPanel party={party()} meConnectionId="sam" onLoosen={vi.fn()} />);
 
-    expect(screen.queryByRole('switch', { name: /skip around/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /scrub/ })).not.toBeInTheDocument();
   });
 
   it('lets the host withhold skipping while leaving pausing shared', async () => {
@@ -229,15 +245,9 @@ describe('PartyPanel', () => {
     const onLoosen = vi.fn();
 
     render(<PartyPanel party={party()} meConnectionId="dan" onLoosen={onLoosen} />);
-    await actor.click(screen.getByRole('switch', { name: /skip around/ }));
+    await actor.click(screen.getByRole('switch', { name: /scrub/ }));
 
     expect(onLoosen).toHaveBeenCalledWith({ everyoneMaySeek: false });
-  });
-
-  it('explains why skipping is the one worth withholding', () => {
-    render(<PartyPanel party={party()} meConnectionId="dan" onLoosen={vi.fn()} />);
-
-    expect(screen.getByText(/moves everyone to a different point in the film/)).toBeInTheDocument();
   });
 
   it('offers a way out', async () => {
@@ -269,7 +279,7 @@ describe('PartyPanel', () => {
       <PartyPanel party={party()} meConnectionId="dan" invitation="https://valence.local/x" />,
     );
 
-    expect(screen.getByText(/adds them to this party/)).toBeInTheDocument();
+    expect(screen.getByText(/can watch along with this link/)).toBeInTheDocument();
   });
 
   it('copies the link when asked', async () => {
@@ -309,7 +319,8 @@ describe('PartyPanel', () => {
     const onRemove = vi.fn();
 
     render(<PartyPanel party={party()} meConnectionId="dan" onRemove={onRemove} />);
-    await actor.click(screen.getByRole('button', { name: 'Remove Sam from the party' }));
+    await actor.click(screen.getByRole('button', { name: 'Actions for Sam' }));
+    await actor.click(screen.getByRole('menuitem', { name: /Remove Sam from the party/ }));
 
     expect(onRemove).toHaveBeenCalledWith('sam');
   });
@@ -331,7 +342,7 @@ describe('PartyPanel', () => {
     const onSetPassword = vi.fn();
 
     render(<PartyPanel party={party()} meConnectionId="dan" onSetPassword={onSetPassword} />);
-    await actor.type(screen.getByLabelText('Party password'), 'letmein');
+    await actor.type(screen.getByLabelText('Password'), 'letmein');
     await actor.click(screen.getByRole('button', { name: 'Set' }));
 
     expect(onSetPassword).toHaveBeenCalledWith('letmein');
@@ -368,7 +379,7 @@ describe('PartyPanel', () => {
   it('does not offer the password control to a guest', () => {
     render(<PartyPanel party={party()} meConnectionId="sam" onSetPassword={vi.fn()} />);
 
-    expect(screen.queryByLabelText('Party password')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
   });
 
   it('says a party is protected, which is what the host needs to know it worked', () => {
@@ -380,7 +391,7 @@ describe('PartyPanel', () => {
       />,
     );
 
-    expect(screen.getByText(/This party has a password/)).toBeInTheDocument();
+    expect(screen.getByText(/needs it to join/)).toBeInTheDocument();
   });
 
   it('says who the room is waiting for, so a stopped picture is explained', () => {
@@ -424,6 +435,56 @@ describe('PartyPanel', () => {
     await actor.click(screen.getByRole('button', { name: 'Invite Kit' }));
 
     expect(onAsk).toHaveBeenCalledWith('profile-kit');
+  });
+
+  it('shows a household by its own picture rather than its owner profile’s', () => {
+    const { container } = render(
+      <PartyPanel
+        party={party()}
+        meConnectionId="dan"
+        people={[
+          {
+            id: 'profile-ones',
+            name: 'The Ones',
+            avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+            updatedAt: '2026-11-15T10:00:00.000Z',
+            pictureUrl: '/api/profiles/profile-ones/household?v=1',
+          },
+        ]}
+        onAsk={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('img[src*="/household"]')).not.toBeNull();
+    expect(container.querySelector('img[src*="profile-ones/avatar"]')).toBeNull();
+  });
+
+  it('heads the people from each linked server with where they are from, by their own name', () => {
+    render(
+      <PartyPanel
+        party={party()}
+        meConnectionId="dan"
+        people={[
+          { id: 'profile-kit', name: 'Kit' },
+          {
+            id: 'peer~films~nino',
+            name: 'Nino from KKONAW',
+            ownName: 'Nino',
+            server: { id: 'films', name: 'KKONAW' },
+          },
+        ]}
+        onAsk={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Members from KKONAW')).toBeInTheDocument();
+    expect(screen.getByText('Nino')).toBeInTheDocument();
+    expect(screen.queryByText('Nino from KKONAW')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Invite Nino from KKONAW' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Kit').compareDocumentPosition(screen.getByText('Members from KKONAW')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('does not offer to ask along somebody already in the party', () => {

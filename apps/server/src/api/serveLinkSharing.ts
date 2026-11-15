@@ -25,6 +25,7 @@ import { peerMayReach } from '@ValenceServer/linking/peerMayReach';
 import { innerAddressOf } from '@ValenceServer/linking/innerAddressOf';
 import { whatAPeerMayAsk } from '@ValenceServer/linking/whatAPeerMayAsk';
 import { PEER_MEMBER } from '@ValenceServer/linking/parties/PEER_MEMBER';
+import { inNameOrder } from '@ValenceServer/linking/parties/inNameOrder';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { AskedAlongSchema } from '@ValenceContracts/schemas/LinkSharing';
 import { MediaRequestAskSchema } from '@ValenceContracts/schemas/MediaRequest';
@@ -44,6 +45,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { saying } from '@ValenceI18n/saying';
 import { say } from '@ValenceI18n/say';
+import { PlaybackHealthSchema } from '@ValenceServer/presence/PlaybackHealthSchema';
 
 type Admitted = Extract<Admission, { kind: 'admitted' }>;
 
@@ -62,7 +64,10 @@ const StartedSchema = z.object({
   delivery: z.object({ kind: z.enum(['hls', 'direct']) }),
 });
 
-const BeatSchema = z.object({ isPlaying: z.boolean() });
+const BeatSchema = z.object({
+  isPlaying: z.boolean(),
+  health: PlaybackHealthSchema.optional(),
+});
 
 const PartySaySchema = z.object({
   connection: z.string().min(1).max(100),
@@ -489,20 +494,27 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       servers
         .filter((server) => server.state === 'linked')
         .map(async (server) =>
-          (await linkSharingStore.listPeople(server.id)).flatMap((person) =>
-            person.name === null || person.blockedAt !== null
-              ? []
-              : [
-                  {
-                    id: `${PEER_MEMBER}${server.id}~${person.id}`,
-                    name: say('common.nameFromServer', { name: person.name, server: server.name }),
-                  },
-                ],
-          ),
+          (await linkSharingStore.readSharing(server.id))?.invitesTheirPeople !== true
+            ? []
+            : (await linkSharingStore.listPeople(server.id)).flatMap((person) =>
+                person.name === null || person.blockedAt !== null
+                  ? []
+                  : [
+                      {
+                        id: `${PEER_MEMBER}${server.id}~${person.id}`,
+                        name: say('common.nameFromServer', {
+                          name: person.name,
+                          server: server.name,
+                        }),
+                        ownName: person.name,
+                        server: { id: server.id, name: server.name },
+                      },
+                    ],
+              ),
         ),
     );
 
-    return context.json({ people: people.flat() }, 200);
+    return context.json({ people: inNameOrder(people.flat()) }, 200);
   });
 
   app.openapi(catalogueRoute, async (context) => {
@@ -647,7 +659,11 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       const beat = BeatSchema.safeParse(jsonIn(sent));
 
       if (beat.success) {
-        presence.heartbeatPlayback(viewerOf(who.serverId, beating), beat.data.isPlaying);
+        presence.heartbeatPlayback(
+          viewerOf(who.serverId, beating),
+          beat.data.isPlaying,
+          beat.data.health,
+        );
       }
 
       const waiting = asking.get(beating) ?? [];

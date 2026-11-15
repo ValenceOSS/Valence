@@ -221,6 +221,9 @@ const atLeastStereo = (claimed: number): number =>
  * never said it. A viewer who wants less than the file pins a quality step, which is a ceiling
  * somebody actually chose.
  *
+ * Surround is asked for in Dolby Digital Plus where the browser's own decoders take it, as Safari's
+ * do, so a DTS film is converted to what a receiver behind it understands rather than to AAC.
+ *
  * @param capabilities - What the browser reported it can decode.
  * @returns The profile to send with a session request.
  */
@@ -265,6 +268,7 @@ const detectDeviceProfile = ({
     maxHeight: Math.max(screenHeight, 480),
     ...(maxBitrateKbps === undefined ? {} : { maxBitrateKbps }),
     maxAudioChannels: atLeastStereo(maxAudioChannels),
+    ...(audio.includes('eac3') ? { surroundAudioCodec: 'eac3' } : {}),
     supportedVideoRanges: supportsHdr ? ['SDR', 'HDR10', 'HLG'] : ['SDR'],
     tenBitVideoCodecs,
     maxVideoLevels: {

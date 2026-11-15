@@ -182,8 +182,12 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
     track === null || !track.album.hasArtwork
       ? null
       : onThisServer(albumArtworkUrl(track.album.id));
-  const lights = usePictureLights(cover);
-  const tint = usePictureTint(cover);
+  const coverToRead =
+    track === null || !track.album.hasArtwork
+      ? null
+      : onThisServer(albumArtworkUrl(track.album.id, 'small'));
+  const lights = usePictureLights(coverToRead);
+  const tint = usePictureTint(coverToRead);
   const cache = useQueryClient();
   const playlists = useQuery(musicQueries.playlists()).data;
   const mine = (playlists ?? []).filter((playlist) => playlist.isMine && !playlist.isSmart);

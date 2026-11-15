@@ -33,10 +33,11 @@ type WatchPartyState = {
   notice: string | null;
   passwordWanted: PasswordWanted | null;
   meConnectionId: string | null;
+  startedHere: string | null;
   referenceSeconds: number | null;
   waitingFor: readonly string[];
   jitterMs: number;
-  open: (mediaId: string, kind?: PartyKind) => void;
+  open: (mediaId: string, kind?: PartyKind, isPlaying?: boolean) => void;
   join: (partyId: string, password?: string) => void;
   leave: () => void;
   send: PartyClient['send'];
@@ -112,7 +113,8 @@ const readRoom = (
  * else the moment one was refused. A party this tab is not a member of is no party of its own, so
  * an answer to a join that arrives after it has left does not put it back in, and leaving also
  * drops a join still waiting for the socket. A profile let go of leaves its party, so the socket
- * opened for whoever is next does not join them to it.
+ * opened for whoever is next does not join them to it. Which party this tab started is kept, so
+ * whatever shows the party can open itself on it once, and not on one joined from a link.
  *
  * @param client - The shared socket, injectable for tests.
  * @returns The party and the ways of acting on it.
@@ -125,6 +127,9 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
   const [passwordWanted, setPasswordWanted] = useState<PasswordWanted | null>(null);
   const [room, setRoom] = useState<RoomClock>(NOTHING_HEARD);
   const [chat, setChat] = useState<readonly PartyChatLine[]>(NO_CHAT);
+  const [meConnectionId, setMeConnectionId] = useState<string | null>(null);
+  const [startedHere, setStartedHere] = useState<string | null>(null);
+  const isStartingRef = useRef(false);
   const partyRef = useRef<PartyClient | null>(null);
   const inPartyRef = useRef<string | null>(null);
   const waitingToJoinRef = useRef<{ partyId: string; password?: string } | null>(null);
@@ -139,6 +144,7 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
       watcher: {
         onParty: (told) => {
           const me = client.connectionId();
+          setMeConnectionId(me);
           const isIn =
             me === null
               ? told.members.length > 0
@@ -147,6 +153,11 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
 
           if (now === null || !now.chatIsOn || now.id !== toldRef.current.party?.id) {
             setChat(NO_CHAT);
+          }
+
+          if (now !== null && isStartingRef.current) {
+            isStartingRef.current = false;
+            setStartedHere(now.id);
           }
 
           toldRef.current = { ...toldRef.current, party: now };
@@ -231,10 +242,9 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
     [client],
   );
 
-  const meConnectionId = client.connectionId();
-
-  const open = useCallback((mediaId: string, kind?: PartyKind) => {
-    partyRef.current?.open(mediaId, kind);
+  const open = useCallback((mediaId: string, kind?: PartyKind, isPlaying?: boolean) => {
+    isStartingRef.current = true;
+    partyRef.current?.open(mediaId, kind, isPlaying);
   }, []);
 
   const join = useCallback((partyId: string, password?: string) => {
@@ -323,6 +333,7 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
     notice,
     passwordWanted,
     meConnectionId,
+    startedHere,
     referenceSeconds: room.referenceSeconds,
     waitingFor: room.waitingFor,
     jitterMs: room.jitterMs,

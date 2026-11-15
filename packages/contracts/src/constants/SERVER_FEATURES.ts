@@ -12,6 +12,7 @@ const SERVER_FEATURES = [
   'books.bookmarks',
   'library.homeShelves',
   'library.pickedForYou',
+  'library.largeArtwork',
 ] as const;
 
 export { SERVER_FEATURES };

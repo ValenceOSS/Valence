@@ -36,7 +36,10 @@ import {
   TheirLibrariesSchema,
 } from '@ValenceContracts/schemas/LinkSharing';
 import { LibrarySchema } from '@ValenceContracts/schemas/Library';
-import type { Library } from '@ValenceContracts/schemas/Library';
+import type { Library, MediaDetail } from '@ValenceContracts/schemas/Library';
+import { aJellyfinDetail } from '@ValenceServer/jellyfin/testing/aJellyfinDetail';
+import { aJellyfinFilm } from '@ValenceServer/jellyfin/testing/aJellyfinFilm';
+import { aDeviceProfile } from '@ValenceServer/testing/aDeviceProfile';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 
@@ -66,6 +69,7 @@ const aNetwork = () => {
     granted: readonly Permission[] = ['administrator'],
     libraries: readonly Library[] = [],
     extra: Partial<NonNullable<CreateAppOptions['linking']>> = {},
+    media: readonly MediaDetail[] = [],
   ) => {
     const { auth, settings, store } = createMemoryAuth();
     const permissions = createMemoryPermissionService();
@@ -106,8 +110,11 @@ const aNetwork = () => {
       },
       countUsers: () => Promise.resolve(1),
       promoteToAdmin: () => Promise.resolve(null),
-      library: createMemoryLibraryService({ libraries: [...libraries], media: [] }),
-      playback: createMemoryPlaybackService(),
+      library: createMemoryLibraryService({ libraries: [...libraries], media: [...media] }),
+      playback: createMemoryPlaybackService({
+        media: Object.fromEntries(media.map((item) => [item.id, item])),
+        sessions: {},
+      }),
       segments: createMemorySegmentService(),
       subtitles: createMemorySubtitleService({}),
       progress: createMemoryWatchProgressService(),
@@ -541,6 +548,83 @@ describe('the linked server routes', () => {
     ]);
   });
 
+  it('shows where somebody from a linked server has got, as their server says', async () => {
+    const network = aNetwork();
+    const title = '00000000-0000-4000-8000-0000000000c2';
+    const film = aJellyfinDetail(aJellyfinFilm({ id: title, libraryId: FILMS.id }));
+    const anime = await network.serverAt(
+      'https://anime.example',
+      ['administrator'],
+      [FILMS],
+      {
+        subjectOf: ({ id }) =>
+          Promise.resolve(
+            id === title
+              ? {
+                  id,
+                  title: 'Arrival',
+                  libraryId: FILMS.id,
+                  certificationAge: 12,
+                  isNeverRated: false,
+                }
+              : null,
+          ),
+      },
+      [film],
+    );
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+    const marques = { profileId: 'profile-1', name: 'Marques' };
+    const health = {
+      positionSeconds: 1200,
+      durationSeconds: 8500,
+      bufferedAheadSeconds: 60,
+      presentedWidth: 1920,
+      presentedHeight: 800,
+    };
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      libraryIds: [FILMS.id],
+    });
+
+    const started = z
+      .object({ sessionId: z.string() })
+      .parse(
+        await (
+          await films.askAt(
+            hostAtGuest,
+            `/api/playback/${title}/session`,
+            'POST',
+            { deviceProfile: aDeviceProfile() },
+            marques,
+          )
+        ).json(),
+      );
+
+    await films.askAt(
+      hostAtGuest,
+      `/api/playback/session/${started.sessionId}/heartbeat`,
+      'POST',
+      { isPlaying: true, health },
+      marques,
+    );
+
+    const sessions = z
+      .array(
+        z.object({
+          fromServer: z.string().nullable(),
+          playback: z
+            .object({ health: z.object({ positionSeconds: z.number() }).nullable() })
+            .nullable(),
+        }),
+      )
+      .parse(await (await anime.request('/api/admin/sessions')).json());
+
+    expect(sessions.find((session) => session.fromServer !== null)?.playback?.health).toEqual({
+      positionSeconds: 1200,
+    });
+  });
+
   it('stops honouring a ticket once the title is no longer shared, or the server is unlinked', async () => {
     const network = aNetwork();
     const title = '00000000-0000-4000-8000-0000000000c1';
@@ -603,6 +687,7 @@ describe('the linked server routes', () => {
       allowsDownloads: true,
       takesTheirRequests: true,
       playsDirect: true,
+      invitesTheirPeople: false,
     });
 
     expect(LinkSharingSchema.parse(await changed.json())).toMatchObject({
@@ -612,6 +697,7 @@ describe('the linked server routes', () => {
       allowsDownloads: true,
       takesTheirRequests: true,
       playsDirect: true,
+      invitesTheirPeople: false,
     });
   });
 
@@ -668,9 +754,39 @@ describe('the linked server routes', () => {
       await (await anime.request(`/api/linked-servers/${guestAtHost}/people`)).json(),
     ).people;
 
-    expect((await askable()).map((person) => person.name)).toEqual(['Sam from films.example']);
+    expect(await askable()).toEqual([
+      expect.objectContaining({
+        name: 'Sam from films.example',
+        ownName: 'Sam',
+        server: { id: guestAtHost, name: 'films.example' },
+      }),
+    ]);
 
     await anime.request(`/api/linked-servers/${guestAtHost}/people/${sam?.id ?? ''}/block`, 'PUT');
+
+    expect(await askable()).toEqual([]);
+  });
+
+  it('names nobody from a linked server whose people this server chose not to invite', async () => {
+    const network = aNetwork();
+    const anime = await network.serverAt('https://anime.example');
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+
+    await films.askAt(hostAtGuest, '/libraries', 'GET', undefined, {
+      profileId: 'sam',
+      name: 'Sam',
+    });
+
+    const askable = async () =>
+      AskableElsewhereSchema.parse(await (await anime.request('/api/linked-servers/people')).json())
+        .people;
+
+    expect(await askable()).toHaveLength(1);
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      invitesTheirPeople: false,
+    });
 
     expect(await askable()).toEqual([]);
   });

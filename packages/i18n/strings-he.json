@@ -6053,11 +6053,6 @@
     "context": "The host's switch that turns a watch party's chat on (from `PartyChat`)."
   },
   {
-    "handler": "common.partyChat.keptForTheParty",
-    "text": "ההודעות נשמרות רק כל עוד המסיבה נמשכת, ונמחקות כשהצ'אט כבה.",
-    "context": "Under the chat switch (from `PartyChat`)."
-  },
-  {
     "handler": "common.partyChat.nothingSaidYet",
     "text": "עדיין לא נכתב דבר.",
     "context": "Shown in a watch party's chat before anybody has written (from `PartyChat`)."
@@ -6078,14 +6073,24 @@
     "context": "The heading of a popover panel in the party menu."
   },
   {
-    "handler": "common.partyMenu.watchPartyWatchingWatching",
-    "text": "מסיבת צפייה · {watching} צופים",
-    "context": "Shown in the party menu. {watching} is filled in by the app."
+    "handler": "common.partyMenu.watchPartyCountInTheParty",
+    "text": "Watch party · {count} in the party",
+    "context": "The name of the watch party button while there is a party. {count} is how many people have joined it."
   },
   {
     "handler": "common.partyMenu.watchThisWithOtherPeopleHere",
     "text": "צפה יחד עם אנשים אחרים בשרת הזה, בסנכרון. תקבל קישור לשליחה אליהם, וכל מי שמפעיל, משהה או מדלג, זה קורה אצל כולם.",
     "context": "Text shown in the party menu."
+  },
+  {
+    "handler": "common.partyPanel.anyoneHereCanListenAlong",
+    "text": "Anyone with an account here can listen along with this link.",
+    "context": "Explains the invitation link of a listening party."
+  },
+  {
+    "handler": "common.partyPanel.anyoneHereCanWatchAlong",
+    "text": "Anyone with an account here can watch along with this link.",
+    "context": "Explains the invitation link of a watch party."
   },
   {
     "handler": "common.partyPanel.aPasswordAsksAnybodyOpeningThe",
@@ -6125,43 +6130,23 @@
     "context": "The title of a panel card in the party panel."
   },
   {
-    "handler": "common.partyPanel.countListening.one",
-    "text": "{count} מאזין",
-    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
+    "handler": "common.partyPanel.countInTheParty.one",
+    "text": "{count} in the party",
+    "context": "The title of a party's panel: how many people have joined it. {count} is the number."
   },
   {
-    "handler": "common.partyPanel.countListening.two",
-    "text": "שניים מאזינים",
-    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
+    "handler": "common.partyPanel.countInTheParty.other",
+    "text": "{count} in the party",
+    "context": "The title of a party's panel: how many people have joined it. {count} is the number."
   },
   {
-    "handler": "common.partyPanel.countListening.other",
-    "text": "{count} מאזינים",
-    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
-  },
-  {
-    "handler": "common.partyPanel.countWatching.one",
-    "text": "{count} צופה",
-    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
-  },
-  {
-    "handler": "common.partyPanel.countWatching.two",
-    "text": "שניים צופים",
-    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
-  },
-  {
-    "handler": "common.partyPanel.countWatching.other",
-    "text": "{count} צופים",
-    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
-  },
-  {
-    "handler": "common.partyPanel.everyoneCanPlayAndPause",
-    "text": "כולם יכולים להפעיל ולהשהות",
+    "handler": "common.partyPanel.everyoneCanPlayPause",
+    "text": "Everyone can play/pause",
     "context": "The label of a switch in the party panel."
   },
   {
-    "handler": "common.partyPanel.everyoneCanSkipAround",
-    "text": "כולם יכולים לדלג",
+    "handler": "common.partyPanel.everyoneCanScrub",
+    "text": "Everyone can scrub",
     "context": "The label of a switch in the party panel."
   },
   { "handler": "common.partyPanel.guest", "text": "אורח", "context": "Shown in the party panel." },
@@ -6192,6 +6177,11 @@
     "context": "Shown in the party panel."
   },
   {
+    "handler": "common.partyPanel.membersFromServer",
+    "text": "Members from {server}",
+    "context": "Heading over the people from one linked server in a watch party's invite list. {server} is that server's name."
+  },
+  {
     "handler": "common.partyPanel.nameYou",
     "text": "{name} (אתה)",
     "context": "A member of a watch or listening party, marked as the person reading the list."
@@ -6212,11 +6202,6 @@
     "context": "Shown in the party panel."
   },
   {
-    "handler": "common.partyPanel.partyPassword",
-    "text": "סיסמת המסיבה",
-    "context": "The label of a text field in the party panel."
-  },
-  {
     "handler": "common.partyPanel.removeNameFromTheParty",
     "text": "הסרת {name} מהמסיבה",
     "context": "The label of a button in the party panel. {name} is filled in by the app."
@@ -6232,16 +6217,6 @@
     "context": "How far a member of a watch party is behind whoever keeps time."
   },
   {
-    "handler": "common.partyPanel.sendThisToListenAlong",
-    "text": "שלח את זה לכל מי שיש לו חשבון בשרת הזה. זה יוסיף אותו למסיבה כדי להאזין יחד.",
-    "context": "Explains the invitation link of a listening party."
-  },
-  {
-    "handler": "common.partyPanel.sendThisToWatchAlong",
-    "text": "שלח את זה לכל מי שיש לו חשבון בשרת הזה. זה יוסיף אותו למסיבה כדי לצפות יחד.",
-    "context": "Explains the invitation link of a watch party."
-  },
-  {
     "handler": "common.partyPanel.set",
     "text": "הגדרה",
     "context": "The label of a button in the party panel."
@@ -6255,11 +6230,6 @@
     "handler": "common.partyPanel.shareTheInvitation",
     "text": "שיתוף קישור הזמנה",
     "context": "Opens the system's share sheet with the link that puts somebody in this party."
-  },
-  {
-    "handler": "common.partyPanel.skippingIsTheDisruptiveOneA",
-    "text": "דילוג הוא הפקד המפריע ביותר, כי גרירה מקרית אחת מעבירה את כולם לנקודה אחרת בסרט. אפשר לכבות אותו ועדיין לאפשר לכולם להשהות.",
-    "context": "Text shown in the party panel."
   },
   {
     "handler": "common.partyPanel.thisPartyHasAPasswordAnybody",
@@ -10806,6 +10776,11 @@
     "handler": "error.playback.thisAccountIsAlreadyStreaming",
     "text": "החשבון הזה כבר מזרים את המספר המקסימלי של פעמים בו זמנית ({count}). עצור אחד מהאחרים כדי לנגן את זה.",
     "context": "A refusal the server answers with (HTTP 429) when an account's simultaneous-stream limit stops a stream. {count} is the limit (from `servePlayback`)."
+  },
+  {
+    "handler": "error.playback.tooManyNotes",
+    "text": "This device has sent too many playback notes lately.",
+    "context": "An error the server answers with (HTTP 429) in the app on the server (from `servePlayback`), when a device sends too many notes of things its player put right by itself, such as recovering from a failure."
   },
   {
     "handler": "error.playback.tooManyProblemReports",
@@ -21858,6 +21833,11 @@
     "context": "Card title: making an invite for another Valence's admin."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.inviteTheirPeopleToParties",
+    "text": "Invite their people to watch parties",
+    "context": "Setting: whether this server's people may invite a linked server's people to a watch party here."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.lastHeardFrom",
     "text": "נשמע לאחרונה",
     "context": "Column heading in the list of linked servers: when each last answered."
@@ -22233,6 +22213,11 @@
     "context": "Explains a linked server's age limit."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.turnedOffNamesPeopleAreLeftOut",
+    "text": "Turned off, {name}’s people are left out of the invite list in a watch party, and an invitation to them is refused. You still see what they watch here.",
+    "context": "More detail on the watch party invitation setting for a linked server. {name} is that server."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.unlink",
     "text": "נתק קישור",
     "context": "Button and confirmation ending a link with another server."
@@ -22301,6 +22286,11 @@
     "handler": "screens.adminArea.linkedServersPanel.youApproveThem",
     "text": "אתה מאשר אותם",
     "context": "Third step of linking servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.yourPeopleCanInviteNamesPeople",
+    "text": "Your people can invite {name}’s people to a watch party here.",
+    "context": "Explains the watch party invitation setting for a linked server. {name} is that server."
   },
   {
     "handler": "screens.adminArea.liveTvPanel.addALiveTvSource",

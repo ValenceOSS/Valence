@@ -73,13 +73,19 @@ describe('federationReachOf', () => {
     });
   });
 
-  it('names a session or set of thumbnails the asking server started', () => {
+  it('names a session or set of thumbnails the asking server started, and its heartbeat', () => {
     expect(federationReachOf('GET', `${AT}/api/playback/session/abc/index.m3u8`)).toEqual({
       kind: 'claimed',
       action: 'media',
       claim: 'session',
       id: 'abc',
       inner: '/api/playback/session/abc/index.m3u8',
+      isAHeartbeat: false,
+    });
+    expect(federationReachOf('POST', `${AT}/api/playback/session/abc/heartbeat`)).toMatchObject({
+      claim: 'session',
+      id: 'abc',
+      isAHeartbeat: true,
     });
     expect(federationReachOf('DELETE', `${AT}/api/playback/session/abc`)).toMatchObject({
       claim: 'session',

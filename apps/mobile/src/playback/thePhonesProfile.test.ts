@@ -30,6 +30,10 @@ describe('thePhonesProfile', () => {
     expect(thePhonesProfile().maxAudioChannels).toBeGreaterThan(2);
   });
 
+  it('asks for surround it cannot play, such as DTS, in Dolby Digital Plus', () => {
+    expect(thePhonesProfile().surroundAudioCodec).toBe('eac3');
+  });
+
   it('takes ten-bit hevc, which is most of what a library holds in hdr', () => {
     expect(thePhonesProfile().tenBitVideoCodecs).toContain('hevc');
   });
@@ -67,6 +71,10 @@ describe('thePhonesProfile', () => {
 
     it('takes AAC alone as it is, since Dolby audio is not on every Android phone', () => {
       expect(thePhonesProfile().directPlayProfiles[0]?.audioCodecs).toEqual(['aac']);
+    });
+
+    it('asks for no Dolby Digital Plus in place of AAC, for the same reason', () => {
+      expect(thePhonesProfile().surroundAudioCodec).toBeUndefined();
     });
 
     it('asks for transport streams when transcoded, whose timing its player reads', () => {

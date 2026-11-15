@@ -1,12 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
-import { withAlpha } from '@ValenceCore/functions/withAlpha';
+import { useEffect, useMemo, useState } from 'react';
+import { Animated, StyleSheet } from 'react-native';
+import { bloomsOf } from '@ValenceMobile/components/AMoodBackground/components/APaletteLayer/bloomsOf';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { APaletteLayerProps } from './APaletteLayer.types';
-
-const STRENGTH_BY_ROW = [0.36, 0.28, 0.22] as const;
-
-const ACROSS = 4;
 
 const COMES_IN_OVER = 1200;
 
@@ -15,20 +11,29 @@ const styles = StyleSheet.create({
 });
 
 /**
- * One set of lights read from a picture, each a bloom of its colour where it was read — brighter
- * along the top, softer towards the foot, as the web weighs them — fading in as it arrives and out
- * as the next set replaces it, so the two cross rather than one being laid over the other and then
- * taken away.
+ * One set of lights read from a picture, laid out as the web's mood background lays out its orbs —
+ * a bloom of each colour where it was read, as strong as it is vivid and fainter towards the foot —
+ * and drawn once, as one background, fading in as it arrives and out as the next set replaces it,
+ * so the two cross rather than one being laid over the other and then taken away. While it fades it
+ * is kept as one picture, so only how much of it shows changes from frame to frame.
  *
- * @param palette - The lights, in rows of four from the top.
+ * @param palette - The lights, in rows of six from the top.
  * @param isLeaving - Whether it is being replaced, and so fading out.
  * @param isThereAlready - Whether it was there when the background was drawn, and so is lit from the
  *   start rather than fading in.
  */
 const APaletteLayer = ({ palette, isLeaving, isThereAlready = false }: APaletteLayerProps) => {
   const [shown] = useState(() => new Animated.Value(isThereAlready ? 1 : 0));
+  const [isFading, setIsFading] = useState(!isThereAlready);
+  const blooms = useMemo(() => bloomsOf(palette), [palette]);
 
   useEffect(() => {
+    if (isThereAlready && !isLeaving) {
+      return undefined;
+    }
+
+    setIsFading(true);
+
     const fading = Animated.timing(shown, {
       toValue: isLeaving ? 0 : 1,
       duration: COMES_IN_OVER,
@@ -36,31 +41,27 @@ const APaletteLayer = ({ palette, isLeaving, isThereAlready = false }: APaletteL
       useNativeDriver: true,
     });
 
-    fading.start();
+    fading.start(({ finished }) => {
+      if (finished) {
+        setIsFading(false);
+      }
+    });
 
     return () => {
       fading.stop();
     };
-  }, [shown, isLeaving]);
+  }, [shown, isLeaving, isThereAlready]);
 
   return (
-    <Animated.View style={[styles.fills, { opacity: shown }]}>
-      {palette.map((light, at) => {
-        const strength = STRENGTH_BY_ROW[Math.floor(at / ACROSS)] ?? STRENGTH_BY_ROW[2];
-
-        return (
-          <View
-            key={`${light.at}:${light.colour}`}
-            style={[
-              styles.fills,
-              {
-                experimental_backgroundImage: `radial-gradient(ellipse 60% 30% at ${light.at}, ${withAlpha(light.colour, strength)}, transparent 70%)`,
-              },
-            ]}
-          />
-        );
-      })}
-    </Animated.View>
+    <Animated.View
+      style={[
+        styles.fills,
+        blooms === null ? null : { experimental_backgroundImage: blooms },
+        { opacity: shown },
+      ]}
+      shouldRasterizeIOS={isFading}
+      renderToHardwareTextureAndroid={isFading}
+    />
   );
 };
 

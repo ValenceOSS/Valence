@@ -351,8 +351,8 @@ const AppShell = ({
     {
       id: 'downloads',
       label: say('common.downloads'),
-      icon: <Icon of={DownloadFilledIcon} size={20} />,
-      activeIcon: <Icon of={DownloadFilledIcon} size={20} />,
+      icon: <Icon of={DownloadFilledIcon} size={22} />,
+      activeIcon: <Icon of={DownloadFilledIcon} size={22} />,
       gesture: 'settle' as const,
       isCurrent: isDownloadsOpen,
       onSelect: onOpenDownloads,
@@ -381,6 +381,7 @@ const AppShell = ({
                       label={say('screens.appShell.chooseSomethingAtRandom')}
                       align="center"
                       look="face"
+                      className="size-8.5 coarse:size-11"
                       trigger={<Icon of={Dice5FilledIcon} size={20} />}
                       groups={[
                         {

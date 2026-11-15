@@ -43,7 +43,8 @@ const party = (over?: Partial<WatchParty>): WatchParty => ({
   ...over,
 });
 
-const createWorld = (meConnectionId = 'sam') => {
+const createWorld = (meConnectionId: string | null = 'sam') => {
+  let me = meConnectionId;
   const sent: { kind: string; partyId?: string }[] = [];
   const resumed: (() => void)[] = [];
   let heard: ((event: RealtimeEvent) => void) | null = null;
@@ -70,7 +71,7 @@ const createWorld = (meConnectionId = 'sam') => {
       return () => {};
     },
     isLive: () => true,
-    connectionId: () => meConnectionId,
+    connectionId: () => me,
     sendParty: (message) => {
       sent.push(message);
     },
@@ -89,6 +90,9 @@ const createWorld = (meConnectionId = 'sam') => {
   return {
     client,
     sent,
+    welcome: (connectionId: string) => {
+      me = connectionId;
+    },
     resume: () => {
       for (const run of resumed) {
         run();
@@ -158,6 +162,38 @@ describe('useWatchParty', () => {
     });
 
     expect(result.current.party?.id).toBe('party-1');
+  });
+
+  it('knows which member it is when the socket says so only after it first drew', () => {
+    const world = createWorld(null);
+    const { result } = renderHook(() => useWatchParty(world.client));
+
+    expect(result.current.meConnectionId).toBeNull();
+
+    act(() => {
+      world.welcome('sam');
+      world.tell(party());
+    });
+
+    expect(result.current.meConnectionId).toBe('sam');
+  });
+
+  it('knows which party it started itself, and not one it joined', () => {
+    const world = createWorld();
+    const { result } = renderHook(() => useWatchParty(world.client));
+
+    act(() => {
+      world.tell(party({ id: 'joined' }));
+    });
+
+    expect(result.current.startedHere).toBeNull();
+
+    act(() => {
+      result.current.open('a-film');
+      world.tell(party({ id: 'started' }));
+    });
+
+    expect(result.current.startedHere).toBe('started');
   });
 
   it('reads the timekeeper as where they will be now, not where they were when they said so', () => {

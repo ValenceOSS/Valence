@@ -118,6 +118,9 @@ const useChromecast = (ask: AChromecastAsk): AChromecast => {
       undefined,
       now.burnInSubtitleId,
       true,
+      undefined,
+      undefined,
+      'cast',
     )
       .then(async (outcome) => {
         if (outcome.kind !== 'started') {

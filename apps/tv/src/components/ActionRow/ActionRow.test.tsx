@@ -1,4 +1,5 @@
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
+import { Text } from 'react-native';
 import { Play } from '@keyline-icons/react-native';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -19,6 +20,14 @@ describe('ActionRow', () => {
 
     expect(drawn.getByText('1.4 Mbps')).toBeTruthy();
     expect(drawn.getByRole('button', { name: '720p, 1.4 Mbps' })).toBeTruthy();
+  });
+
+  it('leads with a face in place of an icon, for a line about a person', async () => {
+    const drawn = await render(
+      <ActionRow label="Invite Kim" icon={Play} face={<Text>K</Text>} onPress={jest.fn()} />,
+    );
+
+    expect(drawn.getByText('K')).toBeTruthy();
   });
 
   it('is passed by where it is not to be pressed', async () => {

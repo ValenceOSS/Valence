@@ -4,7 +4,35 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { fetchCollections } from '@ValenceClient/collections/fetchCollections';
+import type { useHomeRows } from '@ValenceClient/library/useHomeRows';
+import { AHomeShelf } from '@ValenceMobile/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf';
+import { TheFeatured } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/TheFeatured';
+import { aTitle } from '@ValenceMobile/testing/aTitle';
 import { TheHome } from './TheHome';
+
+const mockRows: { made: (() => ReturnType<typeof useHomeRows>) | null } = { made: null };
+
+jest.mock('@ValenceClient/library/useHomeRows', () => {
+  const { useHomeRows: actual } = jest.requireActual<{ useHomeRows: typeof useHomeRows }>(
+    '@ValenceClient/library/useHomeRows',
+  );
+
+  return {
+    useHomeRows: (...asked: Parameters<typeof useHomeRows>) =>
+      mockRows.made === null ? actual(...asked) : mockRows.made(),
+  };
+});
+
+jest.mock(
+  '@ValenceMobile/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf',
+  () => ({ AHomeShelf: jest.fn(() => null) }),
+);
+
+jest.mock('@ValenceMobile/components/TheLibrary/components/TheFeatured/TheFeatured', () => {
+  const { Text: Said } = jest.requireActual<{ Text: typeof Text }>('react-native');
+
+  return { TheFeatured: jest.fn(() => <Said>Featured</Said>) };
+});
 
 jest.mock('@ValenceClient/collections/fetchCollections', () => ({
   ...jest.requireActual<object>('@ValenceClient/collections/fetchCollections'),
@@ -20,13 +48,13 @@ const aHome = (librariesAre: 'reading' | 'missing' | 'there') => (
     onLookAt={jest.fn()}
     onLookAtShow={jest.fn()}
     onShowing={jest.fn()}
-    onClip={jest.fn()}
   />
 );
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
   jest.mocked(fetchCollections).mockResolvedValue([]);
+  mockRows.made = null;
 });
 
 describe('TheHome', () => {
@@ -79,7 +107,6 @@ describe('TheHome', () => {
         onLookAt={jest.fn()}
         onLookAtShow={jest.fn()}
         onShowing={jest.fn()}
-        onClip={jest.fn()}
         onScrolled={onScrolled}
       />,
       { wrapper: CacheScope },
@@ -91,6 +118,57 @@ describe('TheHome', () => {
     await fireEvent.scroll(drawn.getByText('Above'), scrolledTo(0));
 
     expect(onScrolled.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it('hands the shelves the same flags while the flags stay the same, however often they are rebuilt', async () => {
+    const fresh = aTitle({ addedAt: new Date().toISOString() });
+
+    mockRows.made = () => ({
+      rails: [{ id: 'new', title: 'New', items: [fresh] }],
+      isReading: false,
+      hasMore: false,
+      isReadingMore: false,
+      showMore: jest.fn(),
+    });
+    jest.mocked(AHomeShelf).mockClear();
+
+    const drawn = await render(aHome('there'), { wrapper: CacheScope });
+
+    await drawn.rerender(aHome('there'));
+    await drawn.rerender(aHome('there'));
+
+    const flags = jest.mocked(AHomeShelf).mock.calls.map(([shelf]) => shelf.flagOf);
+
+    expect(flags.length).toBeGreaterThan(1);
+    expect(new Set(flags).size).toBe(1);
+    expect(flags[0]?.(fresh)).not.toBeNull();
+  });
+
+  it('stops the hero only once it has been scrolled out of view, and starts it once it is back', async () => {
+    jest.mocked(TheFeatured).mockClear();
+    const drawn = await render(aHome('there'), { wrapper: CacheScope });
+    const scrolledTo = (y: number) => ({ nativeEvent: { contentOffset: { y } } });
+
+    await fireEvent(drawn.getByText('Featured'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 500 } },
+    });
+    const isInView = () => jest.mocked(TheFeatured).mock.lastCall?.[0].isInView;
+    const drawnBefore = jest.mocked(TheFeatured).mock.calls.length;
+
+    await fireEvent.scroll(drawn.getByText('Featured'), scrolledTo(100));
+    await fireEvent.scroll(drawn.getByText('Featured'), scrolledTo(200));
+
+    expect(jest.mocked(TheFeatured).mock.calls.length).toBe(drawnBefore);
+    expect(isInView()).toBe(true);
+
+    await fireEvent.scroll(drawn.getByText('Featured'), scrolledTo(450));
+    await fireEvent.scroll(drawn.getByText('Featured'), scrolledTo(600));
+
+    expect(isInView()).toBe(false);
+
+    await fireEvent.scroll(drawn.getByText('Featured'), scrolledTo(10));
+
+    expect(isInView()).toBe(true);
   });
 
   it('sets a display name so devtools can identify it', () => {

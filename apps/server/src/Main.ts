@@ -59,6 +59,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { arch, cpus, platform, release, totalmem } from 'node:os';
 import { mkdir, readdir, readFile, rm, stat, unlink, utimes, writeFile } from 'node:fs/promises';
 import { serve } from '@hono/node-server';
+import { KEEPS_IDLE_CONNECTIONS_MS } from '@ValenceServer/web/KEEPS_IDLE_CONNECTIONS_MS';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { serveTheTvLayout } from '@ValenceServer/web/serveTheTvLayout';
@@ -6296,6 +6297,7 @@ const realtimeHandler = createRealtimeHandler({
 /**
  * Asks somebody from a linked server to a watch party here, by asking their server to tell them:
  * this server knows them only by the name their server gives them, and never reaches them itself.
+ * Nobody is asked from a server whose people this server has chosen not to invite.
  *
  * @param party - The party they are being asked to.
  * @param byName - Who is asking.
@@ -6308,7 +6310,12 @@ const askAlongElsewhere = async (
 ): Promise<void> => {
   const [serverId, personId] = member.slice(PEER_MEMBER.length).split('~');
 
-  if (serverId === undefined || personId === undefined || party.kind !== 'watch') {
+  if (
+    serverId === undefined ||
+    personId === undefined ||
+    party.kind !== 'watch' ||
+    (await linkSharingStore.readSharing(serverId))?.invitesTheirPeople !== true
+  ) {
     return;
   }
 
@@ -6940,7 +6947,13 @@ watchForStalls({
   },
 });
 
-const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
+const serving = {
+  fetch: app.fetch,
+  port: env.PORT,
+  serverOptions: { keepAliveTimeout: KEEPS_IDLE_CONNECTIONS_MS },
+};
+
+const server = serve(serving, (info) => {
   const origin = `http://localhost:${info.port.toString()}`;
 
   log.info('server', `Valence listening on ${origin}`);

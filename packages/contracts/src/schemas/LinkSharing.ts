@@ -29,6 +29,7 @@ const LinkSharingSchema = z.object({
   allowsDownloads: z.boolean(),
   takesTheirRequests: z.boolean(),
   playsDirect: z.boolean(),
+  invitesTheirPeople: z.boolean(),
 });
 
 const LinkSharingChangeSchema = z.object({
@@ -43,6 +44,7 @@ const LinkSharingChangeSchema = z.object({
   allowsDownloads: z.boolean().optional(),
   takesTheirRequests: z.boolean().optional(),
   playsDirect: z.boolean().optional(),
+  invitesTheirPeople: z.boolean().optional(),
 });
 
 const SharedLibrarySchema = z.object({
@@ -117,7 +119,14 @@ const LinkedServerFacesSchema = z.object({
 });
 
 const AskableElsewhereSchema = z.object({
-  people: z.array(z.object({ id: z.string().min(1), name: z.string() })),
+  people: z.array(
+    z.object({
+      id: z.string().min(1),
+      name: z.string(),
+      ownName: z.string().exactOptional(),
+      server: z.object({ id: z.string().min(1), name: z.string() }).exactOptional(),
+    }),
+  ),
 });
 
 const AskedAlongSchema = z.object({

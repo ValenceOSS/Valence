@@ -18,7 +18,10 @@ import {
   heartbeatRoute,
   beginRoute,
   problemRoute,
+  noteRoute,
 } from '@ValenceServer/routes/PlaybackRoute';
+import { describeTheStart } from '@ValenceServer/playback/describeTheStart';
+import { describeTheNote } from '@ValenceServer/playback/describeTheNote';
 import { SHARE_COOKIE } from '@ValenceServer/sharing/createShareGate';
 import { getCookie } from 'hono/cookie';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -41,6 +44,8 @@ const READIED_FOR_MS = 10 * 60 * 1000;
 const REPORTS_AT_MOST = 20;
 
 const REPORTS_WITHIN_MS = 10 * 60 * 1000;
+
+const NOTES_AT_MOST = 60;
 
 const TRICKPLAY_CACHING = 'private, max-age=86400';
 
@@ -78,6 +83,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     (await streaming.isStreamed(mediaId)) &&
     !(await requires(headers, 'sources.play'));
   const mayReport = createRateLimiter({ most: REPORTS_AT_MOST, withinMs: REPORTS_WITHIN_MS });
+  const mayNote = createRateLimiter({ most: NOTES_AT_MOST, withinMs: REPORTS_WITHIN_MS });
   const castTickets = createDirectTickets<{ sessionId: string }>();
 
   const limitOf = async (headers: Headers) => {
@@ -197,6 +203,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       isCast,
       picksItsOwnSound,
       isReadiedAhead,
+      startedBecause,
     } = context.req.valid('json');
 
     if (await mayNotPlayFromSources(mediaId, context.req.raw.headers)) {
@@ -256,6 +263,17 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     if (outcome.kind === 'failed') {
       return context.json({ ...refuseWith(outcome.reason), problem: outcome.problem }, 500);
     }
+
+    log?.info(
+      'playback',
+      describeTheStart({
+        startSeconds: startSeconds ?? 0,
+        mode: describePlaybackMode(outcome.session.plan),
+        client: nameTheClient(deviceOfRequest(context.req.raw.headers).identity).message,
+        startedBecause,
+      }),
+      { context: { mediaId, sessionId: outcome.session.sessionId } },
+    );
 
     const openedBy = getCookie(context, SHARE_COOKIE);
 
@@ -485,6 +503,34 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
         detail: report.details,
         context: { mediaId: report.mediaId, sessionId: report.sessionId },
       },
+    );
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(noteRoute, async (context) => {
+    const { clientId } = context.req.valid('query');
+    const note = context.req.valid('json');
+
+    if (!(await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId))) {
+      return context.json(refuse('error.common.thatIsNotYourDevice'), 403);
+    }
+
+    const noter = (await readAccount(context.req.raw.headers))?.id ?? 'nobody';
+
+    if (!mayNote(noter)) {
+      return context.json(refuse('error.playback.tooManyNotes'), 429);
+    }
+
+    log?.info(
+      'playback',
+      describeTheNote(
+        note,
+        nameTheClient(deviceOfRequest(context.req.raw.headers).identity).message,
+      ),
+      note.kind === 'recovered'
+        ? { context: { mediaId: note.mediaId, sessionId: note.sessionId } }
+        : undefined,
     );
 
     return context.body(null, 204);

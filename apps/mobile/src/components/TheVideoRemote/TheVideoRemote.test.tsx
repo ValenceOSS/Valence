@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { z } from 'zod';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -41,7 +42,7 @@ jest.mock('@ValenceClient/video/useVideoRemote', () => ({
   useVideoRemote: () => mockRemote.current,
 }));
 
-jest.mock('@ValenceMobile/hooks/usePictureLights', () => ({ usePictureLights: () => [] }));
+jest.mock('@ValenceMobile/hooks/usePictureLights', () => ({ usePictureLights: jest.fn(() => []) }));
 
 const mockServer = { hasBarePosters: true };
 
@@ -118,6 +119,15 @@ describe('TheVideoRemote', () => {
 
     expect(addressOf(await theBackground(drawn))).toMatch(
       new RegExp(`/api/media/${WATCHING.mediaId}/image/poster\\?lettering=none$`, 'u'),
+    );
+  });
+
+  it('takes its ground from a narrowed copy of the picture rather than the one it draws', async () => {
+    controlling(WATCHING);
+    await draw();
+
+    expect(usePictureLights).toHaveBeenLastCalledWith(
+      expect.stringMatching(/\/image\/poster\?lettering=none&size=small$/u),
     );
   });
 

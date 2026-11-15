@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { ARTWORK_WIDTHS } from '@ValenceContracts/constants/ARTWORK_WIDTHS';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
@@ -204,12 +205,15 @@ const bookResourceUrl = (bookId: string, chapterId: string, href: string): strin
   `/api/books/${bookId}/chapters/${chapterId}/resource?href=${encodeURIComponent(href)}`;
 
 /**
- * Where to find the cover of a book.
+ * Where to find the cover of a book, whole or narrowed. A server too old to narrow it sends it
+ * whole.
  *
  * @param bookId - The book.
+ * @param size - The narrowed copy wanted, or nothing for the whole cover.
  * @returns The address.
  */
-const bookCoverUrl = (bookId: string): string => `/api/books/${bookId}/cover`;
+const bookCoverUrl = (bookId: string, size?: keyof typeof ARTWORK_WIDTHS): string =>
+  `/api/books/${bookId}/cover${size === undefined ? '' : `?size=${size}`}`;
 
 export {
   bookCoverUrl,

@@ -58,6 +58,7 @@ const inParty = (
   ...aShell().watchParty,
   party,
   meConnectionId: me,
+  startedHere: null,
   send: vi.fn(),
   join: vi.fn(),
   report: vi.fn(),

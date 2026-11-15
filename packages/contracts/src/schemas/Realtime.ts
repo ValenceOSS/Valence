@@ -83,6 +83,7 @@ const PartyOpenSchema = z.object({
   kind: z.literal('partyOpen'),
   mediaId: z.string().min(1).max(128),
   partyKind: PartyKindSchema.optional(),
+  isPlaying: z.boolean().optional(),
 });
 
 const PartyJoinSchema = z.object({

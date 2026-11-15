@@ -3,14 +3,14 @@ import { addNetworkStateListener } from 'expo-network';
 import { focusManager, onlineManager } from '@tanstack/react-query';
 
 /**
- * Tells the query cache when the app comes back to the front and when the phone comes back online,
- * which is what a browser tells it on its own and a phone does not, so what was showing is asked
- * for again rather than left as it was when somebody last looked.
+ * Tells the query cache when the app comes back from the background and when the phone comes back
+ * online, so what was showing is asked for again, without a glance at the notifications or the
+ * control centre counting as leaving.
  */
 const refetchWhenThePhoneWakes = (): void => {
   focusManager.setEventListener((isFocused) => {
     const watching = AppState.addEventListener('change', (state) => {
-      isFocused(state === 'active');
+      isFocused(state !== 'background');
     });
 
     return () => {

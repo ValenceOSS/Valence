@@ -78,6 +78,8 @@ Valence decides how to deliver each file to each device, one part at a time: con
 | Direct stream | The picture is passed through and only the sound is re-encoded.                                 | The sound codec or channel layout is not supported, for example a surround track the browser cannot decode.                                                           |
 | Transcode     | The picture is re-encoded.                                                                      | The picture codec, profile, level, HDR range, frame rate or interlacing is not supported, you pinned a lower quality, or an image based subtitle has to be burned in. |
 
+Sound that has to be re-encoded becomes AAC. The iPhone, iPad and Apple TV apps, Safari, and Android TVs and Jellyfin apps that play Dolby Digital Plus get surround of up to six channels in it instead, at 640 kbps. Apple's players decode no DTS and expect surround in Dolby Digital Plus. A 7.1 track stays AAC, because Dolby Digital Plus would lose two channels, and so does sound under a pinned quality step.
+
 Every decision carries a reason (for example "Client does not support the mkv container" or "Quality step limits resolution to 1280x720"), and the administrator can see how each live session is being delivered in the admin **Sessions** panel. Transcoding uses your server's processor or graphics card, so prefer direct play where you can. If the server has a supported graphics card, see [Hardware transcoding](/install/hardware-transcoding).
 
 ### Playing more in the browser
@@ -292,7 +294,7 @@ You need the permission to start watch parties, which the default Member role ha
 | Co-host | Play and pause, seek, change what is playing and invite.                          |
 | Guest   | Watch. Guests have no powers by default.                                          |
 
-The host can make a guest a co-host, remove people, and use two switches to loosen the room: **Everyone can play and pause** and **Everyone can skip around**. A **Party password** can be set, or changed, so that people need it to join. The server keeps the password and only tells everybody that there is one.
+The host can make a guest a co-host, remove people, and use three switches to loosen the room: **Everyone can play/pause**, **Everyone can scrub** and **Everyone can chat**. A **Party password** can be set, or changed, so that people need it to join. The server keeps the password and only tells everybody that there is one.
 
 Playback commands are stamped by the server, so two people pressing pause at the same moment resolve the same way for everyone. If someone falls behind, the party holds and shows "Waiting for" that person "to catch up".
 

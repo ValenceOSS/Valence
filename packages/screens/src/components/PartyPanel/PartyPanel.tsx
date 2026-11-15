@@ -1,10 +1,9 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  CirclePause as CirclePauseIcon,
   Clock as ClockIcon,
-  Eye as EyeIcon,
-  Headphones as HeadphonesIcon,
+  Crown as CrownIcon,
   UserPlus as UserPlusIcon,
+  UserX as UserXIcon,
 } from '@keyline-icons/react';
 import {
   CircleCheck as CircleCheckFilledIcon,
@@ -31,6 +30,11 @@ import { ROLE_NAMES } from '@ValenceClient/party/ROLE_NAMES';
 import { PARTY_WORDS } from '@ValenceClient/party/PARTY_WORDS';
 import { secondsBehind } from '@ValenceClient/party/secondsBehind';
 import { whoCanBeAsked } from '@ValenceClient/party/whoCanBeAsked';
+import { memberActivity } from '@ValenceClient/party/memberActivity';
+import { sayActivity } from '@ValenceClient/party/sayActivity';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { cn } from '@ValenceUI/cn';
+import { askableGroups } from '@ValenceClient/party/askableGroups';
 import type { Askable } from '@ValenceClient/party/whoCanBeAsked';
 import type { PartyMember } from '@ValenceContracts/schemas/WatchParty';
 import type { PartyPanelProps } from './PartyPanel.types';
@@ -38,9 +42,15 @@ import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
-const ICONS = { watch: EyeIcon, listen: HeadphonesIcon } as const;
+const ACTIVITY_DOTS = {
+  doing: 'bg-success',
+  paused: 'bg-text-muted',
+  notDoing: 'bg-warning',
+} as const;
 
 const TICK_MS = 1000;
+
+const HERE = 'here';
 
 const NO_FACE = { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED } as const;
 
@@ -88,29 +98,30 @@ const describeTogetherness = (
 };
 
 /**
- * Somebody's face as their profile draws it, or their initial where the party knows of no profile.
+ * Somebody's face as their profile draws it, or their initial where there is no profile to draw it
+ * from, as for somebody from a linked server.
  *
- * @param member - Whose face.
- * @param people - Everybody with an account here, which is where a face is read from.
+ * @param name - What they are called.
+ * @param person - Their profile, where this server has one.
  * @returns The face.
  */
-const faceOf = (member: PartyMember, people: readonly Askable[]) => {
-  const person = people.find((someone) => someone.id === member.profileId);
-
-  return (
-    <FaceCircle
-      name={member.name}
-      colour={person?.colour ?? PROFILE_COLOURS[0]}
-      avatar={person?.avatar ?? NO_FACE}
-      source={
-        person?.updatedAt === undefined
-          ? ''
-          : profileAvatarUrl({ id: person.id, updatedAt: person.updatedAt })
-      }
-      className="size-7 text-xs"
-    />
-  );
-};
+const faceOf = (name: string, person: Askable | undefined) => (
+  <FaceCircle
+    name={name}
+    colour={person?.colour ?? PROFILE_COLOURS[0]}
+    avatar={person?.avatar ?? NO_FACE}
+    source={
+      person?.updatedAt === undefined
+        ? ''
+        : profileAvatarUrl({
+            id: person.id,
+            updatedAt: person.updatedAt,
+            pictureUrl: person.pictureUrl,
+          })
+    }
+    className="size-7 text-xs"
+  />
+);
 
 /**
  * The instant to carry the party's reports forward to, moving on a second at a time while the
@@ -203,7 +214,6 @@ const PartyPanel = ({
   const [asked, setAsked] = useState<readonly string[]>([]);
   const me = party.members.find((member) => member.connectionId === meConnectionId);
   const timekeeper = party.members.find((member) => member.connectionId === party.timekeeperId);
-  const watching = party.members.filter((member) => member.isWatching).length;
   const words = PARTY_WORDS[party.kind];
   const mayAsk = me?.role === 'host' || me?.role === 'coHost';
   const atMs = usePartyClock(party.members, party.isPlaying);
@@ -215,7 +225,7 @@ const PartyPanel = ({
   return (
     <section className="flex w-96 max-w-[calc(100vw-3rem)] flex-col gap-2 text-text">
       <PanelCard
-        title={sayCount(words.doing, watching)}
+        title={sayCount('common.partyPanel.countInTheParty', party.members.length)}
         isFlush
         actions={
           onLeave === undefined ? undefined : (
@@ -254,7 +264,10 @@ const PartyPanel = ({
                 return {
                   id: member.connectionId,
                   atSeconds: whereTheRoomIs(member, atMs),
-                  face: faceOf(member, people),
+                  face: faceOf(
+                    member.name,
+                    people.find((someone) => someone.id === member.profileId),
+                  ),
                   label:
                     drift === null
                       ? say('screens.partyPanel.nameAtPosition', { name: member.name, position })
@@ -287,70 +300,81 @@ const PartyPanel = ({
         <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
           {party.members.map((member) => {
             const drift = timekeeper === undefined ? null : describeDrift(member, timekeeper);
+            const activity = memberActivity(member, party);
+            const about = [
+              ROLE_NAMES[member.role],
+              member.connectionId === party.timekeeperId
+                ? say('common.partyPanel.keepingTime')
+                : null,
+              drift,
+            ]
+              .filter((part) => part !== null)
+              .join(' · ');
 
             return (
-              <li key={member.connectionId} className="flex flex-wrap items-center gap-2 px-4 py-3">
-                <span className="text-sm font-medium">
-                  {member.connectionId === meConnectionId
-                    ? say('common.partyPanel.nameYou', { name: member.name })
-                    : member.name}
+              <li key={member.connectionId} className="flex items-center gap-3 px-4 py-2.5">
+                {faceOf(
+                  member.name,
+                  people.find((someone) => someone.id === member.profileId),
+                )}
+
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-sm font-medium">
+                    {member.connectionId === meConnectionId
+                      ? say('common.partyPanel.nameYou', { name: member.name })
+                      : member.name}
+                  </span>
+                  <span className="truncate text-xs text-text-muted">{about}</span>
                 </span>
 
-                <Badge size="sm">{ROLE_NAMES[member.role]}</Badge>
-
-                {member.connectionId === party.timekeeperId && (
-                  <Badge size="sm" tone="quiet">
-                    <Icon of={ClockIcon} size={12} />
-                    {say('common.partyPanel.keepingTime')}
-                  </Badge>
-                )}
-
-                {member.isWatching ? (
-                  <span className="flex items-center gap-1 text-xs text-text-muted">
-                    <Icon of={ICONS[party.kind]} size={13} />
-                    {words.isDoing}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-xs text-text-muted">
-                    <Icon of={CirclePauseIcon} size={13} />
-                    {words.notDoing}
-                  </span>
-                )}
-
-                {drift !== null && <span className="text-xs text-text-muted">{drift}</span>}
+                <span className="flex shrink-0 items-center gap-1.5 text-xs text-text-muted">
+                  <span
+                    aria-hidden
+                    className={cn('size-1.5 rounded-full', ACTIVITY_DOTS[activity])}
+                  />
+                  {sayActivity(member, party, words)}
+                </span>
 
                 {me?.role === 'host' && member.connectionId !== meConnectionId && (
-                  <span className="ms-auto flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        onSetRole?.(
-                          member.connectionId,
-                          member.role === 'coHost' ? 'guest' : 'coHost',
-                        );
-                      }}
-                    >
-                      {member.role === 'coHost'
-                        ? say('common.partyPanel.makeAGuest')
-                        : say('common.partyPanel.makeACoHost')}
-                    </Button>
-
-                    {onRemove === undefined ? null : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        label={say('common.partyPanel.removeNameFromTheParty', {
-                          name: member.name,
-                        })}
-                        onClick={() => {
-                          onRemove(member.connectionId);
-                        }}
-                      >
-                        {say('common.forget')}
-                      </Button>
-                    )}
-                  </span>
+                  <ActionMenu
+                    label={say('common.actionsForName', { name: member.name })}
+                    size="sm"
+                    groups={[
+                      {
+                        items: [
+                          {
+                            id: 'role',
+                            label:
+                              member.role === 'coHost'
+                                ? say('common.partyPanel.makeAGuest')
+                                : say('common.partyPanel.makeACoHost'),
+                            icon: <Icon of={CrownIcon} size={15} />,
+                            onChoose: () => {
+                              onSetRole?.(
+                                member.connectionId,
+                                member.role === 'coHost' ? 'guest' : 'coHost',
+                              );
+                            },
+                          },
+                          ...(onRemove === undefined
+                            ? []
+                            : [
+                                {
+                                  id: 'remove',
+                                  label: say('common.partyPanel.removeNameFromTheParty', {
+                                    name: member.name,
+                                  }),
+                                  icon: <Icon of={UserXIcon} size={15} />,
+                                  isDestructive: true,
+                                  onChoose: () => {
+                                    onRemove(member.connectionId);
+                                  },
+                                },
+                              ]),
+                        ],
+                      },
+                    ]}
+                  />
                 )}
               </li>
             );
@@ -390,29 +414,46 @@ const PartyPanel = ({
             {say('common.partyPanel.askSomebodyAlongTheyAreTold')}
           </p>
 
-          <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-            {elsewhere.map((person) => (
-              <li key={person.id} className="flex items-center justify-between gap-2 px-4 py-2">
-                <span className="min-w-0 truncate text-sm">{person.name}</span>
+          {askableGroups(elsewhere).map((group) => (
+            <div key={group.server?.id ?? HERE}>
+              {group.server === null ? null : (
+                <p className="mt-2 border-t border-[var(--surface-line)] px-4 pt-3 pb-1 text-xs font-medium text-text-muted">
+                  {say('common.partyPanel.membersFromServer', { server: group.server.name })}
+                </p>
+              )}
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={asked.includes(person.id)}
-                  label={say('common.partyPanel.askNameAlong', { name: person.name })}
-                  onClick={() => {
-                    setAsked((already) => [...already, person.id]);
-                    onAsk(person.id);
-                  }}
-                >
-                  <Icon of={UserPlusIcon} size={14} />
-                  {asked.includes(person.id)
-                    ? say('common.partyPanel.asked')
-                    : say('common.partyPanel.ask')}
-                </Button>
-              </li>
-            ))}
-          </ul>
+              <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+                {group.people.map((person) => (
+                  <li key={person.id} className="flex items-center justify-between gap-2 px-4 py-2">
+                    <span className="flex min-w-0 items-center gap-3">
+                      {faceOf(person.ownName ?? person.name, person)}
+                      <span className="min-w-0 truncate text-sm">
+                        {person.ownName ?? person.name}
+                      </span>
+                    </span>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={asked.includes(person.id)}
+                      label={say('common.partyPanel.askNameAlong', { name: person.name })}
+                      hasTooltip={false}
+                      className="-me-2.5"
+                      onClick={() => {
+                        setAsked((already) => [...already, person.id]);
+                        onAsk(person.id);
+                      }}
+                    >
+                      {asked.includes(person.id)
+                        ? say('common.partyPanel.asked')
+                        : say('common.partyPanel.ask')}
+                      <Icon of={UserPlusIcon} size={14} />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </PanelCard>
       )}
 
@@ -421,55 +462,67 @@ const PartyPanel = ({
       )}
 
       {me?.role !== 'host' ? null : (
-        <PanelCard title={say('common.partyPanel.controls')}>
-          <div className="flex flex-col gap-3">
-            <Switch
-              label={say('common.partyPanel.everyoneCanPlayAndPause')}
-              isOn={party.everyoneMayPlayPause}
-              onToggle={() => {
-                onLoosen?.({ everyoneMayPlayPause: !party.everyoneMayPlayPause });
-              }}
-            />
-
-            <Switch
-              label={say('common.partyPanel.everyoneCanSkipAround')}
-              isOn={party.everyoneMaySeek}
-              onToggle={() => {
-                onLoosen?.({ everyoneMaySeek: !party.everyoneMaySeek });
-              }}
-            />
-
-            <p className="text-xs leading-relaxed text-text-muted">
-              {say('common.partyPanel.skippingIsTheDisruptiveOneA')}
-            </p>
-
-            {onWrite === undefined ? null : (
-              <>
+        <PanelCard title={say('common.partyPanel.controls')} isFlush>
+          <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+            {[
+              {
+                id: 'playPause',
+                label: say('common.partyPanel.everyoneCanPlayPause'),
+                isOn: party.everyoneMayPlayPause,
+                toggle: () => {
+                  onLoosen?.({ everyoneMayPlayPause: !party.everyoneMayPlayPause });
+                },
+              },
+              {
+                id: 'scrub',
+                label: say('common.partyPanel.everyoneCanScrub'),
+                isOn: party.everyoneMaySeek,
+                toggle: () => {
+                  onLoosen?.({ everyoneMaySeek: !party.everyoneMaySeek });
+                },
+              },
+              ...(onWrite === undefined
+                ? []
+                : [
+                    {
+                      id: 'chat',
+                      label: say('common.partyChat.everyoneCanChat'),
+                      isOn: party.chatIsOn,
+                      toggle: () => {
+                        onLoosen?.({ chatIsOn: !party.chatIsOn });
+                      },
+                    },
+                  ]),
+            ].map((control) => (
+              <li
+                key={control.id}
+                className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm"
+              >
+                <span>{control.label}</span>
                 <Switch
-                  label={say('common.partyChat.everyoneCanChat')}
-                  isOn={party.chatIsOn}
-                  onToggle={() => {
-                    onLoosen?.({ chatIsOn: !party.chatIsOn });
-                  }}
+                  label={control.label}
+                  isLabelHidden
+                  isOn={control.isOn}
+                  onToggle={control.toggle}
                 />
-
-                <p className="text-xs leading-relaxed text-text-muted">
-                  {say('common.partyChat.keptForTheParty')}
-                </p>
-              </>
-            )}
+              </li>
+            ))}
 
             {onSetPassword === undefined ? null : (
-              <div className="flex flex-col gap-2 border-t border-[var(--surface-line)] pt-3">
-                <p className="text-xs leading-relaxed text-text-muted">
-                  {party.hasPassword
-                    ? say('common.partyPanel.thisPartyHasAPasswordAnybody')
-                    : say('common.partyPanel.aPasswordAsksAnybodyOpeningThe')}
-                </p>
+              <li className="flex flex-col gap-2 px-4 py-3">
+                <span className="flex flex-col">
+                  <span className="text-sm">{say('common.password')}</span>
+                  <span className="text-xs text-text-muted">
+                    {party.hasPassword
+                      ? say('common.partyPanel.thisPartyHasAPasswordAnybody')
+                      : say('common.partyPanel.aPasswordAsksAnybodyOpeningThe')}
+                  </span>
+                </span>
 
-                <div className="flex items-end gap-2">
+                <span className="flex items-center gap-2">
                   <TextField
-                    label={say('common.partyPanel.partyPassword')}
+                    label={say('common.password')}
+                    isLabelHidden
                     type="password"
                     size="sm"
                     value={password}
@@ -507,10 +560,10 @@ const PartyPanel = ({
                       {say('common.clear')}
                     </Button>
                   )}
-                </div>
-              </div>
+                </span>
+              </li>
             )}
-          </div>
+          </ul>
         </PanelCard>
       )}
     </section>

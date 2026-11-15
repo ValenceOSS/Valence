@@ -58,6 +58,7 @@ const createMemoryLinkSharingStore = (
         allowsDownloads: change.allowsDownloads ?? held.allowsDownloads,
         takesTheirRequests: change.takesTheirRequests ?? held.takesTheirRequests,
         playsDirect: change.playsDirect ?? held.playsDirect,
+        invitesTheirPeople: change.invitesTheirPeople ?? held.invitesTheirPeople,
       };
 
       sharing.set(linkedServerId, changed);

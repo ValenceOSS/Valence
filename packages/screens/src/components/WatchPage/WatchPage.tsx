@@ -9,6 +9,7 @@ import { PartyPasswordDialog } from '@ValenceScreens/components/PartyPasswordDia
 import { useWhereToBegin } from '@ValenceClient/party/useWhereToBegin';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
 import { invitationTo } from '@ValenceClient/party/invitationTo';
+import { mayMoveTheParty } from '@ValenceClient/party/mayMoveTheParty';
 import { countCarriedOn } from '@ValenceClient/playback/countCarriedOn';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
@@ -95,6 +96,32 @@ const WatchPage = () => {
   });
 
   const partyPlayback = usePartyPlayback(watchParty, playing?.id ?? null);
+  const mayMove = mayMoveTheParty(filmParty, watchParty.meConnectionId);
+  const mayChooseWhatPlays = filmParty === null || mayMove;
+  const moveThePartyTo = (mediaId: string) => {
+    watchParty.send({ kind: 'changeWhatIsPlaying', mediaId });
+  };
+  const carryOnTo = (episode: MediaSummary) => {
+    if (filmParty !== null && !mayMove) {
+      return;
+    }
+
+    setCarriedOn(carriedOn + 1);
+    carriedOnToRef.current = episode.id;
+
+    if (filmParty === null) {
+      go({ playing: episode.id, inspecting: null });
+    } else {
+      moveThePartyTo(episode.id);
+    }
+  };
+  const stopWatching = (id: string) => {
+    if (filmParty !== null) {
+      watchParty.leave();
+    }
+
+    go({ playing: null, party: null, inspecting: id });
+  };
   const found = playing === null ? undefined : progress.get(playing.id);
   const startAt =
     playing !== null && startOverride?.mediaId === playing.id
@@ -181,16 +208,17 @@ const WatchPage = () => {
         startSeconds={beginning.kind === 'wait' ? 0 : beginning.atSeconds}
         partyNotice={watchParty.notice}
         isImmersive
-        renderPartyMenu={({ isHidden, onOpenChange }) => (
+        renderPartyMenu={({ isHidden, isPlaying, onOpenChange }) => (
           <PartyMenu
             party={filmParty}
             durationSeconds={shown.durationSeconds}
             meConnectionId={watchParty.meConnectionId}
+            startedHere={watchParty.startedHere}
             waitingFor={watchParty.waitingFor}
             isHidden={isHidden}
             onOpenChange={onOpenChange}
             onOpen={() => {
-              watchParty.open(shown.id);
+              watchParty.open(shown.id, 'watch', isPlaying);
             }}
             onSetRole={watchParty.setRole}
             onLoosen={watchParty.loosen}
@@ -215,12 +243,16 @@ const WatchPage = () => {
           />
         )}
         {...(partyPlayback === null ? {} : { party: partyPlayback })}
-        episodes={showEpisodes}
-        following={following}
+        episodes={mayChooseWhatPlays ? showEpisodes : []}
+        following={mayChooseWhatPlays ? following : null}
         onSelectEpisode={(episode) => {
-          go({ playing: episode.id });
+          if (filmParty === null) {
+            go({ playing: episode.id });
+          } else if (mayMove) {
+            moveThePartyTo(episode.id);
+          }
         }}
-        willCarryOn={decided.kind === 'play'}
+        willCarryOn={decided.kind === 'play' && mayChooseWhatPlays}
         {...(askingAbout === null
           ? {}
           : {
@@ -228,11 +260,11 @@ const WatchPage = () => {
                 upNext: askingAbout,
                 onCarryOn: () => {
                   setAskingAbout(null);
-                  go({ playing: askingAbout.id, inspecting: null });
+                  carryOnTo(askingAbout);
                 },
                 onStop: () => {
                   setAskingAbout(null);
-                  go({ playing: null, inspecting: shown.id });
+                  stopWatching(shown.id);
                 },
               },
             })}
@@ -259,6 +291,10 @@ const WatchPage = () => {
           });
         }}
         onEnded={() => {
+          if (filmParty !== null && (decided.kind === 'nothing' || !mayMove)) {
+            return;
+          }
+
           if (decided.kind === 'nothing') {
             go({ playing: null, inspecting: shown.id });
 
@@ -271,16 +307,10 @@ const WatchPage = () => {
             return;
           }
 
-          setCarriedOn(carriedOn + 1);
-          carriedOnToRef.current = decided.episode.id;
-          go({ playing: decided.episode.id, inspecting: null });
+          carryOnTo(decided.episode);
         }}
         onClose={() => {
-          if (filmParty !== null) {
-            watchParty.leave();
-          }
-
-          go({ playing: null, party: null, inspecting: shown.id });
+          stopWatching(shown.id);
           void readProgress();
         }}
       />

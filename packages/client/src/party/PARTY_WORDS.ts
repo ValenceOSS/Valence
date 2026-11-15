@@ -3,8 +3,8 @@ import { say } from '@ValenceI18n/say';
 
 type PartyWords = {
   title: string;
-  doing: 'common.partyPanel.countWatching' | 'common.partyPanel.countListening';
   isDoing: string;
+  isPaused: string;
   notDoing: string;
   invitation: string;
   intro: string;
@@ -14,19 +14,19 @@ type PartyWords = {
 const PARTY_WORDS: Readonly<Record<PartyKind, PartyWords>> = {
   watch: {
     title: say('common.partyMenu.watchParty'),
-    doing: 'common.partyPanel.countWatching',
     isDoing: say('common.watching'),
+    isPaused: say('common.paused'),
     notDoing: say('common.partyPanel.notWatching'),
-    invitation: say('common.partyPanel.sendThisToWatchAlong'),
+    invitation: say('common.partyPanel.anyoneHereCanWatchAlong'),
     intro: say('common.partyMenu.watchThisWithOtherPeopleHere'),
     start: say('common.partyMenu.startAWatchParty'),
   },
   listen: {
     title: say('common.listeningParty'),
-    doing: 'common.partyPanel.countListening',
     isDoing: say('common.partyPanel.listening'),
+    isPaused: say('common.paused'),
     notDoing: say('common.partyPanel.notListening'),
-    invitation: say('common.partyPanel.sendThisToListenAlong'),
+    invitation: say('common.partyPanel.anyoneHereCanListenAlong'),
     intro: say('common.listeningPartyPanel.everybodyHearsWhatYouPlayWhere'),
     start: say('common.listeningPartyPanel.startAListeningParty'),
   },

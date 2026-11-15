@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { deliveredBitrateKbps } from '@ValenceClient/playback/deliveredBitrateKbps';
 import { teachShakaOurScheme } from '@ValenceScreens/playback/teachShakaOurScheme';
+import { followPlace } from '@ValenceScreens/playback/followPlace';
+import type { FollowedPlace } from '@ValenceScreens/playback/followPlace';
 import type { ShakaNetworking } from '@ValenceScreens/playback/teachShakaOurScheme';
 import type shaka from 'shaka-player/dist/shaka-player.compiled';
 import type { Buffer } from '@ValenceClient/playback/bufferFor';
@@ -83,14 +85,13 @@ type AttachOptions = {
   isSomeoneElses?: boolean;
   buffer?: Buffer;
   connections?: number;
-  onFault?: (fault: PlaybackFault) => void;
+  onFault?: (fault: PlaybackFault, atSeconds: number) => void;
   onRecovered?: (refusedAtSeconds: number) => void;
+  place?: FollowedPlace;
   loadShaka?: () => Promise<ShakaModule>;
 };
 
 const CRITICAL = 2;
-
-const HAS_A_PICTURE = 2;
 
 const ONE_AT_A_TIME = 1;
 
@@ -211,8 +212,10 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  *
  * @param options - The element to attach to, the manifest to load, where to start, whether the
  *   stream is one Valence did not make, how much to hold ahead and behind, how many segments to
- *   fetch at once, how to report a fault the engine could not recover from, and what to do once it
- *   has started the element again after the browser refused to decode what it was sent.
+ *   fetch at once, how to report a fault the engine could not recover from with the last place the
+ *   element had a picture or was sent to, and what to do once it has started the element again after
+ *   the browser refused to decode what it was sent, and the place the player keeps, where it keeps
+ *   one, so the engine reads the same place the player does.
  * @returns A handle carrying the teardown to call — an orphaned engine keeps buffering and holds
  *   the element open — a reading of what the engine is actually being sent, its estimate of what
  *   the connection carries, and how many qualities it can switch between on its own. A stream that
@@ -238,10 +241,9 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  *
  * A picture the browser refuses to decode is not reported as a fault. The engine empties the element
  * and starts it again where it was, and says so with an event of its own, which is passed on with
- * where the element last was while it had a picture, or where it refused, since by then it has
- * been emptied and reads nothing, and not every such start follows the element refusing anything. A
- * stream that copies a damaged file meets the same frame again, and only the server converting it
- * gets past.
+ * where the viewer was as `followPlace` keeps it, since by then the element has been emptied and
+ * reads nothing, and not every such start follows the element refusing anything. A stream that
+ * copies a damaged file meets the same frame again, and only the server converting it gets past.
  *
  * None of that holds for a stream Valence did not make, such as a live channel's: its segments'
  * own timestamps are a broadcaster's, often starting far from nothing, and placed by them nothing
@@ -256,6 +258,7 @@ const attachShaka = async ({
   connections = ONE_AT_A_TIME,
   onFault,
   onRecovered,
+  place: given,
   loadShaka = loadShakaPlayer,
 }: AttachOptions): Promise<AttachedStream> => {
   const shaka = await loadShaka();
@@ -283,33 +286,24 @@ const attachShaka = async ({
     streaming: { segmentPrefetchLimit: Math.max(connections, ONE_AT_A_TIME) - ONE_AT_A_TIME },
   });
 
+  const place = given ?? followPlace(element, startSeconds);
+
   player.addEventListener?.('error', (event) => {
     const fault = faultFrom(event);
 
     if (fault !== null) {
-      onFault?.(fault);
+      onFault?.(fault, place.read());
     }
   });
 
-  const refused = { atSeconds: startSeconds };
-  const noteWhereRefused = () => {
-    refused.atSeconds = element.currentTime;
-  };
-  const noteWhereItIs = () => {
-    if (element.readyState >= HAS_A_PICTURE) {
-      refused.atSeconds = element.currentTime;
-    }
-  };
-
-  element.addEventListener('error', noteWhereRefused);
-  element.addEventListener('timeupdate', noteWhereItIs);
   player.addEventListener?.('mediasourcerecovered', () => {
-    onRecovered?.(refused.atSeconds);
+    onRecovered?.(place.read());
   });
 
   const detach = () => {
-    element.removeEventListener('error', noteWhereRefused);
-    element.removeEventListener('timeupdate', noteWhereItIs);
+    if (given === undefined) {
+      place.stop();
+    }
 
     return player.destroy();
   };

@@ -53,6 +53,8 @@ const WORDS_FIT_FROM = 330;
 
 const OVER_THE_SCRIM = '#000000';
 
+const FOOT_GAP = 8;
+
 const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: 10, justifyContent: 'space-between', marginTop: 8 },
   half: { flex: 1 },
@@ -67,11 +69,10 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
   },
-  folds: { overflow: 'hidden' },
-  unfolded: { left: 0, position: 'absolute', right: 0, top: 0 },
+  above: { gap: FOOT_GAP },
   foot: {
     bottom: 0,
-    gap: 8,
+    gap: FOOT_GAP,
     left: 0,
     paddingBottom: 18,
     paddingHorizontal: 18,
@@ -106,11 +107,13 @@ const styles = StyleSheet.create({
  * blurred towards the foot where its logo, its facts with its age rating and a few lines about it
  * rise into view one after another, with a way to play it and a way to read more — the way to read
  * more down to its icon, its logo shorter and the lines about it left out, on a card too narrow
- * for them, as a folding phone's outside screen gives it. The lines about
- * it fold away once they have been read, and what is below them slides up into their place.
+ * for them, as a folding phone's outside screen gives it. The lines about it fade away once they
+ * have been read, and what is above them slides down into their place, moved rather than laid out
+ * again on every frame.
  *
- * The clip plays only while the title is the one showing, silent unless somebody turned the sound
- * on, which is remembered for the next.
+ * The clip plays only while the title is the one showing, in the player the featured titles share,
+ * silent unless somebody turned the sound on, which is remembered for the next. A card without the
+ * player draws its backdrop alone.
  *
  * The backdrop and its clip are rounded and clipped by themselves as well as by the card around
  * them: as one title gives way to the next, the card's own clipping lapses for the length of the
@@ -121,17 +124,20 @@ const styles = StyleSheet.create({
  * @param height - How tall to draw it: a poster on a phone held upright, wider than tall on a wide
  *   screen.
  * @param isShowing - Whether it is the one in view.
+ * @param clipPlayer - The player the featured titles share, or nothing where this card may not play.
  * @param resumeAt - Where somebody stopped in it, if they did.
  * @param onEnded - Told when its clip has played through.
  * @param onPlay - Told to play it.
  * @param onMoreInfo - Told to open its page.
- * @param onClip - Told its clip's player while it plays, so the page can draw it behind itself.
+ * @param onClip - Told its clip's player while it plays, so the dots can follow it.
+ * @param nearness - How near the middle of the row it is, from nothing to the whole of it.
  */
 const AFeature = ({
   media,
   width,
   height,
   isShowing,
+  clipPlayer,
   resumeAt,
   onEnded,
   onPlay,
@@ -208,7 +214,7 @@ const AFeature = ({
       toValue: 0,
       duration: FOLDS_OVER,
       easing: EASINGS.inOutCubic,
-      useNativeDriver: false,
+      useNativeDriver: true,
     });
     const folding = setTimeout(() => {
       fold.start(() => {
@@ -234,17 +240,21 @@ const AFeature = ({
     [rising],
   );
 
-  const folds = useMemo(
-    () =>
-      toldHigh === null
-        ? { opacity: telling }
-        : {
-            opacity: telling,
-            height: telling.interpolate({ inputRange: [0, 1], outputRange: [0, toldHigh] }),
-          },
+  const makingRoom = useMemo(
+    () => ({
+      transform: [
+        {
+          translateY: telling.interpolate({
+            inputRange: [0, 1],
+            outputRange: [(toldHigh ?? 0) + FOOT_GAP, 0],
+          }),
+        },
+      ],
+    }),
     [telling, toldHigh],
   );
 
+  const isTold = !isNarrow && overview !== null && overview !== '' && isTelling;
   const facts = [
     media.rating === null || media.rating === undefined ? null : `★ ${media.rating.toFixed(1)}`,
     media.year === null ? null : media.year.toString(),
@@ -275,6 +285,7 @@ const AFeature = ({
               hasBackdrop={media.hasBackdrop}
               isShowing={isShowing}
               isMuted={isMuted}
+              clipPlayer={clipPlayer}
               onEnded={onEnded}
               onPlaying={setIsPlaying}
               {...(onClip === undefined ? {} : { onClip })}
@@ -292,69 +303,69 @@ const AFeature = ({
           <Animated.View
             style={[styles.foot, nearness === undefined ? null : { opacity: nearness }]}
           >
-            <Animated.View style={risings[0]}>
-              <ATitleLogo
-                mediaId={media.hasLogo ? media.id : null}
-                title={title}
-                high={isNarrow ? NARROW_LOGO_HIGH : LOGO_HIGH}
-                widest={width * LOGO_AT_MOST}
-                isOnArtwork
-                isCentred={false}
-              />
-            </Animated.View>
-
-            <Animated.View style={[styles.facts, risings[1]]}>
-              <Words size="small" tone="onArtwork">
-                {facts.join(' · ')}
-              </Words>
-              <TheBadges
-                isOnArtwork
-                isShort
-                isSolid
-                badges={qualityBadges({
-                  width: media.width,
-                  height: media.height,
-                  videoRange: media.videoRange,
-                  audioStreams: detail.data?.audioStreams,
-                })}
-                rating={
-                  typeof certification === 'string' &&
-                  certification !== '' &&
-                  typeof certificationRegion === 'string'
-                    ? { certification, region: certificationRegion }
-                    : null
-                }
-              />
-            </Animated.View>
-
-            {genres.length === 0 ? null : (
-              <GROUND.Provider value={OVER_THE_SCRIM}>
-                <Animated.View style={risings[1]}>
-                  <ABadgeRow badges={genres} />
-                </Animated.View>
-              </GROUND.Provider>
-            )}
-
-            {isNarrow || overview === null || overview === '' || !isTelling ? null : (
-              <Animated.View style={[styles.folds, folds]}>
-                <View
-                  style={styles.unfolded}
-                  onLayout={(event) => {
-                    const { height } = event.nativeEvent.layout;
-
-                    if (height > 0 && toldHigh !== height) {
-                      setToldHigh(height);
-                    }
-                  }}
-                >
-                  <Animated.View style={risings[2]}>
-                    <Words tone="onArtwork" lines={3} isProse>
-                      {overview}
-                    </Words>
-                  </Animated.View>
-                </View>
+            <Animated.View style={[styles.above, isTold ? makingRoom : null]}>
+              <Animated.View style={risings[0]}>
+                <ATitleLogo
+                  mediaId={media.hasLogo ? media.id : null}
+                  title={title}
+                  high={isNarrow ? NARROW_LOGO_HIGH : LOGO_HIGH}
+                  widest={width * LOGO_AT_MOST}
+                  isOnArtwork
+                  isCentred={false}
+                />
               </Animated.View>
-            )}
+
+              <Animated.View style={[styles.facts, risings[1]]}>
+                <Words size="small" tone="onArtwork">
+                  {facts.join(' · ')}
+                </Words>
+                <TheBadges
+                  isOnArtwork
+                  isShort
+                  isSolid
+                  badges={qualityBadges({
+                    width: media.width,
+                    height: media.height,
+                    videoRange: media.videoRange,
+                    audioStreams: detail.data?.audioStreams,
+                  })}
+                  rating={
+                    typeof certification === 'string' &&
+                    certification !== '' &&
+                    typeof certificationRegion === 'string'
+                      ? { certification, region: certificationRegion }
+                      : null
+                  }
+                />
+              </Animated.View>
+
+              {genres.length === 0 ? null : (
+                <GROUND.Provider value={OVER_THE_SCRIM}>
+                  <Animated.View style={risings[1]}>
+                    <ABadgeRow badges={genres} />
+                  </Animated.View>
+                </GROUND.Provider>
+              )}
+            </Animated.View>
+
+            {isTold ? (
+              <Animated.View
+                style={{ opacity: telling }}
+                onLayout={(event) => {
+                  const { height } = event.nativeEvent.layout;
+
+                  if (height > 0 && toldHigh !== height) {
+                    setToldHigh(height);
+                  }
+                }}
+              >
+                <Animated.View style={risings[2]}>
+                  <Words tone="onArtwork" lines={3} isProse>
+                    {overview}
+                  </Words>
+                </Animated.View>
+              </Animated.View>
+            ) : null}
 
             <Animated.View style={[styles.buttons, risings[3]]}>
               <View style={styles.half}>

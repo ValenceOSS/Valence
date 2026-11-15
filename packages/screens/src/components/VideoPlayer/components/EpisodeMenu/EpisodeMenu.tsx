@@ -101,6 +101,7 @@ const EpisodeMenu = ({
   return (
     <PopoverPanel
       tone="default"
+      isPill
       offset={PLAYER_MENU_OFFSET}
       label={say('common.episodes')}
       isDisabled={isDisabled}

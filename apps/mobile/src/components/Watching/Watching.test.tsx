@@ -265,6 +265,10 @@ describe('Watching', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
+        undefined,
+        'opened',
       );
     });
   });
@@ -544,6 +548,10 @@ describe('Watching', () => {
         undefined,
         'picture',
         undefined,
+        undefined,
+        undefined,
+        undefined,
+        'converting',
       );
     });
   });
@@ -635,6 +643,10 @@ describe('Watching', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
+        undefined,
+        'opened',
       );
     });
   });
@@ -697,6 +709,7 @@ describe('Watching', () => {
       expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBe('english');
     });
     expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[3]).toBe(900);
+    expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[12]).toBe('subtitles');
 
     await act(() => {
       theFakePlayer.say('isExternalPlaybackActiveChange', { isExternalPlaybackActive: false });
@@ -710,7 +723,8 @@ describe('Watching', () => {
   it('burns the subtitles being read into the picture while it plays in picture-in-picture', async () => {
     jest
       .mocked(startPlaybackSession)
-      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+      .mockResolvedValueOnce(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }))
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/burnt.m3u8', dashUrl: null }));
     jest.mocked(fetchSubtitleTracks).mockResolvedValue([
       {
         id: 'english',
@@ -753,7 +767,8 @@ describe('Watching', () => {
   it('keeps its place and plays on when it comes back before the burnt-in picture arrives', async () => {
     jest
       .mocked(startPlaybackSession)
-      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+      .mockResolvedValueOnce(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }))
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/again.m3u8', dashUrl: null }));
     jest.mocked(fetchSubtitleTracks).mockResolvedValue([
       {
         id: 'english',
@@ -784,9 +799,6 @@ describe('Watching', () => {
       expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBe('english');
     });
 
-    theFakePlayer.pause();
-    theFakePlayer.currentTime = 0;
-
     const play = jest.spyOn(theFakePlayer, 'play');
 
     await act(() => {
@@ -802,6 +814,140 @@ describe('Watching', () => {
     });
 
     play.mockRestore();
+  });
+
+  it('keeps the film playing in picture-in-picture while the burnt-in picture is fetched, rather than emptying the player', async () => {
+    const aSessionCalled = (sessionId: string): StartOutcome => {
+      const outcome = started({ kind: 'hls', manifestUrl: `/${sessionId}.m3u8`, dashUrl: null });
+
+      return outcome.kind === 'started'
+        ? { ...outcome, session: { ...outcome.session, sessionId } }
+        : outcome;
+    };
+    let burnt: (outcome: StartOutcome) => void = () => undefined;
+
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValueOnce(aSessionCalled('plain'))
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          burnt = resolve;
+        }),
+      );
+    jest.mocked(fetchSubtitleTracks).mockResolvedValue([aTrack('english')]);
+    saveSubtitleLanguage('en');
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(theFakePlayer.source).toContain('/plain.m3u8');
+    });
+
+    theFakePlayer.currentTime = 900;
+
+    await act(() => {
+      theFakePlayer.popOut();
+    });
+    await waitFor(() => {
+      expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBe('english');
+    });
+
+    expect(theFakePlayer.emptied).toBe(0);
+    expect(theFakePlayer.playing).toBe(true);
+    expect(stopPlaybackSession).not.toHaveBeenCalledWith('plain', expect.any(String));
+    expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+
+    theFakePlayer.currentTime = 912;
+
+    await act(() => {
+      burnt(aSessionCalled('burnt'));
+    });
+    await waitFor(() => {
+      expect(theFakePlayer.source).toContain('/burnt.m3u8');
+    });
+    await waitFor(() => {
+      expect(stopPlaybackSession).toHaveBeenCalledWith('plain', expect.any(String));
+    });
+
+    expect(theFakePlayer.emptied).toBe(0);
+    expect(theFakePlayer.currentTime).toBe(912);
+    expect(stopPlaybackSession).not.toHaveBeenCalledWith('burnt', expect.any(String));
+  });
+
+  it('leaves the film paused when it was paused while the burnt-in picture was fetched', async () => {
+    let burnt: (outcome: StartOutcome) => void = () => undefined;
+
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValueOnce(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }))
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          burnt = resolve;
+        }),
+      );
+    jest.mocked(fetchSubtitleTracks).mockResolvedValue([aTrack('english')]);
+    saveSubtitleLanguage('en');
+
+    await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(theFakePlayer.source).toContain('/master.m3u8');
+    });
+
+    await act(() => {
+      theFakePlayer.popOut();
+    });
+    await waitFor(() => {
+      expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBe('english');
+    });
+
+    theFakePlayer.pause();
+
+    const play = jest.spyOn(theFakePlayer, 'play');
+
+    await act(() => {
+      burnt(started({ kind: 'hls', manifestUrl: '/burnt.m3u8', dashUrl: null }));
+    });
+    await waitFor(() => {
+      expect(theFakePlayer.source).toContain('/burnt.m3u8');
+    });
+    await act(() => Promise.resolve());
+
+    expect(play).not.toHaveBeenCalled();
+
+    play.mockRestore();
+  });
+
+  it('plays on without the subtitles burnt in where that picture cannot be started', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValueOnce(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }))
+      .mockResolvedValueOnce({
+        kind: 'failed',
+        problem: 'unsupported',
+        reason: 'The media service failed.',
+      });
+    jest.mocked(fetchSubtitleTracks).mockResolvedValue([aTrack('english')]);
+    saveSubtitleLanguage('en');
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(theFakePlayer.source).toContain('/master.m3u8');
+    });
+
+    await act(() => {
+      theFakePlayer.popOut();
+    });
+    await waitFor(() => {
+      expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBe('english');
+    });
+    await act(() => Promise.resolve());
+
+    expect(theFakePlayer.emptied).toBe(0);
+    expect(theFakePlayer.playing).toBe(true);
+    expect(drawn.queryByText('The media service failed.')).toBeNull();
+    expect(stopPlaybackSession).not.toHaveBeenCalled();
   });
 
   it('leaves a film paused in picture-in-picture paused when its subtitles go back to the phone', async () => {
@@ -1388,7 +1534,7 @@ describe('Watching', () => {
     await userEvent.press(drawn.getByLabelText('Watch party'));
     await userEvent.press(drawn.getByLabelText('Start a watch party'));
 
-    expect(watchParty.open).toHaveBeenCalledWith('a-film', 'watch');
+    expect(watchParty.open).toHaveBeenCalledWith('a-film', 'watch', expect.any(Boolean));
   });
 
   it('offers no watch party for a copy kept on the phone', async () => {

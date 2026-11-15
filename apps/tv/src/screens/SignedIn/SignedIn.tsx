@@ -377,6 +377,22 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     ]);
   }, []);
 
+  const followTheParty = useCallback((mediaId: string) => {
+    setOpened((was) => {
+      const now = was.at(-1);
+
+      return [
+        ...was.slice(0, -1),
+        {
+          kind: 'play',
+          mediaId,
+          startSeconds: 0,
+          carriedOn: now?.kind === 'play' ? now.carriedOn : 0,
+        },
+      ];
+    });
+  }, []);
+
   const goHome = useCallback(() => {
     choose('home');
     giveFocusTo(homeTab);
@@ -971,6 +987,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
             {...(top.startedFrom === undefined ? {} : { startedFrom: top.startedFrom })}
             onLeave={back}
             onNext={playNext}
+            onPartyMovesTo={followTheParty}
           />
         </View>
       ) : null}

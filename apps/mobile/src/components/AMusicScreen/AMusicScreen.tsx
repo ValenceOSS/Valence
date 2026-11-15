@@ -31,6 +31,8 @@ const styles = StyleSheet.create({
  * @param standIn - What is drawn where there is no cover.
  * @param onBack - Told somebody is done with it.
  * @param children - The rest of the page.
+ * @param rows - Its songs, where there may be many, drawn only as they come near the screen.
+ * @param afterRows - What follows the songs.
  */
 const AMusicScreen = ({
   title,
@@ -39,11 +41,14 @@ const AMusicScreen = ({
   standIn,
   onBack,
   children,
+  rows,
+  afterRows,
 }: AMusicScreenProps) => {
   const colours = useTheColours();
   const [firstAlbum] = albumIds ?? [];
   const tint = usePictureTint(
-    artwork ?? (firstAlbum === undefined ? null : onThisServer(albumArtworkUrl(firstAlbum))),
+    artwork ??
+      (firstAlbum === undefined ? null : onThisServer(albumArtworkUrl(firstAlbum, 'small'))),
   );
   const drawn =
     albumIds !== undefined ? (
@@ -70,6 +75,8 @@ const AMusicScreen = ({
           />
         }
         {...(tint === null ? {} : { behind: <ATintedGround tint={tint} /> })}
+        {...(rows === undefined ? {} : { rows })}
+        {...(afterRows === undefined ? {} : { afterRows })}
       >
         {children}
       </Screen>

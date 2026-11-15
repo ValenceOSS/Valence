@@ -18,6 +18,7 @@ const ICON_SIZE = 30;
  * @param detail - A quieter word after the label, where there is more to say about it.
  * @param icon - What leads the line, or nothing for a line that keeps its place in a list beside
  *   lines that have one.
+ * @param face - Somebody's face to lead the line in place of an icon, for a line about a person.
  * @param onPress - Told when it is pressed.
  * @param watchedFraction - How far through the title this viewer is, for the line that resumes it.
  * @param hasPreferredFocus - Whether the remote starts here.
@@ -27,6 +28,7 @@ const ActionRow = ({
   label,
   detail,
   icon,
+  face,
   onPress,
   watchedFraction,
   hasPreferredFocus = false,
@@ -45,11 +47,12 @@ const ActionRow = ({
 
       return (
         <View style={[styles.row, isFocused && styles.focused, isDisabled && styles.disabled]}>
-          {icon === undefined ? (
-            <View style={styles.blank} />
-          ) : (
-            <Icon of={icon} colour={ink} size={ICON_SIZE} />
-          )}
+          {face ??
+            (icon === undefined ? (
+              <View style={styles.blank} />
+            ) : (
+              <Icon of={icon} colour={ink} size={ICON_SIZE} />
+            ))}
 
           <Text numberOfLines={1} style={[styles.label, { color: ink }]}>
             {label}

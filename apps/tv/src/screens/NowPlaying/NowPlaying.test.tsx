@@ -177,7 +177,7 @@ describe('NowPlaying', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Listening party' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Start a listening party' }));
 
-    expect(watchParty.open).toHaveBeenCalledWith(SONG.id, 'listen');
+    expect(watchParty.open).toHaveBeenCalledWith(SONG.id, 'listen', undefined);
   });
 
   it('shows the song, who sings it, the album and how it is being heard', async () => {

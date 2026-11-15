@@ -155,6 +155,25 @@ describe('TheCalendar', () => {
     expect(fetchReleaseCalendar).toHaveBeenLastCalledWith(TODAY, addDays(TODAY, 59), 'mine');
   });
 
+  it('draws the days coming up only as they come near the screen', async () => {
+    jest.mocked(fetchReleaseCalendar).mockResolvedValue(
+      Array.from({ length: 60 }, (_, at) =>
+        aCalendarEntry({
+          id: `day-${at.toString()}`,
+          date: addDays(TODAY, at),
+          title: `Show ${at.toString()}`,
+        }),
+      ),
+    );
+
+    const drawn = await drawCalendar();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Upcoming' }));
+
+    expect(await drawn.findByText('Show 0')).toBeTruthy();
+    expect(drawn.queryByText('Show 59')).toBeNull();
+  });
+
   it('says so where nothing comes out over the next two months', async () => {
     const drawn = await drawCalendar();
 

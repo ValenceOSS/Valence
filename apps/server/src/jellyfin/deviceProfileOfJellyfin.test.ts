@@ -40,6 +40,29 @@ describe('deviceProfileOfJellyfin', () => {
     expect(profile.maxBitrateKbps).toBe(20_000);
     expect(profile.supportedSubtitleFormats).toEqual(['srt']);
     expect(profile.tenBitVideoCodecs).toEqual(['hevc']);
+    expect(profile.surroundAudioCodec).toBeUndefined();
+  });
+
+  it('converts surround to Dolby Digital Plus for an app that takes it converted', () => {
+    const profile = deviceProfileOfJellyfin(
+      JellyfinDeviceProfileSchema.parse({
+        transcodingprofiles: [
+          {
+            container: 'mp4',
+            type: 'Video',
+            videocodec: 'hevc,h264',
+            audiocodec: 'aac,ac3,EAC3',
+            protocol: 'hls',
+          },
+        ],
+      }),
+      'Swiftfin',
+      null,
+      null,
+    );
+
+    expect(profile.surroundAudioCodec).toBe('eac3');
+    expect(profile.transcodingProfiles[0]).toMatchObject({ audioCodec: 'aac' });
   });
 
   it('reads limits and ranges from the codec profiles', () => {

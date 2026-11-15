@@ -28,12 +28,19 @@ import {
   MediaSummarySchema,
 } from '@ValenceContracts/schemas/Library';
 import { scanACode } from '@ValenceMobile/platform/scanACode';
+import { useNotificationTaps } from '@ValenceMobile/push/useNotificationTaps';
 import { SignedIn } from './SignedIn';
 import type { ReactNode } from 'react';
+import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
+import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
+import { aPartyMember } from '@ValenceClient/testing/aPartyMember';
+import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
+import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 jest.mock('@ValenceClient/session/auth');
 jest.mock('@ValenceMobile/platform/scanACode', () => ({ scanACode: jest.fn() }));
+jest.mock('@ValenceMobile/push/useNotificationTaps', () => ({ useNotificationTaps: jest.fn() }));
 jest.mock('@ValenceMobile/components/ATelevisionToSignIn/ATelevisionToSignIn', () => ({
   ATelevisionToSignIn: ({ code, askedFrom }: { code: string; askedFrom: string | null }) =>
     mockCreateElement(mockText, null, `Signing in ${code} from ${askedFrom ?? 'nowhere'}`),
@@ -43,6 +50,20 @@ jest.mock('@ValenceClient/playback/startPlaybackSession');
 jest.mock('@ValenceClient/library/fetchShows');
 jest.mock('@ValenceClient/profiles/fetchProfiles');
 jest.mock('@ValenceClient/profiles/fetchProfileList');
+const mockPartyHeld: { current: WatchPartyState | null } = { current: null };
+
+jest.mock('@ValenceClient/party/useWatchParty', () => {
+  const actual = jest.requireActual<{
+    useWatchParty: (client: RealtimeClient) => WatchPartyState;
+  }>('@ValenceClient/party/useWatchParty');
+
+  return {
+    ...actual,
+    useWatchParty: (client: RealtimeClient) =>
+      mockPartyHeld.current ?? actual.useWatchParty(client),
+  };
+});
+
 jest.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
   ...jest.requireActual<object>('@ValenceClient/realtime/getRealtimeClient'),
   allowRealtimeClientToStart: jest.fn(),
@@ -252,6 +273,40 @@ describe('SignedIn', () => {
     ).toBeTruthy();
   });
 
+  it('opens the title a tapped notification leads to', async () => {
+    withOneTitle();
+
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+    const [[followTap] = []] = jest.mocked(useNotificationTaps).mock.calls.slice(-1);
+
+    await act(() => {
+      followTap?.(`/?item=${ARRIVAL.id}`);
+    });
+
+    await waitFor(() => {
+      expect(drawn.getByText('Linguists meet a ship.')).toBeTruthy();
+    });
+  });
+
+  it('opens the player over everything for the watch party a tapped invitation asks them into', async () => {
+    withOneTitle();
+
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+
+    expect(await drawn.findByLabelText('What to show')).toBeTruthy();
+
+    const [[followTap] = []] = jest.mocked(useNotificationTaps).mock.calls.slice(-1);
+
+    await act(() => {
+      followTap?.(`/watch/${ARRIVAL.id}?party=p-1`);
+    });
+
+    await waitFor(() => {
+      expect(drawn.queryByLabelText('What to show')).toBeNull();
+    });
+    expect(drawn.getByLabelText('What to show', { includeHiddenElements: true })).toBeTruthy();
+  });
+
   it('opens a title when somebody presses its poster', async () => {
     withOneTitle();
 
@@ -286,6 +341,10 @@ describe('SignedIn', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
+        undefined,
+        'opened',
       );
     });
   });
@@ -477,6 +536,78 @@ describe('SignedIn', () => {
         theFakePlayer.say('playToEnd', { isPlaying: false });
       });
     };
+
+    const inAPartyAs = (role: 'host' | 'guest') => {
+      const send = jest.fn();
+
+      mockPartyHeld.current = aWatchPartyStateWith(jest.fn, {
+        party: aWatchParty({ mediaId: THREE[0]!.id, members: [aPartyMember({ role })] }),
+        referenceSeconds: 0,
+        send,
+      });
+
+      return send;
+    };
+
+    afterEach(() => {
+      mockPartyHeld.current = null;
+    });
+
+    it('moves the whole watch party on to the next one, for whoever runs it', async () => {
+      asksAfter(0);
+
+      const send = inAPartyAs('host');
+
+      await intoTheFirstEpisode();
+
+      const startedBefore = jest.mocked(startPlaybackSession).mock.calls.length;
+
+      await itEnds();
+
+      await waitFor(() => {
+        expect(send).toHaveBeenCalledWith({ kind: 'changeWhatIsPlaying', mediaId: THREE[1]!.id });
+      });
+      expect(jest.mocked(startPlaybackSession).mock.calls.length).toBe(startedBefore);
+    });
+
+    it('asks whoever runs the watch party whether anybody is still watching, as it would alone', async () => {
+      asksAfter(1);
+
+      const send = inAPartyAs('host');
+      const drawn = await intoTheFirstEpisode();
+
+      await itEnds();
+      await waitFor(() => {
+        expect(send).toHaveBeenCalledTimes(1);
+      });
+      await itEnds();
+      await waitFor(() => {
+        expect(drawn.getByText('Are you still watching?')).toBeTruthy();
+      });
+
+      await userEvent.press(drawn.getByText('Still watching'));
+
+      await waitFor(() => {
+        expect(send).toHaveBeenLastCalledWith({
+          kind: 'changeWhatIsPlaying',
+          mediaId: THREE[1]!.id,
+        });
+      });
+    });
+
+    it('keeps a guest at the end until the watch party moves on', async () => {
+      asksAfter(0);
+
+      const send = inAPartyAs('guest');
+      const drawn = await intoTheFirstEpisode();
+      const startedBefore = jest.mocked(startPlaybackSession).mock.calls.length;
+
+      await itEnds();
+
+      expect(send).not.toHaveBeenCalled();
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+      expect(jest.mocked(startPlaybackSession).mock.calls.length).toBe(startedBefore);
+    });
 
     it('plays the next one in the season', async () => {
       asksAfter(0);

@@ -18,7 +18,8 @@ const AUDIO = ['aac', 'ac3', 'eac3', 'alac', 'mp3'];
  * A browser has to be asked what it can play; an Apple TV is one known thing. Its player decodes
  * H.264 and HEVC, ten-bit HEVC included, in every range the television might show — Dolby Vision
  * and HDR10 as well as SDR — up to 4K, and passes Dolby Digital and Dolby Digital Plus through at up
- * to eight channels. What it cannot open whole it takes as HLS.
+ * to eight channels. What it cannot open whole it takes as HLS, with surround it cannot play, DTS
+ * above all, converted to Dolby Digital Plus.
  *
  * @returns The profile.
  */
@@ -29,6 +30,7 @@ const anAppleTvsProfile = (): DeviceProfile =>
     maxWidth: 3840,
     maxHeight: 2160,
     maxAudioChannels: 8,
+    surroundAudioCodec: 'eac3',
     supportedVideoRanges: ['SDR', 'HDR10', 'HLG', 'DolbyVision'],
     tenBitVideoCodecs: ['hevc'],
     maxVideoLevels: { h264: 52, hevc: 153 },
@@ -69,7 +71,8 @@ const WITHOUT_ITS_DECODERS: TvDecoders = {
  * profile, and up to the highest level one decodes. A kind of HDR is claimed where the screen shows
  * it and a decoder takes the ten bits it needs, and Dolby Vision only where there is a Dolby Vision
  * decoder too. Dolby and DTS sound is claimed where the television decodes it or its HDMI output
- * hands it on whole to a receiver. Pictures are sent no larger than the screen. ExoPlayer opens MP4
+ * hands it on whole to a receiver, and surround it cannot play is converted to Dolby Digital Plus
+ * where it plays that. Pictures are sent no larger than the screen. ExoPlayer opens MP4
  * and Matroska alike. Where the television cannot say, it is held to what every Android TV decodes.
  *
  * What it cannot open whole it takes as HLS in transport stream segments rather than fragmented MP4,
@@ -93,6 +96,7 @@ const anAndroidTvsProfile = (plays: TvDecoders | null): DeviceProfile => {
     maxWidth: Math.max(screen.width, FULL_HD.width),
     maxHeight: Math.max(screen.height, FULL_HD.height),
     maxAudioChannels: 8,
+    ...(heard.has('eac3') ? { surroundAudioCodec: 'eac3' } : {}),
     supportedVideoRanges: [
       'SDR',
       ...said.hdr.filter((range) =>

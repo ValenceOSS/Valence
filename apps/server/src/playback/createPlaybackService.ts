@@ -583,6 +583,8 @@ const createPlaybackService = ({
     stop: (sessionId, deviceId) => transcoder.stopSession(sessionId, deviceId),
 
     heartbeat: (sessionId, isPlaying) => transcoder.heartbeatSession(sessionId, isPlaying),
+
+    relayPresence: () => undefined,
   };
 };
 

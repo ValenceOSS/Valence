@@ -1,5 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import { ArtworkSizeSchema } from '@ValenceServer/routes/ArtworkSizeSchema';
 import {
   BookContentsSchema,
   BookDetailSchema,
@@ -118,7 +119,15 @@ const readBookCoverRoute = createRoute({
   path: '/api/books/{bookId}/cover',
   tags: ['Books'],
   summary: 'Read the cover of a book, which is the first page of its first chapter',
-  request: { params: z.object({ bookId: z.string().uuid() }) },
+  request: {
+    params: z.object({ bookId: z.string().uuid() }),
+    query: z.object({
+      size: ArtworkSizeSchema.optional().openapi({
+        description:
+          'Asks for the cover narrowed, as WebP, rather than whole; a server that does not know it sends the whole cover',
+      }),
+    }),
+  },
   responses: {
     200: { description: 'The cover' },
     404: { description: 'No cover', content: { 'application/json': { schema: BookError } } },

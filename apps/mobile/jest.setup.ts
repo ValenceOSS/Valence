@@ -59,6 +59,9 @@ jest.mock('expo-notifications', () => ({
   getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: false })),
   requestPermissionsAsync: jest.fn(() => Promise.resolve({ granted: false })),
   getDevicePushTokenAsync: jest.fn(() => Promise.resolve({ type: 'ios', data: 'a'.repeat(64) })),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  getLastNotificationResponse: jest.fn(() => null),
+  clearLastNotificationResponse: jest.fn(),
 }));
 
 jest.mock('expo-application', () => ({
@@ -109,6 +112,9 @@ jest.mock('@ValenceMobile/platform/theCookiesThisPhoneHolds', () => ({
 jest.mock('react-native-gesture-handler', () => ({
   GestureHandlerRootView: ({ children, style }: ViewProps & { children?: ReactNode }) =>
     mockCreateElement(mockView, { style }, children),
+  GestureDetector: ({ children }: { children?: ReactNode }) => children,
+  GestureStateManager: { activate: jest.fn(), fail: jest.fn(), deactivate: jest.fn() },
+  usePanGesture: <T>(config: T) => config,
 }));
 
 jest.mock('@shopify/react-native-skia', () => ({
@@ -225,6 +231,8 @@ jest.mock('expo-video', () => ({
 
     mockUseEffect(() => {
       if (source === null) {
+        mockPlayer.emptied += mockPlayer.source === null ? 0 : 1;
+
         return;
       }
 

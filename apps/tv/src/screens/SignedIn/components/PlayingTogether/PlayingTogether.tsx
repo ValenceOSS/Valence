@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { mayMoveTheParty } from '@ValenceClient/party/mayMoveTheParty';
+import { useStayWithTheParty } from '@ValenceClient/party/useStayWithTheParty';
 import { useWhereToBegin } from '@ValenceClient/party/useWhereToBegin';
 import { usePreRoll } from '@ValenceClient/playback/usePreRoll';
 import { PreRollClip } from '@ValenceTv/components/PreRollClip/PreRollClip';
@@ -13,9 +14,11 @@ import { say } from '@ValenceI18n/say';
  * The player, for somebody who may be arriving into a watch party: the party they were invited to
  * is joined, and the film is held back a moment until the room says where it is, so it opens where
  * everybody else has got to rather than where this account last left it. Leaving the film leaves
- * the party, as closing the web's player does, including one still being joined. Moving on to
- * another title while in a watch party, such as the next episode, leaves it too, since nobody can
- * watch two things with one room. A pre-roll clip plays first where the server has one, before
+ * the party, as closing the web's player does, including one still being joined. The party moving
+ * on to another title, such as the next episode, takes this viewer with it, and this viewer moving
+ * on to a title the party is not watching leaves it. In a watch party, following on to another
+ * episode moves the whole party there, for whoever may, and is not offered to anybody else. A
+ * pre-roll clip plays first where the server has one, before
  * a title chosen rather than one that followed on, from the beginning and outside a watch party.
  *
  * @param watchParty - The party this television holds.
@@ -23,6 +26,8 @@ import { say } from '@ValenceI18n/say';
  * @param mediaId - What to play.
  * @param startSeconds - Where this account had got to, used outside a party.
  * @param onLeave - Told they have left the film.
+ * @param onNext - Told to play the next episode outside a watch party.
+ * @param onPartyMovesTo - Told the party has moved on to another title, to watch it with them.
  */
 const PlayingTogether = ({
   watchParty,
@@ -30,16 +35,23 @@ const PlayingTogether = ({
   mediaId,
   startSeconds,
   onLeave,
+  onNext,
+  onPartyMovesTo,
   ...rest
 }: PlayingTogetherProps) => {
-  const partyMediaId = watchParty.party?.kind === 'watch' ? watchParty.party.mediaId : null;
-  const { leave: leaveTheParty } = watchParty;
+  const filmParty = watchParty.party?.kind === 'watch' ? watchParty.party : null;
+  const partyMediaId = filmParty?.mediaId ?? null;
 
-  useEffect(() => {
-    if (invitedTo === null && partyMediaId !== null && partyMediaId !== mediaId) {
-      leaveTheParty();
-    }
-  }, [invitedTo, partyMediaId, mediaId, leaveTheParty]);
+  useStayWithTheParty({ watchParty, invitedTo, mediaId, onMovedTo: onPartyMovesTo });
+
+  const moveOn =
+    filmParty === null
+      ? onNext
+      : mayMoveTheParty(filmParty, watchParty.meConnectionId)
+        ? (episode: { id: string }) => {
+            watchParty.send({ kind: 'changeWhatIsPlaying', mediaId: episode.id });
+          }
+        : undefined;
 
   const beginning = useWhereToBegin({
     watchParty,
@@ -93,6 +105,7 @@ const PlayingTogether = ({
       mediaId={mediaId}
       startSeconds={beginning.atSeconds}
       onLeave={leave}
+      {...(moveOn === undefined ? {} : { onNext: moveOn })}
       watchParty={watchParty}
     />
   );

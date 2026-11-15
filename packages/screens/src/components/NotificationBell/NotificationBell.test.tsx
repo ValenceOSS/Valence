@@ -59,6 +59,12 @@ describe('NotificationBell', () => {
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 
+  it('keeps the count small on the corner of the dock’s inbox, so the icon still reads', () => {
+    draw({ unread: 3 });
+
+    expect(screen.getByText('3').closest('[class*="absolute"]')).toHaveClass('h-3.5', 'top-1');
+  });
+
   it('stops counting past a point rather than reflowing the dock', () => {
     draw({ unread: 42 });
 

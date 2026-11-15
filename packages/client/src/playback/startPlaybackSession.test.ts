@@ -29,6 +29,7 @@ const SentBodySchema = z.object({
   requestedQuality: z.string().optional(),
   converted: z.string().optional(),
   isReadiedAhead: z.boolean().optional(),
+  startedBecause: z.string().optional(),
 });
 
 const sentBody = () => SentBodySchema.parse(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
@@ -115,6 +116,32 @@ describe('startPlaybackSession', () => {
     );
 
     expect(sentBody()).toMatchObject({ isReadiedAhead: true });
+  });
+
+  it('says why the stream is being asked for, for the server log', async () => {
+    await startPlaybackSession(
+      'media-1',
+      profile,
+      'client-1',
+      1669,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      false,
+      false,
+      false,
+      'recovering',
+    );
+
+    expect(sentBody()).toMatchObject({ startSeconds: 1669, startedBecause: 'recovering' });
+  });
+
+  it('says no reason where it was given none', async () => {
+    await startPlaybackSession('media-1', profile, 'client-1');
+
+    expect(sentBody()).not.toHaveProperty('startedBecause');
   });
 
   it('says whether the next episode should follow on with no gap, off where the server did not say', async () => {

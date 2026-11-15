@@ -184,6 +184,41 @@ describe('TheFeatured', () => {
     jest.useRealTimers();
   });
 
+  it('makes one player for every card, handed to the one showing and those beside it', async () => {
+    installPlatform(aFakePlatform());
+    jest.mocked(AFeature).mockClear();
+    const titles = Array.from({ length: 5 }, (_, at) =>
+      aTitle({ id: `3fa85f64-5717-4562-b3fc-2c963f66afb${at.toString()}` }),
+    );
+
+    await render(
+      <TheFeatured
+        items={titles}
+        onWatch={jest.fn()}
+        onLookAt={jest.fn()}
+        onLookAtShow={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    const cards = jest
+      .mocked(AFeature)
+      .mock.calls.slice(-9)
+      .map(([card]) => card);
+    const handed = cards.filter((card) => card.clipPlayer !== null);
+
+    expect(cards).toHaveLength(9);
+    expect(handed.map((card) => card.media.id)).toEqual([
+      titles[4]?.id,
+      titles[0]?.id,
+      titles[1]?.id,
+    ]);
+    expect(new Set(handed.map((card) => card.clipPlayer)).size).toBe(1);
+    expect(cards.filter((card) => card.isShowing).map((card) => card.media.id)).toEqual([
+      titles[0]?.id,
+    ]);
+  });
+
   it('draws a card wider than it is tall on a wide window', async () => {
     const card = await theCardIn(871, 669);
 

@@ -15,6 +15,7 @@ import { isImageSubtitle } from './isImageSubtitle';
 import { selectForcedSubtitle } from './selectForcedSubtitle';
 import { encodeBitrateFor } from './encodeBitrateFor';
 import { ladderBitrateFor } from './ladderBitrateFor';
+import { surroundCodecFor } from './surroundCodecFor';
 import { saying } from '@ValenceI18n/saying';
 
 type SubtitleBurnIn = 'chosen' | 'file';
@@ -404,6 +405,10 @@ const decideVideo = (
   };
 };
 
+const ENCODED_KBPS = 384;
+
+const DOLBY_DIGITAL_PLUS_KBPS = 640;
+
 /**
  * Decides what to do with the sound, having first picked which track the viewer means. A track the
  * device can play is passed through; anything else is transcoded to what it asked for. Sound is
@@ -423,6 +428,11 @@ const decideVideo = (
  * `maxAudioChannels` still says what to encode to once something else has forced an encode, which
  * is what it is good for: a stereo device has no use for a 5.1 encode.
  *
+ * Surround is encoded as Dolby Digital Plus for a client that asked for it, so a DTS track reaches an
+ * iPhone or an Apple TV in the codec Apple wants surround in, at 640 kb/s. Not where the viewer
+ * pinned a quality, whose audio ceiling AAC fills better, nor where the client could not play what it
+ * was sent, which might have been exactly that.
+ *
  * @param media - The file, as the catalogue holds it.
  * @param profile - What the device says it can play.
  * @param qualityClamp - What the viewer pinned quality to, where they pinned it.
@@ -439,9 +449,7 @@ const decideAudio = (
 ): AudioDecision => {
   const stream = selectAudioStream(media.audioStreams, preferredLanguage);
   const fallback = profile.transcodingProfiles[0];
-  const targetCodec = fallback === undefined ? 'aac' : fallback.audioCodec;
   const compressedBitrateKbps = qualityClamp?.maxAudioBitrateKbps ?? null;
-  const maxBitrateKbps = compressedBitrateKbps ?? 384;
 
   if (stream === undefined) {
     return {
@@ -457,6 +465,14 @@ const decideAudio = (
   const codecSupported = profile.directPlayProfiles.some((entry) =>
     entry.audioCodecs.includes(stream.codec),
   );
+  const channels = Math.min(stream.channels, profile.maxAudioChannels);
+  const surroundCodec =
+    compressedBitrateKbps === null && converted !== 'pictureAndSound'
+      ? surroundCodecFor(profile, channels)
+      : null;
+  const targetCodec = surroundCodec ?? fallback?.audioCodec ?? 'aac';
+  const maxBitrateKbps =
+    compressedBitrateKbps ?? (surroundCodec === null ? ENCODED_KBPS : DOLBY_DIGITAL_PLUS_KBPS);
 
   const transcodeAudio = (
     code: 'AudioSampleRateNotSupported' | 'AudioProfileNotSupported' | 'ClientCouldNotPlayTheCopy',
@@ -465,7 +481,7 @@ const decideAudio = (
     kind: 'transcode',
     streamIndex: stream.index,
     codec: targetCodec,
-    channels: Math.min(stream.channels, profile.maxAudioChannels),
+    channels,
     maxBitrateKbps,
     reason: { code, detail },
   });
@@ -482,7 +498,7 @@ const decideAudio = (
       kind: 'transcode',
       streamIndex: stream.index,
       codec: targetCodec,
-      channels: Math.min(stream.channels, profile.maxAudioChannels),
+      channels,
       maxBitrateKbps,
       reason: {
         code: 'AudioCodecNotSupported',
@@ -528,7 +544,7 @@ const decideAudio = (
       kind: 'transcode',
       streamIndex: stream.index,
       codec: targetCodec,
-      channels: Math.min(stream.channels, profile.maxAudioChannels),
+      channels,
       maxBitrateKbps: compressedBitrateKbps,
       reason: {
         code: 'UserForcedTranscode',

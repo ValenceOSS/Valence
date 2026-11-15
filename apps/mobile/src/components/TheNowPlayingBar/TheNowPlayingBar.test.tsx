@@ -8,6 +8,15 @@ import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { aFakeAudiobookPlayer } from '@ValenceMobile/testing/aFakeAudiobookPlayer';
 import { TheNowPlayingBar } from './TheNowPlayingBar';
+import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
+
+jest.mock('@ValenceMobile/hooks/usePictureLights', () => {
+  const { usePictureLights: actual } = jest.requireActual<{
+    usePictureLights: typeof usePictureLights;
+  }>('@ValenceMobile/hooks/usePictureLights');
+
+  return { usePictureLights: jest.fn(actual) };
+});
 
 let mockFake = aFakeAudiobookPlayer();
 
@@ -21,6 +30,17 @@ beforeEach(() => {
 });
 
 describe('TheNowPlayingBar', () => {
+  it('is tinted by a narrowed copy of the cover, not the whole one', async () => {
+    await act(() => {
+      thePhonesMusicPlayer().play([aTrack(1)], 0);
+    });
+    await render(<TheNowPlayingBar onOpen={jest.fn()} />, { wrapper: CacheScope });
+
+    expect(usePictureLights).toHaveBeenLastCalledWith(
+      expect.stringMatching(/\/artwork\?size=small$/u),
+    );
+  });
+
   it('draws nothing while nothing is playing', async () => {
     thePhonesMusicPlayer().stop();
     const drawn = await render(<TheNowPlayingBar onOpen={jest.fn()} />, { wrapper: CacheScope });

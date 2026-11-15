@@ -274,6 +274,19 @@ const SharingCard = ({ server, thisServer }: SharingCardProps) => {
           }),
         )}
         {toggleRow(
+          say('screens.adminArea.linkedServersPanel.inviteTheirPeopleToParties'),
+          say('screens.adminArea.linkedServersPanel.yourPeopleCanInviteNamesPeople', {
+            name: server.name,
+          }),
+          sharing.invitesTheirPeople,
+          () => {
+            change({ invitesTheirPeople: !sharing.invitesTheirPeople });
+          },
+          say('screens.adminArea.linkedServersPanel.turnedOffNamesPeopleAreLeftOut', {
+            name: server.name,
+          }),
+        )}
+        {toggleRow(
           say('screens.adminArea.linkedServersPanel.sendYourPeoplesNames'),
           say('screens.adminArea.linkedServersPanel.nameSeesWhoIsWatchingByName', {
             name: server.name,

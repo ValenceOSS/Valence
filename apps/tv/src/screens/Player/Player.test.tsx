@@ -832,7 +832,7 @@ describe('Player', () => {
       await userEvent.press(drawn.getByRole('button', { name: 'Watch party, Off' }));
       await userEvent.press(drawn.getByRole('button', { name: 'Start a watch party' }));
 
-      expect(watchParty.open).toHaveBeenCalledWith(MEDIA_ID, 'watch');
+      expect(watchParty.open).toHaveBeenCalledWith(MEDIA_ID, 'watch', expect.any(Boolean));
     });
 
     it('asks for the password a party wants, and Menu gives up on it', async () => {
@@ -1510,6 +1510,17 @@ describe('Player', () => {
       await tell('playToEnd', {});
 
       expect(onLeave).toHaveBeenCalledTimes(1);
+    });
+
+    it('stays on the last frame of a film in a watch party, rather than leaving the party', async () => {
+      const { onLeave } = await draw({
+        detail: FILM,
+        watchParty: aWatchPartyStateWith(jest.fn, { party: aWatchParty({ mediaId: MEDIA_ID }) }),
+      });
+
+      await tell('playToEnd', {});
+
+      expect(onLeave).not.toHaveBeenCalled();
     });
   });
 

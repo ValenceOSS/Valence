@@ -63,6 +63,16 @@ describe('opening a party', () => {
   it('opens a party for watching when it is not told what kind', () => {
     expect(openWith(createWorld()).kind).toBe('watch');
   });
+
+  it('starts paused where the host had paused, and playing where it is not told', () => {
+    const registry = createWorld();
+
+    expect(
+      registry.open({ mediaId: 'a-film', host: someone('host', 'Dan'), isPlaying: false })
+        .isPlaying,
+    ).toBe(false);
+    expect(openWith(createWorld()).isPlaying).toBe(true);
+  });
 });
 
 describe('joining', () => {
@@ -262,6 +272,49 @@ describe('issuing a command', () => {
     registry.issue(opened.id, 'host', { kind: 'changeWhatIsPlaying', mediaId: 'other' }, 1);
 
     expect(registry.find(opened.id)?.mediaId).toBe('other');
+  });
+
+  it('starts everybody at the beginning of the next title, not ready until they say so', () => {
+    const registry = createWorld();
+    const opened = openWith(registry);
+    const atTheEnd = {
+      positionSeconds: 2700,
+      bufferedAheadSeconds: 0,
+      isWatching: false,
+      isReady: true,
+    };
+
+    registry.join({ partyId: opened.id, ...someone('sam', 'Sam') });
+    registry.report('host', atTheEnd);
+    registry.report('sam', atTheEnd);
+    registry.issue(opened.id, 'host', { kind: 'changeWhatIsPlaying', mediaId: 'episode-2' }, 1);
+
+    expect(registry.find(opened.id)?.members).toEqual([
+      expect.objectContaining({ positionSeconds: 0, isWatching: false, isReady: false }),
+      expect.objectContaining({ positionSeconds: 0, isWatching: false, isReady: false }),
+    ]);
+  });
+
+  it('leaves where everybody is when a party for listening moves on to another song', () => {
+    const registry = createWorld();
+    const party = registry.open({
+      mediaId: 'a-song',
+      host: someone('host', 'Dan'),
+      kind: 'listen',
+    });
+
+    registry.report('host', {
+      positionSeconds: 200,
+      bufferedAheadSeconds: 5,
+      isWatching: true,
+      isReady: true,
+    });
+    registry.issue(party.id, 'host', { kind: 'changeWhatIsPlaying', mediaId: 'next-song' }, 1);
+
+    expect(registry.find(party.id)?.members[0]).toMatchObject({
+      positionSeconds: 200,
+      isReady: true,
+    });
   });
 });
 

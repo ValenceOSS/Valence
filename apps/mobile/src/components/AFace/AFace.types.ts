@@ -3,7 +3,9 @@ import type { Animated } from 'react-native';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 type AFaceProps = {
-  profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar' | 'name' | 'colour'>;
+  profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar' | 'name' | 'colour'> & {
+    pictureUrl?: string | undefined;
+  };
   picked?: string | null;
   isLarge?: boolean;
   isSmall?: boolean;

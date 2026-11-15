@@ -167,6 +167,16 @@ describe('createPartyClient', () => {
     expect(world.sent).toEqual([{ kind: 'partyOpen', mediaId: 'a-song', partyKind: 'listen' }]);
   });
 
+  it('says whether what it opens a party around is playing', () => {
+    const world = createWorld();
+
+    world.held.open('a-film', 'watch', false);
+
+    expect(world.sent).toEqual([
+      { kind: 'partyOpen', mediaId: 'a-film', partyKind: 'watch', isPlaying: false },
+    ]);
+  });
+
   it('asks the server for a party rather than deciding it has one', () => {
     const world = createWorld();
 

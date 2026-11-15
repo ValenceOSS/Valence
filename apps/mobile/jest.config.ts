@@ -21,6 +21,13 @@ const TypeScriptPathsSchema = z.object({
 
 const ExpoPresetSchema = z.object({ transformIgnorePatterns: z.array(z.string()).default([]) });
 
+const AS_METRO_COMPILES_IT = {
+  presets: ['babel-preset-expo'],
+  caller: { name: 'babel-jest', supportsReactCompiler: true },
+};
+
+const AS_METRO_LEAVES_IT = { presets: ['babel-preset-expo'] };
+
 /**
  * The workspace aliases, as Jest wants them.
  *
@@ -66,8 +73,9 @@ const config: Config = {
   preset: 'jest-expo',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'mjs', 'json', 'node'],
   transform: {
-    '^.+\\.[jt]sx?$': ['babel-jest', { presets: ['babel-preset-expo'] }],
-    '^.+\\.mjs$': ['babel-jest', { presets: ['babel-preset-expo'] }],
+    '/node_modules/.+\\.(m?js|[jt]sx?)$': ['babel-jest', AS_METRO_LEAVES_IT],
+    '^.+\\.[jt]sx?$': ['babel-jest', AS_METRO_COMPILES_IT],
+    '^.+\\.mjs$': ['babel-jest', AS_METRO_COMPILES_IT],
   },
   moduleNameMapper: {
     '^react-native/asset-registry$': '<rootDir>/node_modules/react-native/src/asset-registry.js',
@@ -78,6 +86,7 @@ const config: Config = {
     ...theWorkspaceAliases(),
   },
   transformIgnorePatterns: whatNeedsCompiling(),
+  resolver: '<rootDir>/jest.resolver.ts',
   setupFiles: ['<rootDir>/jest.setup.ts'],
   setupFilesAfterEnv: ['<rootDir>/jest.beforeEach.ts'],
   roots: ['<rootDir>', '<rootDir>/../../packages/native/src'],

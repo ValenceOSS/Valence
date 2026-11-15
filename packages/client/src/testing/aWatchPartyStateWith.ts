@@ -18,6 +18,7 @@ const aWatchPartyStateWith = (
   notice: null,
   passwordWanted: null,
   meConnectionId: 'me',
+  startedHere: null,
   referenceSeconds: null,
   waitingFor: [],
   jitterMs: 0,

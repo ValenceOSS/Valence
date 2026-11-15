@@ -144,6 +144,7 @@ const handlePartyMessage = (
         mediaId: message.mediaId,
         host: who,
         ...(message.partyKind === undefined ? {} : { kind: message.partyKind }),
+        ...(message.isPlaying === undefined ? {} : { isPlaying: message.isPlaying }),
         onClosed: (closed) => {
           binding.tell(
             closed.members.map((member) => member.connectionId),

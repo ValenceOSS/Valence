@@ -13,7 +13,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const servePresence = (app: OpenAPIHono, context: AppContext): void => {
-  const { presence, isTheDeviceOfWhoeverIsAsking } = context;
+  const { presence, playback, isTheDeviceOfWhoeverIsAsking } = context;
 
   app.openapi(presenceHeartbeatRoute, async (context) => {
     const { clientId } = context.req.valid('param');
@@ -24,6 +24,12 @@ const servePresence = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     presence.heartbeatPlayback(clientId, isPlaying, health);
+
+    const watching = presence.list().find((entry) => entry.clientId === clientId)?.playback;
+
+    if (watching !== null && watching !== undefined) {
+      playback.relayPresence(clientId, watching.mediaId, isPlaying, health);
+    }
 
     return context.body(null, 204);
   });

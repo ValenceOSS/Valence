@@ -37,6 +37,7 @@ const aShell = (instead: Partial<Shell> = {}): Shell => ({
     refusal: null,
     passwordWanted: null,
     meConnectionId: null,
+    startedHere: null,
     referenceSeconds: null,
     waitingFor: [],
     jitterMs: 0,

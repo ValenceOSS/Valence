@@ -60,20 +60,68 @@ describe('PartyMenu', () => {
     expect(onOpen).toHaveBeenCalled();
   });
 
-  it('says how many are watching without being opened, since that is the thing worth glancing at', () => {
-    render(<PartyMenu party={party()} meConnectionId="dan" />);
+  it('stays open on starting one, to show the party once it is there', async () => {
+    const actor = userEvent.setup();
+    const { rerender } = render(<PartyMenu party={null} meConnectionId="dan" onOpen={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: /2 watching/ })).toBeInTheDocument();
+    await openIt(actor, 'Watch party');
+    await actor.click(screen.getByRole('button', { name: 'Start a watch party' }));
+    rerender(<PartyMenu party={party()} meConnectionId="dan" startedHere="party-1" />);
+
+    expect(screen.getByText('Dan (you)')).toBeInTheDocument();
   });
 
-  it('counts who is watching rather than who has joined', () => {
+  it('opens by itself on a party started here from elsewhere, once', async () => {
+    const actor = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const { rerender } = render(
+      <PartyMenu
+        party={null}
+        meConnectionId="dan"
+        startedHere={null}
+        onOpenChange={onOpenChange}
+      />,
+    );
+
+    rerender(
+      <PartyMenu
+        party={party()}
+        meConnectionId="dan"
+        startedHere="party-1"
+        onOpenChange={onOpenChange}
+      />,
+    );
+
+    expect(screen.getByText('Dan (you)')).toBeInTheDocument();
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+
+    await actor.keyboard('{Escape}');
+    rerender(
+      <PartyMenu
+        party={party({ isPlaying: false })}
+        meConnectionId="dan"
+        startedHere="party-1"
+        onOpenChange={onOpenChange}
+      />,
+    );
+
+    expect(screen.queryByText('Dan (you)')).not.toBeInTheDocument();
+  });
+
+  it('does not open by itself on a party it joined', () => {
+    render(<PartyMenu party={party()} meConnectionId="dan" startedHere={null} />);
+
+    expect(screen.queryByText('Dan (you)')).not.toBeInTheDocument();
+  });
+
+  it('says how many are in the party without being opened, watching or not', () => {
     const mixed = party({
       members: [member(), member({ connectionId: 'sam', name: 'Sam', isWatching: false })],
     });
 
     render(<PartyMenu party={mixed} meConnectionId="dan" />);
 
-    expect(screen.getByRole('button', { name: /1 watching/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /2 in the party/ })).toBeInTheDocument();
   });
 
   it('shows who is in the party once opened', async () => {
@@ -91,7 +139,7 @@ describe('PartyMenu', () => {
     render(<PartyMenu party={party()} meConnectionId="dan" onLoosen={vi.fn()} />);
     await openIt(actor, /Watch party/);
 
-    expect(screen.getByRole('switch', { name: /skip around/ })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: /scrub/ })).toBeInTheDocument();
   });
 
   it('does not give a guest those controls', async () => {
@@ -100,7 +148,7 @@ describe('PartyMenu', () => {
     render(<PartyMenu party={party()} meConnectionId="sam" onLoosen={vi.fn()} />);
     await openIt(actor, /Watch party/);
 
-    expect(screen.queryByRole('switch', { name: /skip around/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /scrub/ })).not.toBeInTheDocument();
   });
 
   it('offers the invitation to anybody in the party', async () => {
@@ -142,7 +190,8 @@ describe('PartyMenu', () => {
 
     render(<PartyMenu party={party()} meConnectionId="dan" onRemove={onRemove} />);
     await openIt(actor, /Watch party/);
-    await actor.click(screen.getByRole('button', { name: 'Remove Sam from the party' }));
+    await actor.click(screen.getByRole('button', { name: 'Actions for Sam' }));
+    await actor.click(screen.getByRole('menuitem', { name: /Remove Sam from the party/ }));
 
     expect(onRemove).toHaveBeenCalledWith('sam');
   });

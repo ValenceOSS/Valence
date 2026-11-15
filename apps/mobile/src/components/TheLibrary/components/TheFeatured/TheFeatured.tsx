@@ -15,6 +15,8 @@ import { TheDots } from '@ValenceMobile/components/TheLibrary/components/TheFeat
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { useIsInTheForeground } from '@ValenceMobile/hooks/useIsInTheForeground';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
+import { useClipPlayer } from '@ValenceMobile/components/APreview/useClipPlayer';
+import type { VideoPlayer } from 'expo-video';
 import type { TheFeaturedProps } from './TheFeatured.types';
 
 const GAP = 12;
@@ -106,12 +108,15 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
  * Beneath them, the dots say which is showing and how long is left of it: through its clip while
  * one plays, and otherwise until it moves on by itself.
  *
+ * However many cards there are, clones at either end included, there is one player for their clips,
+ * handed to the card showing and to those either side of it, so a clip giving way can fade out; the
+ * rest draw their backdrops alone.
+ *
  * @param items - What to feature.
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
  * @param onShowing - Told which title is showing, whenever that changes.
- * @param onClip - Told the showing title's clip while it plays.
  * @param isInView - Whether the page is scrolled to show it; away from it, or with the app behind
  *   another, nothing plays or moves on.
  */
@@ -121,13 +126,13 @@ const TheFeaturedTitles = ({
   onLookAt,
   onLookAtShow,
   onShowing,
-  onClip,
   isInView: isScrolledTo = true,
 }: TheFeaturedProps) => {
   const isInView = useIsInTheForeground() && isScrolledTo;
   const { width, height } = useWindowDimensions();
   const hasStrip = useTheSideStrip() !== null;
   const isStill = usePrefersStillness();
+  const clipPlayer = useClipPlayer();
   const [filled] = useState(() => new Animated.Value(0));
   const watched = useQuery(viewingQueries.progress());
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
@@ -248,11 +253,11 @@ const TheFeaturedTitles = ({
   }, [showing, onShowing]);
 
   const moving = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const heard = useRef<Parameters<NonNullable<typeof onClip>>[0]>(null);
-  const latest = useRef({ turn, count, lead, step, isStill, onClip, isInView });
+  const heard = useRef<VideoPlayer | null>(null);
+  const latest = useRef({ turn, count, lead, step, isStill, isInView });
 
   useLayoutEffect(() => {
-    latest.current = { turn, count, lead, step, isStill, onClip, isInView };
+    latest.current = { turn, count, lead, step, isStill, isInView };
   });
 
   const findThePlace = useCallback(() => {
@@ -371,9 +376,7 @@ const TheFeaturedTitles = ({
   }, [isInView, filled, runOut]);
 
   const heardClip = useCallback(
-    (player: Parameters<NonNullable<typeof onClip>>[0]) => {
-      latest.current.onClip?.(player);
-
+    (player: VideoPlayer | null) => {
       if (player === heard.current) {
         return;
       }
@@ -423,6 +426,7 @@ const TheFeaturedTitles = ({
         {cards.map((media, index) => {
           const showId = showIdOf(media);
           const isShowing = isInView && index === lead + turn;
+          const isBeside = Math.abs(index - (lead + turn)) <= 1;
 
           return (
             <Animated.View
@@ -434,6 +438,7 @@ const TheFeaturedTitles = ({
                 width={across}
                 height={Math.round(across * tallness)}
                 isShowing={isShowing}
+                clipPlayer={isBeside ? clipPlayer : null}
                 {...(leaning[index] === undefined ? {} : { nearness: leaning[index].nearness })}
                 resumeAt={resumeFor(progress, media.id)}
                 onEnded={showNext}

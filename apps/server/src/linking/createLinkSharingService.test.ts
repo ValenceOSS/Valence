@@ -325,6 +325,28 @@ describe('createLinkSharingService', () => {
     expect(await filmsAsks('/libraries')).toMatchObject({ status: 429 });
   });
 
+  it('counts the heartbeats of a session it started apart, so they never crowd out its stream', async () => {
+    const { filmsAsks, filmsAtAnime, claims } = await twoSharingServers({
+      perServer: 2,
+      perPerson: 1,
+    });
+    const sam = { profileId: 'sam', name: 'Sam' };
+    const beat = (session: string) =>
+      filmsAsks(`/api/playback/session/${session}/heartbeat`, sam, 'POST');
+
+    claims.claim('session', 'one', filmsAtAnime, { mediaId: ARRIVAL, title: 'Arrival' });
+
+    const beats = [];
+
+    for (let second = 0; second < 10; second += 1) {
+      beats.push((await beat('one')).kind);
+    }
+
+    expect(beats.every((kind) => kind === 'admitted')).toBe(true);
+    expect((await filmsAsks('/api/playback/session/one/index.m3u8', sam)).kind).toBe('admitted');
+    expect(await beat('not-theirs')).toMatchObject({ status: 429 });
+  });
+
   it('records nobody new once a server is over its rate, or has brought as many people as any house has', async () => {
     const crowded = await twoSharingServers({ perServer: 100, perPerson: 100, people: 2 });
 

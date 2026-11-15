@@ -4,6 +4,8 @@ import { whatToReport } from '@ValenceCore/functions/whatToReport';
 import { describeCommand } from '@ValenceClient/party/describeCommand';
 import type { PartyPlayback } from '@ValenceClient/party/PartyPlayback';
 import type { RoomPlayer } from '@ValenceClient/party/RoomPlayer';
+import { reportPlaybackNote } from '@ValenceClient/playback/reportPlaybackNote';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 
 const REPORT_EVERY_MS = 1000;
 
@@ -22,6 +24,37 @@ type FollowTheRoom = {
 };
 
 /**
+ * Moves a player to where the room is, and tells the server's log, since a viewer who sees their
+ * film jump has nothing else to show anybody where from and to.
+ *
+ * @param player - The player to move.
+ * @param partyId - The party moving it.
+ * @param toSeconds - Where the room is.
+ * @param because - Whether it is catching up on joining, or after drifting too far.
+ */
+const moveToTheRoom = (
+  player: RoomPlayer,
+  partyId: string,
+  toSeconds: number,
+  because: 'joined' | 'drifted',
+): void => {
+  const fromSeconds = player.currentSeconds() + player.frameSkewSeconds();
+
+  player.seekTo(toSeconds - player.frameSkewSeconds());
+
+  void reportPlaybackNote(
+    {
+      kind: 'caughtUp',
+      partyId,
+      fromSeconds: Math.max(0, fromSeconds),
+      toSeconds: Math.max(0, toSeconds),
+      because,
+    },
+    platformInUse().thisClientId(),
+  );
+};
+
+/**
  * Keeps one player in step with the watch party it is part of, whichever client it is drawn by —
  * the browser's video element, the phone's player or the television's — through the few things each
  * of them can be asked to do.
@@ -29,10 +62,13 @@ type FollowTheRoom = {
  * Five things, each its own effect because each answers to something different. Joining part-way
  * through jumps straight to where the room is, once, rather than easing there. A command somebody
  * sent is applied once, by its sequence, and said aloud. The player runs while the room runs and
- * nobody is holding it up, and stops otherwise, rather than deciding for itself. Where it is, and
- * whether it could play, is reported every second, from the last position known to be real while
- * a stream is being rebuilt. And small drift is closed by playing a little faster or slower, large
- * drift by jumping, while a held room lines everybody up on the same frame.
+ * nobody is holding it up, and stops otherwise, rather than deciding for itself, but a player that
+ * has reached the end is left there, since starting it again would play the film from the start
+ * for as long as the room still says it is playing. Where it is, and whether it could play, is
+ * reported every second, from the last position known to be real while a stream is being rebuilt.
+ * And small drift is closed by playing a little faster or slower, large drift by jumping, while a
+ * held room lines everybody up on the same frame. A jump, on joining or after drifting, is noted in
+ * the server's log.
  *
  * The player is asked for at the moment it is needed rather than held, since a client's player can
  * be replaced underneath — a new session, a new element — without the party changing.
@@ -85,7 +121,7 @@ const useFollowTheRoom = ({
     const showing = player.currentSeconds() + player.frameSkewSeconds();
 
     if (Math.abs(reference - showing) > CATCH_UP_BEYOND_SECONDS) {
-      player.seekTo(reference - player.frameSkewSeconds());
+      moveToTheRoom(player, party.id, reference, 'joined');
     }
   }, [party, reference, party?.meConnectionId]);
 
@@ -125,7 +161,7 @@ const useFollowTheRoom = ({
 
     const shouldRun = isPlaying && !isHeld;
 
-    if (shouldRun && player.isPaused()) {
+    if (shouldRun && player.isPaused() && !player.isEnded()) {
       player.play().catch(onCannotStart);
 
       return;
@@ -200,7 +236,7 @@ const useFollowTheRoom = ({
     });
 
     if (corrected.kind === 'snap') {
-      player.seekTo(reference - player.frameSkewSeconds());
+      moveToTheRoom(player, held.id, reference, 'drifted');
       player.setRate(1);
 
       return;
