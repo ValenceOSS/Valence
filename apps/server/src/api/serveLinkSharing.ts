@@ -46,8 +46,15 @@ import { refuse } from '@ValenceI18n/refuse';
 import { saying } from '@ValenceI18n/saying';
 import { say } from '@ValenceI18n/say';
 import { PlaybackHealthSchema } from '@ValenceServer/presence/PlaybackHealthSchema';
+import { quietLinkedViewers } from '@ValenceServer/linking/quietLinkedViewers';
 
 type Admitted = Extract<Admission, { kind: 'admitted' }>;
+
+const ABOUT_A_SESSION = /^\/api\/playback\/session\/([^/]+)/;
+
+const LINKED_SESSION_GOES_QUIET_MS = 120_000;
+
+const LOOKS_FOR_QUIET_SESSIONS_EVERY_MS = 30_000;
 
 const SYNCS_AFTER_MS = 5000;
 
@@ -148,6 +155,37 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
   const tickets = createDirectTickets();
   const streamSlots = createStreamSlots();
   const viewerOf = (serverId: string, sessionId: string) => `peer~${serverId}~${sessionId}`;
+  const lastHeard = new Map<string, number>();
+  const letGo = (serverId: string, sessionId: string) => {
+    const watcher = viewerOf(serverId, sessionId);
+
+    lastHeard.delete(watcher);
+    peerClaims.release('session', sessionId, serverId);
+    presence.stopPlayback(watcher);
+    presence.disconnect(watcher, watcher);
+    asking.delete(sessionId);
+  };
+
+  setInterval(() => {
+    const now = Date.now();
+
+    for (const watcher of quietLinkedViewers(
+      presence.list(),
+      (clientId) => {
+        const heardAt = lastHeard.get(clientId);
+
+        return heardAt === undefined ? null : now - heardAt;
+      },
+      now,
+      LINKED_SESSION_GOES_QUIET_MS,
+    )) {
+      const [, serverId, ...session] = watcher.split('~');
+
+      if (serverId !== undefined && session.length > 0) {
+        letGo(serverId, session.join('~'));
+      }
+    }
+  }, LOOKS_FOR_QUIET_SESSIONS_EVERY_MS).unref();
   const keeper = createLinkKeeper(context);
   const syncSoon = createSoonSync(syncLinkedServer, SYNCS_AFTER_MS);
   const admitted = new WeakMap<Request, Admitted>();
@@ -604,6 +642,14 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       }
     })();
     const stopped = method === 'DELETE' ? STOPPED_SESSION.exec(who.inner)?.[1] : undefined;
+    const about = ABOUT_A_SESSION.exec(who.inner)?.[1];
+
+    if (
+      about !== undefined &&
+      presence.isHeldBy(viewerOf(who.serverId, about), viewerOf(who.serverId, about))
+    ) {
+      lastHeard.set(viewerOf(who.serverId, about), Date.now());
+    }
     const beating = method === 'POST' ? HEARTBEAT.exec(who.inner)?.[1] : undefined;
 
     try {
@@ -618,6 +664,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
             who.title.mediaId === null ? null : await library.getMedia(who.title.mediaId);
 
           peerClaims.claim('session', sessionId, who.serverId, who.title);
+          lastHeard.set(watcher, Date.now());
           presence.connect({
             clientId: watcher,
             socketId: watcher,
@@ -684,12 +731,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (stopped !== undefined) {
-      const watcher = viewerOf(who.serverId, stopped);
-
-      peerClaims.release('session', stopped, who.serverId);
-      presence.stopPlayback(watcher);
-      presence.disconnect(watcher, watcher);
-      asking.delete(stopped);
+      letGo(who.serverId, stopped);
     }
 
     const passedBack = new Headers(answered.headers);

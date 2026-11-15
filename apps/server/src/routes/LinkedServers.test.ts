@@ -625,6 +625,81 @@ describe('the linked server routes', () => {
     });
   });
 
+  it('lets go of a session from a linked server once it goes quiet, and keeps one it still hears from', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+
+    try {
+      const network = aNetwork();
+      const title = '00000000-0000-4000-8000-0000000000c3';
+      const film = aJellyfinDetail(aJellyfinFilm({ id: title, libraryId: FILMS.id }));
+      const anime = await network.serverAt(
+        'https://anime.example',
+        ['administrator'],
+        [FILMS],
+        {
+          subjectOf: ({ id }) =>
+            Promise.resolve(
+              id === title
+                ? {
+                    id,
+                    title: 'Arrival',
+                    libraryId: FILMS.id,
+                    certificationAge: 12,
+                    isNeverRated: false,
+                  }
+                : null,
+            ),
+        },
+        [film],
+      );
+      const films = await network.serverAt('https://films.example');
+      const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+      const marques = { profileId: 'profile-1', name: 'Marques' };
+
+      await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+        libraryIds: [FILMS.id],
+      });
+
+      const started = z
+        .object({ sessionId: z.string() })
+        .parse(
+          await (
+            await films.askAt(
+              hostAtGuest,
+              `/api/playback/${title}/session`,
+              'POST',
+              { deviceProfile: aDeviceProfile() },
+              marques,
+            )
+          ).json(),
+        );
+      const linkedSessions = async () =>
+        z
+          .array(z.object({ fromServer: z.string().nullable() }))
+          .parse(await (await anime.request('/api/admin/sessions')).json())
+          .filter((session) => session.fromServer !== null).length;
+
+      for (let beat = 0; beat < 6; beat += 1) {
+        await vi.advanceTimersByTimeAsync(30_000);
+        await films.askAt(
+          hostAtGuest,
+          `/api/playback/session/${started.sessionId}/heartbeat`,
+          'POST',
+          { isPlaying: false },
+          marques,
+        );
+      }
+
+      expect(await linkedSessions()).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(150_000);
+
+      expect(await linkedSessions()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('stops honouring a ticket once the title is no longer shared, or the server is unlinked', async () => {
     const network = aNetwork();
     const title = '00000000-0000-4000-8000-0000000000c1';

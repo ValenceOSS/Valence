@@ -32,6 +32,23 @@ describe('groupSessionsByViewer', () => {
     expect(groupSessionsByViewer([])).toEqual([]);
   });
 
+  it('keeps two people from a linked server apart, and gathers each one’s sessions', () => {
+    const linked = (clientId: string, profileName: string, fromServer = 'KKONAW') =>
+      session({ clientId, accountId: null, profileId: null, profileName, fromServer });
+    const groups = groupSessionsByViewer([
+      linked('peer~a~1', 'Danny'),
+      linked('peer~a~2', 'Marques'),
+      linked('peer~a~3', 'Danny'),
+      linked('peer~b~1', 'Danny', 'Northside'),
+    ]);
+
+    expect(groups.map((group) => group.sessions.map((one) => one.clientId))).toEqual([
+      ['peer~a~1', 'peer~a~3'],
+      ['peer~a~2'],
+      ['peer~b~1'],
+    ]);
+  });
+
   it('gathers every tab one person has open', () => {
     const groups = groupSessionsByViewer([
       session({ clientId: 'cli_1' }),
