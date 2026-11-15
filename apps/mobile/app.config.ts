@@ -76,6 +76,7 @@ const config: ExpoConfig = {
     allowBackup: false,
     ...(firebase === undefined ? {} : { googleServicesFile: firebase }),
   },
+  experiments: { reactCompiler: true },
   extra: {
     eas: {
       projectId: '11620f0a-1d3a-449d-9812-2afe80b14ecc',
