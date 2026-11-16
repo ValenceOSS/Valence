@@ -1,6 +1,7 @@
 //! What this computer knows about the files it holds, in `held.json` beside the preference file,
 //! written as the Electron app's `conf` wrote it: one JSON object of rows by download, tab-indented.
 
+use super::coalesced::Coalesced;
 use super::held_file::HeldFile;
 use serde::de::{Deserializer, MapAccess, Visitor};
 use serde::ser::{SerializeMap, Serializer};
@@ -15,10 +16,11 @@ pub const HELD_INDEX_FILE: &str = "held.json";
 /// The rows of the index in the order they were first written, as a JavaScript object keeps them.
 type Rows = Vec<(String, Value)>;
 
-/// The index of held files, read once and written through on every change.
+/// The index of held files, read once and written through on every change, off the runtime's own
+/// threads and one write at a time, the latest rows winning.
 pub struct HeldIndex {
-    file: PathBuf,
     rows: Mutex<Rows>,
+    writing: Coalesced,
 }
 
 impl HeldIndex {
@@ -31,8 +33,8 @@ impl HeldIndex {
             .unwrap_or_default();
 
         Self {
-            file,
             rows: Mutex::new(rows),
+            writing: Coalesced::new(move |written| write_whole(&file, written)),
         }
     }
 
@@ -103,21 +105,30 @@ impl HeldIndex {
         self.rows.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Writes the rows to the file whole, through a file beside it so a crash never leaves half.
+    /// Writes the rows to the file, in the background.
     fn save(&self, rows: &Rows) {
-        let Ok(written) = write_rows(rows) else {
-            return;
-        };
-
-        if let Some(folder) = self.file.parent() {
-            let _ = std::fs::create_dir_all(folder);
+        if let Ok(written) = write_rows(rows) {
+            self.writing.write(written);
         }
+    }
 
-        let beside = with_suffix(&self.file, ".writing");
+    /// Waits until the rows written so far are on the disk.
+    #[cfg(test)]
+    pub fn settled(&self) {
+        self.writing.settled();
+    }
+}
 
-        if std::fs::write(&beside, written).is_ok() {
-            let _ = std::fs::rename(&beside, &self.file);
-        }
+/// Writes `written` to `file` whole, through a file beside it so a crash never leaves half.
+fn write_whole(file: &Path, written: &[u8]) {
+    if let Some(folder) = file.parent() {
+        let _ = std::fs::create_dir_all(folder);
+    }
+
+    let beside = with_suffix(file, ".writing");
+
+    if std::fs::write(&beside, written).is_ok() {
+        let _ = std::fs::rename(&beside, file);
     }
 }
 
@@ -217,6 +228,7 @@ mod tests {
         index.write(&a_row(TWO));
         index.write(&a_row(ONE));
         index.change(TWO, |row| row.state = HeldState::Here);
+        index.settled();
 
         let again = HeldIndex::open(file);
         let rows: Vec<(String, HeldState)> = again
@@ -239,7 +251,10 @@ mod tests {
         let folder = tempfile::tempdir().unwrap();
         let file = folder.path().join(HELD_INDEX_FILE);
 
-        HeldIndex::open(file.clone()).write(&a_row(ONE));
+        let index = HeldIndex::open(file.clone());
+
+        index.write(&a_row(ONE));
+        index.settled();
 
         let written = std::fs::read_to_string(file).unwrap();
 

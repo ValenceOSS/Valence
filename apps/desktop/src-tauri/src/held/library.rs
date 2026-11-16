@@ -529,10 +529,12 @@ mod tests {
         }
 
         fn rows(&self) -> Vec<HeldFile> {
+            self.library.inner.index.settled();
             HeldIndex::open(self.index_file.clone()).all()
         }
 
         fn row(&self, download_id: &str) -> Option<HeldFile> {
+            self.library.inner.index.settled();
             HeldIndex::open(self.index_file.clone()).read(download_id)
         }
 

@@ -1,5 +1,6 @@
 //! Films and episodes kept on this computer to watch offline.
 
+pub mod coalesced;
 pub mod folder;
 pub mod held_file;
 pub mod index;
