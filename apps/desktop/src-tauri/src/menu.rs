@@ -53,10 +53,6 @@ const VALENCE_ON_THE_WEB: &str = "valence-on-the-web";
 /// How far one step of zoom goes, as a browser counts its zoom level.
 const ZOOM_STEP: f64 = 0.5;
 
-/// The script that keeps a right click to the page, with no menu of the webview's own.
-const NO_MENU_OF_ITS_OWN: &str =
-    "document.addEventListener('contextmenu', (event) => event.preventDefault());";
-
 /// How far the page is zoomed, as a browser's zoom level: nought is actual size.
 #[derive(Default)]
 struct Zoom(Mutex<f64>);
@@ -298,9 +294,8 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     )?)?;
     handle.on_menu_event(|app, event| chosen(app, &event));
 
-    let watcher = tauri::plugin::Builder::<Wry>::new("valence-window-menu")
-        .js_init_script(NO_MENU_OF_ITS_OWN.to_owned())
-        .on_window_ready(|window| {
+    let watcher =
+        tauri::plugin::Builder::<Wry>::new("valence-window-menu").on_window_ready(|window| {
             if !is_mac() {
                 let _ = window.hide_menu();
             }

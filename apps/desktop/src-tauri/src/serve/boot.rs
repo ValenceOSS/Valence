@@ -57,20 +57,10 @@ pub fn what_is_now(app: AppHandle) -> Value {
     })
 }
 
-/// The script that hands `boot` to the page and marks the document as the desktop app's, on the
-/// system `boot` says it runs on.
+/// The script that hands `boot` to the page, as nothing but the values it holds.
 #[must_use]
 pub fn script(boot: &Value) -> String {
-    let platform = boot
-        .pointer("/about/platform")
-        .cloned()
-        .unwrap_or_else(|| Value::String(String::new()));
-
-    format!(
-        "window.__VALENCE_BOOT__ = {boot};\n\
-         document.documentElement.setAttribute(\"data-valence-desktop\", \"true\");\n\
-         document.documentElement.setAttribute(\"data-valence-platform\", {platform});\n"
-    )
+    format!("window.__VALENCE_BOOT__ = {boot};\n")
 }
 
 /// Answers with the first script, built now.
@@ -105,7 +95,7 @@ mod tests {
     }
 
     #[test]
-    fn hands_the_page_its_values_and_marks_the_document() {
+    fn hands_the_page_its_values_and_nothing_else() {
         let boot = json!({
             "preferences": { "valence.server.address": "http://nas:8420" },
             "about": { "platform": "darwin" },
@@ -120,8 +110,7 @@ mod tests {
             .expect("the values first");
 
         assert_eq!(serde_json::from_str::<Value>(handed).expect("JSON"), boot);
-        assert!(written.contains("setAttribute(\"data-valence-desktop\", \"true\")"));
-        assert!(written.contains("setAttribute(\"data-valence-platform\", \"darwin\")"));
+        assert!(!written.contains("setAttribute"));
     }
 
     #[test]
@@ -131,6 +120,6 @@ mod tests {
         );
 
         assert!(written.contains(r#""a":"\";alert(1);//""#));
-        assert!(written.contains(r#"data-valence-platform", "x\"""#));
+        assert!(written.contains(r#""platform":"x\"""#));
     }
 }

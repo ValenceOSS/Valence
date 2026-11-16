@@ -251,7 +251,7 @@ async fn builds_the_first_script_fresh_and_never_caches_it() {
         .text()
         .await
         .expect("text")
-        .contains("data-valence-platform\", \"linux\""));
+        .contains("\"platform\":\"linux\""));
 }
 
 #[tokio::test]

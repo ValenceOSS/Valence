@@ -11,6 +11,7 @@ import { askAboutAPasskey } from '@ValenceDesktop/bridge/askAboutAPasskey';
 import { catchUpWithTheHost } from '@ValenceDesktop/bridge/catchUpWithTheHost';
 import { hearTheHost } from '@ValenceDesktop/bridge/hearTheHost';
 import { keepUpWith } from '@ValenceDesktop/bridge/keepUpWith';
+import { keepRightClicksToThePage } from '@ValenceDesktop/bridge/keepRightClicksToThePage';
 import { markTheDocument } from '@ValenceDesktop/bridge/markTheDocument';
 import { passOnWhatThePageSays } from '@ValenceDesktop/bridge/passOnWhatThePageSays';
 import { readTheBoot } from '@ValenceDesktop/bridge/readTheBoot';
@@ -33,6 +34,7 @@ const installTheBridge = (): void => {
   }
 
   passOnWhatThePageSays(document);
+  keepRightClicksToThePage(document);
 
   const theUpdate = keepUpWith('valence:update-changed', DesktopUpdateSchema, boot.update);
   const theFrame = keepUpWith('valence:frame-changed', WindowFrameSchema, boot.frame);
