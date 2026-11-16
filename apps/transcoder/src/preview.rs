@@ -954,6 +954,7 @@ mod tests {
             hardware_scalers: Vec::new(),
             hardware_overlays: Vec::new(),
             hardware_tone_maps: Vec::new(),
+            low_power_encoders: Vec::new(),
             can_burn_text_subtitles: true,
             can_burn_image_subtitles: true,
             can_write_subtitles: false,

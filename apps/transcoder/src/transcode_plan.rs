@@ -551,16 +551,16 @@ impl SessionSpec {
         }
     }
 
-    /// Hashes which way an Intel encode's rate is steered, for a session encoded with `VAAPI` or
-    /// `QSV`; see [`INTEL_RATE_RECIPE`]. Every other session hashes nothing more, so its segments
+    /// Hashes how an Intel encode is made, for a session encoded with `VAAPI` or `QSV`; see
+    /// [`INTEL_ENCODE_RECIPE`]. Every other session hashes nothing more, so its segments
     /// keep their address.
-    fn hash_intel_rate(&self, hasher: &mut Sha256) {
+    fn hash_intel_encode(&self, hasher: &mut Sha256) {
         if let VideoAction::Encode { encoder, .. } = &self.video {
             if VAAPI_ENCODERS.contains(&encoder.as_str())
                 || QSV_ENCODERS.contains(&encoder.as_str())
             {
-                hasher.update(b"intel-rate");
-                hasher.update(INTEL_RATE_RECIPE.to_be_bytes());
+                hasher.update(b"intel-encode");
+                hasher.update(INTEL_ENCODE_RECIPE.to_be_bytes());
             }
         }
     }
@@ -679,7 +679,7 @@ impl SubtitleAction {
 ///
 /// **Raise this whenever the way HDR is converted changes.** Sessions that do
 /// not convert are not addressed by it, so their segments are kept.
-const TONE_MAP_RECIPE: u32 = 1;
+const TONE_MAP_RECIPE: u32 = 2;
 
 impl SessionSpec {
     /// Whether a graphics chip can decode this session's source picture.
@@ -720,7 +720,7 @@ impl SessionSpec {
         self.hash_tone_mapping(&mut hasher);
         self.hash_idr_keyframes(&mut hasher);
         self.hash_fallback_bitrate(&mut hasher);
-        self.hash_intel_rate(&mut hasher);
+        self.hash_intel_encode(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -777,7 +777,7 @@ impl SessionSpec {
         self.hash_tone_mapping(&mut hasher);
         self.hash_idr_keyframes(&mut hasher);
         self.hash_fallback_bitrate(&mut hasher);
-        self.hash_intel_rate(&mut hasher);
+        self.hash_intel_encode(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -1099,6 +1099,8 @@ pub struct DeviceFilters {
     pub scaler: bool,
     pub overlay: bool,
     pub tone_maps: DeviceToneMaps,
+    /// Whether this machine proved `h264_vaapi` at low power; see [`low_power_arguments`].
+    pub h264_at_low_power: bool,
 }
 
 /// Which tone mappers a machine has proved for a backend's frames.
@@ -1184,10 +1186,10 @@ pub fn tone_map_format(expression: &str) -> Option<&str> {
 /// filter runs before the frames are mapped onto the `QSV` device. What is
 /// asked is what the pipeline names, not what the backend is called.
 ///
-/// Where the backend's own mapper will not take the source — Intel's VPP converts HDR10 alone —
-/// `tonemap_opencl` is lent the frames and hands them back, on a backend whose frames can make the
-/// trip and a machine that has proved the trip works. That keeps Dolby Vision without an
-/// HDR10 base, and HLG, on the device rather than sending every frame through system memory.
+/// Where the backend can lend its frames to `tonemap_opencl` and the machine has proved the trip,
+/// that is the mapper, whatever kind of HDR the source is; see [`opencl_tone_map`]. The backend's
+/// own mapper is what is left where it has not, and it converts less: Intel's VPP takes HDR10
+/// alone.
 #[must_use]
 pub fn on_device_tone_map_filter(
     spec: &SessionSpec,
@@ -1196,14 +1198,12 @@ pub fn on_device_tone_map_filter(
     let range = spec.source_range.unwrap_or(VideoRange::Hdr10);
     let base = spec.source_range_base.unwrap_or(range);
 
-    if filters.tone_maps.own {
-        if let Some(mapper) = spec.hardware_accel.tone_map_for(range, base) {
-            return Some(mapper);
-        }
-    }
-
     if filters.tone_maps.through_opencl && spec.hardware_accel.lends_frames_to_opencl() {
         return Some(Cow::Owned(opencl_tone_map(range)));
+    }
+
+    if filters.tone_maps.own {
+        return spec.hardware_accel.tone_map_for(range, base);
     }
 
     None
@@ -1698,8 +1698,9 @@ impl HardwareAccel {
 
     /// The tone map that keeps a source of this kind on this backend's device, if any does.
     ///
-    /// The backend's own mapper where it takes the source, and otherwise `tonemap_opencl` where this
-    /// backend can lend its frames and the machine has proved it can.
+    /// `tonemap_opencl` where this backend can lend its frames and the machine has proved it can,
+    /// since it is the better picture; see [`opencl_tone_map`]. Otherwise the backend's own mapper,
+    /// where it takes the source.
     #[must_use]
     pub fn device_tone_map_for(
         self,
@@ -1707,10 +1708,11 @@ impl HardwareAccel {
         base: VideoRange,
         through_opencl: bool,
     ) -> Option<Cow<'static, str>> {
-        self.tone_map_for(range, base).or_else(|| {
-            (through_opencl && self.lends_frames_to_opencl())
-                .then(|| Cow::Owned(opencl_tone_map(range)))
-        })
+        if through_opencl && self.lends_frames_to_opencl() {
+            return Some(Cow::Owned(opencl_tone_map(range)));
+        }
+
+        self.tone_map_for(range, base)
     }
 
     /// Whether this backend's frames can be lent to `OpenCL` and taken back.
@@ -2056,10 +2058,18 @@ pub const OPENCL_TONE_MAP_NAME: &str = "tonemap_opencl";
 
 /// `tonemap_opencl`, lent the backend's `VAAPI` surfaces and handing them back.
 ///
-/// Intel's own route for what VPP will not convert, and Jellyfin's: the surfaces are shared with
-/// `OpenCL` through Intel's media sharing rather than copied, and the filter applies a Dolby Vision
-/// layer's own reshaping from the frame, so a source with no HDR10 beneath it comes out in the
-/// right colours. The curve is the one every other mapper here is given — BT.2390, the spec's knee,
+/// Intel's tone mapper wherever the machine has proved the trip, HDR10 included, as it is
+/// Jellyfin's by default: the surfaces are shared with `OpenCL` through Intel's media sharing
+/// rather than copied, and the filter applies a Dolby Vision layer's own reshaping from the frame,
+/// so a source with no HDR10 beneath it comes out in the right colours.
+///
+/// Preferred to VPP's mapper even where VPP takes the source, because VPP's has no curve to tune
+/// and leaves shadows too dark. Measured on a UHD 770 with a dark close-up from a Dolby Vision
+/// film on an HDR10 base: the shadow under the subject's chin averaged 27 out of 255 through this
+/// and 22 through VPP's with its lift, with more of the hair and skin in it visible, and the
+/// difference survived the H.264 encode after it. It costs speed, not enough to matter: the same
+/// film encoded to 1080p H.264 at 10.3 times real time through this, and 16.8 through VPP's. VPP's
+/// is what a machine without the trip, or a `QSV` session, still uses. The curve is the one every other mapper here is given — BT.2390, the spec's knee,
 /// a fixed 1000-nit peak, no desaturation — without the fixed peak for Dolby Vision, whose per-scene
 /// brightness does better than any fixed number. See VAL-344.
 ///
@@ -2141,7 +2151,10 @@ pub fn lending_to_opencl(arguments: Vec<String>) -> Vec<String> {
     lent
 }
 
-/// Intel's tone mapper, with the lift Jellyfin settled on in front of it.
+/// VPP's tone mapper, with the lift Jellyfin settled on in front of it.
+///
+/// What an Intel card converts with where it cannot lend its frames to `tonemap_opencl`, which is
+/// preferred wherever it can; see [`opencl_tone_map`].
 ///
 /// VPP's tone map has no curve to tune and comes out dark: Jellyfin's own users said "way too
 /// dark" (jellyfin#6624), and its answer was a brightness of 16 applied before the tone map
@@ -2204,14 +2217,16 @@ const VAAPI_ENCODERS: [&str; 4] = ["h264_vaapi", "hevc_vaapi", "av1_vaapi", "vp9
 /// to borrow for a hard frame and still never sends more than the ceiling a client was promised.
 const INTEL_TARGET_PERCENT: u32 = 50;
 
-/// Which way an Intel encode's rate was steered.
+/// How an Intel encode was made: which way its rate was steered, and whether `h264_vaapi` ran at
+/// low power.
 ///
-/// Part of the address of every `VAAPI` and `QSV` encode, so segments made aimed at the ceiling are
-/// not handed back once the target has moved. A spec does not say whose card it will run on, so an
-/// AMD card's `VAAPI` encodes move with Intel's, at the cost of encoding them once more.
+/// Part of the address of every `VAAPI` and `QSV` encode, so segments made the old way are not
+/// handed back once either has changed. A spec does not say whose card it will run on, or whether
+/// that card runs at low power, so an AMD card's `VAAPI` encodes and `QSV`'s move with them, at the
+/// cost of encoding them once more.
 ///
-/// **Raise this whenever the way an Intel encode's rate is steered changes.**
-const INTEL_RATE_RECIPE: u32 = 1;
+/// **Raise this whenever the way an Intel encode is made changes.**
+const INTEL_ENCODE_RECIPE: u32 = 2;
 
 /// The `QSV` encoders, which have no mode flag and are steered by their numbers instead.
 const QSV_ENCODERS: [&str; 3] = ["h264_qsv", "hevc_qsv", "av1_qsv"];
@@ -2310,6 +2325,32 @@ pub fn forced_idr_arguments(encoder: &str) -> Vec<String> {
         .map_or_else(Vec::new, |(_, option)| {
             vec![(*option).to_owned(), "1".to_owned()]
         })
+}
+
+/// The encoders run at low power where the machine has proved they can.
+pub const LOW_POWER_ENCODERS: [&str; 1] = ["h264_vaapi"];
+
+/// Runs Intel's H.264 encoder on its fixed-function block, where the machine has proved it can.
+///
+/// Intel's cards carry two H.264 encoders behind `h264_vaapi`. The one `VAAPI` opens by default
+/// does part of its work on the card's shader cores, which `tonemap_opencl` needs too; the low
+/// power one, VDENC, works apart from them, and is what Jellyfin recommends. Measured on a UHD 770
+/// with the build Valence ships, five minutes of a 1080p Dolby Vision film through
+/// `tonemap_opencl` to H.264 at a 34,903 kbps ceiling: 10.3 times real time with the default
+/// encoder and 15.4 at low power, and three at once 3.5 times each against 5.7. The picture was
+/// alike: through VPP's mapper over two minutes, a worst frame of 49.0 dB PSNR at low power
+/// against 48.2.
+///
+/// Older Intel cards have no low power H.264 encoder, and `FFmpeg` will not open one that is not
+/// there, so it is asked for only where the start-up probe proved it. AMD's cards have none at all,
+/// and fail that probe. Only H.264 is asked for, because that is what was measured.
+#[must_use]
+pub fn low_power_arguments(encoder: &str, proved: bool) -> Vec<String> {
+    if proved && LOW_POWER_ENCODERS.contains(&encoder) {
+        return vec!["-low_power".to_owned(), "1".to_owned()];
+    }
+
+    Vec::new()
 }
 
 /// The Media Foundation encoders, which are told to use the graphics card.
@@ -2705,6 +2746,10 @@ impl TranscodePlan {
                 .encoder_device_arguments(&self.device),
         );
         arguments.extend(media_foundation_arguments(encoder));
+        arguments.extend(low_power_arguments(
+            encoder,
+            self.device_filters.h264_at_low_power,
+        ));
 
         arguments
     }
@@ -3454,6 +3499,7 @@ mod tests {
             own: false,
             through_opencl: false,
         },
+        h264_at_low_power: false,
     };
 
     /// A build with both, as the shipped package has.
@@ -3464,6 +3510,7 @@ mod tests {
             own: true,
             through_opencl: false,
         },
+        h264_at_low_power: false,
     };
 
     /// The shipped package on a machine that has also proved it can lend frames to `OpenCL`.
@@ -4523,11 +4570,11 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
         assert_eq!(frame_route(&hlg, FULL), FrameRoute::InSoftware);
     }
 
-    /// A source Intel's VPP will not take is lent to `tonemap_opencl` and stays on the device,
-    /// once the machine has proved the trip; HDR10 still goes to VPP.
+    /// Every kind of HDR is lent to `tonemap_opencl` and stays on the device once the machine has
+    /// proved the trip, HDR10 included, which VPP would also take.
     #[cfg(unix)]
     #[test]
-    fn lends_what_vpp_cannot_convert_to_opencl() {
+    fn lends_every_kind_of_hdr_to_opencl() {
         let hdr10 = SessionSpec {
             video: VideoAction::Encode {
                 encoder: "h264_vaapi".to_owned(),
@@ -4542,6 +4589,8 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
         };
 
         for (range, base) in [
+            (VideoRange::Hdr10, VideoRange::Hdr10),
+            (VideoRange::DolbyVision, VideoRange::Hdr10),
             (VideoRange::DolbyVision, VideoRange::DolbyVision),
             (VideoRange::Hlg, VideoRange::Hlg),
         ] {
@@ -4554,17 +4603,136 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
             assert_eq!(
                 frame_route(&source, WITH_OPENCL),
                 FrameRoute::OnDevice,
-                "{range:?}"
+                "{range:?} on {base:?}"
             );
             assert_eq!(
                 super::on_device_tone_map_filter(&source, WITH_OPENCL).as_deref(),
                 Some(opencl_tone_map(range).as_str()),
-                "{range:?}"
+                "{range:?} on {base:?}"
             );
         }
+    }
+
+    /// Where the machine has not proved the trip to `OpenCL`, VPP still converts what it takes.
+    #[cfg(unix)]
+    #[test]
+    fn converts_hdr10_on_vpp_where_opencl_is_not_proved() {
+        let dolby_vision_on_hdr10 = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "h264_vaapi".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 1920,
+                max_height: 800,
+                tone_map: Some(ToneMapping::Libplacebo),
+                deinterlace: false,
+                square_pixels: false,
+            },
+            source_range: Some(VideoRange::DolbyVision),
+            source_range_base: Some(VideoRange::Hdr10),
+            ..on_gpu(HardwareAccel::Vaapi)
+        };
+
+        assert!(
+            super::on_device_tone_map_filter(&dolby_vision_on_hdr10, FULL)
+                .is_some_and(|mapper| mapper.starts_with("procamp_vaapi=b=16,tonemap_vaapi="))
+        );
+    }
+
+    /// `QSV` cannot lend its frames to `OpenCL`, so it keeps VPP's mapper on a machine that has
+    /// proved the trip for `VAAPI`.
+    #[cfg(unix)]
+    #[test]
+    fn keeps_qsv_on_vpp_where_opencl_is_proved() {
+        let hdr10 = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "h264_qsv".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 1920,
+                max_height: 800,
+                tone_map: Some(ToneMapping::Libplacebo),
+                deinterlace: false,
+                square_pixels: false,
+            },
+            ..on_gpu(HardwareAccel::Qsv)
+        };
 
         assert!(super::on_device_tone_map_filter(&hdr10, WITH_OPENCL)
             .is_some_and(|mapper| mapper.starts_with("procamp_vaapi=b=16,tonemap_vaapi=")));
+    }
+
+    /// Only `h264_vaapi` is run at low power, and only where the machine proved it.
+    #[test]
+    fn asks_for_low_power_only_for_h264_on_vaapi_where_proved() {
+        assert_eq!(
+            super::low_power_arguments("h264_vaapi", true),
+            ["-low_power", "1"]
+        );
+        assert!(super::low_power_arguments("h264_vaapi", false).is_empty());
+
+        for encoder in ["hevc_vaapi", "av1_vaapi", "h264_qsv", "libx264"] {
+            assert!(
+                super::low_power_arguments(encoder, true).is_empty(),
+                "{encoder}"
+            );
+        }
+    }
+
+    /// A session on a machine that proved low power encodes with it, beside the encoder it names.
+    #[cfg(unix)]
+    #[test]
+    fn encodes_at_low_power_where_the_machine_proved_it() {
+        let session = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "h264_vaapi".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 1280,
+                max_height: 720,
+                tone_map: None,
+                deinterlace: false,
+                square_pixels: false,
+            },
+            ..on_gpu(HardwareAccel::Vaapi)
+        };
+        let at_low_power = DeviceFilters {
+            h264_at_low_power: true,
+            ..FULL
+        };
+
+        let args = plan_on(session.clone(), at_low_power).to_ffmpeg_args();
+        let encoder = args
+            .iter()
+            .position(|argument| argument == "h264_vaapi")
+            .expect("the encoder");
+
+        assert!(args.windows(2).any(|pair| pair == ["-low_power", "1"]));
+        assert!(
+            args.iter().position(|argument| argument == "-low_power") > Some(encoder),
+            "after the encoder it applies to: {args:?}"
+        );
+        assert!(!plan_on(session, FULL)
+            .to_ffmpeg_args()
+            .iter()
+            .any(|argument| argument == "-low_power"));
+    }
+
+    /// Previews and sheets choose the same way sessions do: `OpenCL` on `VAAPI` once proved, VPP
+    /// otherwise, and VPP on `QSV` whatever the machine has proved.
+    #[cfg(unix)]
+    #[test]
+    fn chooses_opencl_for_previews_and_sheets_where_proved() {
+        let on_vaapi =
+            HardwareAccel::Vaapi.device_tone_map_for(VideoRange::Hdr10, VideoRange::Hdr10, true);
+        let unproved =
+            HardwareAccel::Vaapi.device_tone_map_for(VideoRange::Hdr10, VideoRange::Hdr10, false);
+        let on_qsv =
+            HardwareAccel::Qsv.device_tone_map_for(VideoRange::Hdr10, VideoRange::Hdr10, true);
+
+        assert_eq!(
+            on_vaapi.as_deref(),
+            Some(opencl_tone_map(VideoRange::Hdr10).as_str())
+        );
+        assert!(unproved.is_some_and(|mapper| mapper.starts_with("procamp_vaapi=b=16,")));
+        assert!(on_qsv.is_some_and(|mapper| mapper.starts_with("procamp_vaapi=b=16,")));
     }
 
     /// Without the machine having proved the trip, nothing is lent to `OpenCL` and the session
@@ -7091,7 +7259,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             };
             let mut hasher = Sha256::new();
 
-            spec.hash_intel_rate(&mut hasher);
+            spec.hash_intel_encode(&mut hasher);
 
             hasher.finalize()
         };
@@ -7106,7 +7274,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
 
         let mut copied = Sha256::new();
 
-        spec().hash_intel_rate(&mut copied);
+        spec().hash_intel_encode(&mut copied);
 
         assert_eq!(copied.finalize(), untouched);
     }

@@ -84,6 +84,7 @@ const SCALER_ONLY: DeviceFilters = DeviceFilters {
         own: false,
         through_opencl: false,
     },
+    h264_at_low_power: false,
 };
 
 /// A build with both, as the shipped package has.
@@ -94,6 +95,7 @@ const FULL: DeviceFilters = DeviceFilters {
         own: true,
         through_opencl: false,
     },
+    h264_at_low_power: false,
 };
 
 /// Where the corpus lives, matching `fixturesDirectory` on the TypeScript side.

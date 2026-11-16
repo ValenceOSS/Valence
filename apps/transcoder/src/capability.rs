@@ -488,6 +488,13 @@ pub struct Capabilities {
     /// result. See VAL-111.
     #[serde(default)]
     pub hardware_tone_maps: Vec<String>,
+    /// The encoders this machine will run at low power.
+    ///
+    /// Asked of each encoder in [`crate::transcode_plan::LOW_POWER_ENCODERS`] that verified, by
+    /// encoding a frame at low power, since an Intel card too old to have that encoder lists it
+    /// all the same. See [`crate::transcode_plan::low_power_arguments`].
+    #[serde(default)]
+    pub low_power_encoders: Vec<String>,
 }
 
 /// Chooses a tone mapping route from the filters a build actually has.
@@ -691,6 +698,41 @@ pub fn probe_arguments(candidate: &EncoderCandidate, device: &str) -> Vec<String
     arguments.extend(["-f".to_owned(), "null".to_owned(), "-".to_owned()]);
 
     arguments
+}
+
+/// The arguments that ask an encoder to prove itself at low power.
+///
+/// The same frame [`probe_arguments`] encodes, with the encoder told to use its low power block.
+#[must_use]
+pub fn low_power_probe_arguments(candidate: &EncoderCandidate, device: &str) -> Vec<String> {
+    let mut arguments = probe_arguments(candidate, device);
+    let output = arguments.len() - 3;
+
+    arguments.splice(output..output, ["-low_power".to_owned(), "1".to_owned()]);
+
+    arguments
+}
+
+/// The encoders among those that verified which also run at low power.
+async fn verified_low_power(
+    ffmpeg: &str,
+    encoders: &[VerifiedEncoder],
+    device: &str,
+) -> Vec<String> {
+    let mut verified = Vec::new();
+
+    for candidate in ENCODER_CANDIDATES.iter().filter(|candidate| {
+        crate::transcode_plan::LOW_POWER_ENCODERS.contains(&candidate.encoder)
+            && encoders
+                .iter()
+                .any(|found| found.encoder == candidate.encoder)
+    }) {
+        if runs(ffmpeg, low_power_probe_arguments(candidate, device)).await {
+            verified.push(candidate.encoder.to_owned());
+        }
+    }
+
+    verified
 }
 
 /// What a probe frame has to claim to be for a tone mapper to accept it.
@@ -1122,6 +1164,7 @@ impl Default for Capabilities {
             hardware_scalers: Vec::new(),
             hardware_overlays: Vec::new(),
             hardware_tone_maps: Vec::new(),
+            low_power_encoders: Vec::new(),
             can_burn_text_subtitles: false,
             can_burn_image_subtitles: false,
             can_write_subtitles: false,
@@ -1295,6 +1338,14 @@ pub fn filters_from(capabilities: &Capabilities, accel: HardwareAccel) -> Device
             through_opencl: accel.lends_frames_to_opencl()
                 && capabilities.proved_tone_mappers().through_opencl,
         },
+        h264_at_low_power: ENCODER_CANDIDATES.iter().any(|candidate| {
+            candidate.accel == accel
+                && candidate.codec == "h264"
+                && capabilities
+                    .low_power_encoders
+                    .iter()
+                    .any(|found| found == candidate.encoder)
+        }),
     }
 }
 
@@ -1507,6 +1558,7 @@ async fn detect_capabilities_uncached(
     let version = read_version(ffmpeg).await;
     let encoders_for_chains = encoders.clone();
     let encoders_for_concurrency = encoders.clone();
+    let encoders_for_low_power = encoders.clone();
 
     Capabilities {
         ffmpeg_supported: meets_minimum(&version),
@@ -1522,6 +1574,7 @@ async fn detect_capabilities_uncached(
             .collect(),
         hardware_overlays: verified_overlays(ffmpeg, &filters, device).await,
         hardware_tone_maps: verified_tone_maps(ffmpeg, &filters, device).await,
+        low_power_encoders: verified_low_power(ffmpeg, &encoders_for_low_power, device).await,
         rejected,
         can_burn_text_subtitles: filters.iter().any(|filter| filter == "subtitles"),
         can_burn_image_subtitles: filters.iter().any(|filter| filter == "overlay"),
@@ -1539,11 +1592,11 @@ async fn detect_capabilities_uncached(
 #[cfg(test)]
 mod tests {
     use super::{
-        complaint, describe_build, overlay_probe_arguments, parse_listed_encoders,
-        parse_listed_filters, probe_arguments, select_tone_mapping,
-        software_tone_map_probe_arguments, summarise_failure, tone_map_probe_arguments,
-        verified_accels, Capabilities, EncoderCandidate, VerifiedEncoder, ENCODER_CANDIDATES,
-        PROBE_HDR_PARAMETERS, SMALLEST_USABLE_PROBE,
+        complaint, describe_build, filters_from, low_power_probe_arguments,
+        overlay_probe_arguments, parse_listed_encoders, parse_listed_filters, probe_arguments,
+        select_tone_mapping, software_tone_map_probe_arguments, summarise_failure,
+        tone_map_probe_arguments, verified_accels, Capabilities, EncoderCandidate, VerifiedEncoder,
+        ENCODER_CANDIDATES, PROBE_HDR_PARAMETERS, SMALLEST_USABLE_PROBE,
     };
     use crate::transcode_plan::HardwareAccel;
     use crate::transcode_plan::DEFAULT_DEVICE;
@@ -1972,6 +2025,37 @@ mod tests {
             .any(|pair| pair == ["-c:v", "hevc_qsv"]));
     }
 
+    /// The low power probe encodes the same frame on the same encoder, told to use its low power
+    /// block, with the output still last.
+    #[test]
+    fn probes_the_encoder_at_low_power() {
+        let vaapi = candidate("h264_vaapi", HardwareAccel::Vaapi);
+        let plain = probe_arguments(&vaapi, DEFAULT_DEVICE);
+        let arguments = low_power_probe_arguments(&vaapi, DEFAULT_DEVICE);
+
+        assert!(arguments
+            .windows(2)
+            .any(|pair| pair == ["-c:v", "h264_vaapi"]));
+        assert!(arguments.windows(2).any(|pair| pair == ["-low_power", "1"]));
+        assert_eq!(arguments[arguments.len() - 3..], ["-f", "null", "-"]);
+        assert_eq!(arguments.len(), plain.len() + 2);
+    }
+
+    /// A session is told `h264_vaapi` runs at low power only where the machine proved it, and only
+    /// on `VAAPI`.
+    #[cfg(unix)]
+    #[test]
+    fn says_h264_runs_at_low_power_only_where_proved() {
+        let proved = Capabilities {
+            low_power_encoders: vec!["h264_vaapi".to_owned()],
+            ..Capabilities::default()
+        };
+
+        assert!(filters_from(&proved, HardwareAccel::Vaapi).h264_at_low_power);
+        assert!(!filters_from(&proved, HardwareAccel::Qsv).h264_at_low_power);
+        assert!(!filters_from(&Capabilities::default(), HardwareAccel::Vaapi).h264_at_low_power);
+    }
+
     /// Media Foundation would otherwise prove Microsoft's software encoder and call it the card.
     #[test]
     fn holds_a_media_foundation_probe_to_the_card() {
@@ -2188,6 +2272,7 @@ reported anything else would either reprobe forever or never"
             rejected: Vec::new(),
             hardware_overlays: Vec::new(),
             hardware_tone_maps: Vec::new(),
+            low_power_encoders: Vec::new(),
             hardware_scalers: Vec::new(),
             can_burn_text_subtitles: false,
             can_burn_image_subtitles: false,
