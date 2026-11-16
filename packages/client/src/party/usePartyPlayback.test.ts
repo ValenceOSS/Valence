@@ -36,6 +36,24 @@ describe('usePartyPlayback', () => {
     });
   });
 
+  it("says whether this client keeps the party's time", () => {
+    const keeping = aWatchPartyState({
+      party: aWatchParty({ kind: 'watch', timekeeperId: 'me' }),
+      meConnectionId: 'me',
+    });
+    const following = aWatchPartyState({
+      party: aWatchParty({ kind: 'watch', timekeeperId: 'someone-else' }),
+      meConnectionId: 'me',
+    });
+
+    expect(renderHook(() => usePartyPlayback(keeping, 'film-1')).result.current?.isTimekeeper).toBe(
+      true,
+    );
+    expect(
+      renderHook(() => usePartyPlayback(following, 'film-1')).result.current?.isTimekeeper,
+    ).toBe(false);
+  });
+
   it('hands nothing for a party listening to music, or none', () => {
     expect(
       renderHook(() => usePartyPlayback(aState(aParty('listen')), 'film-1')).result.current,

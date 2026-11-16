@@ -123,7 +123,8 @@ const REFUSED_ONESELF = saying('server.parties.partyRegistry.youCannotRemoveYour
  *
  * A watch party moving on to another title starts everybody in it at the beginning of that title,
  * not ready until they say so, so nobody begins the next episode where the last one ended and the
- * room waits for everybody to have it before it plays.
+ * room waits for everybody to have it before it plays. The new title plays even where the last was
+ * paused, since a title that ends pauses the party at its end.
  *
  * A party for listening together starts with only its host driving it — what plays and where it
  * has got to are theirs to choose, while everybody keeps their own volume, since that never
@@ -352,6 +353,7 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
               {
                 ...intended,
                 mediaId: command.mediaId,
+                isPlaying: intended.kind === 'watch' ? true : intended.isPlaying,
                 members: intended.members.map((one) =>
                   intended.kind !== 'watch'
                     ? one

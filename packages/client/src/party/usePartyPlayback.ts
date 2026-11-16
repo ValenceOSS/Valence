@@ -43,6 +43,7 @@ const usePartyPlayback = (
             referenceSeconds,
             jitterMs,
             isPlaying: party.isPlaying,
+            isTimekeeper: meConnectionId !== null && party.timekeeperId === meConnectionId,
             isHeld: party.isHeld,
             waitingFor,
             members: party.members.length,

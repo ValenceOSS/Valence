@@ -4010,6 +4010,7 @@ describe('when the player is in a watch party', () => {
       referenceSeconds: null,
       jitterMs: 0,
       isPlaying: true,
+      isTimekeeper: false,
       isHeld: false,
       waitingFor: [],
       members: 2,
@@ -4038,6 +4039,22 @@ describe('when the player is in a watch party', () => {
     await actor.keyboard(' ');
 
     expect(onCommand).toHaveBeenCalled();
+  });
+
+  it('pauses the party at the end for whoever keeps its time, so seeking back stays paused', async () => {
+    const { element, onCommand } = await inParty({ isTimekeeper: true });
+
+    fireEvent.ended(element);
+
+    expect(onCommand).toHaveBeenCalledWith({ kind: 'pause', atSeconds: 7200 });
+  });
+
+  it("leaves pausing at the end to whoever keeps the party's time", async () => {
+    const { element, onCommand } = await inParty();
+
+    fireEvent.ended(element);
+
+    expect(onCommand).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'pause' }));
   });
 
   it('does not pause on its own, since the party decides', async () => {

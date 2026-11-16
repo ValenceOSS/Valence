@@ -295,6 +295,16 @@ describe('issuing a command', () => {
     ]);
   });
 
+  it('plays the next title, even when the last one was paused at its end', () => {
+    const registry = createWorld();
+    const opened = openWith(registry);
+
+    registry.issue(opened.id, 'host', { kind: 'pause', atSeconds: 2700 }, 1);
+    registry.issue(opened.id, 'host', { kind: 'changeWhatIsPlaying', mediaId: 'episode-2' }, 2);
+
+    expect(registry.find(opened.id)?.isPlaying).toBe(true);
+  });
+
   it('leaves where everybody is when a party for listening moves on to another song', () => {
     const registry = createWorld();
     const party = registry.open({
