@@ -87,12 +87,19 @@ impl CarriedStorage {
         self.held().clone()
     }
 
-    /// Notes that the page has it all, so it is never handed over again.
+    /// Notes that the page has it all, so it is never handed over again, making the app's folder
+    /// where this is its first start and there is none yet.
     pub fn taken(&self) {
         self.held().clear();
 
         if !self.mark.exists() {
-            if let Err(error) = std::fs::write(&self.mark, b"") {
+            let noted = self
+                .mark
+                .parent()
+                .map_or(Ok(()), std::fs::create_dir_all)
+                .and_then(|()| std::fs::write(&self.mark, b""));
+
+            if let Err(error) = noted {
                 eprintln!("Valence could not note that the storage was carried over: {error}");
             }
         }
@@ -140,6 +147,15 @@ mod tests {
 
         assert!(carried.waiting().is_empty());
         assert!(folder.path().join(STORAGE_CARRIED).exists());
+    }
+
+    #[test]
+    fn notes_it_on_a_first_start_with_no_folder_yet() {
+        let folder = tempfile::tempdir().unwrap();
+        let user_data = folder.path().join("Valence");
+
+        assert!(CarriedStorage::in_folder(&user_data).waiting().is_empty());
+        assert!(user_data.join(STORAGE_CARRIED).exists());
     }
 
     #[test]
