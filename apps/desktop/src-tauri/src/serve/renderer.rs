@@ -19,6 +19,7 @@ use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::header::{
     CACHE_CONTROL, CONTENT_ENCODING, CONTENT_LENGTH, CONTENT_TYPE, REFERRER_POLICY,
+    X_CONTENT_TYPE_OPTIONS,
 };
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -36,6 +37,12 @@ pub const VIDEO_HOSTS: [&str; 4] = [
 ];
 
 const CONTENT_SECURITY_POLICY: &str = "content-security-policy";
+
+/// Where the build puts the files it names by their contents, which never change under one name.
+const NAMED_BY_CONTENT: &str = "assets/";
+
+/// How long a file named by its contents may be kept: as long as there is, never asked for again.
+const KEPT_FOR_GOOD: &str = "public, max-age=31536000, immutable";
 
 /// What a page names itself to another site as: its origin alone, and nothing to a site over
 /// plain http.
@@ -208,6 +215,27 @@ fn a_page(bytes: Vec<u8>, policy: &str) -> Response {
     response
 }
 
+/// Answers with a file that is not a page, as `kind`, kept by the webview for good where its name
+/// says what it holds, so a later launch reads it from the webview's own cache.
+fn a_file(path: &Path, kind: &'static str, bytes: Vec<u8>) -> Response {
+    let mut response = (
+        [
+            (CONTENT_TYPE, HeaderValue::from_static(kind)),
+            (X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff")),
+        ],
+        bytes,
+    )
+        .into_response();
+
+    if path.starts_with(NAMED_BY_CONTENT) {
+        response
+            .headers_mut()
+            .insert(CACHE_CONTROL, HeaderValue::from_static(KEPT_FOR_GOOD));
+    }
+
+    response
+}
+
 /// Answers that there is no such file.
 fn missing() -> Response {
     StatusCode::NOT_FOUND.into_response()
@@ -238,7 +266,7 @@ pub async fn from_the_folder(folder: &Path, pathname: &str, policy: &str) -> Res
         return if kind.starts_with("text/html") {
             a_page(bytes, policy)
         } else {
-            ([(CONTENT_TYPE, HeaderValue::from_static(kind))], bytes).into_response()
+            a_file(&path, kind, bytes)
         };
     }
 
@@ -273,11 +301,7 @@ fn from_the_app(app: &tauri::AppHandle, pathname: &str, policy: &str) -> Respons
         return missing();
     }
 
-    (
-        [(CONTENT_TYPE, HeaderValue::from_static(type_of(&name)))],
-        asset.bytes,
-    )
-        .into_response()
+    a_file(&path, type_of(&name), asset.bytes)
 }
 
 /// The headers of a page Vite sent, unpacked on the way and so no longer the length it was, and
@@ -473,6 +497,11 @@ mod tests {
             "text/javascript; charset=utf-8"
         );
         assert!(script.headers().get(CONTENT_SECURITY_POLICY).is_none());
+        assert_eq!(script.headers()[X_CONTENT_TYPE_OPTIONS], "nosniff");
+        assert_eq!(
+            script.headers()[CACHE_CONTROL],
+            "public, max-age=31536000, immutable"
+        );
         assert_eq!(body_of(script).await, "let a;");
 
         let route = from_the_folder(folder.path(), "/library/films", "policy").await;
@@ -507,6 +536,7 @@ mod tests {
 
         assert_eq!(decoders.status(), StatusCode::OK);
         assert_eq!(decoders.headers()[CONTENT_TYPE], "application/wasm");
+        assert!(decoders.headers().get(CACHE_CONTROL).is_none());
 
         let escaping = from_the_folder(folder.path(), "/../index.html", "policy").await;
 
