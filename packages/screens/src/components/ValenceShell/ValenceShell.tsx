@@ -516,7 +516,10 @@ const ValenceShell = () => {
             }
           }}
           {...(inspecting !== null && resumeFor(progress, inspecting.id) !== null
-            ? { resumeSeconds: resumeFor(progress, inspecting.id) ?? 0 }
+            ? {
+                resumeSeconds: resumeFor(progress, inspecting.id) ?? 0,
+                resumeCopyId: progress.get(inspecting.id)?.copyId ?? null,
+              }
             : {})}
           {...(backToCameFrom ??
             (openShow === null

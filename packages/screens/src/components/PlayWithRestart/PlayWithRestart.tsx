@@ -31,7 +31,10 @@ const PlayWithRestart = ({ children, onStartAgain, more, size = 'lg' }: PlayWith
   return (
     <div className="flex w-full items-stretch gap-[3px]">
       <div
-        className={cn('min-w-0 flex-1 [&>*]:w-full', isJoined ? '[&_button]:rounded-e-[4px]' : '')}
+        className={cn(
+          'min-w-0 flex-1 [&>*]:w-full',
+          isJoined ? '[&>*]:rounded-e-[4px] [&_button:last-child]:rounded-e-[4px]' : '',
+        )}
       >
         {children}
       </div>

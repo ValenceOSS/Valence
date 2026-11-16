@@ -38,10 +38,10 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
         ?.linkedServerId ?? null) !== null;
 
     if (!isACopyFromElsewhere) {
-      return { mediaId: asked, item: copy };
+      return { mediaId: asked, item: copy, copyId: null };
     }
 
-    return { mediaId: parentId, item: (await library.getMedia(parentId)) ?? copy };
+    return { mediaId: parentId, item: (await library.getMedia(parentId)) ?? copy, copyId: asked };
   };
 
   app.openapi(listProgressRoute, async (context) => {
@@ -67,7 +67,7 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.noSuchMediaItem'), 404);
     }
 
-    const { mediaId, item } = found;
+    const { mediaId, item, copyId } = found;
 
     if ((item.extraKind ?? null) !== null) {
       return context.body(null, 204);
@@ -97,7 +97,13 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
             { positionSeconds: report.positionSeconds, atMs: at.getTime(), isPlaying: true },
           );
 
-    await progress.record(profileId, { mediaId, ...report, durationSeconds, isFinished });
+    await progress.record(profileId, {
+      mediaId,
+      ...report,
+      durationSeconds,
+      isFinished,
+      copyId,
+    });
 
     if (history !== undefined) {
       await history.record(profileId, mediaId, {

@@ -8,6 +8,7 @@ const WatchProgressSchema = z.object({
   isFinished: z.boolean(),
   updatedAt: z.string().datetime(),
   isDismissed: z.boolean().optional(),
+  copyId: z.string().uuid().nullable().optional(),
 });
 
 const WatchProgressListSchema = z.object({ progress: z.array(WatchProgressSchema) });

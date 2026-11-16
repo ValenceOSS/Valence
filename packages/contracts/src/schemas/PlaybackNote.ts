@@ -23,6 +23,14 @@ const PlaybackNoteSchema = z.discriminatedUnion('kind', [
       atSeconds: z.number().nonnegative(),
     })
     .extend(EngineFaultSchema.shape),
+  z.object({
+    kind: z.literal('directRefused'),
+    mediaId: z.string().min(1).max(200),
+    sessionId: z.string().min(1).max(200).nullable(),
+    server: z.string().min(1).max(100),
+    origin: z.string().url().max(200),
+    why: z.enum(['policy', 'network']),
+  }),
 ]);
 
 type PlaybackNote = z.infer<typeof PlaybackNoteSchema>;

@@ -1,0 +1,2 @@
+ALTER TABLE "watch_progress" ADD COLUMN "copyId" text;--> statement-breakpoint
+ALTER TABLE "watch_progress" ADD CONSTRAINT "watch_progress_copyId_media_item_id_fk" FOREIGN KEY ("copyId") REFERENCES "public"."media_item"("id") ON DELETE set null ON UPDATE no action;

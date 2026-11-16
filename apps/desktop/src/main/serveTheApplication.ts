@@ -28,7 +28,8 @@ const CARRIED = ['accept', 'content-type', 'range', 'authorization', DEVICE_HEAD
  * Writes the policy a page of this client is held to, allowing these sources of script beyond its own.
  * The one thing a page may frame is the video host's player, which is how a catalogue trailer plays.
  * WebAssembly may be compiled, since the browser's own player decodes sound and MPEG-2 pictures
- * with it.
+ * with it. Streams may come from any secure address, as a linked server's do where they are fetched
+ * from it directly.
  *
  * @param scripts - Where else script may come from.
  * @returns The policy, as the header carries it.
@@ -39,9 +40,9 @@ const policyAllowing = (scripts: readonly string[]): string =>
     ["script-src 'self' 'wasm-unsafe-eval'", ...scripts].join(' '),
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
-    "media-src 'self' blob:",
+    "media-src 'self' blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' ws: wss:",
+    "connect-src 'self' ws: wss: https:",
     "object-src 'none'",
     ['frame-src', ...VIDEO_HOSTS.map((host) => `https://${host}`)].join(' '),
     "base-uri 'self'",

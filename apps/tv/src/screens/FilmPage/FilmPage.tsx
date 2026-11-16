@@ -41,6 +41,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
 import { whereFrom } from '@ValenceClient/linking/whereFrom';
 import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
+import { whichCopyToPlay } from '@ValenceClient/linking/whichCopyToPlay';
 import type { FilmPageProps } from './FilmPage.types';
 import { say } from '@ValenceI18n/say';
 import { LikeThisShelf } from '@ValenceTv/components/LikeThisShelf/LikeThisShelf';
@@ -100,7 +101,15 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson, onOpen }: FilmPageP
 
   const versions = film.versions ?? [];
   const offered = theVersionsOf(film.id, versions);
-  const playing = versions.find((one) => one.id === (chosenVersion ?? preferred)) ?? null;
+  const resumable = resumeFor(progress, film.id) === null ? undefined : progress.get(film.id);
+  const playingId = whichCopyToPlay(
+    film.id,
+    versions,
+    chosenVersion,
+    resumable === undefined ? undefined : (resumable.copyId ?? null),
+    preferred,
+  );
+  const playing = versions.find((one) => one.id === playingId) ?? null;
   const summary = playing ?? summariseDetail(film);
   const resume = resumeFor(
     progress,
@@ -246,7 +255,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson, onOpen }: FilmPageP
           title={say('common.whichVersionToPlay')}
           choices={offered.map((one) => ({ ...one, isCurrent: one.id === summary.id }))}
           onChoose={(id) => {
-            setChosenVersion(id === film.id ? null : id);
+            setChosenVersion(id);
             setPanel(null);
           }}
         />

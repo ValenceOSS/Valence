@@ -342,6 +342,7 @@ const watchProgress = pgTable(
     mediaItemId: text('mediaItemId')
       .notNull()
       .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    copyId: text('copyId').references(() => mediaItem.id, { onDelete: 'set null' }),
     positionSeconds: real('positionSeconds').notNull(),
     durationSeconds: real('durationSeconds').notNull(),
     isFinished: boolean('isFinished').notNull().default(false),

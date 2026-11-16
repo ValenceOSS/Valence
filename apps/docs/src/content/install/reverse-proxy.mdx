@@ -27,6 +27,8 @@ Two more are worth doing:
 
 If the proxy adds a `Content-Security-Policy` of its own, its `script-src` must include `'wasm-unsafe-eval'`. The browser's own player decodes DTS, Dolby Digital, TrueHD and MPEG-2 pictures with WebAssembly, and a policy without it stops all of that from loading. Valence then has the server convert those films instead, so nothing visibly breaks, but the server does work the browser could have done. See [The browser player is not used](/reference/troubleshooting#the-browser-player-is-not-used).
 
+If you link another server and turn on **Stream directly from their server**, the policy's `connect-src` and `media-src` must also include that server's address, such as `https://films.example.org`. Without it the browser refuses to fetch from that server, and Valence streams its titles through yours instead, using your upload. The player says so when it happens, and the server log names the address to add.
+
 Also pass the original `Host` and `X-Forwarded-Proto` headers so Valence sees the address the browser used.
 
 ## Settings that must agree

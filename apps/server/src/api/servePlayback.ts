@@ -204,6 +204,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       picksItsOwnSound,
       isReadiedAhead,
       startedBecause,
+      refusedOrigins,
     } = context.req.valid('json');
 
     if (await mayNotPlayFromSources(mediaId, context.req.raw.headers)) {
@@ -244,6 +245,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       burnInSubtitleId,
       isCast,
       picksItsOwnSound,
+      refusedOrigins,
     );
 
     if (outcome.kind === 'notFound') {

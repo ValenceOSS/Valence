@@ -9414,6 +9414,8 @@ const ENGLISH = {
   'screens.videoPlayer.captionSettings.thick': 'Thick',
   'screens.videoPlayer.captionSettings.thin': 'Thin',
   'screens.videoPlayer.changingTheStream': 'Switching stream',
+  'screens.videoPlayer.couldNotReachNameDirectly':
+    'Couldn’t reach {name} directly, so it’s playing through this server.',
   'screens.videoPlayer.gettingTheRoomInStep': 'Syncing with the party',
   'screens.videoPlayer.loadingTheNextEpisode': 'Loading the next episode',
   'screens.videoPlayer.openValenceAtItsAddressOn':

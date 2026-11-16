@@ -262,6 +262,36 @@ describe('createLinkedPlayback', () => {
     });
   });
 
+  it('streams through this server for a player that could not reach the linked server directly', async () => {
+    const { linked } = playback(films, 'https://films.example');
+
+    expect(
+      await linked.start(
+        HERE,
+        aDeviceProfile(),
+        0,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        ['https://films.example'],
+      ),
+    ).toMatchObject({
+      session: {
+        sessionId: SESSION,
+        delivery: {
+          kind: 'hls',
+          manifestUrl: `/api/playback/session/${encodeURIComponent(SESSION)}/index.m3u8`,
+        },
+      },
+    });
+  });
+
   it('hands players no address a linked server chose outside its own routes', async () => {
     for (const delivery of [
       { kind: 'hls', manifestUrl: 'https://elsewhere.example/index.m3u8' },
