@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "update",
+  "description": "What the update window's page may ask of the app: to hear how the update stands and to be dragged. Granted at launch to the loopback server's own origin alone, port and all.",
+  "local": false,
+  "windows": ["update-*"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:window:allow-start-dragging",
+    "core:window:allow-internal-toggle-maximize",
+    "notification:allow-is-permission-granted",
+    "allow-what-is-now"
+  ]
+}

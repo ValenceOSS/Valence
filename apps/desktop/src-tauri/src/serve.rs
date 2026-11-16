@@ -160,8 +160,8 @@ fn chosen_renderer(app: &tauri::App) -> Result<Renderer, Box<dyn std::error::Err
 ///
 /// # Errors
 ///
-/// When no port can be listened on, the renderer's address is not one, or the upstream client
-/// and reach were not set up first.
+/// When no port can be listened on, the app's capabilities cannot be granted to it, the
+/// renderer's address is not one, or the upstream client and reach were not set up first.
 pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let port_file = crate::paths::user_data().join(PORT_FILE);
     let ports = port::candidates(port::remembered(&port_file));
@@ -174,6 +174,9 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     let key: Arc<str> = guard::a_key().into();
     let host = format!("127.0.0.1:{port}");
+
+    crate::capabilities::grant(app, &format!("http://{host}"))?;
+
     let renderer = chosen_renderer(app)?;
     let policy = renderer::policy_for(&renderer, &format!("http://{host}"));
     let handle = app.handle().clone();

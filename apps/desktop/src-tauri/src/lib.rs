@@ -12,6 +12,7 @@
 mod about;
 mod app_icon;
 mod badge;
+mod capabilities;
 mod carry_over;
 mod cast;
 mod debugging;
