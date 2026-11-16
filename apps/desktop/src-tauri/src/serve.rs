@@ -21,6 +21,7 @@ use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::middleware::from_fn_with_state;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{any, get};
+use axum::serve::ListenerExt;
 use axum::Router;
 use reqwest::Url;
 use serde_json::{json, Value};
@@ -156,7 +157,8 @@ fn chosen_renderer(app: &tauri::App) -> Result<Renderer, Box<dyn std::error::Err
     Ok(Renderer::Embedded(app.handle().clone()))
 }
 
-/// Starts the loopback server, on the port it had last time where it can.
+/// Starts the loopback server, on the port it had last time where it can, sending what it has
+/// to say on each connection as soon as it has it.
 ///
 /// # Errors
 ///
@@ -194,6 +196,10 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     };
 
     app.manage(Serving { port, key });
+    let listener = listener.tap_io(|connection| {
+        let _ = connection.set_nodelay(true);
+    });
+
     crate::runtime::spawn(async move {
         if let Err(error) = axum::serve(listener, router(served)).await {
             eprintln!("Valence's loopback server stopped: {error}");

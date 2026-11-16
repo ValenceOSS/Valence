@@ -3,7 +3,8 @@
 //! The page cannot open the socket at the server itself: its origin is this app, so the webview
 //! would send the server no cookie and the server would rightly refuse it. So the page opens its
 //! socket here, this opens one to the server with the session on it, and messages are passed
-//! between the two until either end closes, which closes the other.
+//! between the two until either end closes, which closes the other. Each message goes to the
+//! server as soon as it is sent, as a browser's would, rather than held back to fill a packet.
 
 use axum::extract::ws::{CloseFrame as PageClose, Message as PageMessage, WebSocket};
 use axum::extract::{FromRequestParts, Request, State, WebSocketUpgrade};
@@ -127,7 +128,7 @@ pub async fn answer(State(served): State<Served>, request: Request) -> Response 
     let connecting = tokio_tungstenite::connect_async_tls_with_config(
         asking,
         None,
-        false,
+        true,
         crate::tls::for_sockets().map(Connector::Rustls),
     );
     let Ok(connected) = tokio::time::timeout(LONGEST_TO_CONNECT, connecting).await else {
