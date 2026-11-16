@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-held-keep"
+description = "Enables the held_keep command without any pre-configured scope."
+commands.allow = ["held_keep"]
+
+[[permission]]
+identifier = "deny-held-keep"
+description = "Denies the held_keep command without any pre-configured scope."
+commands.deny = ["held_keep"]

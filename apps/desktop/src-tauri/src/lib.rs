@@ -1,5 +1,14 @@
 //! Valence's desktop app: a window onto a Valence server, hosted by Tauri.
 
+#![cfg_attr(
+    test,
+    allow(
+        clippy::expect_used,
+        clippy::unwrap_used,
+        reason = "a test that cannot set itself up has nothing left to check"
+    )
+)]
+
 mod about;
 mod app_icon;
 mod badge;
@@ -12,6 +21,7 @@ mod passkeys;
 mod paths;
 mod preferences;
 mod reach;
+mod runtime;
 mod say;
 mod screen;
 mod serve;
@@ -21,12 +31,54 @@ mod updates;
 mod upstream;
 mod window;
 
+use tauri::{AppHandle, RunEvent};
+
+/// Answers what happens to the app as it runs: on macOS it keeps running with no window open, as
+/// Mac apps do, and opens one again when its Dock icon is clicked; elsewhere it quits when its
+/// window closes.
+fn as_it_runs(app: &AppHandle, event: RunEvent) {
+    match event {
+        RunEvent::ExitRequested { api, code, .. } => {
+            if cfg!(target_os = "macos") && code.is_none() {
+                api.prevent_exit();
+            }
+        }
+        #[cfg(target_os = "macos")]
+        RunEvent::Reopen {
+            has_visible_windows,
+            ..
+        } => {
+            if !has_visible_windows {
+                window::bring_forward(app);
+            }
+        }
+        _ => {
+            let _ = app;
+        }
+    }
+}
+
 /// Builds and runs the app until it quits.
 pub fn run() {
-    let built = tauri::Builder::default()
+    let builder = tauri::Builder::default();
+
+    #[cfg(not(debug_assertions))]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(
+        |app, _arguments, _folder| {
+            window::bring_forward(app);
+        },
+    ));
+
+    let built = builder
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
-            preferences::setup(app)?;
-            this_launch::setup(app)?;
+            window::prepare(app);
+            preferences::setup(app);
+            this_launch::setup(app);
+            about::setup(app);
             upstream::setup(app)?;
             reach::setup(app)?;
             serve::setup(app)?;
@@ -40,7 +92,7 @@ pub fn run() {
             menu::setup(app)?;
             tray::setup(app)?;
             app_icon::setup(app)?;
-            screen::setup(app)?;
+            screen::setup(app);
             window::setup(app)?;
             Ok(())
         })
@@ -49,6 +101,7 @@ pub fn run() {
             preferences::preferences_forget,
             this_launch::this_launch_write,
             this_launch::this_launch_forget,
+            serve::boot::what_is_now,
             window::go_to_the_server,
             window::change_server,
             window::frame_minimise,
@@ -73,9 +126,10 @@ pub fn run() {
             passkeys::passkeys_add_one_in_the_browser,
             discord::now_watching,
         ])
-        .run(tauri::generate_context!());
+        .build(tauri::generate_context!());
 
-    if let Err(error) = built {
-        eprintln!("Valence could not start: {error}");
+    match built {
+        Ok(app) => app.run(as_it_runs),
+        Err(error) => eprintln!("Valence could not start: {error}"),
     }
 }

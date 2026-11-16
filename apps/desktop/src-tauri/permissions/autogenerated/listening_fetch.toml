@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-listening-fetch"
+description = "Enables the listening_fetch command without any pre-configured scope."
+commands.allow = ["listening_fetch"]
+
+[[permission]]
+identifier = "deny-listening-fetch"
+description = "Denies the listening_fetch command without any pre-configured scope."
+commands.deny = ["listening_fetch"]

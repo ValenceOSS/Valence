@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-passkeys-sign-in-on-a-page"
+description = "Enables the passkeys_sign_in_on_a_page command without any pre-configured scope."
+commands.allow = ["passkeys_sign_in_on_a_page"]
+
+[[permission]]
+identifier = "deny-passkeys-sign-in-on-a-page"
+description = "Denies the passkeys_sign_in_on_a_page command without any pre-configured scope."
+commands.deny = ["passkeys_sign_in_on_a_page"]

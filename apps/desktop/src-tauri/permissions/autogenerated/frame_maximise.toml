@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-frame-maximise"
+description = "Enables the frame_maximise command without any pre-configured scope."
+commands.allow = ["frame_maximise"]
+
+[[permission]]
+identifier = "deny-frame-maximise"
+description = "Denies the frame_maximise command without any pre-configured scope."
+commands.deny = ["frame_maximise"]

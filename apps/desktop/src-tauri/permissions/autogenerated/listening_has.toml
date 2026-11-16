@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-listening-has"
+description = "Enables the listening_has command without any pre-configured scope."
+commands.allow = ["listening_has"]
+
+[[permission]]
+identifier = "deny-listening-has"
+description = "Denies the listening_has command without any pre-configured scope."
+commands.deny = ["listening_has"]

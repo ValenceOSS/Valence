@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-passkeys-add-one-in-the-browser"
+description = "Enables the passkeys_add_one_in_the_browser command without any pre-configured scope."
+commands.allow = ["passkeys_add_one_in_the_browser"]
+
+[[permission]]
+identifier = "deny-passkeys-add-one-in-the-browser"
+description = "Denies the passkeys_add_one_in_the_browser command without any pre-configured scope."
+commands.deny = ["passkeys_add_one_in_the_browser"]

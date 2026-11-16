@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-what-is-now"
+description = "Enables the what_is_now command without any pre-configured scope."
+commands.allow = ["what_is_now"]
+
+[[permission]]
+identifier = "deny-what-is-now"
+description = "Denies the what_is_now command without any pre-configured scope."
+commands.deny = ["what_is_now"]

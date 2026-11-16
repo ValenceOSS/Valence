@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-now-watching"
+description = "Enables the now_watching command without any pre-configured scope."
+commands.allow = ["now_watching"]
+
+[[permission]]
+identifier = "deny-now-watching"
+description = "Denies the now_watching command without any pre-configured scope."
+commands.deny = ["now_watching"]

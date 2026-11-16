@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-servers-reach"
+description = "Enables the servers_reach command without any pre-configured scope."
+commands.allow = ["servers_reach"]
+
+[[permission]]
+identifier = "deny-servers-reach"
+description = "Denies the servers_reach command without any pre-configured scope."
+commands.deny = ["servers_reach"]

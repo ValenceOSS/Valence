@@ -2166,9 +2166,17 @@ const ENGLISH = {
     'Couldn’t load this app’s pages from {served}.',
   'desktop.main.theApplication.valenceCouldNotBeReachedAt':
     'Couldn’t connect to Valence at {server}.',
+  'desktop.main.theApplicationMenu.actualSize': 'Actual Size',
   'desktop.main.theApplicationMenu.cmdOrCtrlShiftS': 'CmdOrCtrl+Shift+S',
   'desktop.main.theApplicationMenu.file': 'File',
+  'desktop.main.theApplicationMenu.forceReload': 'Force Reload',
+  'desktop.main.theApplicationMenu.reload': 'Reload',
+  'desktop.main.theApplicationMenu.toggleDeveloperTools': 'Toggle Developer Tools',
+  'desktop.main.theApplicationMenu.toggleFullScreen': 'Toggle Full Screen',
   'desktop.main.theApplicationMenu.valenceOnTheWeb': 'Valence on the web',
+  'desktop.main.theApplicationMenu.window': 'Window',
+  'desktop.main.theApplicationMenu.zoomIn': 'Zoom In',
+  'desktop.main.theApplicationMenu.zoomOut': 'Zoom Out',
   'desktop.main.theHeldLibrary.thisClientCouldNotFinishKeeping':
     'Couldn’t finish downloading it to this device.',
   'desktop.main.whatWindowsSaid.thisDeviceAlreadyHasAPasskey':

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-keep-the-screen-on"
+description = "Enables the keep_the_screen_on command without any pre-configured scope."
+commands.allow = ["keep_the_screen_on"]
+
+[[permission]]
+identifier = "deny-keep-the-screen-on"
+description = "Denies the keep_the_screen_on command without any pre-configured scope."
+commands.deny = ["keep_the_screen_on"]

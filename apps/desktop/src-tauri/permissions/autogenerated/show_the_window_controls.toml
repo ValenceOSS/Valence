@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-show-the-window-controls"
+description = "Enables the show_the_window_controls command without any pre-configured scope."
+commands.allow = ["show_the_window_controls"]
+
+[[permission]]
+identifier = "deny-show-the-window-controls"
+description = "Denies the show_the_window_controls command without any pre-configured scope."
+commands.deny = ["show_the_window_controls"]

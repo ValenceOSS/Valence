@@ -9266,6 +9266,11 @@
     "context": "Shown in the main of the desktop app (from `serveTheApplication`). {server} is filled in by the app."
   },
   {
+    "handler": "desktop.main.theApplicationMenu.actualSize",
+    "text": "Actual Size",
+    "context": "The label of the menu item in the desktop app’s View menu that puts the zoom back to normal."
+  },
+  {
     "handler": "desktop.main.theApplicationMenu.cmdOrCtrlShiftS",
     "text": "CmdOrCtrl+Shift+S",
     "context": "Shown in the main of the desktop app (from `theApplicationMenu`)."
@@ -9276,9 +9281,44 @@
     "context": "The label in the main of the desktop app (from `theApplicationMenu`)."
   },
   {
+    "handler": "desktop.main.theApplicationMenu.forceReload",
+    "text": "Force Reload",
+    "context": "The label of the menu item in the desktop app’s View menu that reloads the page from scratch."
+  },
+  {
+    "handler": "desktop.main.theApplicationMenu.reload",
+    "text": "Reload",
+    "context": "The label of the menu item in the desktop app’s View menu that reloads the page."
+  },
+  {
+    "handler": "desktop.main.theApplicationMenu.toggleDeveloperTools",
+    "text": "Toggle Developer Tools",
+    "context": "The label of the menu item in the desktop app’s View menu that opens or closes the developer tools, offered only in a build being worked on."
+  },
+  {
+    "handler": "desktop.main.theApplicationMenu.toggleFullScreen",
+    "text": "Toggle Full Screen",
+    "context": "The label of the menu item in the desktop app’s View menu that fills the screen or stops filling it."
+  },
+  {
     "handler": "desktop.main.theApplicationMenu.valenceOnTheWeb",
     "text": "Valence på nettet",
     "context": "The label in the main of the desktop app (from `theApplicationMenu`)."
+  },
+  {
+    "handler": "desktop.main.theApplicationMenu.window",
+    "text": "Window",
+    "context": "The label of the Window menu in the desktop app’s menu bar on a Mac."
+  },
+  {
+    "handler": "desktop.main.theApplicationMenu.zoomIn",
+    "text": "Zoom In",
+    "context": "The label of the menu item in the desktop app’s View menu that makes the page larger."
+  },
+  {
+    "handler": "desktop.main.theApplicationMenu.zoomOut",
+    "text": "Zoom Out",
+    "context": "The label of the menu item in the desktop app’s View menu that makes the page smaller."
   },
   {
     "handler": "desktop.main.theHeldLibrary.thisClientCouldNotFinishKeeping",

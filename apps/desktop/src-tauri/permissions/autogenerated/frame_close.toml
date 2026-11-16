@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-frame-close"
+description = "Enables the frame_close command without any pre-configured scope."
+commands.allow = ["frame_close"]
+
+[[permission]]
+identifier = "deny-frame-close"
+description = "Denies the frame_close command without any pre-configured scope."
+commands.deny = ["frame_close"]

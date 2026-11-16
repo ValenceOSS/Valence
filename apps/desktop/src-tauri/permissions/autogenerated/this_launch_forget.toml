@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-this-launch-forget"
+description = "Enables the this_launch_forget command without any pre-configured scope."
+commands.allow = ["this_launch_forget"]
+
+[[permission]]
+identifier = "deny-this-launch-forget"
+description = "Denies the this_launch_forget command without any pre-configured scope."
+commands.deny = ["this_launch_forget"]

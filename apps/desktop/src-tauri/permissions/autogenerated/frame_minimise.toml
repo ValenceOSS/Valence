@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-frame-minimise"
+description = "Enables the frame_minimise command without any pre-configured scope."
+commands.allow = ["frame_minimise"]
+
+[[permission]]
+identifier = "deny-frame-minimise"
+description = "Denies the frame_minimise command without any pre-configured scope."
+commands.deny = ["frame_minimise"]

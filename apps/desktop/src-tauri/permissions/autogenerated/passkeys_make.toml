@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-passkeys-make"
+description = "Enables the passkeys_make command without any pre-configured scope."
+commands.allow = ["passkeys_make"]
+
+[[permission]]
+identifier = "deny-passkeys-make"
+description = "Denies the passkeys_make command without any pre-configured scope."
+commands.deny = ["passkeys_make"]

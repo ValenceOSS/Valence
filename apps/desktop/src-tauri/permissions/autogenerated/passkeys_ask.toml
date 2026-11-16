@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-passkeys-ask"
+description = "Enables the passkeys_ask command without any pre-configured scope."
+commands.allow = ["passkeys_ask"]
+
+[[permission]]
+identifier = "deny-passkeys-ask"
+description = "Denies the passkeys_ask command without any pre-configured scope."
+commands.deny = ["passkeys_ask"]
