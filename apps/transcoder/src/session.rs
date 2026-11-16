@@ -11,7 +11,7 @@ use tokio::sync::{oneshot, watch, Mutex, Notify};
 
 use crate::boundaries::ensure_boundaries;
 use crate::capability::Capabilities;
-use crate::devices::{DeviceReport, GraphicsDevice};
+use crate::devices::{DeviceReport, GraphicsDevice, Vendor};
 use crate::media::VideoRange;
 use crate::placement::{Candidate, Choice, Placement};
 use crate::playlist::segment_at;
@@ -1283,6 +1283,41 @@ impl SessionRegistry {
             .collect()
     }
 
+    /// Who made the card a session runs on: the device it was placed on, or the configured node's
+    /// card where it was not placed.
+    async fn vendor_for(&self, placed_on: Option<&GraphicsDevice>, accel: HardwareAccel) -> Vendor {
+        match placed_on {
+            Some(device) => device.vendor,
+            None => self.configured_vendor(accel).await,
+        }
+    }
+
+    /// Who made the card on the configured node, as the backend asked for drives it, and nobody in
+    /// particular where that is not known.
+    ///
+    /// The node may be configured by a link to it, such as one under `/dev/dri/by-path`, so it is
+    /// matched on where it leads as well as on how it is written.
+    pub async fn configured_vendor(&self, accel: HardwareAccel) -> Vendor {
+        let configured = &self.config.device;
+        let leads_to = tokio::fs::canonicalize(configured).await.ok();
+
+        for device in self.devices().await {
+            if !device.accels.contains(&accel) {
+                continue;
+            }
+
+            let same = device.node == *configured
+                || (leads_to.is_some()
+                    && tokio::fs::canonicalize(&device.node).await.ok() == leads_to);
+
+            if same {
+                return device.vendor;
+            }
+        }
+
+        Vendor::Other
+    }
+
     /// Where a session about to start goes, and which of its chain's filters that device has:
     /// the placed device's own findings, or the configured device's where it was not placed.
     async fn place_with_filters(
@@ -1526,6 +1561,9 @@ impl SessionRegistry {
 
         let spec = deliverable(&self.config, spec, boundaries.can_copy).await;
         let (spec, placed_on, device_filters) = self.place_with_filters(spec).await;
+        let vendor = self
+            .vendor_for(placed_on.as_ref(), spec.hardware_accel)
+            .await;
 
         let plan = TranscodePlan {
             spec: spec.clone(),
@@ -1533,6 +1571,7 @@ impl SessionRegistry {
             device: placed_on
                 .as_ref()
                 .map_or_else(|| self.config.device.clone(), |device| device.node.clone()),
+            vendor,
             device_filters,
             start_at: SegmentStart::default(),
             cut_seconds: boundaries.cut_seconds,
@@ -2659,6 +2698,7 @@ async fn supervise(
             spec: attempt.spec.without_hardware(),
             output_directory: attempt.output_directory,
             device: attempt.device,
+            vendor: attempt.vendor,
             device_filters: DeviceFilters::default(),
             start_at: attempt.start_at,
             cut_seconds: attempt.cut_seconds,
@@ -3509,6 +3549,7 @@ mod tests {
                 spec,
                 output_directory: String::new(),
                 device: String::new(),
+                vendor: crate::devices::Vendor::Other,
                 device_filters: DeviceFilters::default(),
                 start_at: SegmentStart::default(),
                 cut_seconds: 4.0,
@@ -4161,5 +4202,77 @@ mod tests {
             resume_from(&directory, 0, 6, SegmentContainer::Fmp4).await,
             5
         );
+    }
+    /// Who made the configured card is read from the device on its node that the backend drives,
+    /// reached by its own path or by a link to it, and is nobody in particular otherwise: Intel's
+    /// rate is steered apart from AMD's on the same `VAAPI`.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn finds_who_made_the_configured_card_by_its_node_or_a_link_to_it() {
+        use crate::devices::{GraphicsDevice, Vendor};
+        use crate::transcode_plan::HardwareAccel;
+
+        let directory =
+            std::env::temp_dir().join(format!("valence-configured-vendor-{}", std::process::id()));
+        let node = directory.join("renderD129");
+        let link = directory.join("by-path-card");
+
+        tokio::fs::create_dir_all(&directory)
+            .await
+            .expect("makes the directory");
+        tokio::fs::write(&node, b"").await.expect("makes the node");
+        let _ = tokio::fs::remove_file(&link).await;
+        tokio::fs::symlink(&node, &link)
+            .await
+            .expect("links to the node");
+
+        let configured_on = |device: &std::path::Path| {
+            let registry = SessionRegistry::new(SessionConfig {
+                device: device.to_string_lossy().into_owned(),
+                ..SessionConfig::default()
+            });
+
+            registry
+                .devices
+                .set(vec![GraphicsDevice {
+                    id: "pci:0000:03:00.0".to_owned(),
+                    name: "AMD graphics".to_owned(),
+                    vendor: Vendor::Amd,
+                    node: node.to_string_lossy().into_owned(),
+                    accels: vec![HardwareAccel::Vaapi],
+                }])
+                .expect("seeds the devices");
+
+            registry
+        };
+
+        assert_eq!(
+            configured_on(&node)
+                .configured_vendor(HardwareAccel::Vaapi)
+                .await,
+            Vendor::Amd
+        );
+        assert_eq!(
+            configured_on(&link)
+                .configured_vendor(HardwareAccel::Vaapi)
+                .await,
+            Vendor::Amd
+        );
+        assert_eq!(
+            configured_on(&node)
+                .configured_vendor(HardwareAccel::Qsv)
+                .await,
+            Vendor::Other
+        );
+        assert_eq!(
+            configured_on(&directory.join("renderD200"))
+                .configured_vendor(HardwareAccel::Vaapi)
+                .await,
+            Vendor::Other
+        );
+
+        let _ = tokio::fs::remove_file(&link).await;
+        let _ = tokio::fs::remove_file(&node).await;
+        let _ = tokio::fs::remove_dir(&directory).await;
     }
 }

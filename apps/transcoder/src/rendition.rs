@@ -615,6 +615,7 @@ mod tests {
             spec: request.spec.clone(),
             output_directory: String::new(),
             device: DEFAULT_DEVICE.to_owned(),
+            vendor: crate::devices::Vendor::Other,
             device_filters: DeviceFilters::default(),
             start_at: SegmentStart::default(),
             cut_seconds: 0.0,

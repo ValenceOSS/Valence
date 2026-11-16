@@ -227,6 +227,7 @@ fn plan_for(spec: SessionSpec, filters: DeviceFilters, output: &Path) -> Transco
         spec,
         output_directory: output.to_string_lossy().into_owned(),
         device: "/dev/dri/renderD128".to_owned(),
+        vendor: valence_transcoder::devices::Vendor::Other,
         device_filters: filters,
         start_at: SegmentStart::default(),
         cut_seconds: 4.0,
