@@ -702,16 +702,29 @@ pub fn probe_arguments(candidate: &EncoderCandidate, device: &str) -> Vec<String
 
 /// The arguments that ask an encoder to prove itself at low power.
 ///
-/// The same frame [`probe_arguments`] encodes, with the encoder told to use its low power block.
+/// The same frame [`probe_arguments`] encodes, with the encoder told to use its low power block and
+/// steered the way an Intel session steers it, by
+/// [`crate::transcode_plan::rate_control_arguments`]. Asked without a rate, the frame is encoded at
+/// a constant quantiser, which the low power block manages alone; a bitrate needs Intel's `HuC`
+/// firmware as well, so a host without it would pass a bare probe and fail every session.
 #[must_use]
 pub fn low_power_probe_arguments(candidate: &EncoderCandidate, device: &str) -> Vec<String> {
     let mut arguments = probe_arguments(candidate, device);
     let output = arguments.len() - 3;
+    let mut low_power = vec!["-low_power".to_owned(), "1".to_owned()];
 
-    arguments.splice(output..output, ["-low_power".to_owned(), "1".to_owned()]);
+    low_power.extend(crate::transcode_plan::rate_control_arguments(
+        candidate.encoder,
+        LOW_POWER_PROBE_KBPS,
+        crate::devices::Vendor::Intel,
+    ));
+    arguments.splice(output..output, low_power);
 
     arguments
 }
+
+/// The ceiling a low power probe is steered under, any figure a session might be given.
+const LOW_POWER_PROBE_KBPS: u32 = 4_000;
 
 /// The encoders among those that verified which also run at low power.
 async fn verified_low_power(
@@ -2038,7 +2051,30 @@ mod tests {
             .any(|pair| pair == ["-c:v", "h264_vaapi"]));
         assert!(arguments.windows(2).any(|pair| pair == ["-low_power", "1"]));
         assert_eq!(arguments[arguments.len() - 3..], ["-f", "null", "-"]);
-        assert_eq!(arguments.len(), plain.len() + 2);
+        assert_eq!(arguments[..plain.len() - 3], plain[..plain.len() - 3]);
+    }
+
+    /// The low power probe asks for the rate control a session asks for, which needs firmware a
+    /// bare low power encode does not.
+    #[test]
+    fn probes_low_power_with_the_rate_control_sessions_use() {
+        let arguments = low_power_probe_arguments(
+            &candidate("h264_vaapi", HardwareAccel::Vaapi),
+            DEFAULT_DEVICE,
+        );
+        let steered = crate::transcode_plan::rate_control_arguments(
+            "h264_vaapi",
+            4_000,
+            crate::devices::Vendor::Intel,
+        );
+
+        assert!(arguments.windows(2).any(|pair| pair == ["-rc_mode", "VBR"]));
+        assert!(
+            arguments
+                .windows(steered.len())
+                .any(|window| window == steered.as_slice()),
+            "{arguments:?}"
+        );
     }
 
     /// A session is told `h264_vaapi` runs at low power only where the machine proved it, and only
