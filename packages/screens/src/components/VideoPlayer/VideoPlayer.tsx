@@ -1219,7 +1219,7 @@ const VideoPlayer = ({
           undefined,
           picksSound,
           request.startedBecause,
-          [...theRefusedOrigins()],
+          theRefusedOrigins().list(),
         );
       const readied =
         keptSource === undefined &&
@@ -1421,11 +1421,8 @@ const VideoPlayer = ({
         return;
       }
 
-      const seen: { from: number | null } = { from: null };
       noteProgress = () => {
-        seen.from ??= element.currentTime;
-
-        if (element.currentTime - seen.from > 1) {
+        if (element.currentTime - request.startSeconds > 1) {
           hasPlayedRef.current = true;
           comebacksRef.current = [];
         }
@@ -3206,6 +3203,7 @@ const VideoPlayer = ({
           true,
           false,
           'next',
+          theRefusedOrigins().list(),
         ),
       };
     });

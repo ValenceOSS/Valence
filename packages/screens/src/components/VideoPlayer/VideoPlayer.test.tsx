@@ -305,7 +305,7 @@ const startedSession: {
 };
 
 beforeEach(() => {
-  theRefusedOrigins().clear();
+  theRefusedOrigins().forget();
   startMock.mockReset();
   serverUpMock.mockReset();
   serverUpMock.mockResolvedValue(true);
