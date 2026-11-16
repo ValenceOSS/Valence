@@ -2171,6 +2171,22 @@ const BUFFER_MULTIPLE: u32 = 2;
 /// The `VAAPI` encoders, which are told their rate control mode rather than left to infer one.
 const VAAPI_ENCODERS: [&str; 4] = ["h264_vaapi", "hevc_vaapi", "av1_vaapi", "vp9_vaapi"];
 
+/// How much of its ceiling an Intel encode aims at, in percent, `VAAPI` and `QSV` alike, the
+/// ceiling itself left where it is.
+///
+/// Asked for the ceiling as its target too, Intel's encoders treat the number as a cap to stay well
+/// under rather than a figure to reach, and starve exactly the frames that need bits: a dark
+/// close-up came out blocky enough to look like a stream at a tenth of its rate. Measured on an
+/// i5-13500 with iHD and the build Valence ships, twenty seconds of a dark Dolby Vision scene
+/// through the playback chain, against a near-lossless encode of the same frames, at a 34,903 kbps
+/// ceiling. `VAAPI` aimed at the ceiling made 10,957 kbps with a worst frame of 38.6 dB PSNR, and
+/// aimed at half of it 17,250 kbps and 46.5 dB; two thirds made 42.3 dB and four fifths 38.6, and a
+/// ceiling one kilobit above the target changed nothing. `QSV` as it was steered, one kilobit of
+/// ceiling above a target at the ceiling, made 8,360 kbps and 37.2 dB, and at half 17,436 kbps and
+/// 46.7 dB. Every one encoded at fourteen times the speed of playback. Half leaves the encoder room
+/// to borrow for a hard frame and still never sends more than the ceiling a client was promised.
+const INTEL_TARGET_PERCENT: u32 = 50;
+
 /// The `QSV` encoders, which have no mode flag and are steered by their numbers instead.
 const QSV_ENCODERS: [&str; 3] = ["h264_qsv", "hevc_qsv", "av1_qsv"];
 
@@ -2346,8 +2362,14 @@ pub fn rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<Strin
     }
 
     if target.is_none() || NEEDS_A_BITRATE_TOO.contains(&encoder) {
+        let aimed_at_kbps = if VAAPI_ENCODERS.contains(&encoder) {
+            (max_bitrate_kbps * INTEL_TARGET_PERCENT / 100).max(1)
+        } else {
+            max_bitrate_kbps
+        };
+
         arguments.push("-b:v".to_owned());
-        arguments.push(format!("{max_bitrate_kbps}k"));
+        arguments.push(format!("{aimed_at_kbps}k"));
     }
 
     arguments.push("-maxrate".to_owned());
@@ -2361,21 +2383,25 @@ pub fn rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<Strin
 /// What to ask a `QSV` encoder for, which is the same request made a different way.
 ///
 /// `QSV` has no mode flag. It reads one out of the numbers, and a ceiling equal to the target reads
-/// as constant bitrate there exactly as it does on `VAAPI`. The mode is therefore steered by raising
-/// the ceiling a single kilobit above the target, which is what Jellyfin does and for this reason.
+/// as constant bitrate there exactly as it does on `VAAPI`. A ceiling a kilobit above the target,
+/// which is what Jellyfin does, keeps it out of constant bitrate but not out of starving the frames
+/// that need bits, so it is aimed at half its ceiling as `VAAPI` is; see [`INTEL_TARGET_PERCENT`].
 ///
 /// The rest is what Intel's own guidance asks for once the mode is right: macroblock level rate
 /// control, which spends bits where a viewer looks rather than evenly across the frame, a buffer of
 /// twice the usual depth, and that buffer part filled at the start so the first demanding scene has
 /// something to draw on rather than beginning at empty.
 ///
-/// `h264_qsv` refuses to open below a megabit, so a ceiling under that is raised to it. A stream
-/// that cheap is being asked for by a profile nobody can watch comfortably anyway.
+/// `h264_qsv` refuses to open below a megabit, so a ceiling or a target under that is raised to it,
+/// and the ceiling kept a kilobit clear of the target. A stream that cheap is being asked for by a
+/// profile nobody can watch comfortably anyway.
 ///
-/// None of this is measured here. `QSV` cannot currently draw thumbnails on the Intel machine this
-/// was found on, so the numbers are Jellyfin's rather than ours; see VAL-199 and VAL-215.
+/// The target was measured on an i5-13500; the buffer and its starting fill are Jellyfin's, since
+/// `QSV` cannot currently draw thumbnails on that machine; see VAL-199 and VAL-215.
 fn qsv_rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<String> {
     let bitrate = max_bitrate_kbps.max(QSV_SMALLEST_BITRATE_KBPS);
+    let aimed_at = (bitrate * INTEL_TARGET_PERCENT / 100).max(QSV_SMALLEST_BITRATE_KBPS);
+    let ceiling = bitrate.max(aimed_at + 1);
 
     let mut arguments = Vec::new();
 
@@ -2385,9 +2411,9 @@ fn qsv_rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<Strin
     }
 
     arguments.push("-b:v".to_owned());
-    arguments.push(format!("{bitrate}k"));
+    arguments.push(format!("{aimed_at}k"));
     arguments.push("-maxrate".to_owned());
-    arguments.push(format!("{}k", bitrate + 1));
+    arguments.push(format!("{ceiling}k"));
     arguments.push("-rc_init_occupancy".to_owned());
     arguments.push(format!("{}k", bitrate * QSV_INITIAL_OCCUPANCY_MULTIPLE));
     arguments.push("-bufsize".to_owned());
@@ -5072,21 +5098,21 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         }
     }
 
-    /// `QSV` has no mode flag, so the same request is made by lifting the ceiling a kilobit clear of
-    /// the target. Equal values read as constant bitrate there too.
+    /// `QSV` has no mode flag and reads constant bitrate out of equal values, and aimed at its
+    /// ceiling it starves a hard frame as `VAAPI` does, so it aims at half. See `INTEL_TARGET_PERCENT`.
     #[test]
-    fn lifts_the_qsv_ceiling_clear_of_its_target_so_the_rate_may_vary() {
+    fn aims_qsv_at_half_its_ceiling_so_the_rate_may_vary_and_has_room_for_a_hard_frame() {
         for encoder in ["h264_qsv", "hevc_qsv", "av1_qsv"] {
             let arguments = rate_control_arguments(encoder, 2500);
 
             assert!(
-                arguments.windows(2).any(|pair| pair == ["-b:v", "2500k"]),
+                arguments.windows(2).any(|pair| pair == ["-b:v", "1250k"]),
                 "{encoder}: {arguments:?}"
             );
             assert!(
                 arguments
                     .windows(2)
-                    .any(|pair| pair == ["-maxrate", "2501k"]),
+                    .any(|pair| pair == ["-maxrate", "2500k"]),
                 "{encoder}: {arguments:?}"
             );
         }
@@ -5152,13 +5178,32 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     /// at. Guessing a quality scale for it would be worse than the bitrate it already gets.
     #[test]
     fn leaves_an_unmeasured_backend_on_a_bitrate() {
-        for encoder in ["h264_vaapi", "hevc_qsv", "h264_amf", "h264_rkmpp"] {
+        for encoder in ["h264_amf", "h264_rkmpp"] {
             let arguments = rate_control_arguments(encoder, 2500);
 
             assert!(
                 arguments.windows(2).any(|pair| pair == ["-b:v", "2500k"]),
                 "{encoder}: {arguments:?}"
             );
+        }
+    }
+
+    /// Intel's `VAAPI` encoder, aimed at its ceiling, starves the frames that need bits; aimed at
+    /// half of it, it borrows for them without ever passing the ceiling. See `INTEL_TARGET_PERCENT`.
+    #[test]
+    fn aims_a_vaapi_encode_at_half_its_ceiling_so_it_has_room_for_a_hard_frame() {
+        for encoder in ["h264_vaapi", "hevc_vaapi", "av1_vaapi", "vp9_vaapi"] {
+            let arguments = rate_control_arguments(encoder, 34_903);
+            let pair = |flag: &str, value: &str| {
+                arguments
+                    .windows(2)
+                    .any(|found| found == [flag.to_owned(), value.to_owned()])
+            };
+
+            assert!(pair("-rc_mode", "VBR"), "{encoder}: {arguments:?}");
+            assert!(pair("-b:v", "17451k"), "{encoder}: {arguments:?}");
+            assert!(pair("-maxrate", "34903k"), "{encoder}: {arguments:?}");
+            assert!(pair("-bufsize", "69806k"), "{encoder}: {arguments:?}");
         }
     }
 
