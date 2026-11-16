@@ -25,6 +25,19 @@ describe('PlaybackNoteSchema', () => {
     ).toBe(true);
   });
 
+  it('takes the reason a player handed a film from its engine to the server', () => {
+    expect(
+      PlaybackNoteSchema.safeParse({
+        kind: 'engineHandedOver',
+        mediaId: 'film-1',
+        sessionId: null,
+        atSeconds: 0,
+        stage: 'opening',
+        detail: 'Failed to fetch',
+      }).success,
+    ).toBe(true);
+  });
+
   it('refuses a place before the start', () => {
     expect(
       PlaybackNoteSchema.safeParse({

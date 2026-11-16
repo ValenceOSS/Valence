@@ -1,3 +1,5 @@
+import type { EngineFault } from '@ValenceContracts/schemas/EngineFault';
+import { faultOf } from './faultOf';
 const HELD_AHEAD = 4;
 
 const FALLEN_BEHIND_SECONDS = 2;
@@ -23,14 +25,14 @@ type FrameQueue<Sample extends Frame> = {
  * rather than racing through every frame it missed.
  *
  * @param sink - Where decoded frames come from, in presentation order from a given time.
- * @param onFault - Told that decoding failed.
+ * @param onFault - Told that decoding failed, and what the failure said.
  * @param heldAhead - How many frames to keep ready: few for a hardware decoder's scarce surfaces,
  *   more for frames decoded in the page, a group of pictures at a time.
  * @returns The queue.
  */
 const createFrameQueue = <Sample extends Frame>(
   sink: { samples: (startTimestamp: number) => AsyncIterable<Sample> },
-  onFault: () => void,
+  onFault: (fault: EngineFault) => void,
   heldAhead = HELD_AHEAD,
 ): FrameQueue<Sample> => {
   const state: {
@@ -78,9 +80,9 @@ const createFrameQueue = <Sample extends Frame>(
           return;
         }
       }
-    } catch {
+    } catch (error) {
       if (isCurrent()) {
-        onFault();
+        onFault(faultOf('decoding', error instanceof Error ? error : null));
       }
     }
   };

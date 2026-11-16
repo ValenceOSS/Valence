@@ -206,6 +206,7 @@ describe('createMediaFeed', () => {
     element.dispatchEvent(new Event('error'));
 
     expect(onFault).toHaveBeenCalledOnce();
+    expect(onFault).toHaveBeenCalledWith({ stage: 'refused', detail: null });
   });
 
   it('says nothing of the element once the feed has stopped', async () => {
@@ -250,6 +251,10 @@ describe('createMediaFeed', () => {
     await feed.startAt(0);
 
     expect(onFault).toHaveBeenCalledOnce();
+    expect(onFault).toHaveBeenCalledWith({
+      stage: 'repackaging',
+      detail: 'The file stopped being readable before its end.',
+    });
     expect(source.ended.times).toBe(0);
   });
 

@@ -13,6 +13,8 @@ import { createThroughputMeter } from './createThroughputMeter';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
 import type { EngineStats } from './EngineStats';
 import type { Grade } from './createPicturePresenter';
+import type { EngineFault } from '@ValenceContracts/schemas/EngineFault';
+import { faultOf } from './faultOf';
 
 const NEAR_THE_END_SECONDS = 0.25;
 
@@ -35,7 +37,7 @@ type EngineOptions = {
   startSeconds: number;
   audioTrackAt: number;
   brightness: number;
-  onFault: () => void;
+  onFault: (fault: EngineFault) => void;
 };
 
 /**
@@ -90,10 +92,10 @@ const attachEngine = async ({
     drawing: null,
     drawn: 0,
   };
-  const fail = () => {
+  const fail = (fault: EngineFault) => {
     if (!life.isOver && !life.hasFailed) {
       life.hasFailed = true;
-      onFault();
+      onFault(fault);
     }
   };
   const throughput = createThroughputMeter();
@@ -124,7 +126,9 @@ const attachEngine = async ({
     throw new Error('The file has no picture and sound this browser can decode.');
   }
 
-  const presenter = await createPicturePresenter(canvas, fail);
+  const presenter = await createPicturePresenter(canvas, () => {
+    fail(faultOf('drawing', null));
+  });
 
   if (presenter === null) {
     input.dispose();
@@ -271,8 +275,8 @@ const attachEngine = async ({
     }
 
     if (!feed.holds(at) && at < duration - NEAR_THE_END_SECONDS) {
-      void feed.startAt(at).catch(() => {
-        fail();
+      void feed.startAt(at).catch((error: Error | null) => {
+        fail(faultOf('seeking', error instanceof Error ? error : null));
       });
     }
   };

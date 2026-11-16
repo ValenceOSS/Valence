@@ -20,6 +20,8 @@ import type {
   StreamTargetChunk,
 } from 'mediabunny';
 import type { SoundRoute } from './chooseSoundRoute';
+import type { EngineFault } from '@ValenceContracts/schemas/EngineFault';
+import { faultOf } from './faultOf';
 
 const HELD_AHEAD_SECONDS = 30;
 
@@ -193,7 +195,7 @@ const createMediaFeed = async ({
   picture?: Pick<InputVideoTrack, 'id' | 'getCodecParameterString'> | null;
   decodesHere?: 'truehd' | null;
   soundPackets?: Pick<EncodedPacketSink, 'getPacket' | 'getFirstPacket' | 'packets'> | null;
-  onFault: () => void;
+  onFault: (fault: EngineFault) => void;
 }): Promise<MediaFeed> => {
   const plays = (mimeType: string) => MediaSource.isTypeSupported(mimeType);
 
@@ -240,7 +242,7 @@ const createMediaFeed = async ({
     fragments: [],
   };
   const onRefused = () => {
-    onFault();
+    onFault(faultOf('refused', element.error));
   };
 
   element.addEventListener('error', onRefused);
@@ -414,7 +416,7 @@ const createMediaFeed = async ({
       });
     } catch (error) {
       if (run === state.run && !(error instanceof ConversionCanceledError)) {
-        onFault();
+        onFault(faultOf('repackaging', error instanceof Error ? error : null));
       }
     } finally {
       firstAppended();

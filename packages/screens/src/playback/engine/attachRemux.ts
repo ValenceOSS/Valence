@@ -4,6 +4,8 @@ import { createMediaFeed } from './createMediaFeed';
 import { createThroughputMeter } from './createThroughputMeter';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
 import type { EngineStats } from './EngineStats';
+import type { EngineFault } from '@ValenceContracts/schemas/EngineFault';
+import { faultOf } from './faultOf';
 
 const NEAR_THE_END_SECONDS = 0.25;
 
@@ -12,7 +14,7 @@ type RemuxOptions = {
   url: string;
   startSeconds: number;
   audioTrackAt: number;
-  onFault: () => void;
+  onFault: (fault: EngineFault) => void;
 };
 
 /**
@@ -46,10 +48,10 @@ const attachRemux = async ({
   setBrightness: (brightness: number) => void;
 }> => {
   const life = { isOver: false, hasFailed: false };
-  const fail = () => {
+  const fail = (fault: EngineFault) => {
     if (!life.isOver && !life.hasFailed) {
       life.hasFailed = true;
-      onFault();
+      onFault(fault);
     }
   };
   const throughput = createThroughputMeter();
@@ -97,8 +99,8 @@ const attachRemux = async ({
     const at = element.currentTime;
 
     if (!feed.holds(at) && at < duration - NEAR_THE_END_SECONDS) {
-      void feed.startAt(at).catch(() => {
-        fail();
+      void feed.startAt(at).catch((error: Error | null) => {
+        fail(faultOf('seeking', error instanceof Error ? error : null));
       });
     }
   };
