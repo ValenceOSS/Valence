@@ -109,6 +109,7 @@ pub fn sample_plan(
         },
         output_directory: output.to_string_lossy().into_owned(),
         device: device.to_owned(),
+        vendor: crate::devices::Vendor::Other,
         device_filters: crate::transcode_plan::DeviceFilters::default(),
         start_at: SegmentStart::default(),
         cut_seconds: 4.0,

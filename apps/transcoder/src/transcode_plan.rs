@@ -4,6 +4,7 @@ use std::fmt::Write as _;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+use crate::devices::Vendor;
 use crate::media::{ColourMetadata, VideoRange};
 
 /// A hardware acceleration backend the host may offer.
@@ -537,12 +538,6 @@ impl SessionSpec {
         }
     }
 
-    /// Adds a client's need for IDR keyframes to an address being worked out.
-    ///
-    /// Such a session may be encoded where any other would be copied, so it
-    /// cannot share their segments. Left out when not asked for, and for every
-    /// codec the need does not change, so those sessions keep sharing one
-    /// address with every other client's.
     /// Hashes the ceiling a copy would be encoded under, should it have to be.
     ///
     /// Two viewers asking to copy the same film share its segments, and a copy that turns out to be
@@ -556,6 +551,26 @@ impl SessionSpec {
         }
     }
 
+    /// Hashes which way an Intel encode's rate is steered, for a session encoded with `VAAPI` or
+    /// `QSV`; see [`INTEL_RATE_RECIPE`]. Every other session hashes nothing more, so its segments
+    /// keep their address.
+    fn hash_intel_rate(&self, hasher: &mut Sha256) {
+        if let VideoAction::Encode { encoder, .. } = &self.video {
+            if VAAPI_ENCODERS.contains(&encoder.as_str())
+                || QSV_ENCODERS.contains(&encoder.as_str())
+            {
+                hasher.update(b"intel-rate");
+                hasher.update(INTEL_RATE_RECIPE.to_be_bytes());
+            }
+        }
+    }
+
+    /// Adds a client's need for IDR keyframes to an address being worked out.
+    ///
+    /// Such a session may be encoded where any other would be copied, so it
+    /// cannot share their segments. Left out when not asked for, and for every
+    /// codec the need does not change, so those sessions keep sharing one
+    /// address with every other client's.
     fn hash_idr_keyframes(&self, hasher: &mut Sha256) {
         if self.needs_idr_keyframes
             && self
@@ -705,6 +720,7 @@ impl SessionSpec {
         self.hash_tone_mapping(&mut hasher);
         self.hash_idr_keyframes(&mut hasher);
         self.hash_fallback_bitrate(&mut hasher);
+        self.hash_intel_rate(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -761,6 +777,7 @@ impl SessionSpec {
         self.hash_tone_mapping(&mut hasher);
         self.hash_idr_keyframes(&mut hasher);
         self.hash_fallback_bitrate(&mut hasher);
+        self.hash_intel_rate(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -2171,6 +2188,31 @@ const BUFFER_MULTIPLE: u32 = 2;
 /// The `VAAPI` encoders, which are told their rate control mode rather than left to infer one.
 const VAAPI_ENCODERS: [&str; 4] = ["h264_vaapi", "hevc_vaapi", "av1_vaapi", "vp9_vaapi"];
 
+/// How much of its ceiling an Intel encode aims at, in percent, `VAAPI` and `QSV` alike, the
+/// ceiling itself left where it is.
+///
+/// Asked for the ceiling as its target too, Intel's encoders treat the number as a cap to stay well
+/// under rather than a figure to reach, and starve exactly the frames that need bits: a dark
+/// close-up came out blocky enough to look like a stream at a tenth of its rate. Measured on an
+/// i5-13500 with iHD and the build Valence ships, twenty seconds of a dark Dolby Vision scene
+/// through the playback chain, against a near-lossless encode of the same frames, at a 34,903 kbps
+/// ceiling. `VAAPI` aimed at the ceiling made 10,957 kbps with a worst frame of 38.6 dB PSNR, and
+/// aimed at half of it 17,250 kbps and 46.5 dB; two thirds made 42.3 dB and four fifths 38.6, and a
+/// ceiling one kilobit above the target changed nothing. `QSV` as it was steered, one kilobit of
+/// ceiling above a target at the ceiling, made 8,360 kbps and 37.2 dB, and at half 17,436 kbps and
+/// 46.7 dB. Every one encoded at fourteen times the speed of playback. Half leaves the encoder room
+/// to borrow for a hard frame and still never sends more than the ceiling a client was promised.
+const INTEL_TARGET_PERCENT: u32 = 50;
+
+/// Which way an Intel encode's rate was steered.
+///
+/// Part of the address of every `VAAPI` and `QSV` encode, so segments made aimed at the ceiling are
+/// not handed back once the target has moved. A spec does not say whose card it will run on, so an
+/// AMD card's `VAAPI` encodes move with Intel's, at the cost of encoding them once more.
+///
+/// **Raise this whenever the way an Intel encode's rate is steered changes.**
+const INTEL_RATE_RECIPE: u32 = 1;
+
 /// The `QSV` encoders, which have no mode flag and are steered by their numbers instead.
 const QSV_ENCODERS: [&str; 3] = ["h264_qsv", "hevc_qsv", "av1_qsv"];
 
@@ -2326,7 +2368,7 @@ pub fn system_memory_format(encoder: &str) -> &'static str {
 }
 
 #[must_use]
-pub fn rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<String> {
+pub fn rate_control_arguments(encoder: &str, max_bitrate_kbps: u32, vendor: Vendor) -> Vec<String> {
     if QSV_ENCODERS.contains(&encoder) {
         return qsv_rate_control_arguments(encoder, max_bitrate_kbps);
     }
@@ -2346,8 +2388,14 @@ pub fn rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<Strin
     }
 
     if target.is_none() || NEEDS_A_BITRATE_TOO.contains(&encoder) {
+        let aimed_at_kbps = if vendor == Vendor::Intel && VAAPI_ENCODERS.contains(&encoder) {
+            (max_bitrate_kbps * INTEL_TARGET_PERCENT / 100).max(1)
+        } else {
+            max_bitrate_kbps
+        };
+
         arguments.push("-b:v".to_owned());
-        arguments.push(format!("{max_bitrate_kbps}k"));
+        arguments.push(format!("{aimed_at_kbps}k"));
     }
 
     arguments.push("-maxrate".to_owned());
@@ -2361,21 +2409,25 @@ pub fn rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<Strin
 /// What to ask a `QSV` encoder for, which is the same request made a different way.
 ///
 /// `QSV` has no mode flag. It reads one out of the numbers, and a ceiling equal to the target reads
-/// as constant bitrate there exactly as it does on `VAAPI`. The mode is therefore steered by raising
-/// the ceiling a single kilobit above the target, which is what Jellyfin does and for this reason.
+/// as constant bitrate there exactly as it does on `VAAPI`. A ceiling a kilobit above the target,
+/// which is what Jellyfin does, keeps it out of constant bitrate but not out of starving the frames
+/// that need bits, so it is aimed at half its ceiling as `VAAPI` is; see [`INTEL_TARGET_PERCENT`].
 ///
 /// The rest is what Intel's own guidance asks for once the mode is right: macroblock level rate
 /// control, which spends bits where a viewer looks rather than evenly across the frame, a buffer of
 /// twice the usual depth, and that buffer part filled at the start so the first demanding scene has
 /// something to draw on rather than beginning at empty.
 ///
-/// `h264_qsv` refuses to open below a megabit, so a ceiling under that is raised to it. A stream
-/// that cheap is being asked for by a profile nobody can watch comfortably anyway.
+/// `h264_qsv` refuses to open below a megabit, so a ceiling or a target under that is raised to it,
+/// and the ceiling kept a kilobit clear of the target. A stream that cheap is being asked for by a
+/// profile nobody can watch comfortably anyway.
 ///
-/// None of this is measured here. `QSV` cannot currently draw thumbnails on the Intel machine this
-/// was found on, so the numbers are Jellyfin's rather than ours; see VAL-199 and VAL-215.
+/// The target was measured on an i5-13500; the buffer and its starting fill are Jellyfin's, since
+/// `QSV` cannot currently draw thumbnails on that machine; see VAL-199 and VAL-215.
 fn qsv_rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<String> {
     let bitrate = max_bitrate_kbps.max(QSV_SMALLEST_BITRATE_KBPS);
+    let aimed_at = (bitrate * INTEL_TARGET_PERCENT / 100).max(QSV_SMALLEST_BITRATE_KBPS);
+    let ceiling = bitrate.max(aimed_at + 1);
 
     let mut arguments = Vec::new();
 
@@ -2385,9 +2437,9 @@ fn qsv_rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<Strin
     }
 
     arguments.push("-b:v".to_owned());
-    arguments.push(format!("{bitrate}k"));
+    arguments.push(format!("{aimed_at}k"));
     arguments.push("-maxrate".to_owned());
-    arguments.push(format!("{}k", bitrate + 1));
+    arguments.push(format!("{ceiling}k"));
     arguments.push("-rc_init_occupancy".to_owned());
     arguments.push(format!("{}k", bitrate * QSV_INITIAL_OCCUPANCY_MULTIPLE));
     arguments.push("-bufsize".to_owned());
@@ -2553,6 +2605,11 @@ pub struct TranscodePlan {
     /// not part of the session key: pointing Valence at a different card should
     /// not orphan every segment already on disk.
     pub device: String,
+    /// Who made the card the session runs on, where that is known.
+    ///
+    /// `VAAPI` drives AMD's cards as well as Intel's, and only Intel's encoder was measured to need
+    /// its target below its ceiling; see [`INTEL_TARGET_PERCENT`].
+    pub vendor: Vendor,
     /// Which of the filters this backend needs the build actually has.
     ///
     /// Asked rather than assumed. `scale_vt` arrived in `FFmpeg` 7.0 and some
@@ -2675,7 +2732,11 @@ impl TranscodePlan {
                 square_pixels,
             } => {
                 args.extend(self.encoder_arguments(encoder));
-                args.extend(rate_control_arguments(encoder, *max_bitrate_kbps));
+                args.extend(rate_control_arguments(
+                    encoder,
+                    *max_bitrate_kbps,
+                    self.vendor,
+                ));
                 args.extend(forced_idr_arguments(encoder));
                 args.extend(
                     NO_EMBEDDED_CAPTIONS
@@ -3381,7 +3442,9 @@ mod tests {
         ToneMapping, Track, TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE,
         TEXT_OVERLAY_FPS, VAAPI,
     };
+    use crate::devices::Vendor;
     use crate::media::{ColourMetadata, VideoRange};
+    use sha2::{Digest, Sha256};
 
     /// A build with a scaler and no compositor, as the existing routes assume.
     const SCALER_ONLY: DeviceFilters = DeviceFilters {
@@ -4994,7 +5057,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             ("h264_videotoolbox", "-q:v", "62"),
             ("h264_nvenc", "-cq", "23"),
         ] {
-            let arguments = rate_control_arguments(encoder, 2500);
+            let arguments = rate_control_arguments(encoder, 2500, Vendor::Intel);
 
             assert!(
                 arguments.windows(2).any(|pair| pair == [flag, value]),
@@ -5007,7 +5070,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     /// CRF, so a value carried across from x264 would not be mistuned but inverted.
     #[test]
     fn does_not_hand_videotoolbox_a_crf_value() {
-        let arguments = rate_control_arguments("h264_videotoolbox", 2500);
+        let arguments = rate_control_arguments("h264_videotoolbox", 2500, Vendor::Intel);
 
         assert!(
             !arguments.iter().any(|argument| argument == "-crf"),
@@ -5020,7 +5083,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     #[test]
     fn caps_every_encoder_with_a_window_to_measure_it_over() {
         for encoder in ["libx264", "h264_videotoolbox", "h264_vaapi", "h264_amf"] {
-            let arguments = rate_control_arguments(encoder, 2500);
+            let arguments = rate_control_arguments(encoder, 2500, Vendor::Intel);
 
             assert!(
                 arguments
@@ -5044,7 +5107,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     #[test]
     fn tells_vaapi_to_vary_the_rate_rather_than_leaving_it_to_guess() {
         for encoder in ["h264_vaapi", "hevc_vaapi", "av1_vaapi", "vp9_vaapi"] {
-            let arguments = rate_control_arguments(encoder, 2500);
+            let arguments = rate_control_arguments(encoder, 2500, Vendor::Intel);
 
             assert!(
                 arguments.windows(2).any(|pair| pair == ["-rc_mode", "VBR"]),
@@ -5063,7 +5126,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             "h264_amf",
             "h264_qsv",
         ] {
-            let arguments = rate_control_arguments(encoder, 2500);
+            let arguments = rate_control_arguments(encoder, 2500, Vendor::Intel);
 
             assert!(
                 !arguments.iter().any(|argument| argument == "-rc_mode"),
@@ -5072,21 +5135,21 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         }
     }
 
-    /// `QSV` has no mode flag, so the same request is made by lifting the ceiling a kilobit clear of
-    /// the target. Equal values read as constant bitrate there too.
+    /// `QSV` has no mode flag and reads constant bitrate out of equal values, and aimed at its
+    /// ceiling it starves a hard frame as `VAAPI` does, so it aims at half. See `INTEL_TARGET_PERCENT`.
     #[test]
-    fn lifts_the_qsv_ceiling_clear_of_its_target_so_the_rate_may_vary() {
+    fn aims_qsv_at_half_its_ceiling_so_the_rate_may_vary_and_has_room_for_a_hard_frame() {
         for encoder in ["h264_qsv", "hevc_qsv", "av1_qsv"] {
-            let arguments = rate_control_arguments(encoder, 2500);
+            let arguments = rate_control_arguments(encoder, 2500, Vendor::Intel);
 
             assert!(
-                arguments.windows(2).any(|pair| pair == ["-b:v", "2500k"]),
+                arguments.windows(2).any(|pair| pair == ["-b:v", "1250k"]),
                 "{encoder}: {arguments:?}"
             );
             assert!(
                 arguments
                     .windows(2)
-                    .any(|pair| pair == ["-maxrate", "2501k"]),
+                    .any(|pair| pair == ["-maxrate", "2500k"]),
                 "{encoder}: {arguments:?}"
             );
         }
@@ -5096,7 +5159,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     /// borrow rather than fall apart.
     #[test]
     fn gives_qsv_room_to_absorb_a_scene_that_costs_more_than_the_ceiling() {
-        let arguments = rate_control_arguments("h264_qsv", 2500);
+        let arguments = rate_control_arguments("h264_qsv", 2500, Vendor::Intel);
 
         assert!(
             arguments
@@ -5118,14 +5181,14 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     fn asks_for_macroblock_rate_control_only_where_there_is_one() {
         for encoder in ["h264_qsv", "hevc_qsv"] {
             assert!(
-                rate_control_arguments(encoder, 2500)
+                rate_control_arguments(encoder, 2500, Vendor::Intel)
                     .windows(2)
                     .any(|pair| pair == ["-mbbrc", "1"]),
                 "{encoder}"
             );
         }
 
-        assert!(!rate_control_arguments("av1_qsv", 2500)
+        assert!(!rate_control_arguments("av1_qsv", 2500, Vendor::Intel)
             .iter()
             .any(|argument| argument == "-mbbrc"));
     }
@@ -5134,7 +5197,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     /// than producing an encoder that never starts.
     #[test]
     fn raises_a_qsv_ceiling_the_encoder_would_refuse_to_open_on() {
-        let arguments = rate_control_arguments("h264_qsv", 400);
+        let arguments = rate_control_arguments("h264_qsv", 400, Vendor::Intel);
 
         assert!(
             arguments.windows(2).any(|pair| pair == ["-b:v", "1000k"]),
@@ -5149,11 +5212,17 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     }
 
     /// A backend nobody has put a file through keeps what it had, capped rather than merely aimed
-    /// at. Guessing a quality scale for it would be worse than the bitrate it already gets.
+    /// at. Guessing a quality scale for it would be worse than the bitrate it already gets. `VAAPI`
+    /// on a card that is not Intel's is one: Intel's encoder was measured, AMD's was not.
     #[test]
     fn leaves_an_unmeasured_backend_on_a_bitrate() {
-        for encoder in ["h264_vaapi", "hevc_qsv", "h264_amf", "h264_rkmpp"] {
-            let arguments = rate_control_arguments(encoder, 2500);
+        for (encoder, vendor) in [
+            ("h264_amf", Vendor::Amd),
+            ("h264_rkmpp", Vendor::Other),
+            ("h264_vaapi", Vendor::Amd),
+            ("hevc_vaapi", Vendor::Other),
+        ] {
+            let arguments = rate_control_arguments(encoder, 2500, vendor);
 
             assert!(
                 arguments.windows(2).any(|pair| pair == ["-b:v", "2500k"]),
@@ -5162,11 +5231,30 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         }
     }
 
+    /// Intel's `VAAPI` encoder, aimed at its ceiling, starves the frames that need bits; aimed at
+    /// half of it, it borrows for them without ever passing the ceiling. See `INTEL_TARGET_PERCENT`.
+    #[test]
+    fn aims_a_vaapi_encode_at_half_its_ceiling_so_it_has_room_for_a_hard_frame() {
+        for encoder in ["h264_vaapi", "hevc_vaapi", "av1_vaapi", "vp9_vaapi"] {
+            let arguments = rate_control_arguments(encoder, 34_903, Vendor::Intel);
+            let pair = |flag: &str, value: &str| {
+                arguments
+                    .windows(2)
+                    .any(|found| found == [flag.to_owned(), value.to_owned()])
+            };
+
+            assert!(pair("-rc_mode", "VBR"), "{encoder}: {arguments:?}");
+            assert!(pair("-b:v", "17451k"), "{encoder}: {arguments:?}");
+            assert!(pair("-maxrate", "34903k"), "{encoder}: {arguments:?}");
+            assert!(pair("-bufsize", "69806k"), "{encoder}: {arguments:?}");
+        }
+    }
+
     /// VP9 refuses a quality target with nothing to anchor it to: "Rate control parameters set
     /// without a bitrate". Measured, and the reason this exception exists.
     #[test]
     fn gives_vp9_the_bitrate_it_insists_on_alongside_the_quality() {
-        let arguments = rate_control_arguments("libvpx-vp9", 2500);
+        let arguments = rate_control_arguments("libvpx-vp9", 2500, Vendor::Intel);
 
         assert!(
             arguments.windows(2).any(|pair| pair == ["-crf", "32"]),
@@ -5182,7 +5270,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     /// the quality target replaces.
     #[test]
     fn does_not_ask_a_quality_targeted_encoder_to_hit_a_bitrate_as_well() {
-        let arguments = rate_control_arguments("libx264", 2500);
+        let arguments = rate_control_arguments("libx264", 2500, Vendor::Intel);
 
         assert!(
             !arguments.iter().any(|argument| argument == "-b:v"),
@@ -5284,6 +5372,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             output_directory: "/transcodes/abc".into(),
             device_filters: SCALER_ONLY,
             device: "/dev/dri/renderD129".into(),
+            vendor: Vendor::Intel,
             start_at: SegmentStart::default(),
             cut_seconds: 4.0,
         };
@@ -5981,6 +6070,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     fn plan_on(spec: SessionSpec, device_filters: DeviceFilters) -> TranscodePlan {
         TranscodePlan {
             device: DEFAULT_DEVICE.to_owned(),
+            vendor: Vendor::Intel,
             device_filters,
             spec,
             output_directory: "/transcodes/abc".into(),
@@ -6978,6 +7068,47 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
 
         assert_eq!(spec().session_id(), told.session_id());
         assert_eq!(spec().plan_id(), told.plan_id());
+    }
+
+    /// An Intel encode made before its rate was steered as it is now must not be handed back as one
+    /// made after, so a `VAAPI` or `QSV` encode carries the recipe in its address. Every other
+    /// session's address, and the segments on disk under it, stay as they were.
+    #[test]
+    fn addresses_an_intel_encode_by_the_way_its_rate_is_steered() {
+        let untouched = Sha256::new().finalize();
+        let hashed = |encoder: &str| {
+            let spec = SessionSpec {
+                video: VideoAction::Encode {
+                    encoder: encoder.to_owned(),
+                    max_bitrate_kbps: 8000,
+                    max_width: 1280,
+                    max_height: 720,
+                    tone_map: None,
+                    deinterlace: false,
+                    square_pixels: false,
+                },
+                ..spec()
+            };
+            let mut hasher = Sha256::new();
+
+            spec.hash_intel_rate(&mut hasher);
+
+            hasher.finalize()
+        };
+
+        for encoder in ["h264_vaapi", "hevc_vaapi", "h264_qsv", "hevc_qsv"] {
+            assert_ne!(hashed(encoder), untouched, "{encoder}");
+        }
+
+        for encoder in ["libx264", "h264_nvenc", "h264_amf", "h264_videotoolbox"] {
+            assert_eq!(hashed(encoder), untouched, "{encoder}");
+        }
+
+        let mut copied = Sha256::new();
+
+        spec().hash_intel_rate(&mut copied);
+
+        assert_eq!(copied.finalize(), untouched);
     }
 
     #[test]

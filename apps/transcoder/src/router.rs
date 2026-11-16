@@ -2936,9 +2936,11 @@ fn write_in_the_background(state: &AppState, request: &RenditionRequest, path: &
     let device = config.device.clone();
     let asked = request.clone();
     let subject = name_of(path);
+    let registry = state.registry.clone();
 
     tokio::spawn(async move {
         let plan = TranscodePlan {
+            vendor: registry.configured_vendor(asked.spec.hardware_accel).await,
             device_filters: crate::capability::device_filters_for(
                 &ffmpeg,
                 &device,
@@ -3001,6 +3003,7 @@ fn prepare_in_the_background(state: &AppState, request: &DownloadRequest, path: 
     let device = config.device.clone();
     let asked = request.clone();
     let subject = name_of(path);
+    let registry = state.registry.clone();
 
     tokio::spawn(async move {
         let plan = TranscodePlan {
@@ -3009,6 +3012,7 @@ fn prepare_in_the_background(state: &AppState, request: &DownloadRequest, path: 
                 .to_string_lossy()
                 .into_owned(),
             device,
+            vendor: registry.configured_vendor(asked.spec.hardware_accel).await,
             device_filters: DeviceFilters::default(),
             start_at: SegmentStart::default(),
             cut_seconds: 0.0,
