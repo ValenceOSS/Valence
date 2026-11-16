@@ -79,6 +79,24 @@ describe('createLinkedSubtitleFinder', () => {
     expect(asker.asked[0]?.route).toBe('/api/media/r1/subtitles/found?language=fr');
   });
 
+  it('finds nothing, rather than failing, where the linked server refuses the search', async () => {
+    const { finder } = answering(() => Response.json({ error: 'no', code: null }, { status: 403 }));
+
+    expect(await finder.search('theirs', 'fr')).toBeNull();
+  });
+
+  it.each([
+    ['error.subtitles.thatDownloadIsForAnotherEpisode', 'otherEpisode'],
+    ['error.subtitles.theSubtitleCouldNotBeKept', 'failed'],
+    ['error.subtitles.theSiteWouldNotGiveIt', 'unavailable'],
+  ] as const)('keeps the linked server’s reason, %s, where a fetch fails', async (code, kind) => {
+    const { finder } = answering(() => Response.json({ error: 'no', code }, { status: 502 }));
+
+    expect(await finder.fetch('theirs', { source: 'subdl', id: 'x', language: 'fr' })).toEqual({
+      kind,
+    });
+  });
+
   it('fetches on the server with the file, which keeps it', async () => {
     const { asker, finder } = answering(() => Response.json({ name: 'Arrival.fr.srt' }));
     const choice = { source: 'subdl' as const, id: 'x', language: 'fr' };

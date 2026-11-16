@@ -15,6 +15,10 @@ import type { LinkedTitle } from './createLinkedPlayback';
 
 const NOT_ALLOWED = 'error.linking.yourServerMayNotFindSubtitlesHere';
 
+const ANOTHER_EPISODE = 'error.subtitles.thatDownloadIsForAnotherEpisode';
+
+const NOT_KEPT = 'error.subtitles.theSubtitleCouldNotBeKept';
+
 const OUT_OF_REACH_FROM = 500;
 
 /**
@@ -110,7 +114,7 @@ const createLinkedSubtitleFinder = (
       `/api/media/${linked.remoteId}/subtitles/found?${new URLSearchParams({ language }).toString()}`,
     );
 
-    if (answered?.status === 404) {
+    if (answered?.status === 403 || answered?.status === 404) {
       return null;
     }
 
@@ -140,8 +144,18 @@ const createLinkedSubtitleFinder = (
       },
     );
 
-    if (answered === null || answered.status >= OUT_OF_REACH_FROM) {
+    if (answered === null) {
       return { kind: 'unavailable' };
+    }
+
+    if (answered.status >= OUT_OF_REACH_FROM) {
+      const code = await codeOf(answered);
+
+      return code === ANOTHER_EPISODE
+        ? { kind: 'otherEpisode' }
+        : code === NOT_KEPT
+          ? { kind: 'failed' }
+          : { kind: 'unavailable' };
     }
 
     if (answered.ok) {

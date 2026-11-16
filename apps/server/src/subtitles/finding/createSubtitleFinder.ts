@@ -9,6 +9,7 @@ import { fetchSubdlSubtitle } from './fetchSubdlSubtitle';
 import { openSubtitlesHash } from './openSubtitlesHash';
 import { searchOpenSubtitles } from './searchOpenSubtitles';
 import { rankSubtitles } from './rankSubtitles';
+import { bazarrMinimumOf } from './bazarrMinimumOf';
 import { scoreSubtitle } from './scoreSubtitle';
 import { subtitleVideoOf } from './subtitleVideoOf';
 import { searchSubdl } from './searchSubdl';
@@ -303,6 +304,7 @@ const createSubtitleFinder = ({
             id: choice.id,
             release: found?.name ?? '',
             score: found?.score ?? 0,
+            scale: 'bazarr',
             isHearingImpaired: found?.isHearingImpaired ?? false,
             format: downloaded.extension,
           },
@@ -342,13 +344,15 @@ const createSubtitleFinder = ({
         const currentScore =
           current === undefined
             ? null
-            : current.score === 100 || current.release === ''
+            : current.score === 100 || (current.release === '' && current.scale === 'bazarr')
               ? current.score
-              : scoreSubtitle(video, {
-                  release: current.release,
-                  frameRate: null,
-                  isExactMatch: false,
-                }).score;
+              : current.release === ''
+                ? bazarrMinimumOf(current.score, row.seriesTitle === null ? 'film' : 'episode')
+                : scoreSubtitle(video, {
+                    release: current.release,
+                    frameRate: null,
+                    isExactMatch: false,
+                  }).score;
         const found = await finder.search(mediaId, language);
         const best = found?.subtitles.find(
           (subtitle) =>

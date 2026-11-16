@@ -118,7 +118,7 @@ const matchChoicesFor = (value: number) =>
           id: value.toString(),
           label: say('screens.adminArea.subtitlesCard.scoreOrMore', { score: value.toString() }),
         },
-      ];
+      ].toSorted((one, other) => Number(other.id) - Number(one.id));
 
 /**
  * Where Valence finds subtitles for what the libraries hold, and what it does with them: the

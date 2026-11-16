@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { bazarrMinimumOf } from '@ValenceServer/subtitles/finding/bazarrMinimumOf';
 
 const OldMinimumsSchema = z
   .object({
@@ -6,19 +7,6 @@ const OldMinimumsSchema = z
     episodeMinimumScore: z.number().optional(),
   })
   .passthrough();
-
-/**
- * Moves a minimum score kept before subtitles were scored as Bazarr scores them onto that scale,
- * keeping what it meant: the exact file only stays at 100, the same release becomes 98, a close
- * match becomes 90, which asks for the same source, and anything stays at nothing. A minimum below
- * a close match becomes Bazarr's own default for its kind.
- *
- * @param old - The minimum as it was kept.
- * @param kind - Whether it is for films or episodes.
- * @returns The minimum on Bazarr's scale.
- */
-const bazarrMinimumOf = (old: number, kind: 'film' | 'episode'): number =>
-  old >= 100 ? 100 : old >= 80 ? 98 : old >= 60 ? 90 : old > 0 ? (kind === 'film' ? 70 : 90) : 0;
 
 /**
  * Carries subtitle settings kept before subtitles were scored as Bazarr scores them over to that
