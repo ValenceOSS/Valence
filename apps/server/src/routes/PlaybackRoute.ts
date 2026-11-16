@@ -316,7 +316,7 @@ const noteRoute = createRoute({
   path: '/api/playback/notes',
   tags: ['Playback'],
   summary:
-    'Note something a player put right by itself, such as a recovery or a watch party catching it up, for the server log',
+    'Note something a player put right by itself, such as a recovery, a watch party catching it up or its engine handing a film to the server, for the server log',
   request: {
     query: z.object({ clientId: z.string().min(1).optional() }),
     body: { content: { 'application/json': { schema: PlaybackNoteSchema } } },

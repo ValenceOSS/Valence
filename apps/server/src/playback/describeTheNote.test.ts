@@ -11,6 +11,39 @@ describe('describeTheNote', () => {
     ).toBe('Playback recovered by itself at 40:13 for Zen on macOS');
   });
 
+  it('says where and why the browser player handed a film to the server', () => {
+    expect(
+      describeTheNote(
+        {
+          kind: 'engineHandedOver',
+          mediaId: 'film-1',
+          sessionId: null,
+          atSeconds: 0,
+          stage: 'opening',
+          detail: 'Failed to fetch',
+        },
+        'Valence for Windows',
+      ),
+    ).toBe(
+      'The browser player on Valence for Windows handed the film to the server at 0:00, failing to open the file: Failed to fetch',
+    );
+    expect(
+      describeTheNote(
+        {
+          kind: 'engineHandedOver',
+          mediaId: 'film-1',
+          sessionId: 's-1',
+          atSeconds: 61,
+          stage: 'refused',
+          detail: null,
+        },
+        'Zen on macOS',
+      ),
+    ).toBe(
+      'The browser player on Zen on macOS handed the film to the server at 1:01, the browser refusing what it was given',
+    );
+  });
+
   it('says where a watch party moved somebody from and to, and why', () => {
     expect(
       describeTheNote(

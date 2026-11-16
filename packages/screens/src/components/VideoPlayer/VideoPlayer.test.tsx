@@ -4827,4 +4827,47 @@ describe('VideoPlayer, playing in the browser with a sound language remembered',
     expect(startMock.mock.calls[1]?.[1]).toBe(plain);
     expect(startMock.mock.calls[1]?.[11]).toBe(false);
   });
+  it('tries its own player again for the next film, as a watch party changing what is playing does', async () => {
+    const plain: Partial<DeviceProfile> = {
+      name: 'Browser',
+      directPlayProfiles: [{ container: 'mp4', videoCodecs: ['hevc'], audioCodecs: ['aac'] }],
+      supportedVideoRanges: ['SDR', 'HDR10'],
+      tenBitVideoCodecs: ['hevc'],
+    };
+
+    writePlaybackPreferences({ playsInTheBrowser: true, audioLanguage: null });
+    detectMock.mockReturnValue(plain);
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    startMock.mockResolvedValueOnce({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        sessionId: 'copied',
+        plan: {
+          ...transcodingPlan,
+          mediaId: 'media-1',
+          container: { kind: 'remux', target: 'fmp4', reason },
+          video: { kind: 'passthrough', reason },
+          audio: { kind: 'passthrough', streamIndex: 2, reason },
+        },
+      },
+    });
+
+    const { rerender } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(startMock).toHaveBeenCalledTimes(2);
+    });
+    expect(startMock.mock.calls[1]?.[1]).toBe(plain);
+
+    rerender(<VideoPlayer media={{ ...media, id: 'media-2' }} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(startMock.mock.calls.length).toBeGreaterThanOrEqual(3);
+    });
+    expect(startMock.mock.calls[2]?.[0]).toBe('media-2');
+    expect(startMock.mock.calls[2]?.[1]).not.toBe(plain);
+    expect(startMock.mock.calls[2]?.[11]).toBe(true);
+    expect(startMock.mock.calls[2]?.[12]).toBe('opened');
+  });
 });

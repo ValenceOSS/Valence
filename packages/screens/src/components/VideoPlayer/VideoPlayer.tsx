@@ -162,6 +162,7 @@ import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { PictureCanvas } from '@ValenceUI/PictureCanvas';
 import { attachEngine } from '@ValenceScreens/playback/engine/attachEngine';
 import { attachRemux } from '@ValenceScreens/playback/engine/attachRemux';
+import { faultOf } from '@ValenceScreens/playback/engine/faultOf';
 import { chooseBrowserRoute } from '@ValenceClient/playback/chooseBrowserRoute';
 import { readEngineSupport } from '@ValenceScreens/playback/readEngineSupport';
 import { withTheEngine } from '@ValenceClient/playback/withTheEngine';
@@ -169,6 +170,7 @@ import { isPlayedNatively } from '@ValenceClient/playback/isPlayedNatively';
 import { isStreamedNatively } from '@ValenceClient/playback/isStreamedNatively';
 import { naturalAudioStreamIndex } from '@ValenceCore/functions/naturalAudioStreamIndex';
 import type { EngineStats } from '@ValenceScreens/playback/engine/EngineStats';
+import type { EngineFault } from '@ValenceContracts/schemas/EngineFault';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
@@ -967,6 +969,7 @@ const VideoPlayer = ({
 
   useEffect(() => {
     recoveriesRef.current = {};
+    engineRefusedRef.current = false;
   }, [media.id]);
 
   if (request.mediaId !== media.id) {
@@ -1381,7 +1384,19 @@ const VideoPlayer = ({
           outcome.session.delivery.kind === 'direct' &&
           pictureRef.current !== null
         ) {
-          const handOver = () => {
+          const sayWhyTheEngineHandedOver = (fault: EngineFault, atSeconds: number) => {
+            void reportPlaybackNote(
+              {
+                kind: 'engineHandedOver',
+                mediaId: request.mediaId,
+                sessionId: outcome.session.sessionId,
+                atSeconds: Math.max(0, atSeconds),
+                ...fault,
+              },
+              clientId,
+            );
+          };
+          const handOver = (fault: EngineFault) => {
             if (isAbandoned()) {
               return;
             }
@@ -1389,6 +1404,8 @@ const VideoPlayer = ({
             engineRefusedRef.current = true;
 
             const at = placeRef.current?.read();
+
+            sayWhyTheEngineHandedOver(fault, at ?? request.startSeconds);
 
             setRequest((asked) => ({
               ...asked,
@@ -1414,11 +1431,14 @@ const VideoPlayer = ({
                   brightness: hdrBrightnessRef.current,
                 })
               : attachRemux(toPlay)
-          ).catch(() => null);
+          ).catch((error: Error | null) =>
+            faultOf('opening', error instanceof Error ? error : null),
+          );
 
-          if (attached === null) {
+          if (!('detach' in attached)) {
             if (!isAbandoned()) {
               engineRefusedRef.current = true;
+              sayWhyTheEngineHandedOver(attached, request.startSeconds);
               setRequest((asked) => ({ ...asked, startedBecause: 'engine' }));
             }
 
@@ -1481,10 +1501,12 @@ const VideoPlayer = ({
                     brightness: hdrBrightnessRef.current,
                   })
                 : attachRemux({ ...toPlay, url, startSeconds: at })
-            ).catch(() => null);
+            ).catch((error: Error | null) =>
+              faultOf('opening', error instanceof Error ? error : null),
+            );
 
-            if (next === null) {
-              handOver();
+            if (!('detach' in next)) {
+              handOver(next);
 
               return;
             }

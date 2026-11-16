@@ -131,6 +131,7 @@ describe('createFrameQueue', () => {
     await settle();
 
     expect(onFault).toHaveBeenCalledTimes(1);
+    expect(onFault).toHaveBeenCalledWith({ stage: 'decoding', detail: 'the decoder broke' });
   });
 
   it('closes everything it held when stopped', async () => {

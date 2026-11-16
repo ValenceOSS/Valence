@@ -528,9 +528,9 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
         note,
         nameTheClient(deviceOfRequest(context.req.raw.headers).identity).message,
       ),
-      note.kind === 'recovered'
-        ? { context: { mediaId: note.mediaId, sessionId: note.sessionId } }
-        : undefined,
+      note.kind === 'caughtUp'
+        ? undefined
+        : { context: { mediaId: note.mediaId, sessionId: note.sessionId } },
     );
 
     return context.body(null, 204);
