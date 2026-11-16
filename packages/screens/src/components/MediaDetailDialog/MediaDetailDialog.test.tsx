@@ -1217,9 +1217,16 @@ describe('a title from a linked server', () => {
       <MediaDetailDialog media={summary} resumeSeconds={600} onClose={vi.fn()} onPlay={onPlay} />,
     );
 
-    const play = await screen.findByRole('button', { name: /^(Play|Resume).*4K/u });
+    const actor = userEvent.setup();
 
-    await userEvent.setup().click(play);
+    await actor.click(await screen.findByRole('button', { name: 'Which edition to play' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('menuitemradio', { name: /4K/u })).toBeChecked();
+    });
+
+    await actor.keyboard('{Escape}');
+    await actor.click(screen.getByRole('button', { name: /^Resume from 10:00/u }));
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'theirs-1' }), 600);
   });

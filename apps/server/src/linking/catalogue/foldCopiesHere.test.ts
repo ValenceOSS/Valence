@@ -44,7 +44,12 @@ describe('foldCopiesHere', () => {
       await db.insert(mediaItem).values([
         { ...aMediaItemRow('my-arrival', 'mine'), externalId: 'tmdb:1' },
         { ...aMediaItemRow('my-alien', 'mine'), imdbId: 'tt2' },
-        { ...aMediaItemRow('their-arrival', 'theirs'), externalId: 'tmdb:1', height: 2160 },
+        {
+          ...aMediaItemRow('their-arrival', 'theirs'),
+          externalId: 'tmdb:1',
+          width: 3840,
+          height: 2160,
+        },
         { ...aMediaItemRow('their-alien', 'theirs'), imdbId: 'tt2' },
         { ...aMediaItemRow('their-dune', 'theirs'), externalId: 'tmdb:3' },
       ]);
@@ -55,10 +60,35 @@ describe('foldCopiesHere', () => {
 
       expect(rows.find((row) => row.id === 'their-arrival')).toMatchObject({
         parentId: 'my-arrival',
-        versionLabel: '2160p · Films',
+        versionLabel: '4K · Films',
       });
       expect(rows.find((row) => row.id === 'their-alien')?.parentId).toBe('my-alien');
       expect(rows.find((row) => row.id === 'their-dune')?.parentId).toBeNull();
+    },
+    STARTING_THE_DATABASE_MS,
+  );
+
+  it(
+    'names a widescreen copy by the step it is as wide as, not by its height',
+    async () => {
+      const db = await twoShelves('movies');
+
+      await db.insert(mediaItem).values([
+        { ...aMediaItemRow('my-arrival', 'mine'), externalId: 'tmdb:1' },
+        {
+          ...aMediaItemRow('their-arrival', 'theirs'),
+          externalId: 'tmdb:1',
+          width: 3840,
+          height: 1612,
+        },
+      ]);
+
+      await foldCopiesHere(db, 'theirs', 'Films');
+
+      expect(
+        (await db.select().from(mediaItem).where(eq(mediaItem.id, 'their-arrival')))[0]
+          ?.versionLabel,
+      ).toBe('4K · Films');
     },
     STARTING_THE_DATABASE_MS,
   );

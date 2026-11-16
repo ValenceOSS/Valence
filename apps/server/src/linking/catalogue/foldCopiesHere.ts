@@ -1,3 +1,4 @@
+import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { and, eq, isNotNull, isNull, or } from 'drizzle-orm';
@@ -40,6 +41,7 @@ const foldCopiesHere = async (
       id: mediaItem.id,
       externalId: mediaItem.externalId,
       imdbId: mediaItem.imdbId,
+      width: mediaItem.width,
       height: mediaItem.height,
       seasonNumber: mediaItem.seasonNumber,
       episodeNumber: mediaItem.episodeNumber,
@@ -113,14 +115,17 @@ const foldCopiesHere = async (
           row.imdbId === null ? null : `i:${row.imdbId}`,
         ];
     const here = keys.map((key) => (key === null ? undefined : byKey.get(key))).find(Boolean);
+    const step = sharpestStepOf(row)?.label ?? `${row.height.toString()}p`;
 
-    return here === undefined ? [] : [{ id: row.id, parentId: here, height: row.height }];
+    return here === undefined
+      ? []
+      : [{ id: row.id, parentId: here, versionLabel: `${step} · ${serverName}` }];
   });
 
   for (const fold of folds) {
     await db
       .update(mediaItem)
-      .set({ parentId: fold.parentId, versionLabel: `${fold.height.toString()}p · ${serverName}` })
+      .set({ parentId: fold.parentId, versionLabel: fold.versionLabel })
       .where(eq(mediaItem.id, fold.id));
   }
 

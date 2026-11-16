@@ -256,22 +256,21 @@ const MediaDetailDialog = ({
   const overview =
     typeof metadata?.overview === 'string' && metadata.overview !== '' ? metadata.overview : null;
 
-  const startsFrom = chosenVersion === null || isTheSameTitle ? (shownResume ?? 0) : 0;
+  const resumes = chosenVersion === null || isTheSameTitle ? shownResume : undefined;
+  const startsFrom = resumes ?? 0;
   const playSays =
-    chosenVersion !== null
-      ? chosenVersion.versionLabel === null || chosenVersion.versionLabel === undefined
-        ? say('screens.mediaDetailDialog.playThisEdition')
-        : say('common.playName', { name: chosenVersion.versionLabel })
-      : shownResume === undefined
+    resumes !== undefined
+      ? say('screens.mediaDetailDialog.resumeFromShownResume', {
+          shownResume: formatDuration(resumes),
+        })
+      : chosenVersion === null
         ? say('common.play')
-        : say('screens.mediaDetailDialog.resumeFromShownResume', {
-            shownResume: formatDuration(shownResume),
-          });
+        : chosenVersion.versionLabel === null || chosenVersion.versionLabel === undefined
+          ? say('screens.mediaDetailDialog.playThisEdition')
+          : say('common.playName', { name: chosenVersion.versionLabel });
 
   const watchedShare =
-    shownResume === undefined || shown.durationSeconds <= 0
-      ? null
-      : shownResume / shown.durationSeconds;
+    resumes === undefined || shown.durationSeconds <= 0 ? null : resumes / shown.durationSeconds;
   const playFaceOf = (
     <>
       <Icon of={PlayFilledIcon} size={18} />
