@@ -2,7 +2,7 @@
 //! `listenForValences` did: nothing here goes looking, it only hears what servers chose to say.
 
 use super::nearby::NearbyValences;
-use mdns_sd::{ServiceDaemon, ServiceEvent};
+use mdns_sd::ServiceEvent;
 use std::collections::HashSet;
 use std::net::{IpAddr, Ipv4Addr};
 use std::sync::Arc;
@@ -100,7 +100,7 @@ fn instance_name(fullname: &str, service_type: &str) -> String {
 /// Starts hearing Valence servers on the network, on a thread of its own for as long as the app
 /// runs; a network that drops multicast leaves things as they were rather than stopping the app.
 pub fn browse_for_valences(listening: Listening) {
-    let Ok(daemon) = ServiceDaemon::new() else {
+    let Some(daemon) = crate::mdns::daemon() else {
         return;
     };
 
@@ -111,8 +111,6 @@ pub fn browse_for_valences(listening: Listening) {
     let _ = std::thread::Builder::new()
         .name(String::from("valence-mdns"))
         .spawn(move || {
-            let _hearing = daemon;
-
             while let Ok(event) = events.recv() {
                 match event {
                     ServiceEvent::ServiceResolved(info) => listening.up(&Announced {

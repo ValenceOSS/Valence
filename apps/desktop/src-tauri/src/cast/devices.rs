@@ -2,7 +2,7 @@
 //! saying in its TXT records what it is called (`fn`), what it is (`md`), its id (`id`) and what it
 //! can do (`ca`).
 
-use mdns_sd::{ServiceDaemon, ServiceEvent, ServiceInfo};
+use mdns_sd::{ServiceEvent, ServiceInfo};
 use serde::Serialize;
 use std::net::{IpAddr, SocketAddr};
 
@@ -116,7 +116,7 @@ fn device_of(info: &ServiceInfo) -> Option<CastDevice> {
 /// `on_change` the whole list each time it changes; a network that drops multicast leaves the list
 /// empty rather than stopping the app.
 pub fn browse_for_cast_devices(on_change: impl Fn(Vec<CastDevice>) + Send + 'static) {
-    let Ok(daemon) = ServiceDaemon::new() else {
+    let Some(daemon) = crate::mdns::daemon() else {
         return;
     };
 
@@ -127,7 +127,6 @@ pub fn browse_for_cast_devices(on_change: impl Fn(Vec<CastDevice>) + Send + 'sta
     let _ = std::thread::Builder::new()
         .name(String::from("valence-cast-mdns"))
         .spawn(move || {
-            let _hearing = daemon;
             let mut heard = HeardDevices::default();
 
             while let Ok(event) = events.recv() {

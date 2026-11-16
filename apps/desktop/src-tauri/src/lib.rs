@@ -21,6 +21,7 @@ mod discovery;
 mod held;
 mod jar;
 mod listening;
+mod mdns;
 mod memory;
 mod menu;
 mod notices;
