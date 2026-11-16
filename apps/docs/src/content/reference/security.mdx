@@ -70,15 +70,16 @@ Passkeys tie to the hostname in `BETTER_AUTH_URL` and need a secure context, so 
 
 ### The desktop app's loopback server
 
-The desktop app serves its window from a small server of its own on `127.0.0.1` and passes the window's API requests and its WebSocket on to your Valence from the app's own process. The session cookie your server sets is kept by the app, in `cookies.json` in its data folder, readable only by your user on macOS and Linux, and never reaches the page. Requests leave the app with your server's own address as their `Origin`, which is why the desktop app needs no entry in `TRUSTED_ORIGINS`.
+The desktop app serves its window from a small server of its own on `127.0.0.1` and passes the window's API requests and its WebSocket on to your Valence from the app's own process. The session cookie your server sets is kept by the app and never reaches the page: in `cookies.sealed` in its data folder, encrypted with a key kept in the system's keychain, or, on a Linux with no secret service, in `cookies.json`, readable only by your user. Requests leave the app with your server's own address as their `Origin`, which is why the desktop app needs no entry in `TRUSTED_ORIGINS`. Your server's certificate is checked the way your system checks one, so a server signed by an authority of your own works once your system trusts that authority.
 
 A server on loopback can be reached by any page open in any browser on the same computer, so the app's answers only the window it opened:
 
 - When the app starts it makes a random 256-bit key. The window's first page is `/enter` with that key, which sets it as a cookie, `valence-key`, that is `HttpOnly` and `SameSite=Strict`, and moves on. Every request for the API, the realtime socket, a downloaded file or the page's start-up values must carry that cookie, compared in constant time, or it is refused with `403`. The key is never written to disk, so it is new every launch.
 - Every such request must also name the loopback server itself in its `Host` header, so a web page cannot reach it through a name it controls that points at `127.0.0.1`.
+- A cookie is not kept to its port, and every server on `127.0.0.1` counts as the same site, so a request that carries the key must also come from the app's own pages: any `Origin` it names must be the loopback server's own, any `Sec-Fetch-Site` it sends must say the same origin, and the realtime socket must name its origin.
 - Only the app's own built pages, which hold nothing of yours, are answered without the key.
 
-The app's pages carry a strict content security policy, the same as the web client's, and only the app's own windows on that loopback address may call into the app's host.
+The app's pages carry a strict content security policy, the same as the web client's, and only the app's own windows, showing pages from the exact address and port the loopback server listens on that launch, may call into the app's host, each for only what it uses.
 
 ## Rate limiting
 
