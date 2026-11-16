@@ -32,8 +32,26 @@ const COMMANDS: &[&str] = &[
     "now_watching",
 ];
 
+/// The commit this is built from, as `git` names it, for a build not told it by `VALENCE_COMMIT`;
+/// `unknown` where `git` cannot say, as the other clients' builds put it.
+fn commit_built_from() -> String {
+    std::process::Command::new("git")
+        .args(["rev-parse", "--short", "HEAD"])
+        .output()
+        .ok()
+        .filter(|ran| ran.status.success())
+        .and_then(|ran| String::from_utf8(ran.stdout).ok())
+        .map(|said| said.trim().to_owned())
+        .filter(|commit| !commit.is_empty())
+        .unwrap_or_else(|| String::from("unknown"))
+}
+
 fn main() {
     println!("cargo:rerun-if-env-changed=VALENCE_COMMIT");
+
+    if std::env::var_os("VALENCE_COMMIT").is_none() {
+        println!("cargo:rustc-env=VALENCE_COMMIT={}", commit_built_from());
+    }
 
     let attributes = tauri_build::Attributes::new()
         .app_manifest(tauri_build::AppManifest::new().commands(COMMANDS));

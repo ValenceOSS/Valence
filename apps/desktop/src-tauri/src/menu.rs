@@ -278,30 +278,26 @@ fn chosen(app: &AppHandle, event: &MenuEvent) {
     }
 }
 
-/// Gets this part of the app ready, before the window opens: sets the menu, answers it, and keeps
-/// every window's right click and menu bar to the application.
+/// Gets this part of the app ready, before the window opens: sets the menu on macOS, which keeps it
+/// at the top of the screen, and answers it. Elsewhere the window is frameless and draws its own
+/// bar, so there is no menu bar, as there was none in the Electron app.
 ///
 /// # Errors
 ///
-/// When the menu cannot be built, or Tauri will not take the part that watches the windows.
+/// When the menu cannot be built.
 pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
 
     app.manage(Zoom::default());
-    handle.set_menu(the_application_menu(
-        handle,
-        crate::updates::can_update(handle),
-    )?)?;
+
+    if is_mac() {
+        handle.set_menu(the_application_menu(
+            handle,
+            crate::updates::can_update(handle),
+        )?)?;
+    }
+
     handle.on_menu_event(|app, event| chosen(app, &event));
-
-    let watcher =
-        tauri::plugin::Builder::<Wry>::new("valence-window-menu").on_window_ready(|window| {
-            if !is_mac() {
-                let _ = window.hide_menu();
-            }
-        });
-
-    handle.plugin(watcher.build())?;
 
     Ok(())
 }
