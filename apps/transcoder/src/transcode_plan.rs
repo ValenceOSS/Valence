@@ -4667,11 +4667,15 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
             super::low_power_arguments("h264_vaapi", true),
             ["-low_power", "1"]
         );
-        assert!(super::low_power_arguments("h264_vaapi", false).is_empty());
+        assert_eq!(
+            super::low_power_arguments("h264_vaapi", false),
+            Vec::<String>::new()
+        );
 
         for encoder in ["hevc_vaapi", "av1_vaapi", "h264_qsv", "libx264"] {
-            assert!(
-                super::low_power_arguments(encoder, true).is_empty(),
+            assert_eq!(
+                super::low_power_arguments(encoder, true),
+                Vec::<String>::new(),
                 "{encoder}"
             );
         }

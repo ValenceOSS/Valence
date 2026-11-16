@@ -2043,7 +2043,6 @@ mod tests {
 
     /// A session is told `h264_vaapi` runs at low power only where the machine proved it, and only
     /// on `VAAPI`.
-    #[cfg(unix)]
     #[test]
     fn says_h264_runs_at_low_power_only_where_proved() {
         let proved = Capabilities {
