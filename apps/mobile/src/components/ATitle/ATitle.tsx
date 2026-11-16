@@ -69,6 +69,7 @@ import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGr
 import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
 import { whereFrom } from '@ValenceClient/linking/whereFrom';
 import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
+import { whichCopyToPlay } from '@ValenceClient/linking/whichCopyToPlay';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { ATitleProps } from './ATitle.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
@@ -152,12 +153,21 @@ const ATitle = ({
   const originOf = useOriginOf();
   const copies = title?.versions ?? [];
   const preferred = usePreferredCopy(title, copies);
-  const playing = version ?? preferred ?? mediaId;
+  const progressHere = byMediaId(watched.data ?? []);
+  const resumable =
+    resumeFor(progressHere, mediaId) === null ? undefined : progressHere.get(mediaId);
+  const playing = whichCopyToPlay(
+    mediaId,
+    copies,
+    version,
+    resumable === undefined ? undefined : (resumable.copyId ?? null),
+    preferred,
+  );
   const playingElsewhere = copies.find((copy) => copy.id === playing);
   const isWatched =
     (watched.data ?? []).find((entry) => entry.mediaId === mediaId)?.isFinished === true;
   const carryOnAt = resumeFor(
-    byMediaId(watched.data ?? []),
+    progressHere,
     playingElsewhere !== undefined && originOf(playingElsewhere.libraryId) !== null
       ? mediaId
       : playing,

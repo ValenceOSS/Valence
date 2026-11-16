@@ -5,6 +5,7 @@ type ProgressReport = {
   positionSeconds: number;
   durationSeconds: number;
   isFinished: boolean;
+  copyId?: string | null;
 };
 
 type WatchProgressService = {

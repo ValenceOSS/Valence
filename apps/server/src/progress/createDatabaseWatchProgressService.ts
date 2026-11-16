@@ -28,6 +28,7 @@ const createDatabaseWatchProgressService = (db: AnyValenceDatabase): WatchProgre
           durationSeconds: row.durationSeconds,
           isFinished: row.isFinished,
           updatedAt: row.updatedAt.toISOString(),
+          copyId: row.copyId,
         };
   },
 
@@ -52,6 +53,7 @@ const createDatabaseWatchProgressService = (db: AnyValenceDatabase): WatchProgre
       isFinished: progress.isFinished,
       updatedAt: progress.updatedAt.toISOString(),
       isDismissed: dismissedAt !== null && dismissedAt >= progress.updatedAt,
+      copyId: progress.copyId,
     }));
   },
 
@@ -66,6 +68,7 @@ const createDatabaseWatchProgressService = (db: AnyValenceDatabase): WatchProgre
           durationSeconds: report.durationSeconds,
           isFinished: report.isFinished,
           updatedAt: new Date(),
+          copyId: report.copyId ?? null,
         },
       ],
       target: [watchProgress.profileId, watchProgress.mediaItemId],
@@ -74,6 +77,7 @@ const createDatabaseWatchProgressService = (db: AnyValenceDatabase): WatchProgre
         durationSeconds: report.durationSeconds,
         isFinished: report.isFinished,
         updatedAt: new Date(),
+        ...(report.copyId === undefined ? {} : { copyId: report.copyId }),
       },
     });
   },

@@ -56,6 +56,13 @@ const StartRequest = z
     startedBecause: PlaybackStartReasonSchema.optional().describe(
       'Why the client is asking for a stream: opening the title, a quality or track change, or putting playback right after something went wrong. Written to the server log beside the start.',
     ),
+    refusedOrigins: z
+      .array(z.string().url().max(200))
+      .max(16)
+      .optional()
+      .describe(
+        "Linked servers' addresses this client could not fetch from directly, such as where a page's Content-Security-Policy forbids them. A linked title from one of them is streamed through this server instead.",
+      ),
   })
   .openapi('PlaybackStartRequest');
 
@@ -65,6 +72,7 @@ const ExplainRequest = StartRequest.omit({
   isReadiedAhead: true,
   picksItsOwnSound: true,
   startedBecause: true,
+  refusedOrigins: true,
 }).openapi('PlaybackExplainRequest');
 
 const DeliverySchema = z

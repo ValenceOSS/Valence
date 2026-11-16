@@ -67,7 +67,12 @@ const CREDENTIALS = {
 
 const ProgressListSchema = z.object({
   progress: z.array(
-    z.object({ mediaId: z.string(), positionSeconds: z.number(), isFinished: z.boolean() }),
+    z.object({
+      mediaId: z.string(),
+      positionSeconds: z.number(),
+      isFinished: z.boolean(),
+      copyId: z.string().nullish(),
+    }),
   ),
 });
 
@@ -344,6 +349,31 @@ describe('watch progress over HTTP', () => {
     });
 
     expect(await read()).toEqual([]);
+  });
+
+  it('remembers the linked copy it was watched on, and forgets it once the copy here is watched', async () => {
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const read = async () =>
+      ProgressListSchema.parse(
+        await (
+          await app.request(`${BASE}/api/progress`, { headers: { cookie, origin: BASE } })
+        ).json(),
+      ).progress;
+    const watch = (mediaId: string) =>
+      app.request(`${BASE}/api/media/${mediaId}/progress`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json', cookie, origin: BASE },
+        body: JSON.stringify(REPORT),
+      });
+
+    await watch(LINKED_COPY_ID);
+
+    expect((await read()).map((one) => one.copyId)).toEqual([LINKED_COPY_ID]);
+
+    await watch(MEDIA_ID);
+
+    expect((await read()).map((one) => one.copyId ?? null)).toEqual([null]);
   });
 
   it('refuses a position that is not one', async () => {

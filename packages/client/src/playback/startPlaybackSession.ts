@@ -77,6 +77,8 @@ const PROBLEMS_BY_STATUS: Readonly<Record<number, PlaybackProblem>> = {
  *   cannot, in the one request.
  * @param startedBecause - Why this stream is being asked for, for the server's log: opening the
  *   title, a change somebody made, or putting playback right after something went wrong.
+ * @param refusedOrigins - Linked servers' addresses this client could not stream from directly,
+ *   whose titles the server then streams through itself.
  * @returns The session, or why there is not one.
  */
 const startPlaybackSession = async (
@@ -93,6 +95,7 @@ const startPlaybackSession = async (
   isReadiedAhead?: boolean,
   picksItsOwnSound?: boolean,
   startedBecause?: PlaybackStartReason,
+  refusedOrigins: readonly string[] = [],
 ): Promise<StartOutcome> => {
   const response = await fetch(`/api/playback/${mediaId}/session`, {
     method: 'POST',
@@ -115,6 +118,7 @@ const startPlaybackSession = async (
       ...(isReadiedAhead === true ? { isReadiedAhead } : {}),
       ...(picksItsOwnSound === true ? { picksItsOwnSound } : {}),
       ...(startedBecause === undefined ? {} : { startedBecause }),
+      ...(refusedOrigins.length === 0 ? {} : { refusedOrigins }),
     }),
   }).catch(() => null);
 

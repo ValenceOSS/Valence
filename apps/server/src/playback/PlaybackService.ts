@@ -74,6 +74,7 @@ type PlaybackService = {
     burnInSubtitleId?: string,
     isCast?: boolean,
     picksItsOwnSound?: boolean,
+    refusedOrigins?: readonly string[],
   ) => Promise<StartOutcome>;
   readSessionFile: (sessionId: string, name: string) => Promise<SessionFile | null>;
   readDirectFile: (

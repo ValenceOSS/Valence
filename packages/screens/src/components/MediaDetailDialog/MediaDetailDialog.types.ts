@@ -6,6 +6,7 @@ type MediaDetailDialogProps = {
   onClose: () => void;
   onPlay: (media: MediaSummary, startSeconds: number) => void;
   resumeSeconds?: number;
+  resumeCopyId?: string | null;
   watchedFractionFor?: (mediaId: string) => number | undefined;
   siblings?: MediaSummary[];
   onSelectSibling?: (media: MediaSummary) => void;

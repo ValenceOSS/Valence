@@ -37282,6 +37282,11 @@
     "context": "Shown in the video player."
   },
   {
+    "handler": "screens.videoPlayer.couldNotReachNameDirectly",
+    "text": "Couldn’t reach {name} directly, so it’s playing through this server.",
+    "context": "Brief notice in the video player when a title from a linked server could not be fetched from that server directly, so it is streamed through this server instead. {name} is the linked server's name."
+  },
+  {
     "handler": "screens.videoPlayer.gettingTheRoomInStep",
     "text": "Synkroniserer med festen",
     "context": "Shown in the video player."

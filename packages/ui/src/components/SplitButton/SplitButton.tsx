@@ -18,8 +18,9 @@ const PARTED_SHAPES = {
   raised: 'raisedParted',
 } as const;
 
-const PLAY_ARROW =
-  'size-[3.25rem] coarse:size-[3.25rem] rounded-e-[0.875rem] shadow-[var(--shadow-lifted)]';
+const PLAY_ARROW = 'size-[3.25rem] coarse:size-[3.25rem] rounded-e-[0.875rem] shadow-none';
+
+const PLAY_JOINED = 'rounded-[0.875rem] shadow-[var(--shadow-lifted)]';
 
 const PARTED_FACE =
   'h-11 gap-2 rounded-[0.75rem] rounded-e-[4px] px-4 text-[0.9375rem] font-semibold shadow-[var(--shadow-lifted)]';
@@ -58,7 +59,13 @@ const SplitButton = ({
   footer,
   className,
 }: SplitButtonProps) => (
-  <div className={cn('inline-flex min-w-0', shape === 'parted' ? 'gap-[3px]' : '', className)}>
+  <div
+    className={cn(
+      'inline-flex min-w-0',
+      shape === 'parted' ? 'gap-[3px]' : size === 'play' ? PLAY_JOINED : '',
+      className,
+    )}
+  >
     <Button
       variant={tone}
       size={shape === 'parted' || size === 'play' ? 'none' : size}
@@ -68,7 +75,7 @@ const SplitButton = ({
         shape === 'parted'
           ? PARTED_FACE
           : cn(
-              size === 'play' ? cn(PLAY_FACE, 'rounded-e-none') : '',
+              size === 'play' ? cn(PLAY_FACE, 'rounded-e-none shadow-none') : '',
               tone === 'confirm' ? '' : 'border-e-0',
               tone === 'raised' ? 'shadow-none' : '',
             ),

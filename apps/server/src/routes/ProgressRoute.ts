@@ -11,6 +11,14 @@ const ProgressSchema = z
     isFinished: z.boolean(),
     updatedAt: z.string().datetime(),
     isDismissed: z.boolean().optional(),
+    copyId: z
+      .string()
+      .uuid()
+      .nullable()
+      .optional()
+      .describe(
+        "The linked server's copy this was watched on, where it was not this server's own; resuming plays that copy.",
+      ),
   })
   .openapi('WatchProgress');
 

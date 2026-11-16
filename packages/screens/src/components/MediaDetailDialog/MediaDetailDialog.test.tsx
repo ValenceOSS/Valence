@@ -1208,13 +1208,18 @@ describe('a title from a linked server', () => {
     expect((await screen.findAllByText('Also on Films')).length).toBeGreaterThan(0);
   });
 
-  it('plays the other server’s copy from where somebody got to, being the same film', async () => {
+  it('resumes the other server’s copy where somebody got to in it', async () => {
     const onPlay = vi.fn();
-    watcher.prefersBestCopy = true;
     detailMock.mockResolvedValue({ ...detail(), versions: [theirCopy] });
 
     renderInAnAddress(
-      <MediaDetailDialog media={summary} resumeSeconds={600} onClose={vi.fn()} onPlay={onPlay} />,
+      <MediaDetailDialog
+        media={summary}
+        resumeSeconds={600}
+        resumeCopyId="theirs-1"
+        onClose={vi.fn()}
+        onPlay={onPlay}
+      />,
     );
 
     const actor = userEvent.setup();
@@ -1229,5 +1234,59 @@ describe('a title from a linked server', () => {
     await actor.click(screen.getByRole('button', { name: /^Resume from 10:00/u }));
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'theirs-1' }), 600);
+  });
+
+  it('resumes the copy here where somebody got to in it, though the best copy is preferred', async () => {
+    const onPlay = vi.fn();
+    watcher.prefersBestCopy = true;
+    detailMock.mockResolvedValue({ ...detail(), versions: [theirCopy] });
+
+    renderInAnAddress(
+      <MediaDetailDialog media={summary} resumeSeconds={600} onClose={vi.fn()} onPlay={onPlay} />,
+    );
+
+    const actor = userEvent.setup();
+
+    await screen.findByRole('button', { name: 'Which edition to play' });
+    await actor.click(screen.getByRole('button', { name: /^Resume from 10:00/u }));
+
+    expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'media-1' }), 600);
+  });
+
+  it('starts the best copy where there is nothing to resume and it is preferred', async () => {
+    const onPlay = vi.fn();
+    watcher.prefersBestCopy = true;
+    detailMock.mockResolvedValue({ ...detail(), versions: [theirCopy] });
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={onPlay} />);
+
+    const actor = userEvent.setup();
+
+    await actor.click(await screen.findByRole('button', { name: 'Which edition to play' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('menuitemradio', { name: /4K/u })).toBeChecked();
+    });
+
+    await actor.keyboard('{Escape}');
+    await actor.click(screen.getByRole('button', { name: /^Play/u }));
+
+    expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'theirs-1' }), 0);
+  });
+
+  it('keeps the copy here once it is picked, though the best copy is preferred', async () => {
+    const onPlay = vi.fn();
+    watcher.prefersBestCopy = true;
+    detailMock.mockResolvedValue({ ...detail(), versions: [theirCopy] });
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={onPlay} />);
+
+    const actor = userEvent.setup();
+
+    await actor.click(await screen.findByRole('button', { name: 'Which edition to play' }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: /^(?!.*4K)/u }));
+    await actor.click(screen.getByRole('button', { name: /^Play/u }));
+
+    expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'media-1' }), 0);
   });
 });

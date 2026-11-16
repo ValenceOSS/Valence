@@ -151,6 +151,11 @@ import { followPlace } from '@ValenceScreens/playback/followPlace';
 import type { FollowedPlace } from '@ValenceScreens/playback/followPlace';
 import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
 import { reportPlaybackNote } from '@ValenceClient/playback/reportPlaybackNote';
+import { reconnectOrGiveUp } from '@ValenceClient/playback/reconnectOrGiveUp';
+import { theRefusedOrigins } from '@ValenceClient/playback/theRefusedOrigins';
+import { originElsewhere } from '@ValenceClient/playback/originElsewhere';
+import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
+import { refusedByPolicy } from '@ValenceScreens/playback/refusedByPolicy';
 import type { PlaybackStartReason } from '@ValenceContracts/schemas/PlaybackStartReason';
 import { useKeepsTheScreenOn } from '@ValenceScreens/playback/useKeepsTheScreenOn';
 import { waitForTheServer } from '@ValenceClient/session/waitForTheServer';
@@ -217,6 +222,16 @@ const STILL_PICTURE_MOVES_SECONDS = 1.5;
 const ELEMENT_COULD_NOT_DECODE = 3;
 
 const MEDIA = 3;
+
+const NETWORK = 1;
+
+const MANIFEST = 4;
+
+const ELEMENT_LOST_THE_NETWORK = 2;
+
+const ELEMENT_HAS_NOTHING = 0;
+
+const POLICY_REPORTED_WITHIN_MS = 100;
 
 const BACK_WHERE_IT_WAS_WITHIN_SECONDS = 1;
 
@@ -387,6 +402,9 @@ const VideoPlayer = ({
   const hasPlayedRef = useRef(false);
   const placeRef = useRef<FollowedPlace | null>(null);
   const recoveriesRef = useRef<Recoveries>({});
+  const comebacksRef = useRef<number[]>([]);
+  const originOf = useOriginOf();
+  const originOfRef = useRef(originOf);
   const playingRef = useRef(describePlaying(media));
 
   useEffect(() => {
@@ -969,8 +987,13 @@ const VideoPlayer = ({
 
   useEffect(() => {
     recoveriesRef.current = {};
+    comebacksRef.current = [];
     engineRefusedRef.current = false;
   }, [media.id]);
+
+  useEffect(() => {
+    originOfRef.current = originOf;
+  }, [originOf]);
 
   if (request.mediaId !== media.id) {
     setRequest({
@@ -1084,6 +1107,16 @@ const VideoPlayer = ({
             return;
           }
 
+          const next = reconnectOrGiveUp(comebacksRef.current, Date.now());
+
+          if (!next.shouldReconnect) {
+            stopWaiting = null;
+            stopAt('streamLost', null);
+
+            return;
+          }
+
+          comebacksRef.current = next.comebacks;
           setRequest((asked) => ({
             ...asked,
             startSeconds: resumeAt ?? asked.startSeconds,
@@ -1115,6 +1148,8 @@ const VideoPlayer = ({
     window.addEventListener('pagehide', onPageHide);
 
     const run = async () => {
+      refusedByPolicy();
+
       const rememberedAudio =
         request.audioStreamIndex === undefined && keptSource === undefined
           ? readPlaybackPreferences().audioLanguage
@@ -1184,6 +1219,7 @@ const VideoPlayer = ({
           undefined,
           picksSound,
           request.startedBecause,
+          [...theRefusedOrigins()],
         );
       const readied =
         keptSource === undefined &&
@@ -1272,6 +1308,56 @@ const VideoPlayer = ({
 
       const { sessionId } = outcome.session;
       const isHls = outcome.session.delivery.kind !== 'direct';
+      const directOrigin = originElsewhere(
+        outcome.session.delivery.kind === 'direct'
+          ? outcome.session.delivery.url
+          : outcome.session.delivery.manifestUrl,
+        window.location.origin,
+      );
+      const goesThroughThisServer = (): boolean => {
+        if (directOrigin === null || theRefusedOrigins().has(directOrigin) || isAbandoned()) {
+          return false;
+        }
+
+        theRefusedOrigins().add(directOrigin);
+
+        const at = placeRef.current?.read();
+
+        void (async () => {
+          const found = await cache
+            .ensureQueryData(libraryQueries.detail(request.mediaId))
+            .catch(() => null);
+          const server =
+            (found === null ? null : originOfRef.current(found.libraryId)?.name) ??
+            new URL(directOrigin).host;
+
+          notify.say(say('screens.videoPlayer.couldNotReachNameDirectly', { name: server }), {
+            where: PLAYER_TOASTS,
+            isCompact: true,
+          });
+          await new Promise((settle) => {
+            setTimeout(settle, POLICY_REPORTED_WITHIN_MS);
+          });
+          await reportPlaybackNote(
+            {
+              kind: 'directRefused',
+              mediaId: request.mediaId,
+              sessionId: outcome.session.sessionId,
+              server,
+              origin: directOrigin,
+              why: refusedByPolicy().has(directOrigin) ? 'policy' : 'network',
+            },
+            clientId,
+          );
+        })();
+        setRequest((asked) => ({
+          ...asked,
+          startSeconds: Math.floor(at ?? asked.startSeconds),
+          startedBecause: 'recovering',
+        }));
+
+        return true;
+      };
       const startAgainAt = (atSeconds: number): boolean => {
         const recovering = recoverOrGiveUp(recoveriesRef.current, Date.now());
 
@@ -1341,6 +1427,7 @@ const VideoPlayer = ({
 
         if (element.currentTime - seen.from > 1) {
           hasPlayedRef.current = true;
+          comebacksRef.current = [];
         }
       };
       element.addEventListener('timeupdate', noteProgress);
@@ -1436,6 +1523,10 @@ const VideoPlayer = ({
           );
 
           if (!('detach' in attached)) {
+            if (attached.stage === 'opening' && goesThroughThisServer()) {
+              return;
+            }
+
             if (!isAbandoned()) {
               engineRefusedRef.current = true;
               sayWhyTheEngineHandedOver(attached, request.startSeconds);
@@ -1531,6 +1622,14 @@ const VideoPlayer = ({
             const isUnreadable =
               code === ELEMENT_COULD_NOT_DECODE || code === ELEMENT_COULD_NOT_READ;
 
+            if (
+              element.readyState === ELEMENT_HAS_NOTHING &&
+              (code === ELEMENT_LOST_THE_NETWORK || code === ELEMENT_COULD_NOT_READ) &&
+              goesThroughThisServer()
+            ) {
+              return;
+            }
+
             if (isAbandoned() || (isUnreadable && convertInstead(null))) {
               return;
             }
@@ -1578,6 +1677,14 @@ const VideoPlayer = ({
             connections: readPlaybackPreferences().connections,
             place,
             onFault: (fault, atSeconds) => {
+              if (
+                fault.severity >= CRITICAL &&
+                (fault.category === NETWORK || fault.category === MANIFEST) &&
+                goesThroughThisServer()
+              ) {
+                return;
+              }
+
               if (fault.severity < CRITICAL || isAbandoned() || convertInstead(fault, atSeconds)) {
                 return;
               }
@@ -1720,6 +1827,13 @@ const VideoPlayer = ({
           category: engine.data.category,
           ...(engine.data.code === undefined ? {} : { code: engine.data.code }),
         };
+
+        if (
+          (fault.category === NETWORK || fault.category === MANIFEST) &&
+          goesThroughThisServer()
+        ) {
+          return;
+        }
 
         if (isAbandoned() || convertInstead(fault, request.startSeconds)) {
           return;
@@ -3227,6 +3341,7 @@ const VideoPlayer = ({
           }
           onRetry={() => {
             recoveriesRef.current = {};
+            comebacksRef.current = [];
 
             const at = placeRef.current?.read();
 

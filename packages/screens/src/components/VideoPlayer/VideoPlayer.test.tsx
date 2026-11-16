@@ -22,6 +22,7 @@ import type * as SubtitlesModule from '@ValenceClient/playback/fetchSubtitles';
 import type * as TrickplayModule from '@ValenceClient/playback/fetchTrickplay';
 import type * as CastSenderModule from '@ValenceScreens/playback/castSender';
 import type * as CastPlaybackModule from '@ValenceScreens/playback/castPlayback';
+import { theRefusedOrigins } from '@ValenceClient/playback/theRefusedOrigins';
 
 const startMock = vi.hoisted(() => vi.fn());
 const stopMock = vi.hoisted(() => vi.fn());
@@ -304,6 +305,7 @@ const startedSession: {
 };
 
 beforeEach(() => {
+  theRefusedOrigins().clear();
   startMock.mockReset();
   serverUpMock.mockReset();
   serverUpMock.mockResolvedValue(true);
@@ -389,6 +391,7 @@ describe('VideoPlayer', () => {
         undefined,
         false,
         'opened',
+        [],
       );
     });
   });
@@ -562,6 +565,7 @@ describe('VideoPlayer', () => {
         undefined,
         false,
         'converting',
+        [],
       );
     });
   });
@@ -898,6 +902,7 @@ describe('VideoPlayer', () => {
         undefined,
         false,
         'converting',
+        [],
       );
     });
   });
@@ -1134,6 +1139,66 @@ describe('VideoPlayer', () => {
     expect(await screen.findByRole('alert', {}, { timeout: 3000 })).toHaveTextContent(
       'This format isn’t supported',
     );
+  });
+
+  it('stops reconnecting and says the stream could not load once it fails three times with the server up', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      attachMock.mockRejectedValue({ category: 1, code: 1002 });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      expect(await screen.findByText('Reconnecting…')).toBeInTheDocument();
+
+      for (let step = 0; step < 8; step += 1) {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(4000);
+        });
+      }
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t load the stream');
+      expect(startMock).toHaveBeenCalledTimes(4);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('streams through this server, and says so, where a linked server could not be reached directly', async () => {
+    startMock.mockResolvedValueOnce({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        delivery: {
+          kind: 'hls',
+          manifestUrl: 'https://films.example/api/federation/v1/direct/t/index.m3u8',
+        },
+      },
+    });
+    attachMock.mockRejectedValueOnce({ category: 1, code: 1002 });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(startMock).toHaveBeenCalledTimes(2);
+    });
+
+    expect(startMock.mock.calls.at(-1)?.[13]).toEqual(['https://films.example']);
+    expect(
+      await screen.findByText(
+        'Couldn’t reach films.example directly, so it’s playing through this server.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Reconnecting…')).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(noteMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'directRefused',
+          origin: 'https://films.example',
+          why: 'network',
+        }),
+        'client-1',
+      );
+    });
   });
 
   it('reconnects where the playlist could not be read', async () => {
@@ -2496,6 +2561,7 @@ describe('VideoPlayer', () => {
         undefined,
         false,
         'audio',
+        [],
       );
     });
   });

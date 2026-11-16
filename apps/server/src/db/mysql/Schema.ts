@@ -349,6 +349,7 @@ const watchProgress = mysqlTable(
     mediaItemId: identifier('mediaItemId')
       .notNull()
       .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    copyId: identifier('copyId').references(() => mediaItem.id, { onDelete: 'set null' }),
     positionSeconds: float('positionSeconds').notNull(),
     durationSeconds: float('durationSeconds').notNull(),
     isFinished: boolean('isFinished').notNull().default(false),

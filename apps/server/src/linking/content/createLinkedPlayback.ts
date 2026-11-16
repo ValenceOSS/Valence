@@ -199,6 +199,7 @@ const createLinkedPlayback = (
       burnInSubtitleId,
       isCast,
       picksItsOwnSound,
+      refusedOrigins = [],
     ) => {
       const linked = await linkedTitleOf(mediaId);
 
@@ -260,7 +261,13 @@ const createLinkedPlayback = (
         devices.set(here, { deviceId, mediaId });
       }
 
-      const direct = await directFrom(linked.serverId);
+      const offered = await directFrom(linked.serverId);
+      const direct =
+        offered !== null &&
+        URL.canParse(offered) &&
+        refusedOrigins.includes(new URL(offered).origin)
+          ? null
+          : offered;
       const ticket =
         direct === null
           ? null

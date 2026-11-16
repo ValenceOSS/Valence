@@ -7,7 +7,6 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
-  ChevronDown as ChevronDownIcon,
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   EyeOff as EyeOffIcon,
@@ -30,8 +29,6 @@ import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { SplitButton } from '@ValenceUI/SplitButton';
-import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { Server as ServerDuotoneIcon } from '@keyline-icons/react/duotone';
 import { describePicture } from '@ValenceClient/library/describePicture';
 import { useFilmCopies } from '@ValenceScreens/library/useFilmCopies';
 import { useCardOrigin } from '@ValenceScreens/linking/useCardOrigin';
@@ -86,6 +83,7 @@ import { subjectOfMedia } from '@ValenceClient/collections/subjectOfMedia';
 import { Callout } from '@ValenceUI/Callout';
 import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
 import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
+import { whichCopyToPlay } from '@ValenceClient/linking/whichCopyToPlay';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaDetailDialogProps } from './MediaDetailDialog.types';
 import { say } from '@ValenceI18n/say';
@@ -106,6 +104,8 @@ const LOGO_BOX = 'max-h-[20svh] w-auto max-w-[min(70vw,30rem)] object-contain ob
  * @param onClose - Told when the dialog was dismissed.
  * @param onPlay - Told to start it, and where from.
  * @param resumeSeconds - Where this viewer left it.
+ * @param resumeCopyId - Which linked server's copy they left it on, where it was not this server's
+ *   own, so resuming carries on in that copy.
  * @param watchedFractionFor - How far through each sibling they are.
  * @param siblings - The other episodes of the same season.
  * @param onSelectSibling - Told which sibling was chosen.
@@ -130,6 +130,7 @@ const MediaDetailDialog = ({
   onClose,
   onPlay,
   resumeSeconds,
+  resumeCopyId,
   watchedFractionFor,
   siblings = [],
   onSelectSibling,
@@ -221,12 +222,35 @@ const MediaDetailDialog = ({
     (copy) => copy.server ?? say('common.thisServer'),
   );
   const preferred = usePreferredCopy(shown, versions);
-  const chosenVersion = versions.find((one) => one.id === (version ?? preferred)) ?? null;
-  const isTheSameTitle = chosenVersion !== null && originOf(chosenVersion.libraryId) !== null;
 
   if (shown === null) {
     return null;
   }
+
+  const otherCopies = filmCopies.filter(
+    (copy) => copy.media.id !== shown.id && !versions.some((one) => one.id === copy.media.id),
+  );
+  const chosenId = whichCopyToPlay(
+    shown.id,
+    [...versions, ...otherCopies.map((copy) => copy.media)],
+    version,
+    shownResume === undefined ? undefined : (resumeCopyId ?? null),
+    preferred,
+  );
+  const chosenVersion = versions.find((one) => one.id === chosenId) ?? null;
+  const chosenCopy = otherCopies.find((copy) => copy.media.id === chosenId) ?? null;
+  const chosen = chosenCopy?.media ?? chosenVersion ?? shown;
+  const isTheSameTitle = chosenVersion !== null && originOf(chosenVersion.libraryId) !== null;
+  const choices = [
+    ...editionOptionsOf(shown, detail?.versionLabel ?? null, versions),
+    ...otherCopies.map((copy) => ({
+      id: copy.media.id,
+      label: copy.server ?? say('common.thisServer'),
+      detail: [describePicture(copy.media), formatDuration(copy.media.durationSeconds)]
+        .filter((part) => part !== null)
+        .join(' · '),
+    })),
+  ];
 
   const metadata = detail?.metadata ?? null;
   const origin = originOf(shown.libraryId);
@@ -256,18 +280,21 @@ const MediaDetailDialog = ({
   const overview =
     typeof metadata?.overview === 'string' && metadata.overview !== '' ? metadata.overview : null;
 
-  const resumes = chosenVersion === null || isTheSameTitle ? shownResume : undefined;
+  const resumes =
+    chosenCopy === null && (chosenVersion === null || isTheSameTitle) ? shownResume : undefined;
   const startsFrom = resumes ?? 0;
   const playSays =
     resumes !== undefined
       ? say('screens.mediaDetailDialog.resumeFromShownResume', {
           shownResume: formatDuration(resumes),
         })
-      : chosenVersion === null
-        ? say('common.play')
-        : chosenVersion.versionLabel === null || chosenVersion.versionLabel === undefined
-          ? say('screens.mediaDetailDialog.playThisEdition')
-          : say('common.playName', { name: chosenVersion.versionLabel });
+      : chosenCopy !== null && chosenCopy.server !== null
+        ? say('common.playName', { name: chosenCopy.server })
+        : chosenVersion === null
+          ? say('common.play')
+          : chosenVersion.versionLabel === null || chosenVersion.versionLabel === undefined
+            ? say('screens.mediaDetailDialog.playThisEdition')
+            : say('common.playName', { name: chosenVersion.versionLabel });
 
   const watchedShare =
     resumes === undefined || shown.durationSeconds <= 0 ? null : resumes / shown.durationSeconds;
@@ -290,39 +317,35 @@ const MediaDetailDialog = ({
         ? {}
         : {
             onStartAgain: () => {
-              onPlay(chosenVersion ?? shown, 0);
+              onPlay(chosen, 0);
             },
           })}
     >
-      {filmCopies.length > 1 ? (
-        <ActionMenu
-          label={say('common.playFrom')}
-          align="start"
-          look="play"
-          trigger={
-            <>
-              {playFaceOf}
-              <Icon of={ChevronDownIcon} size={16} />
-            </>
+      {choices.length > 1 ? (
+        <SplitButton
+          size="play"
+          choiceLabel={
+            otherCopies.length > 0
+              ? say('common.playFrom')
+              : say('screens.mediaDetailDialog.whichEditionToPlay')
           }
-          groups={[
-            {
-              name: say('common.playFrom'),
-              items: filmCopies.map((copy) => ({
-                id: copy.media.id,
-                label: copy.server ?? say('common.thisServer'),
-                icon: <Icon of={ServerDuotoneIcon} size={18} />,
-                detail: [describePicture(copy.media), formatDuration(copy.media.durationSeconds)]
-                  .filter((part) => part !== null)
-                  .join(' · '),
-                onChoose: () => {
-                  onPlay(copy.media, copy.media.id === shown.id ? (shownResume ?? 0) : 0);
-                },
-              })),
-            },
-          ]}
-        />
-      ) : versions.length === 0 ? (
+          choiceName={
+            otherCopies.length > 0
+              ? say('common.playFrom')
+              : say('screens.mediaDetailDialog.editions')
+          }
+          onClick={() => {
+            onPlay(chosen, startsFrom);
+          }}
+          options={choices}
+          selectedId={chosen.id}
+          onSelect={(id) => {
+            setVersion(id);
+          }}
+        >
+          {playFaceOf}
+        </SplitButton>
+      ) : (
         <Button
           variant="confirm"
           size="none"
@@ -333,22 +356,6 @@ const MediaDetailDialog = ({
         >
           {playFaceOf}
         </Button>
-      ) : (
-        <SplitButton
-          size="play"
-          choiceLabel={say('screens.mediaDetailDialog.whichEditionToPlay')}
-          choiceName={say('screens.mediaDetailDialog.editions')}
-          onClick={() => {
-            onPlay(chosenVersion ?? shown, startsFrom);
-          }}
-          options={editionOptionsOf(shown, detail?.versionLabel ?? null, versions)}
-          selectedId={chosenVersion?.id ?? shown.id}
-          onSelect={(id) => {
-            setVersion(id === shown.id ? null : id);
-          }}
-        >
-          {playFaceOf}
-        </SplitButton>
       )}
     </PlayWithRestart>
   );
@@ -420,7 +427,7 @@ const MediaDetailDialog = ({
             label: say('common.playOnTV'),
             icon: <Icon of={TvIcon} size={18} />,
             onChoose: () => {
-              onPlayOn(chosenVersion ?? shown, startsFrom);
+              onPlayOn(chosen, startsFrom);
             },
           },
         ]),

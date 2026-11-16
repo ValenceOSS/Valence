@@ -30,6 +30,7 @@ const SentBodySchema = z.object({
   converted: z.string().optional(),
   isReadiedAhead: z.boolean().optional(),
   startedBecause: z.string().optional(),
+  refusedOrigins: z.array(z.string()).optional(),
 });
 
 const sentBody = () => SentBodySchema.parse(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
@@ -142,6 +143,33 @@ describe('startPlaybackSession', () => {
     await startPlaybackSession('media-1', profile, 'client-1');
 
     expect(sentBody()).not.toHaveProperty('startedBecause');
+  });
+
+  it('names the linked servers this client could not stream from directly', async () => {
+    await startPlaybackSession(
+      'media-1',
+      profile,
+      'client-1',
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      false,
+      false,
+      false,
+      'recovering',
+      ['https://films.example'],
+    );
+
+    expect(sentBody()).toMatchObject({ refusedOrigins: ['https://films.example'] });
+  });
+
+  it('names none where every linked server could be reached', async () => {
+    await startPlaybackSession('media-1', profile, 'client-1');
+
+    expect(sentBody()).not.toHaveProperty('refusedOrigins');
   });
 
   it('says whether the next episode should follow on with no gap, off where the server did not say', async () => {

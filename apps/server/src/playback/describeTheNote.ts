@@ -14,8 +14,8 @@ const WHILE: Readonly<Record<EngineFault['stage'], string>> = {
 
 /**
  * Says in the server log what a player put right by itself, which leaves no other trace on the
- * server: a recovery where it was, a watch party jumping it to where the room is, or its engine
- * handing a film to the server, and why.
+ * server: a recovery where it was, a watch party jumping it to where the room is, its engine
+ * handing a film to the server, or a linked server's stream it could not fetch directly, and why.
  *
  * @param note - What the player put right.
  * @param client - The device it happened on, by name.
@@ -30,6 +30,12 @@ const describeTheNote = (note: PlaybackNote, client: string): string => {
     const said = note.detail === null ? '' : `: ${note.detail}`;
 
     return `The browser player on ${client} handed the film to the server at ${formatDuration(note.atSeconds)}, ${WHILE[note.stage]}${said}`;
+  }
+
+  if (note.kind === 'directRefused') {
+    return note.why === 'policy'
+      ? `${client} couldn't fetch ${note.server}'s stream directly (blocked by the page's Content-Security-Policy), so it was streamed through this server. Add ${note.origin} to connect-src and media-src in the reverse proxy to let it stream directly.`
+      : `${client} couldn't fetch ${note.server}'s stream directly (the browser couldn't connect to ${note.origin}), so it was streamed through this server.`;
   }
 
   const why = note.because === 'joined' ? 'on joining' : 'after drifting';
