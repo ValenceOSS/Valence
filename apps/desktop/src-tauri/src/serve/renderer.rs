@@ -5,7 +5,8 @@
 //! does not carry the desktop's rules. Inline styles are allowed because animation writes them;
 //! WebAssembly may be compiled because the player decodes some sound and pictures with it;
 //! pictures may come from anywhere over https because a catalogue's artwork lives at its own
-//! addresses; and the one thing a page may frame is the video host's player, for trailers.
+//! addresses; the one thing a page may frame is the video host's player, for trailers; and
+//! nothing may frame a page of the app's.
 //!
 //! A page also says to name its origin, and only its origin, to any other site it asks something
 //! of. The video host's player refuses to play, with its error 153, for a page that names nobody,
@@ -83,6 +84,7 @@ pub fn policy(scripts: &[&str], connections: &[&str]) -> String {
         frame_src,
         "base-uri 'self'".to_owned(),
         "form-action 'none'".to_owned(),
+        "frame-ancestors 'none'".to_owned(),
     ]
     .join("; ")
 }
@@ -361,7 +363,7 @@ mod tests {
 
         assert_eq!(
             policy,
-            "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' ws://127.0.0.1:41847; object-src 'none'; frame-src https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.youtube.com https://youtube.com; base-uri 'self'; form-action 'none'"
+            "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' ws://127.0.0.1:41847; object-src 'none'; frame-src https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.youtube.com https://youtube.com; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
         );
         assert!(!policy.contains("gstatic"));
     }

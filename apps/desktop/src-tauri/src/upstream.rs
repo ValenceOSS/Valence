@@ -206,7 +206,8 @@ pub fn write_privately(file: &Path, bytes: &[u8]) -> io::Result<()> {
 }
 
 /// The address of `path_and_query` on `server`, keeping the server's scheme, host and port and
-/// nothing of any path it was given with.
+/// nothing of any path it was given with, or nothing where it would name another server, as
+/// `//elsewhere/` does.
 #[must_use]
 pub fn on_the_server(server: &str, path_and_query: &str) -> Option<Url> {
     let server = Url::parse(server).ok()?;
@@ -215,7 +216,10 @@ pub fn on_the_server(server: &str, path_and_query: &str) -> Option<Url> {
         return None;
     }
 
-    server.join(path_and_query).ok()
+    server
+        .join(path_and_query)
+        .ok()
+        .filter(|onward| onward.origin() == server.origin())
 }
 
 /// The origin of `url`, as an `Origin` header says it.
@@ -391,6 +395,15 @@ mod tests {
         assert_eq!(on_the_server("ftp://nas", "/api/health"), None);
         assert_eq!(on_the_server("not an address", "/api/health"), None);
         assert_eq!(on_the_server("http://nas", "api/health"), None);
+        assert_eq!(on_the_server("http://nas:8420", "//evil.example/api"), None);
+        assert_eq!(
+            on_the_server("http://nas:8420", "/\\evil.example/api"),
+            None
+        );
+        assert_eq!(
+            on_the_server("http://nas:8420", "/api/../../health").map(String::from),
+            Some("http://nas:8420/health".to_owned())
+        );
     }
 
     #[test]

@@ -3,12 +3,15 @@
 //! Any website open in the person's browser can send requests to a port on their computer, and a
 //! site that renames itself to `127.0.0.1` can read the answers. So everything but the renderer's
 //! own files needs a key the window was handed when it opened, in a cookie no other site can send,
-//! and every request has to be addressed to this server by its own name.
+//! and every request has to be addressed to this server by its own name. A cookie is not kept to
+//! its port, though, and every server on this machine's loopback address is the same site, so a
+//! request that carries the key must also come from this server's own pages where it says where
+//! it comes from, and a live connection, which always says, must say so.
 
 use std::fmt::Write;
 
 use axum::extract::{Query, Request, State};
-use axum::http::header::{CACHE_CONTROL, COOKIE, HOST, LOCATION, SET_COOKIE};
+use axum::http::header::{CACHE_CONTROL, COOKIE, HOST, LOCATION, ORIGIN, SET_COOKIE, UPGRADE};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
@@ -19,6 +22,9 @@ use super::Served;
 
 /// The cookie the key is carried in.
 pub const KEY_COOKIE: &str = "valence-key";
+
+/// The header a browser says which site a request was sent from in.
+const SEC_FETCH_SITE: &str = "sec-fetch-site";
 
 /// A new key: 32 random bytes, written as hex.
 #[must_use]
@@ -63,6 +69,24 @@ pub fn is_addressed_to(headers: &HeaderMap, host: &str) -> bool {
         .is_some_and(|asked| asked.eq_ignore_ascii_case(host))
 }
 
+/// Whether `headers` come from this server's own pages, served from `origin`: any origin they name
+/// is this one, any site they say they were sent from is this one or none, and a request to open a
+/// live connection, which every browser sends with its origin, names it.
+#[must_use]
+pub fn is_from_our_pages(headers: &HeaderMap, origin: &str) -> bool {
+    let named = headers.get(ORIGIN).map(|value| value.to_str());
+    let is_our_origin = match named {
+        Some(Ok(named)) => named.eq_ignore_ascii_case(origin),
+        Some(Err(_)) => false,
+        None => !headers.contains_key(UPGRADE),
+    };
+    let is_our_site = headers
+        .get(SEC_FETCH_SITE)
+        .is_none_or(|site| matches!(site.to_str(), Ok("same-origin" | "none")));
+
+    is_our_origin && is_our_site
+}
+
 /// Where `/enter` may send the window on to: a path on this server, and nowhere else.
 #[must_use]
 pub fn a_way_in(origin: &str, to: Option<&str>) -> Option<String> {
@@ -105,9 +129,13 @@ pub async fn on_this_host(State(served): State<Served>, request: Request, next: 
     }
 }
 
-/// Turns away a request that does not carry the key.
+/// Turns away a request that does not carry the key, or that another site's page sent.
 pub async fn with_the_key(State(served): State<Served>, request: Request, next: Next) -> Response {
-    if carries_the_key(request.headers(), &served.key) {
+    let headers = request.headers();
+
+    if carries_the_key(headers, &served.key)
+        && is_from_our_pages(headers, &format!("http://{}", served.host))
+    {
         next.run(request).await
     } else {
         StatusCode::FORBIDDEN.into_response()
@@ -203,6 +231,39 @@ mod tests {
             "127.0.0.1:41847"
         ));
         assert!(!is_addressed_to(&HeaderMap::new(), "127.0.0.1:41847"));
+    }
+
+    #[test]
+    fn hears_only_this_servers_own_pages() {
+        let ours = "http://127.0.0.1:41847";
+        let from = |pairs: &[(&'static str, &'static str)]| {
+            let mut headers = HeaderMap::new();
+
+            for (name, value) in pairs {
+                headers.append(*name, HeaderValue::from_static(value));
+            }
+
+            is_from_our_pages(&headers, ours)
+        };
+
+        assert!(from(&[]));
+        assert!(from(&[("origin", "http://127.0.0.1:41847")]));
+        assert!(from(&[("sec-fetch-site", "same-origin")]));
+        assert!(from(&[("sec-fetch-site", "none")]));
+        assert!(from(&[
+            ("upgrade", "websocket"),
+            ("origin", "http://127.0.0.1:41847")
+        ]));
+        assert!(!from(&[("origin", "http://127.0.0.1:8080")]));
+        assert!(!from(&[("origin", "null")]));
+        assert!(!from(&[("origin", "https://evil.example")]));
+        assert!(!from(&[("sec-fetch-site", "same-site")]));
+        assert!(!from(&[("sec-fetch-site", "cross-site")]));
+        assert!(!from(&[("upgrade", "websocket")]));
+        assert!(!from(&[
+            ("upgrade", "websocket"),
+            ("origin", "http://localhost:41847")
+        ]));
     }
 
     #[test]

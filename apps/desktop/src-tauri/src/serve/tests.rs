@@ -10,7 +10,7 @@ use futures_util::{SinkExt, StreamExt};
 use serde_json::{json, Value};
 use tokio::sync::Notify;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
-use tokio_tungstenite::tungstenite::Message as ClientMessage;
+use tokio_tungstenite::tungstenite::{Error as SocketError, Message as ClientMessage};
 
 use super::renderer::Renderer;
 use super::{router, Served};
@@ -236,6 +236,36 @@ async fn answers_only_to_its_own_name() {
 }
 
 #[tokio::test]
+async fn turns_away_the_key_from_another_sites_page() {
+    let app = running().await;
+    let own = app
+        .with_the_key("/boot.js")
+        .header("origin", &app.address)
+        .header("sec-fetch-site", "same-origin")
+        .send()
+        .await
+        .expect("an answer");
+
+    assert_eq!(own.status(), 200);
+
+    for (name, value) in [
+        ("origin", "http://127.0.0.1:8080"),
+        ("origin", "null"),
+        ("sec-fetch-site", "same-site"),
+        ("sec-fetch-site", "cross-site"),
+    ] {
+        let refused = app
+            .with_the_key("/boot.js")
+            .header(name, value)
+            .send()
+            .await
+            .expect("an answer");
+
+        assert_eq!(refused.status(), 403, "{name}: {value}");
+    }
+}
+
+#[tokio::test]
 async fn builds_the_first_script_fresh_and_never_caches_it() {
     let app = running().await;
 
@@ -396,6 +426,17 @@ async fn carries_the_live_connection_with_the_session() {
         "cookie",
         format!("valence-key={KEY}").parse().expect("a header"),
     );
+
+    let unnamed = tokio_tungstenite::connect_async(asking.clone()).await;
+
+    assert!(
+        matches!(&unnamed, Err(SocketError::Http(refusal)) if refusal.status() == 403),
+        "a live connection that does not say where it comes from"
+    );
+
+    asking
+        .headers_mut()
+        .insert("origin", app.address.parse().expect("a header"));
 
     let (mut socket, _) = tokio_tungstenite::connect_async(asking)
         .await
