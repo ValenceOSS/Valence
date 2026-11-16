@@ -25,19 +25,12 @@ describe('WindowBar', () => {
     );
   });
 
-  it('takes hold of the window it is laid over', () => {
+  it('takes hold of the window it is laid over, anywhere on it', () => {
     const { container } = render(<WindowBar />);
 
-    expect(container.querySelector('[data-slot="window-bar"]')).toHaveClass(
-      '[-webkit-app-region:drag]',
-    );
-  });
-
-  it('lets go of the window while something it opened is showing, so a press on it closes that', () => {
-    const { container } = render(<WindowBar />);
-
-    expect(container.querySelector('[data-slot="window-bar"]')).toHaveClass(
-      'has-[[data-state=open]]:[-webkit-app-region:no-drag]',
+    expect(container.querySelector('[data-slot="window-bar"]')).toHaveAttribute(
+      'data-tauri-drag-region',
+      'deep',
     );
   });
 
@@ -83,7 +76,7 @@ describe('WindowBar', () => {
   it('lets a press reach the button rather than moving the window', () => {
     render(<WindowBar update={{ kind: 'available', version: '1.2.0' }} />);
 
-    expect(screen.getByRole('button').parentElement).toHaveClass('[-webkit-app-region:no-drag]');
+    expect(screen.getByRole('button').closest('[data-tauri-drag-region="false"]')).not.toBeNull();
   });
 
   it('goes back and forward through the window’s history, dimming a way that leads nowhere', async () => {
@@ -102,7 +95,7 @@ describe('WindowBar', () => {
     await user.click(back);
 
     expect(ways.back).toHaveBeenCalledOnce();
-    expect(back.parentElement).toHaveClass('[-webkit-app-region:no-drag]');
+    expect(back.closest('[data-tauri-drag-region="false"]')).not.toBeNull();
   });
 
   it('holds the admin sidebar toggle beside the history controls', async () => {
@@ -119,9 +112,9 @@ describe('WindowBar', () => {
     await user.click(screen.getByRole('button', { name: 'Close the sidebar' }));
 
     expect(onToggle).toHaveBeenCalledOnce();
-    expect(screen.getByRole('button', { name: 'Close the sidebar' }).closest('div')).toHaveClass(
-      '[-webkit-app-region:no-drag]',
-    );
+    expect(
+      screen.getByRole('button', { name: 'Close the sidebar' }).closest('div'),
+    ).toHaveAttribute('data-tauri-drag-region', 'false');
   });
 
   it('opens the docs from its question mark', async () => {
@@ -183,8 +176,9 @@ describe('WindowBar', () => {
 
     expect(frame.close).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'Minimise' })).toBeInTheDocument();
-    expect(container.querySelector('[data-slot="window-controls"]')?.parentElement).toHaveClass(
-      '[-webkit-app-region:no-drag]',
+    expect(container.querySelector('[data-slot="window-controls"]')?.parentElement).toHaveAttribute(
+      'data-tauri-drag-region',
+      'false',
     );
     expect(container.querySelector('[data-slot="window-bar"]')).not.toHaveClass(
       'pe-[var(--valence-window-bar-clearance)]',

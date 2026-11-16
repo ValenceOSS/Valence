@@ -24,8 +24,8 @@ const aBridge = (isReachable = true, computerName: string | null = 'Studio Mac')
     computerName,
     commit: '2ae1bc1',
     arch: 'arm64',
-    electron: '33.0.0',
-    chrome: '130.0.0.0',
+    webview: 'WebKitGTK 2.48.3',
+    tauri: '2.12.6',
   },
   preferences: {
     held: Object.freeze(Object.fromEntries(onDisk)),
@@ -98,6 +98,12 @@ describe('installDesktopPlatform', () => {
     expect(platformInUse().buildInfo()?.isADevBuild).toBe(true);
   });
 
+  it('says what it runs on: the processor, the web view and Tauri', () => {
+    installDesktopPlatform();
+
+    expect(platformInUse().buildInfo()?.runsOn).toBe('arm64 · WebKitGTK 2.48.3 · Tauri 2.12.6');
+  });
+
   it('writes the address down where the process that owns the window will read it', () => {
     installDesktopPlatform();
 
@@ -133,7 +139,7 @@ describe('installDesktopPlatform', () => {
     expect(platformInUse().thisClientId()).toBe(platformInUse().thisClientId());
   });
 
-  it('is the desktop client whatever Electron says its user agent is', () => {
+  it('is the desktop client whatever its web view says its user agent is', () => {
     installDesktopPlatform();
 
     expect(platformInUse().thisClientKind()).toBe('desktop');

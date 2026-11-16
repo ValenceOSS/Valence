@@ -27,6 +27,6 @@ describe('UpdateWindow', () => {
   it('can be picked up and moved anywhere on it, having no frame of its own', () => {
     const { container } = render(<UpdateWindow step="installing" version="1.5.0" />);
 
-    expect(container.querySelector('main')).toHaveClass('[-webkit-app-region:drag]');
+    expect(container.querySelector('main')).toHaveAttribute('data-tauri-drag-region', 'deep');
   });
 });

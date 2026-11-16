@@ -18,12 +18,9 @@ import { say } from '@ValenceI18n/say';
 const PICK_UP_DOWNLOADS_AFTER = 3000;
 
 /**
- * Tells the application what it is running on, when what it is running on is this client.
- *
- * Six answers, which is all a host is. Preferences go to a file the window's own process keeps,
- * rather than to web storage, because this client has no origin to hang storage off and would forget
- * which server it watches every time it was rebuilt. What lasts only until it quits is held by that
- * process too, in memory, since a page on this client's own scheme cannot keep cookies. The rest is the same shape a browser fills in. Music and audiobooks left downloading are picked up a few seconds after the window opens.
+ * Tells the application it is running in Valence's own window, with preferences and this launch's
+ * values kept by the host, files and reach answered by it, and music and audiobooks left
+ * downloading picked up a few seconds after the window opens.
  */
 const installDesktopPlatform = (): void => {
   installPlatform({
@@ -45,16 +42,16 @@ const installDesktopPlatform = (): void => {
     reachability: theDesktopsReach(),
     openSocket: theDesktopsSocket,
     buildInfo: () => {
-      const { version, isADevBuild, commit, arch, electron, chrome } = window.valence.about;
+      const { version, isADevBuild, commit, arch, webview, tauri } = window.valence.about;
 
       return {
         version,
         isADevBuild,
         commit,
-        runsOn: say('desktop.platform.installDesktopPlatform.archElectronElectronChromiumChrome', {
+        runsOn: say('desktop.platform.installDesktopPlatform.archWebviewTauriTauri', {
           arch,
-          electron,
-          chrome,
+          webview,
+          tauri,
         }),
       };
     },

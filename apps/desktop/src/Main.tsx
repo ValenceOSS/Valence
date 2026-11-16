@@ -5,10 +5,12 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@ValenceUI/Toaster';
 import { TooltipScope } from '@ValenceUI/TooltipScope';
 import { buildQueryClient } from '@ValenceClient/query/queryClient';
+import { installTheBridge } from '@ValenceDesktop/bridge/installTheBridge';
 import { installDesktopPlatform } from '@ValenceDesktop/platform/installDesktopPlatform';
 import { Desktop } from '@ValenceDesktop/Desktop';
 import './styles/main.css';
 
+installTheBridge();
 installDesktopPlatform();
 
 const container = document.querySelector('#root');

@@ -3,7 +3,7 @@ import { aClientData } from '@ValenceDesktop/main/aClientData';
 import { PASSKEY_TIMEOUT } from '@ValenceDesktop/main/passkeyTimeout';
 import { theNativeModule } from '@ValenceDesktop/main/theNativeModule';
 import { whatWindowsSaid } from '@ValenceDesktop/main/whatWindowsSaid';
-import type { MakeReply } from '@ValenceDesktop/main/MakeReply';
+import type { MakeReply } from '@ValenceDesktop/bridge/MakeReply';
 import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import { say } from '@ValenceI18n/say';
 

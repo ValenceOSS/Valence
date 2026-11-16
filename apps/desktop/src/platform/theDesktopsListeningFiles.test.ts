@@ -3,7 +3,7 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { theDesktopsListeningFiles } from './theDesktopsListeningFiles';
 
 /**
- * Stands in for what the preload hands the window, answering a fetch only once told to.
+ * Stands in for what the bridge hands the window, answering a fetch only once told to.
  *
  * @returns The bridge, a way to say how far a fetch has got, a way to finish it, and how many are
  * hearing progress.

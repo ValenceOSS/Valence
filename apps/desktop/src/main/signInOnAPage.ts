@@ -2,7 +2,7 @@ import { app, shell } from 'electron';
 import { listenForTheHandBack } from '@ValenceDesktop/main/listenForTheHandBack';
 import { theServerAddress } from '@ValenceDesktop/main/theServerAddress';
 import type { BrowserWindow } from 'electron';
-import type { HandBackReply } from '@ValenceDesktop/main/HandBackReply';
+import type { HandBackReply } from '@ValenceDesktop/bridge/HandBackReply';
 import { say } from '@ValenceI18n/say';
 
 type SigningInFrom = Pick<BrowserWindow, 'isDestroyed' | 'show' | 'focus'>;

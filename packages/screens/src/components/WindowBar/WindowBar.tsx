@@ -30,12 +30,11 @@ import { say } from '@ValenceI18n/say';
  * arrow is there for whoever wants it and costs nobody else anything. Where the window's own
  * controls are drawn, a rule stands between them and those.
  *
- * Everything that answers a press is marked `no-drag`, so a press reaches it rather than moving the
- * window — the rest of the strip is for picking the window up by. While something it opened is
- * showing, the whole strip answers instead: a press on a strip held for dragging never reaches the
- * page, so a click on the bar would leave the inbox open. It stays usable while a dialog is open,
- * and the inbox it opens with it, so going back, the window's controls and the rest still answer
- * rather than only closing the dialog.
+ * The strip is a drag region for the window's host, and everything that answers a press is marked
+ * out of it, so a press reaches it rather than moving the window — the rest of the strip is for
+ * picking the window up by. It stays usable while a dialog is open, and the inbox it opens with it,
+ * so going back, the window's controls and the rest still answer rather than only closing the
+ * dialog.
  *
  * While a film plays it takes no room at all: the film runs to the top of the window, and this and
  * the window's controls come and go over it with the player's controls.
@@ -61,12 +60,13 @@ const WindowBar = ({
   <div
     data-slot="window-bar"
     data-over-dialogs
+    data-tauri-drag-region="deep"
     className={cn(
-      'fixed inset-x-0 top-0 z-[60] flex h-[var(--valence-window-bar-height)] items-center justify-between border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] ps-[var(--valence-window-bar-lead)] text-on-scrim [-webkit-app-region:drag] has-[[data-state=open]]:[-webkit-app-region:no-drag]',
+      'fixed inset-x-0 top-0 z-[60] flex h-[var(--valence-window-bar-height)] items-center justify-between border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] ps-[var(--valence-window-bar-lead)] text-on-scrim',
       frame === undefined ? 'pe-[var(--valence-window-bar-clearance)]' : null,
     )}
   >
-    <div className="flex items-center gap-1 [-webkit-app-region:no-drag]">
+    <div data-tauri-drag-region="false" className="flex items-center gap-1">
       {ways === undefined ? null : (
         <HistoryArrows
           canGoBack={ways.canGoBack}
@@ -76,7 +76,6 @@ const WindowBar = ({
           backLabel={say('common.goBack')}
           forwardLabel={say('screens.windowBar.goForward')}
           {...(keys === undefined ? {} : { backKeys: keys.back, forwardKeys: keys.forward })}
-          className="[-webkit-app-region:no-drag]"
         />
       )}
 
@@ -89,7 +88,7 @@ const WindowBar = ({
       )}
     </div>
 
-    <div className="flex items-center gap-1 self-stretch [-webkit-app-region:no-drag]">
+    <div data-tauri-drag-region="false" className="flex items-center gap-1 self-stretch">
       {inbox === undefined ? null : <NotificationBell {...inbox} isInTheWindowBar />}
 
       {onHelp === undefined ? null : (

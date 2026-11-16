@@ -9320,9 +9320,9 @@
     "context": "Shown in the platform of the desktop app (from `describeThisDesktop`). {os} is filled in by the app."
   },
   {
-    "handler": "desktop.platform.installDesktopPlatform.archElectronElectronChromiumChrome",
-    "text": "{arch} · Electron {electron} · Chromium {chrome}",
-    "context": "Shown in the platform of the desktop app (from `installDesktopPlatform`). {arch} is filled in by the app; {electron} is filled in by the app; {chrome} is filled in by the app."
+    "handler": "desktop.platform.installDesktopPlatform.archWebviewTauriTauri",
+    "text": "{arch} · {webview} · Tauri {tauri}",
+    "context": "What the desktop app runs on, shown with its version in the about section (from `installDesktopPlatform`). {arch} is the processor architecture, such as x64 or arm64; {webview} is the web view engine and its version, such as WebView2 131.0; {tauri} is the version of Tauri, the framework the app is built on."
   },
   {
     "handler": "desktop.platform.theDesktopsPasskeys.passkeysNeedASecureConnectionReach",
@@ -9332,7 +9332,7 @@
   {
     "handler": "desktop.preload.preload.thisAppDidNotAnswerAbout",
     "text": "De app heeft niet gereageerd op het passkey-verzoek.",
-    "context": "The reason in the preload in the preload of the desktop app."
+    "context": "Why signing in with a passkey failed in the desktop app, when the app itself never answered the request (from `askAboutAPasskey`)."
   },
   {
     "handler": "error.access.thisAppIsTurnedOff",

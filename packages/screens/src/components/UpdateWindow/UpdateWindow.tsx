@@ -26,7 +26,10 @@ const UpdateWindow = ({ step, version }: UpdateWindowProps) => {
       : say('screens.updateWindow.finishingUpdate');
 
   return (
-    <main className="flex h-dvh select-none flex-col items-center justify-between bg-surface px-9 pt-20 pb-10 text-text [-webkit-app-region:drag]">
+    <main
+      data-tauri-drag-region="deep"
+      className="flex h-dvh select-none flex-col items-center justify-between bg-surface px-9 pt-20 pb-10 text-text"
+    >
       <Logo size={56} isAnimated />
 
       <div role="status" className="flex w-full flex-col items-center gap-3.5">

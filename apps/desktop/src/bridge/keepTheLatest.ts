@@ -5,14 +5,7 @@ type KeptLatest<TValue> = {
 };
 
 /**
- * Holds the latest of something the main process says, and hands it to whoever asks, however late
- * they ask.
- *
- * A page asked once as it loaded and listened afterwards, and anything said between the two was
- * lost for as long as the window stayed open. The updater starts before the window exists, so an
- * installer already on disk was announced within a second of opening — while the page was still
- * being drawn — and the button it should have put up never came. Kept here instead, from the moment
- * the preload script runs, and given to every listener as it joins, nothing said is missed.
+ * Holds the latest of something the host says and hands it to every listener as it joins, so nothing said before a page listened is missed.
  *
  * @param first - What is known before anything has been said.
  * @returns The latest, the way to replace it, and the way to follow it.

@@ -1,4 +1,4 @@
-import { aPasskeyReply } from '@ValenceDesktop/main/aPasskeyReply';
+import { aPasskeyReply } from '@ValenceDesktop/bridge/aPasskeyReply';
 import { PasskeyAttestationSchema } from '@ValenceContracts/schemas/PasskeyAttestation';
 import type { z } from 'zod';
 

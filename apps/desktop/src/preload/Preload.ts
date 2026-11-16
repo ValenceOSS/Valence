@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { IpcRendererEvent } from 'electron';
-import { markTheDocument } from '@ValenceDesktop/preload/markTheDocument';
-import { drawUnreadBadge } from '@ValenceDesktop/preload/drawUnreadBadge';
+import { markTheDocument } from '@ValenceDesktop/bridge/markTheDocument';
+import { drawUnreadBadge } from '@ValenceDesktop/bridge/drawUnreadBadge';
 import { z } from 'zod';
 import {
   FOUND_A_VALENCE,
@@ -49,7 +49,7 @@ import {
   WHAT_UPDATE_IS_KNOWN,
 } from '@ValenceDesktop/main/updateChannels';
 import { DesktopUpdateSchema } from '@ValenceContracts/schemas/DesktopUpdate';
-import { keepTheLatest } from '@ValenceDesktop/preload/keepTheLatest';
+import { keepTheLatest } from '@ValenceDesktop/bridge/keepTheLatest';
 import {
   WHAT_THIS_COMPUTER_IS_CALLED,
   WHAT_VERSION_THIS_IS,
@@ -71,9 +71,9 @@ import {
   MAKE_A_PASSKEY,
   SIGN_IN_ON_A_PAGE,
 } from '@ValenceDesktop/main/passkeyChannels';
-import { AskReplySchema } from '@ValenceDesktop/main/AskReply';
-import { MakeReplySchema } from '@ValenceDesktop/main/MakeReply';
-import { HandBackReplySchema } from '@ValenceDesktop/main/HandBackReply';
+import { AskReplySchema } from '@ValenceDesktop/bridge/AskReply';
+import { MakeReplySchema } from '@ValenceDesktop/bridge/MakeReply';
+import { HandBackReplySchema } from '@ValenceDesktop/bridge/HandBackReply';
 import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
 import { say } from '@ValenceI18n/say';
@@ -255,8 +255,8 @@ contextBridge.exposeInMainWorld('valence', {
     computerName,
     commit: __VALENCE_COMMIT__,
     arch: process.arch,
-    electron: process.versions.electron,
-    chrome: process.versions.chrome,
+    webview: process.versions.chrome,
+    tauri: '',
   },
   frame: {
     now: theFrame.now,

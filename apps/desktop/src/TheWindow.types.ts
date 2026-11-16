@@ -4,9 +4,9 @@ import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
 import type { WindowFrame } from '@ValenceContracts/schemas/WindowFrame';
 import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
-import type { AskReply } from '@ValenceDesktop/main/AskReply';
-import type { HandBackReply } from '@ValenceDesktop/main/HandBackReply';
-import type { MakeReply } from '@ValenceDesktop/main/MakeReply';
+import type { AskReply } from '@ValenceDesktop/bridge/AskReply';
+import type { HandBackReply } from '@ValenceDesktop/bridge/HandBackReply';
+import type { MakeReply } from '@ValenceDesktop/bridge/MakeReply';
 
 type ServersFound = {
   alreadyFound: string[];
@@ -63,8 +63,8 @@ type AboutTheBuild = {
   computerName: string | null;
   commit: string;
   arch: string;
-  electron: string;
-  chrome: string;
+  webview: string;
+  tauri: string;
 };
 
 type DesktopNotifications = {
@@ -81,6 +81,7 @@ type DesktopPasskeys = {
 
 declare global {
   interface Window {
+    __VALENCE_BOOT__?: JsonValue;
     valence: {
       preferences: Preferences;
       thisLaunch: Preferences;

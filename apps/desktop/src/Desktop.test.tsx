@@ -86,8 +86,8 @@ const theWindowOffers = (found: string[], nearby: NearbyValence[] = []): void =>
       computerName: 'Studio Mac',
       commit: '2ae1bc1',
       arch: 'arm64',
-      electron: '33.0.0',
-      chrome: '130.0.0',
+      webview: 'WebView2 131.0.2903.70',
+      tauri: '2.12.6',
     },
     frame: {
       now: () => ({ isMaximised: false, isFullScreen: false }),
@@ -199,14 +199,14 @@ describe('Desktop', () => {
       buildInfo: () => ({
         version: '1.2.0',
         commit: '2ae1bc1',
-        runsOn: 'arm64 · Electron 33.0.0 · Chromium 130.0.0',
+        runsOn: 'arm64 · WebView2 131.0.2903.70 · Tauri 2.12.6',
       }),
     });
 
     render(<Desktop />, { wrapper: CacheScope });
 
     expect(
-      screen.getByText('Valence 1.2.0 (2ae1bc1) · arm64 · Electron 33.0.0 · Chromium 130.0.0'),
+      screen.getByText('Valence 1.2.0 (2ae1bc1) · arm64 · WebView2 131.0.2903.70 · Tauri 2.12.6'),
     ).toBeInTheDocument();
   });
 

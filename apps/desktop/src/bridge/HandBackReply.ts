@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { aPasskeyReply } from '@ValenceDesktop/main/aPasskeyReply';
+import { aPasskeyReply } from '@ValenceDesktop/bridge/aPasskeyReply';
 
 const HandBackReplySchema = aPasskeyReply(z.string().min(1));
 

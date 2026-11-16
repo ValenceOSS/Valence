@@ -2181,8 +2181,8 @@ const ENGLISH = {
     'Windows won’t use a passkey for this server’s address.',
   'desktop.platform.describeThisDesktop.valenceForDesktop': 'Valence for desktop',
   'desktop.platform.describeThisDesktop.valenceOnOs': 'Valence on {os}',
-  'desktop.platform.installDesktopPlatform.archElectronElectronChromiumChrome':
-    '{arch} · Electron {electron} · Chromium {chrome}',
+  'desktop.platform.installDesktopPlatform.archWebviewTauriTauri':
+    '{arch} · {webview} · Tauri {tauri}',
   'desktop.platform.theDesktopsPasskeys.passkeysNeedASecureConnectionReach':
     'Passkeys need a secure connection. Open Valence over HTTPS or on localhost to use one.',
   'desktop.preload.preload.thisAppDidNotAnswerAbout':

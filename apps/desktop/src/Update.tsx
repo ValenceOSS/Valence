@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { z } from 'zod';
+import { installTheBridge } from '@ValenceDesktop/bridge/installTheBridge';
 import { installDesktopPlatform } from '@ValenceDesktop/platform/installDesktopPlatform';
 import { UpdateWindow } from '@ValenceScreens/components/UpdateWindow/UpdateWindow';
 import './styles/main.css';
@@ -10,6 +11,7 @@ const AskedSchema = z.object({
   version: z.string().max(64).catch(''),
 });
 
+installTheBridge();
 installDesktopPlatform();
 
 const container = document.querySelector('#root');

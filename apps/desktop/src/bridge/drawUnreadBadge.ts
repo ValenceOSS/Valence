@@ -19,14 +19,7 @@ type UnreadBadgeCanvas = Pick<HTMLCanvasElement, 'width' | 'height' | 'toDataURL
 };
 
 /**
- * Draws the unread count as the small circle Windows lays over the corner of Valence's taskbar
- * button: red, as Discord's and other apps' unread counts are, so it reads as something waiting
- * rather than as part of the icon, and dark enough that the white count clears 4.5:1, in Valence's own font and centred by the digits' own height
- * rather than the line's.
- *
- * Windows has no badge of its own to give a count to, so whatever is shown is a picture; Chromium's
- * picture uses a font of its own choosing, sized for one digit and set off-centre. Drawn here, in the
- * window, because that is where Valence's font is loaded. Counts past nine read as 9+.
+ * Draws the unread count as the red circle Windows lays over the corner of Valence's taskbar button, in Valence's own font, reading 9+ past nine.
  *
  * @param count - How many are unread.
  * @param canvas - What to draw on, a fresh canvas unless one is given.
