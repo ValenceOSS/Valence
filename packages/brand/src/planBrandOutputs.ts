@@ -113,6 +113,21 @@ const planBrandOutputs = (): BrandOutput[] => {
       margin: 0,
       rendition: 'Dark',
     },
+    {
+      kind: 'icon',
+      from: DEV_ICON,
+      to: 'packages/ui/src/assets/discord/valence-desktop-dev.png',
+      pixels: 512,
+      margin: 0,
+    },
+    {
+      kind: 'icon',
+      from: DEV_ICON,
+      to: 'packages/ui/src/assets/discord/valence-desktop-dev-dark.png',
+      pixels: 512,
+      margin: 0,
+      rendition: 'Dark',
+    },
     { kind: 'copy', from: ICON, to: 'apps/desktop/build/icon.icon' },
     { kind: 'icon', from: ICON, to: 'apps/desktop/build/icon.png', pixels: 1024, margin: 0 },
     {

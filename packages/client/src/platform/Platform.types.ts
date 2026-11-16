@@ -64,6 +64,7 @@ type Reachability = {
 
 type BuildInfo = {
   version: string;
+  isADevBuild?: boolean;
   commit: string | null;
   runsOn: string;
 };

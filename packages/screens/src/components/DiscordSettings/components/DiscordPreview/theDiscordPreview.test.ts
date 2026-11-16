@@ -99,4 +99,19 @@ describe('theDiscordPreview', () => {
       ),
     ).toBeNull();
   });
+
+  it('wears the dev logo on a build still being worked on, named by its version, as the status it previews does', () => {
+    expect(
+      theDiscordPreview('browsing', SAMPLES, DEFAULT_DISCORD_PRESENCE, NOW, {
+        version: '0.0.0',
+        isADevBuild: true,
+      })?.assets,
+    ).toMatchObject({ large_image: 'valence-desktop-dev', large_text: 'Valence 0.0.0' });
+    expect(
+      theDiscordPreview('browsing', SAMPLES, DEFAULT_DISCORD_PRESENCE, NOW)?.assets,
+    ).toMatchObject({
+      large_image: 'valence-desktop',
+      large_text: 'Valence',
+    });
+  });
 });

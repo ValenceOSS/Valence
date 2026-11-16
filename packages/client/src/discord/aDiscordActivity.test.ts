@@ -142,6 +142,31 @@ describe('aDiscordActivity', () => {
     });
   });
 
+  it('draws the dev logo for a build still being worked on, light or dark as chosen, named by its version', () => {
+    expect(
+      aDiscordActivity(BROWSING, OPENED, { version: '1.10.0-dev.12', isADevBuild: true })?.assets,
+    ).toMatchObject({
+      large_image: 'valence-desktop-dev',
+      large_text: 'Valence 1.10.0-dev.12',
+    });
+    expect(
+      aDiscordActivity(
+        { ...A_FILM, look: { ...LOOK, logo: 'dark', showsArtwork: false } },
+        OPENED,
+        { version: '0.0.0', isADevBuild: true },
+      )?.assets,
+    ).toMatchObject({ large_image: 'valence-desktop-dev-dark', large_text: 'Valence 0.0.0' });
+  });
+
+  it('names a release by its version beside the plain logo', () => {
+    expect(
+      aDiscordActivity(BROWSING, OPENED, { version: '1.7.0', isADevBuild: false })?.assets,
+    ).toEqual({
+      large_image: 'valence-desktop',
+      large_text: 'Valence 1.7.0',
+    });
+  });
+
   it('counts from when Valence opened while browsing, however often it is said again', () => {
     expect(aDiscordActivity(BROWSING, OPENED)?.timestamps).toEqual({
       start: OPENED / 1000,

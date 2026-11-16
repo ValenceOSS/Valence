@@ -22,6 +22,7 @@ import { theDockIcon } from '@ValenceDesktop/main/theDockIcon';
 import { askToNotify } from '@ValenceDesktop/main/askToNotify';
 import { showTheUnreadCount } from '@ValenceDesktop/main/showTheUnreadCount';
 import { tellDiscord } from '@ValenceDesktop/main/tellDiscord';
+import { isADevBuild } from '@ValenceDesktop/main/isADevBuild';
 import { takeTheStatusDownWithTheWindow } from '@ValenceDesktop/main/takeTheStatusDownWithTheWindow';
 import { whatIsPlaying } from '@ValenceDesktop/main/whatIsPlaying';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -72,6 +73,7 @@ import type { AskingTheServer } from '@ValenceDesktop/main/keepADownload';
 import {
   WHAT_THIS_COMPUTER_IS_CALLED,
   WHAT_VERSION_THIS_IS,
+  IS_IT_A_DEV_BUILD,
 } from '@ValenceDesktop/main/aboutChannels';
 import { theComputersName } from '@ValenceDesktop/main/theComputersName';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
@@ -415,6 +417,10 @@ const start = async (): Promise<void> => {
     event.returnValue = app.getVersion();
   });
 
+  ipcMain.on(IS_IT_A_DEV_BUILD, (event) => {
+    event.returnValue = isADevBuild(app.isPackaged, app.getVersion());
+  });
+
   const computersName = theComputersName();
 
   ipcMain.on(WHAT_THIS_COMPUTER_IS_CALLED, (event) => {
@@ -449,7 +455,10 @@ const start = async (): Promise<void> => {
     }
   });
 
-  const discord = tellDiscord(app.getPath('temp'));
+  const discord = tellDiscord(app.getPath('temp'), Date.now(), {
+    version: app.getVersion(),
+    isADevBuild: isADevBuild(app.isPackaged, app.getVersion()),
+  });
 
   const openAWindow = (showAfter?: Promise<void>): BrowserWindow => {
     const window = openTheWindow(showAfter);

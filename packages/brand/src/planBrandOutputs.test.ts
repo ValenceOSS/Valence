@@ -50,7 +50,7 @@ describe('planBrandOutputs', () => {
     ]);
   });
 
-  it('renders the light and dark pictures Discord shows beside the desktop app', () => {
+  it('renders the light and dark pictures Discord shows beside the desktop app, release and dev', () => {
     expect(
       outputs.filter((output) => output.to.startsWith('packages/ui/src/assets/discord')),
     ).toEqual([
@@ -65,6 +65,21 @@ describe('planBrandOutputs', () => {
         kind: 'icon',
         from: 'assets/valence-icon.icon',
         to: 'packages/ui/src/assets/discord/valence-desktop-dark.png',
+        pixels: 512,
+        margin: 0,
+        rendition: 'Dark',
+      },
+      {
+        kind: 'icon',
+        from: 'assets/valence-icon-dev.icon',
+        to: 'packages/ui/src/assets/discord/valence-desktop-dev.png',
+        pixels: 512,
+        margin: 0,
+      },
+      {
+        kind: 'icon',
+        from: 'assets/valence-icon-dev.icon',
+        to: 'packages/ui/src/assets/discord/valence-desktop-dev-dark.png',
         pixels: 512,
         margin: 0,
         rendition: 'Dark',

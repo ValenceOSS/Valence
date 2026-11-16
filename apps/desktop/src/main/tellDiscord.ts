@@ -9,6 +9,7 @@ import {
 import { aDiscordActivity } from '@ValenceClient/discord/aDiscordActivity';
 import { whereDiscordListens } from '@ValenceDesktop/main/whereDiscordListens';
 import type { WhatIsPlaying } from '@ValenceClient/discord/aDiscordActivity';
+import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
 
 const CLIENT_ID = '1539800715281563738';
 
@@ -52,9 +53,15 @@ type Presence = {
  *   listens on a Mac. Passed in rather than read from the environment, which does not always carry
  *   it.
  * @param openedAt - When Valence opened, which browsing counts from however often it is said again.
+ * @param build - Which Valence this is, whose version the status names and whose dev builds wear the
+ *   dev logo.
  * @returns How to say what is playing, and how to stop.
  */
-const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
+const tellDiscord = (
+  temporary: string,
+  openedAt = Date.now(),
+  build: Pick<BuildInfo, 'version' | 'isADevBuild'> | null = null,
+): Presence => {
   let socket: Socket | null = null;
   let ready = false;
   let waiting: WhatIsPlaying | null = null;
@@ -69,7 +76,7 @@ const tellDiscord = (temporary: string, openedAt = Date.now()): Presence => {
   };
 
   const setActivity = (playing: WhatIsPlaying | null, isUrgent = false): void => {
-    const activity = aDiscordActivity(playing, openedAt);
+    const activity = aDiscordActivity(playing, openedAt, build);
     const said = JSON.stringify(activity);
 
     if (said === lastSent) {
