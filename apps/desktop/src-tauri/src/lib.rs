@@ -83,8 +83,6 @@ pub fn run() {
     let built = builder
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             window::prepare(app);
             memory::setup()?;
