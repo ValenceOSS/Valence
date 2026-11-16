@@ -20,6 +20,13 @@ describe('faultOf', () => {
     ).toBe('Failed to fetch https://linked.example (403)');
   });
 
+  it('cuts a ticket from a path written without its origin', () => {
+    expect(
+      faultOf('opening', new Error('Could not read /api/federation/v1/direct/secret-ticket/file'))
+        .detail,
+    ).toBe('Could not read /api/federation/v1/direct/');
+  });
+
   it('says nothing more where nothing said why', () => {
     expect(faultOf('refused', null)).toEqual({ stage: 'refused', detail: null });
     expect(faultOf('refused', { message: '  ' })).toEqual({ stage: 'refused', detail: null });

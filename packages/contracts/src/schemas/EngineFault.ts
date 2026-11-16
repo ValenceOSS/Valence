@@ -18,4 +18,4 @@ type EngineFault = z.infer<typeof EngineFaultSchema>;
 
 export type { EngineFault };
 
-export { ENGINE_FAULT_STAGES, EngineFaultSchema };
+export { EngineFaultSchema };

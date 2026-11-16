@@ -29,7 +29,7 @@ const describeTheNote = (note: PlaybackNote, client: string): string => {
   if (note.kind === 'engineHandedOver') {
     const said = note.detail === null ? '' : `: ${note.detail}`;
 
-    return `The player's engine handed ${client} to the server at ${formatDuration(note.atSeconds)}, ${WHILE[note.stage]}${said}`;
+    return `The browser player on ${client} handed the film to the server at ${formatDuration(note.atSeconds)}, ${WHILE[note.stage]}${said}`;
   }
 
   const why = note.because === 'joined' ? 'on joining' : 'after drifting';

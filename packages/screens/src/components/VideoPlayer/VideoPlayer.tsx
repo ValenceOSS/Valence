@@ -1431,18 +1431,14 @@ const VideoPlayer = ({
                   brightness: hdrBrightnessRef.current,
                 })
               : attachRemux(toPlay)
-          ).catch((error: Error | null) => {
-            sayWhyTheEngineHandedOver(
-              faultOf('opening', error instanceof Error ? error : null),
-              request.startSeconds,
-            );
+          ).catch((error: Error | null) =>
+            faultOf('opening', error instanceof Error ? error : null),
+          );
 
-            return null;
-          });
-
-          if (attached === null) {
+          if (!('detach' in attached)) {
             if (!isAbandoned()) {
               engineRefusedRef.current = true;
+              sayWhyTheEngineHandedOver(attached, request.startSeconds);
               setRequest((asked) => ({ ...asked, startedBecause: 'engine' }));
             }
 

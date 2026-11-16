@@ -1,5 +1,6 @@
 import type { EngineFault } from '@ValenceContracts/schemas/EngineFault';
 import { faultOf } from './faultOf';
+
 const HELD_AHEAD = 4;
 
 const FALLEN_BEHIND_SECONDS = 2;
