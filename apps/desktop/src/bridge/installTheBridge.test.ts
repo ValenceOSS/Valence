@@ -13,6 +13,12 @@ vi.mock('@ValenceDesktop/bridge/catchUpWithTheHost', () => ({
   catchUpWithTheHost: vi.fn(() => Promise.resolve()),
 }));
 
+const CASTING = vi.hoisted(() => ({ now: () => null }));
+
+vi.mock('@ValenceDesktop/bridge/castThroughTheHost', () => ({
+  castThroughTheHost: () => CASTING,
+}));
+
 const ABOUT = {
   version: '1.1.0',
   isADevBuild: true,
@@ -123,6 +129,40 @@ describe('installTheBridge', () => {
     expect(document.documentElement.dataset['valencePlatform']).toBe('linux');
   });
 
+  it("carries the Electron app's storage over, then tells the host the page has it", () => {
+    window.__VALENCE_BOOT__ = { ...BOOTED, carriedStorage: { 'valence.gridSize': 'large' } };
+
+    installTheBridge();
+
+    expect(window.localStorage.getItem('valence.gridSize')).toBe('large');
+    expect(invoke).toHaveBeenCalledWith('carried_storage_taken', undefined);
+
+    window.localStorage.clear();
+  });
+
+  it('tells the host nothing about storage where there was none to carry', () => {
+    installTheBridge();
+
+    expect(invoke).not.toHaveBeenCalledWith('carried_storage_taken', undefined);
+  });
+
+  it("answers the menu's shortcuts, which a window with no menu bar does not hear itself", () => {
+    installTheBridge();
+
+    document.body.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'S',
+        code: 'KeyS',
+        ctrlKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+
+    expect(invoke).toHaveBeenCalledWith('press_a_shortcut', { shortcut: 'change-server' });
+  });
+
   it.each([
     [
       'preferences_write',
@@ -210,6 +250,12 @@ describe('installTheBridge', () => {
     await expect(window.valence.servers?.reach('http://nas:8420')).resolves.toBe(true);
     await expect(window.valence.servers?.reach('http://nas:8420')).resolves.toBe(false);
     expect(invoke).toHaveBeenCalledWith('servers_reach', { address: 'http://nas:8420' });
+  });
+
+  it('casts through the host, since the web view has no Cast SDK', () => {
+    installTheBridge();
+
+    expect(window.valence.cast).toBe(CASTING);
   });
 
   it('asks the host for passkeys with what the server asked', async () => {

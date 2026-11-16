@@ -20,11 +20,16 @@ type CastRemotePlayer = {
   isConnected: boolean;
   isMediaLoaded: boolean;
   currentTime: number;
+  isPaused?: boolean;
+  volumeLevel?: number;
 };
 
 type CastRemotePlayerController = {
   addEventListener: (event: string, listener: () => void) => void;
   removeEventListener: (event: string, listener: () => void) => void;
+  playOrPause?: () => void;
+  seek?: () => void;
+  setVolumeLevel?: () => void;
 };
 
 type CastConnectionState = 'NO_DEVICES_AVAILABLE' | 'NOT_CONNECTED' | 'CONNECTING' | 'CONNECTED';
@@ -48,7 +53,7 @@ declare global {
         CastContextEventType: { CAST_STATE_CHANGED: string };
         RemotePlayer?: new () => CastRemotePlayer;
         RemotePlayerController?: new (player: CastRemotePlayer) => CastRemotePlayerController;
-        RemotePlayerEventType?: { CURRENT_TIME_CHANGED: string };
+        RemotePlayerEventType?: { CURRENT_TIME_CHANGED: string; IS_PAUSED_CHANGED?: string };
       };
     };
     chrome?: {
@@ -79,7 +84,7 @@ type CastCarrier = {
       CastContextEventType: { CAST_STATE_CHANGED: string };
       RemotePlayer?: new () => CastRemotePlayer;
       RemotePlayerController?: new (player: CastRemotePlayer) => CastRemotePlayerController;
-      RemotePlayerEventType?: { CURRENT_TIME_CHANGED: string };
+      RemotePlayerEventType?: { CURRENT_TIME_CHANGED: string; IS_PAUSED_CHANGED?: string };
     };
   };
   chrome?: {

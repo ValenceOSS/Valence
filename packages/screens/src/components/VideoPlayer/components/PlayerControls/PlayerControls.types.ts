@@ -1,4 +1,5 @@
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
+import type { CastDevice } from '@ValenceContracts/schemas/CastingNow';
 import type { ReactNode } from 'react';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { CaptionStyle } from '@ValenceClient/playback/captionStyle';
@@ -75,6 +76,12 @@ type PlayerControlsProps = {
   onSubtitleOffsetChange?: (seconds: number) => void;
   castState?: CastState;
   onCast?: () => void;
+  castDevices?: CastDevice[];
+  castingTo?: string | null;
+  onCastTo?: (deviceId: string) => void;
+  onStopCasting?: () => void;
+  systemTarget?: CastState;
+  onPickSystemTarget?: () => void;
   onPlayOnTv?: () => void;
   onPopOut?: () => void;
   isPoppedOut?: boolean;

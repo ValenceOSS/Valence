@@ -7,16 +7,19 @@ import type { CastCarrier } from './castSender.types';
  *
  * @param onSeconds - Told each position the device reaches.
  * @param carrier - Where the Cast framework was loaded, for a test.
+ * @param onPlaying - Told whenever the device starts or stops playing.
  * @returns How to stop following.
  */
 const followCastPosition = (
   onSeconds: (seconds: number) => void,
   carrier: CastCarrier = window,
+  onPlaying?: (isPlaying: boolean) => void,
 ): (() => void) => {
   const framework = carrier.cast?.framework;
   const Player = framework?.RemotePlayer;
   const Controller = framework?.RemotePlayerController;
   const changed = framework?.RemotePlayerEventType?.CURRENT_TIME_CHANGED;
+  const paused = framework?.RemotePlayerEventType?.IS_PAUSED_CHANGED;
 
   if (Player === undefined || Controller === undefined || changed === undefined) {
     return () => undefined;
@@ -29,11 +32,24 @@ const followCastPosition = (
       onSeconds(player.currentTime);
     }
   };
+  const turned = () => {
+    if (player.isMediaLoaded && player.isPaused !== undefined) {
+      onPlaying?.(!player.isPaused);
+    }
+  };
 
   controller.addEventListener(changed, said);
 
+  if (paused !== undefined) {
+    controller.addEventListener(paused, turned);
+  }
+
   return () => {
     controller.removeEventListener(changed, said);
+
+    if (paused !== undefined) {
+      controller.removeEventListener(paused, turned);
+    }
   };
 };
 

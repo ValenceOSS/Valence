@@ -7,7 +7,10 @@ import { WindowFrameSchema } from '@ValenceContracts/schemas/WindowFrame';
 import { AskReplySchema } from '@ValenceDesktop/bridge/AskReply';
 import { HandBackReplySchema } from '@ValenceDesktop/bridge/HandBackReply';
 import { MakeReplySchema } from '@ValenceDesktop/bridge/MakeReply';
+import { answerTheShortcuts } from '@ValenceDesktop/bridge/answerTheShortcuts';
 import { askAboutAPasskey } from '@ValenceDesktop/bridge/askAboutAPasskey';
+import { castThroughTheHost } from '@ValenceDesktop/bridge/castThroughTheHost';
+import { carryTheStorageOver } from '@ValenceDesktop/bridge/carryTheStorageOver';
 import { catchUpWithTheHost } from '@ValenceDesktop/bridge/catchUpWithTheHost';
 import { hearTheHost } from '@ValenceDesktop/bridge/hearTheHost';
 import { keepUpWith } from '@ValenceDesktop/bridge/keepUpWith';
@@ -35,6 +38,11 @@ const installTheBridge = (): void => {
 
   passOnWhatThePageSays(document);
   keepRightClicksToThePage(document);
+
+  if (carryTheStorageOver(boot.carriedStorage, () => window.localStorage)) {
+    tellTheHost('carried_storage_taken');
+  }
+  answerTheShortcuts(window, platform);
 
   const theUpdate = keepUpWith('valence:update-changed', DesktopUpdateSchema, boot.update);
   const theFrame = keepUpWith('valence:frame-changed', WindowFrameSchema, boot.frame);
@@ -147,6 +155,7 @@ const installTheBridge = (): void => {
       whenNearbyChanges: (listener) =>
         hearTheHost('valence:nearby-changed', NearbySchema, listener),
     },
+    cast: castThroughTheHost(),
   };
 };
 

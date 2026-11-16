@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cast-address-of"
+description = "Enables the cast_address_of command without any pre-configured scope."
+commands.allow = ["cast_address_of"]
+
+[[permission]]
+identifier = "deny-cast-address-of"
+description = "Denies the cast_address_of command without any pre-configured scope."
+commands.deny = ["cast_address_of"]

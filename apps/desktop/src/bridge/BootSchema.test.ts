@@ -20,6 +20,7 @@ const BOOTED = {
     tauri: '2.12.6',
   },
   passkeyWay: 'page',
+  carriedStorage: { 'valence.playback': '{"volume":0.4}' },
 };
 
 describe('BootSchema', () => {
@@ -47,6 +48,7 @@ describe('BootSchema', () => {
         tauri: '',
       },
       passkeyWay: 'page',
+      carriedStorage: {},
     });
   });
 

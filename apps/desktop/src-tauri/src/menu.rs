@@ -4,10 +4,12 @@
 //! rather than a button on a screen: once the window shows the server's own pages there is no
 //! screen of ours left to put it on. It is under File on every platform, and on the application
 //! menu as well on a Mac. Checking for updates sits under About on a Mac, and only in a build that
-//! updates itself. The developer tools are offered only in a build being worked on.
+//! updates itself. The developer tools are offered only in a build being worked on, or one started
+//! asking for them.
 //!
-//! Windows and Linux have no menu bar to show, since the window draws its own bar, so the menu is
-//! hidden there and only its shortcuts are left. A right click raises no menu of the window's own:
+//! Windows and Linux have no menu bar to show, since the window draws its own bar, so there is no
+//! menu there at all. The page hears the menu's shortcuts instead and asks for each item by
+//! pressing it here, as a menu would, along with the window's own minimise, close and quit. A right click raises no menu of the window's own:
 //! left alone, it raises a browser's menu of reload and inspect, which is a browser showing through
 //! rather than an application.
 
@@ -49,6 +51,15 @@ const TOGGLE_FULL_SCREEN: &str = "valence-toggle-full-screen";
 
 /// The item that opens Valence's page on the web.
 const VALENCE_ON_THE_WEB: &str = "valence-on-the-web";
+
+/// The window menu's item that minimises the window.
+const MINIMISE: &str = "valence-minimise";
+
+/// The window menu's item that closes the window.
+const CLOSE_WINDOW: &str = "valence-close-window";
+
+/// The item that quits.
+const QUIT: &str = "valence-quit";
 
 /// How far one step of zoom goes, as a browser counts its zoom level.
 const ZOOM_STEP: f64 = 0.5;
@@ -136,7 +147,7 @@ fn the_view_menu(app: &AppHandle) -> tauri::Result<Submenu<Wry>> {
             "CmdOrCtrl+Shift+R",
         )?);
 
-    if cfg!(debug_assertions) {
+    if crate::debugging::may_be_inspected() {
         view = view.item(&item(
             TOGGLE_DEV_TOOLS,
             "desktop.main.theApplicationMenu.toggleDeveloperTools",
@@ -240,11 +251,31 @@ fn zoom(app: &AppHandle, by: Option<f64>) {
     }
 }
 
-/// Does what an item of the menu or the tray says.
-fn chosen(app: &AppHandle, event: &MenuEvent) {
+/// The item a shortcut the page heard stands for, by the shortcut's name, or none for a name that
+/// is not one.
+#[must_use]
+pub fn item_for(shortcut: &str) -> Option<&'static str> {
+    match shortcut {
+        "change-server" => Some(CHANGE_SERVER),
+        "reload" => Some(RELOAD),
+        "force-reload" => Some(FORCE_RELOAD),
+        "toggle-dev-tools" => Some(TOGGLE_DEV_TOOLS),
+        "actual-size" => Some(RESET_ZOOM),
+        "zoom-in" => Some(ZOOM_IN),
+        "zoom-out" => Some(ZOOM_OUT),
+        "toggle-full-screen" => Some(TOGGLE_FULL_SCREEN),
+        "minimise" => Some(MINIMISE),
+        "close-window" => Some(CLOSE_WINDOW),
+        "quit" => Some(QUIT),
+        _ => None,
+    }
+}
+
+/// Does what the item with `id`, of the menu or the tray, says.
+fn act(app: &AppHandle, id: &str) {
     let window = the_window(app);
 
-    match event.id().as_ref() {
+    match id {
         CHANGE_SERVER => crate::window::change_server(app.clone()),
         CHECK_FOR_UPDATES => crate::updates::check_now(app),
         RELOAD | FORCE_RELOAD => {
@@ -252,10 +283,8 @@ fn chosen(app: &AppHandle, event: &MenuEvent) {
                 let _ = window.reload();
             }
         }
-        TOGGLE_DEV_TOOLS =>
-        {
-            #[cfg(debug_assertions)]
-            if let Some(window) = window {
+        TOGGLE_DEV_TOOLS => {
+            if let Some(window) = window.filter(|_| crate::debugging::may_be_inspected()) {
                 if window.is_devtools_open() {
                     window.close_devtools();
                 } else {
@@ -271,10 +300,39 @@ fn chosen(app: &AppHandle, event: &MenuEvent) {
                 let _ = window.set_fullscreen(!window.is_fullscreen().unwrap_or(false));
             }
         }
+        MINIMISE => {
+            if let Some(window) = window {
+                let _ = window.minimize();
+            }
+        }
+        CLOSE_WINDOW => {
+            if let Some(window) = window {
+                let _ = window.close();
+            }
+        }
+        QUIT => app.exit(0),
         VALENCE_ON_THE_WEB => {
             let _ = tauri_plugin_opener::open_url(VALENCE_REPOSITORY_URL, None::<&str>);
         }
         _ => {}
+    }
+}
+
+/// Does what an item of the menu or the tray says.
+fn chosen(app: &AppHandle, event: &MenuEvent) {
+    act(app, event.id().as_ref());
+}
+
+/// Does what a shortcut the page heard asks for, as the menu's item for it would: the page hears
+/// the shortcuts where there is no menu bar to hear them.
+#[tauri::command]
+#[allow(
+    clippy::needless_pass_by_value,
+    reason = "Tauri hands a command what it was asked with by value"
+)]
+pub fn press_a_shortcut(app: AppHandle, shortcut: String) {
+    if let Some(item) = item_for(&shortcut) {
+        act(&app, item);
     }
 }
 
@@ -304,7 +362,30 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests {
-    use super::zoom_factor;
+    use super::{item_for, zoom_factor};
+
+    #[test]
+    fn knows_the_item_for_every_shortcut_and_nothing_else() {
+        for (shortcut, item) in [
+            ("change-server", "valence-change-server"),
+            ("reload", "valence-reload"),
+            ("force-reload", "valence-force-reload"),
+            ("toggle-dev-tools", "valence-toggle-dev-tools"),
+            ("actual-size", "valence-reset-zoom"),
+            ("zoom-in", "valence-zoom-in"),
+            ("zoom-out", "valence-zoom-out"),
+            ("toggle-full-screen", "valence-toggle-full-screen"),
+            ("minimise", "valence-minimise"),
+            ("close-window", "valence-close-window"),
+            ("quit", "valence-quit"),
+        ] {
+            assert_eq!(item_for(shortcut), Some(item));
+        }
+
+        assert_eq!(item_for("valence-on-the-web"), None);
+        assert_eq!(item_for("check-for-updates"), None);
+        assert_eq!(item_for(""), None);
+    }
 
     #[test]
     fn zooms_as_a_browser_does() {

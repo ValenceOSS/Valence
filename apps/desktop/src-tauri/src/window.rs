@@ -3,7 +3,7 @@
 //! The frame is hidden so the window reads as an application rather than a browser: on macOS the
 //! traffic lights sit inset over the bar the page draws, and elsewhere the page draws minimise,
 //! maximise and close itself. The window is shown once its page has loaded, so it never arrives
-//! blank. The developer tools open only in a debug build.
+//! blank. The developer tools open only in a debug build, or one started asking for them.
 
 pub mod navigation;
 
@@ -146,7 +146,7 @@ pub fn a_window_onto<'a>(
         .title(say("common.valence", &[]))
         .visible(false)
         .background_color(tauri::window::Color(0, 0, 0, 255))
-        .devtools(cfg!(debug_assertions))
+        .devtools(crate::debugging::may_be_inspected())
         .disable_drag_drop_handler()
         .on_navigation(move |url| decide(&navigating, url))
         .on_new_window(move |url, _features| {

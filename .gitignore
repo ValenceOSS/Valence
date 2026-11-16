@@ -35,6 +35,7 @@ apps/mobile/.expo/
 apps/mobile/build/
 
 apps/web/public/decoders/
+apps/desktop/public/decoders/
 
 # Written by next dev and next build.
 apps/metrics/.next/

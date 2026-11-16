@@ -6,7 +6,7 @@
   "build": {
     "devUrl": "http://127.0.0.1:5174",
     "beforeDevCommand": "pnpm run renderer",
-    "beforeBuildCommand": "pnpm run build",
+    "beforeBuildCommand": "pnpm run decoders && pnpm run build",
     "frontendDist": "../dist"
   },
   "app": {

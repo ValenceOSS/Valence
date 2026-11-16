@@ -10021,7 +10021,7 @@
   {
     "handler": "desktop.main.theApplicationMenu.toggleDeveloperTools",
     "text": "Toggle Developer Tools",
-    "context": "The label of the menu item in the desktop app’s View menu that opens or closes the developer tools, offered only in a build being worked on."
+    "context": "The label of the menu item in the desktop app’s View menu that opens or closes the developer tools, offered only in a build being worked on or one started asking for them."
   },
   {
     "handler": "desktop.main.theApplicationMenu.toggleFullScreen",
@@ -39455,6 +39455,11 @@
     "context": "Text shown in the paused screen in the video player."
   },
   {
+    "handler": "screens.videoPlayer.playerControls.airPlayDevices",
+    "text": "AirPlay devices",
+    "context": "An item in the video player's list of devices to cast to, in the desktop app on a Mac, that opens the system's own list of AirPlay receivers. AirPlay is Apple's name and is not translated."
+  },
+  {
     "handler": "screens.videoPlayer.playerControls.audioTrack",
     "text": "Аудіодоріжка",
     "context": "The label in the player controls in the video player."
@@ -39463,6 +39468,16 @@
     "handler": "screens.videoPlayer.playerControls.backSKIPSECONDSSeconds",
     "text": "Назад на {SKIP_SECONDS} с",
     "context": "The label of a button in the player controls in the video player. {SKIP_SECONDS} is filled in by the app."
+  },
+  {
+    "handler": "screens.videoPlayer.playerControls.castingNow",
+    "text": "Casting now",
+    "context": "Shown beside the Cast device being cast to, in the video player's list of devices in the desktop app."
+  },
+  {
+    "handler": "screens.videoPlayer.playerControls.castToADevice",
+    "text": "Cast to a device",
+    "context": "The label of the menu in the video player's controls that lists the Chromecasts and other Cast devices on the network, in the desktop app."
   },
   {
     "handler": "screens.videoPlayer.playerControls.fetchingSubtitle",
@@ -39523,6 +39538,11 @@
     "handler": "screens.videoPlayer.playerControls.showTheTimeRemaining",
     "text": "Показати час, що лишився",
     "context": "Shown in the player controls in the video player."
+  },
+  {
+    "handler": "screens.videoPlayer.playerControls.stopCasting",
+    "text": "Stop casting",
+    "context": "An item in the video player's list of Cast devices, in the desktop app, that stops casting and brings playback back to this computer."
   },
   {
     "handler": "screens.videoPlayer.playerControls.subtitlesAndCaptions",
@@ -39693,6 +39713,11 @@
     "handler": "screens.videoPlayer.streamStats.widthByHeightAtKbps",
     "text": "{width}×{height} · {kbps} kbps",
     "context": "In the player's stream stats: the largest picture and bitrate the video is being encoded to. {width} and {height} are in pixels; {kbps} is kilobits per second."
+  },
+  {
+    "handler": "screens.videoPlayer.thatDeviceCouldNotBeReached",
+    "text": "Couldn’t connect to that device.",
+    "context": "A short message shown in the video player when the Cast device somebody chose could not be connected to."
   },
   {
     "handler": "screens.videoPlayer.thatDeviceWouldNotTakeThis",

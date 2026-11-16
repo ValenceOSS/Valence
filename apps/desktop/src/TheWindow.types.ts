@@ -7,6 +7,7 @@ import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyReq
 import type { AskReply } from '@ValenceDesktop/bridge/AskReply';
 import type { HandBackReply } from '@ValenceDesktop/bridge/HandBackReply';
 import type { MakeReply } from '@ValenceDesktop/bridge/MakeReply';
+import type { Casting } from '@ValenceClient/platform/Platform.types';
 
 type ServersFound = {
   alreadyFound: string[];
@@ -95,6 +96,7 @@ declare global {
       notifications: DesktopNotifications;
       passkeys: DesktopPasskeys;
       servers?: ServersFound;
+      cast?: Casting;
     };
   }
 }

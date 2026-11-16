@@ -26,6 +26,7 @@ const BootFieldsSchema = z.object({
   isReachable: z.boolean().catch(true),
   about: AboutSchema.catch(() => AboutSchema.parse({})),
   passkeyWay: z.enum(['system', 'page']).catch('page'),
+  carriedStorage: HeldSchema,
 });
 
 const BootSchema = BootFieldsSchema.catch(() => BootFieldsSchema.parse({}));

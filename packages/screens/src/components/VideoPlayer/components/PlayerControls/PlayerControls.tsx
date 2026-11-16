@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
 import {
+  Airplay as AirplayIcon,
   CaptionsOff as CaptionsOffIcon,
   Cast as CastIcon,
   CircleActivity as CircleActivityIcon,
@@ -28,11 +29,13 @@ import {
   VolumePlus as VolumePlusIcon,
 } from '@keyline-icons/react';
 import {
+  Airplay as AirplayFilledIcon,
   Captions as CaptionsFilledIcon,
   Cast as CastFilledIcon,
   Pause as PauseFilledIcon,
   PictureInPicture as PictureInPictureFilledIcon,
   Play as PlayFilledIcon,
+  Tv as TvFilledIcon,
 } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Slider } from '@ValenceUI/Slider';
@@ -147,6 +150,14 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  *   watching may fetch them.
  * @param castState - Whether there is anywhere to cast to, and whether it is in use.
  * @param onCast - Called to cast to another device.
+ * @param castDevices - The devices there are to cast to, where the player lists them itself rather
+ *   than the browser.
+ * @param castingTo - Which of them is being cast to.
+ * @param onCastTo - Called with the device chosen from that list.
+ * @param onStopCasting - Called to stop casting.
+ * @param systemTarget - Where casting through the browser's own devices stands, such as AirPlay
+ *   in a web view built on WebKit, listed beside the others where the browser offers any.
+ * @param onPickSystemTarget - Called to show the browser's own list of those devices.
  * @param onPlayOnTv - Called to send the film to one of this person's televisions, where one is open.
  * @param onPopOut - Called to move the video into a floating window.
  * @param isPoppedOut - Whether it is already in one.
@@ -216,6 +227,12 @@ const PlayerControls = ({
   isPoppedOut = false,
   castState = 'unavailable',
   onCast,
+  castDevices,
+  castingTo = null,
+  onCastTo,
+  onStopCasting,
+  systemTarget = 'unavailable',
+  onPickSystemTarget,
   onPlayOnTv,
   onToggleStats,
   subtitleOffsetSeconds = 0,
@@ -793,7 +810,89 @@ const PlayerControls = ({
           </Button>
         )}
 
-        {onCast === undefined || castState === 'unavailable' ? null : (
+        {castDevices === undefined ||
+        onCastTo === undefined ||
+        castState === 'unavailable' ? null : (
+          <SettingsMenu
+            label={
+              castState === 'connected'
+                ? say('common.playingOnAnotherDevice')
+                : say('screens.videoPlayer.playerControls.castToADevice')
+            }
+            tone="default"
+            offset={PLAYER_MENU_OFFSET}
+            className="rounded-full"
+            {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
+            isDisabled={castState === 'connecting'}
+            trigger={
+              <Icon
+                of={CastIcon}
+                whenActive={CastFilledIcon}
+                isActive={castState === 'connected'}
+                size={20}
+              />
+            }
+            rows={[
+              ...castDevices.map((device) => ({
+                kind: 'action' as const,
+                id: device.id,
+                label: device.name,
+                icon: (
+                  <Icon
+                    of={TvIcon}
+                    whenActive={TvFilledIcon}
+                    isActive={device.id === castingTo}
+                    size={18}
+                  />
+                ),
+                ...(device.id === castingTo
+                  ? { detail: say('screens.videoPlayer.playerControls.castingNow') }
+                  : device.model === null
+                    ? {}
+                    : { detail: device.model }),
+                onSelect: () => {
+                  if (device.id !== castingTo) {
+                    onCastTo(device.id);
+                  }
+                },
+              })),
+              ...(systemTarget === 'unavailable' || onPickSystemTarget === undefined
+                ? []
+                : [
+                    {
+                      kind: 'action' as const,
+                      id: 'system-target',
+                      label: say('screens.videoPlayer.playerControls.airPlayDevices'),
+                      icon: (
+                        <Icon
+                          of={AirplayIcon}
+                          whenActive={AirplayFilledIcon}
+                          isActive={systemTarget === 'connected'}
+                          size={18}
+                        />
+                      ),
+                      ...(systemTarget === 'connected'
+                        ? { detail: say('screens.videoPlayer.playerControls.castingNow') }
+                        : {}),
+                      onSelect: onPickSystemTarget,
+                    },
+                  ]),
+              ...(castingTo === null || onStopCasting === undefined
+                ? []
+                : [
+                    {
+                      kind: 'action' as const,
+                      id: 'stop-casting',
+                      label: say('screens.videoPlayer.playerControls.stopCasting'),
+                      icon: <Icon of={CastIcon} size={18} />,
+                      onSelect: onStopCasting,
+                    },
+                  ]),
+            ]}
+          />
+        )}
+
+        {castDevices !== undefined || onCast === undefined || castState === 'unavailable' ? null : (
           <Button
             isIconOnly
             isPill

@@ -37,7 +37,8 @@ Because both clients run the same code, features arrive on both together. The re
 
 ## What it adds over a browser
 
-- **Its own window.** A frameless window with a draggable strip along the top, an application menu, a tray icon, and a Dock icon on macOS.
+- **Its own window.** A frameless window with a draggable strip along the top, an application menu, a tray icon, and a Dock icon on macOS. Windows and Linux show no menu bar, but its shortcuts work there all the same: `Ctrl+Shift+S` to change server, `Ctrl+R` to reload, `Ctrl+0`, `Ctrl+=` and `Ctrl+-` to zoom, `F11` for full screen, `Ctrl+M` to minimise, `Ctrl+W` to close the window and, on Linux, `Ctrl+Q` to quit.
+- **Notifications.** What the app tells you about, such as a download finishing, appears in your system's notification centre, and clicking one brings the window forward onto what it was about.
 - **Finding your server.** It looks for a server on the same machine and only asks you for an address when it does not find one. See below.
 - **Downloads it can keep.** Films, albums, playlists, liked songs and audiobooks can be downloaded to listen to and watch offline, from the download button on their pages, and are listed under Downloads and on the offline screen. Offline downloads are held in the app's own data folder, not your operating system's Downloads folder. A file in Downloads gets renamed, moved and tidied away by other programs, and the app would keep listing something that was gone. In its own folder, one thing owns the files and can say honestly what is still on disk.
 - **Passkeys.** On Windows, Windows Hello asks for one inside the app. On macOS and Linux, signing in with a passkey happens in your browser, which hands you back to the app. See [Passkeys](/use/accounts-and-roles#passkeys).
@@ -46,7 +47,7 @@ Because both clients run the same code, features arrive on both together. The re
 
 ## What plays without converting
 
-The app plays through your operating system's webview: Microsoft Edge's WebView2 on Windows, Safari's engine on macOS and WebKitGTK on Linux. What a film needs converting for is decided by what that webview can play, so it differs by system, and the server converts more for the desktop app than for Chrome or Edge on the same machine. On Linux the GStreamer plugins on the machine decide; the AppImage carries its own. [Playing media](/use/playing-media#in-the-desktop-app) has the details.
+The app plays through your operating system's webview: Microsoft Edge's WebView2 on Windows, Safari's engine on macOS and WebKitGTK on Linux. What a film needs converting for is decided by what that webview can play, so it differs by system, and the server converts more for the desktop app than for Chrome or Edge on the same machine. On Linux the GStreamer plugins on the machine decide; the AppImage carries its own. The app also carries the decoders file a server serves to browsers, Valence's own TrueHD and MPEG-2 decoders, so with **Play more films in this browser** turned on its player has them as a browser does. [Playing media](/use/playing-media#in-the-desktop-app) has the details.
 
 ## How it finds the server
 
@@ -73,11 +74,11 @@ Choose **Change server** from the **File** menu, or press `Ctrl+Shift+S` on Wind
 
 ## Where it keeps its files
 
-| What                                                          | Windows                    | macOS                                                                             | Linux                      |
-| :------------------------------------------------------------ | :------------------------- | :-------------------------------------------------------------------------------- | :------------------------- |
-| Downloads, the sign-in, the update log and the webview's data | `%APPDATA%\Valence`        | `~/Library/Application Support/Valence`                                           | `~/.config/Valence`        |
-| The remembered server and other preferences                   | `%APPDATA%\valence-nodejs` | `~/Library/Preferences/valence-nodejs`                                            | `~/.config/valence-nodejs` |
-| The webview's own storage and cache                           | In the first row           | `~/Library/WebKit/app.valence.desktop` and `~/Library/Caches/app.valence.desktop` | In the first row           |
+| What                                                                      | Windows                    | macOS                                                                             | Linux                      |
+| :------------------------------------------------------------------------ | :------------------------- | :-------------------------------------------------------------------------------- | :------------------------- |
+| Downloads, the sign-in, the update and memory logs and the webview's data | `%APPDATA%\Valence`        | `~/Library/Application Support/Valence`                                           | `~/.config/Valence`        |
+| The remembered server and other preferences                               | `%APPDATA%\valence-nodejs` | `~/Library/Preferences/valence-nodejs`                                            | `~/.config/valence-nodejs` |
+| The webview's own storage and cache                                       | In the first row           | `~/Library/WebKit/app.valence.desktop` and `~/Library/Caches/app.valence.desktop` | In the first row           |
 
 Downloads are in a `held` folder inside the first. On Linux, `~/.config` is wherever `XDG_CONFIG_HOME` points, if you set it. [Uninstalling](/install/uninstalling#files-on-the-host) says what to delete to leave nothing behind.
 
@@ -98,7 +99,7 @@ These do not:
 
 ## Building from source
 
-You need Node 24 or newer and pnpm, the same as for [local development](/develop/local-setup), and Rust, stable, through [rustup](https://rustup.rs). Each system also needs what Tauri builds against:
+You need Node 24 or newer and pnpm, the same as for [local development](/develop/local-setup), and Rust, stable, through [rustup](https://rustup.rs), with its WebAssembly target for the player's decoders: `rustup target add wasm32-unknown-unknown`. Each system also needs what Tauri builds against:
 
 | System  | What to install                                                                                                                                                                                                                                                                   |
 | :------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -129,7 +130,7 @@ To make an installable package for the operating system you are on:
 pnpm --filter @valence/desktop package
 ```
 
-That is `tauri build`. It builds the renderer with Vite, compiles the host in release mode and bundles it, with application id `app.valence.desktop`. The output goes to `target/release/bundle` at the root of the repository, which is where Cargo builds the whole Rust workspace: a `.app` and a `.dmg` on macOS, an installer `.exe` on Windows, an AppImage and a `.deb` on Linux. Build each platform's package on that platform. A package built this way has no update bundles and is not signed; a release signs both, as [Releasing](/develop/releasing#the-desktop-app) describes.
+That is `tauri build`. It builds the player's TrueHD and MPEG-2 decoders to WebAssembly, which the app serves to its player as a server does, builds the renderer with Vite, compiles the host in release mode and bundles it, with application id `app.valence.desktop`. The output goes to `target/release/bundle` at the root of the repository, which is where Cargo builds the whole Rust workspace: a `.app` and a `.dmg` on macOS, an installer `.exe` on Windows, an AppImage and a `.deb` on Linux. Build each platform's package on that platform. A package built this way has no update bundles and is not signed; a release signs both, as [Releasing](/develop/releasing#the-desktop-app) describes.
 
 Run the tests and type checks with:
 
@@ -140,6 +141,24 @@ cargo test -p valence-desktop
 ```
 
 The host lives in `apps/desktop/src-tauri`, and the page's side, the screens' entry points and the bridge that hands the page what the host knows, in `apps/desktop/src`. Read [Repository layout](/develop/repository-layout) and [Contributing](/develop/contributing) if you want to change it.
+
+### Finding leaks
+
+Every copy of the app, installed or not, writes how much memory it holds to `memory.log` in its own folder (see [Where it keeps its files](#where-it-keeps-its-files)), when it starts and every five minutes after. Each line is the time and then each process, `kind:process=megabytes`: the app itself as `Browser`, and on Windows and Linux the webview's processes beneath it as `Tab`, `GPU` and `Utility`. macOS starts the webview's processes itself, so only the app's own is written there. The log starts again once it passes a megabyte. A report that the app grew can then say which process grew and when.
+
+To look inside an installed copy, start it with `VALENCE_DEVTOOLS=1` for the web inspector alone, or with `VALENCE_DEBUG_PORT` set to a port from 1024 to 65535, which turns the inspector on too. Neither is ever on by default. The inspector opens with `Ctrl+Shift+I` on Windows and Linux, and on macOS with **Toggle Developer Tools** under **View**, `Alt+Cmd+I`, or from Safari's **Develop** menu, where the app's window is listed. The port also opens the webview to a debugger elsewhere:
+
+- **Windows.** Chrome's remote debugging, since the webview is Edge's. Chrome's `chrome://inspect` finds it, and the leak sweep drives it.
+- **Linux.** WebKitGTK's remote inspector: open `http://127.0.0.1:<port>` in a browser, or connect another WebKit's inspector, such as GNOME Web's, to the port after it.
+- **macOS.** Nothing more: Safari's **Develop** menu is the remote inspector there.
+
+The leak sweep runs on Windows:
+
+```bash
+pnpm --filter @valence/desktop sweep --app "C:\Program Files\Valence\Valence.exe"
+```
+
+With `--app` the sweep starts the app itself with the port open and closes it when it is done; without it, it drives a copy already started with `VALENCE_DEBUG_PORT=9222`. Either way, sign in first and keep the window on screen. It visits every route several times, `--passes 5` by default, hovering the cards, scrolling and coming back, then watches a film as a watch party and leaves the pages that update themselves open for `--idle-minutes 2`, measuring the heap, the page's elements and its listeners after each. `--only` keeps to some routes, `--port` names another port. A route whose numbers keep climbing pass after pass is reported as leaking, and the sweep then fails. It drives Chrome's debugging protocol, which macOS's and Linux's webviews do not speak, so there it says so and stops; use the inspector's own memory tools instead.
 
 ## Troubleshooting
 

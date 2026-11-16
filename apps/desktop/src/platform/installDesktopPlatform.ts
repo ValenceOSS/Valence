@@ -60,6 +60,7 @@ const installDesktopPlatform = (): void => {
     musicAudio: theBrowserAudio,
     listeningAudio: theBrowsersListeningAudio,
     passkeys: theDesktopsPasskeys,
+    ...(window.valence.cast === undefined ? {} : { casting: window.valence.cast }),
   });
   carryTheDevice();
   setTimeout(theKeptListening, PICK_UP_DOWNLOADS_AFTER);

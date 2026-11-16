@@ -570,6 +570,81 @@ describe('PlayerControls', () => {
     expect(screen.getByRole('button', { name: /Play on a device/ })).toBeDisabled();
   });
 
+  it('lists the devices itself where the player is handed them, rather than asking the browser', async () => {
+    const user = userEvent.setup();
+    const props = draw({
+      onCast: vi.fn(),
+      castState: 'available',
+      castDevices: [
+        { id: 'living-room', name: 'Living Room TV', model: 'Chromecast Ultra' },
+        { id: 'bedroom', name: 'Bedroom', model: null },
+      ],
+      onCastTo: vi.fn(),
+    });
+
+    expect(screen.queryByRole('button', { name: /Play on a device/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cast to a device' }));
+    await user.click(await screen.findByRole('button', { name: /Living Room TV/ }));
+
+    expect(screen.getByText('Chromecast Ultra')).toBeInTheDocument();
+    expect(props.onCastTo).toHaveBeenCalledWith('living-room');
+    expect(props.onCast).not.toHaveBeenCalled();
+  });
+
+  it('marks the device being cast to, and offers to stop', async () => {
+    const user = userEvent.setup();
+    const props = draw({
+      castState: 'connected',
+      castDevices: [{ id: 'living-room', name: 'Living Room TV', model: 'Chromecast Ultra' }],
+      castingTo: 'living-room',
+      onCastTo: vi.fn(),
+      onStopCasting: vi.fn(),
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Playing on another device' }));
+    await user.click(await screen.findByRole('button', { name: /Living Room TV/ }));
+
+    expect(screen.getByText('Casting now')).toBeInTheDocument();
+    expect(props.onCastTo).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: /Stop casting/ }));
+
+    expect(props.onStopCasting).toHaveBeenCalledTimes(1);
+  });
+
+  it('lists the browser’s own devices beside the others where it offers any', async () => {
+    const user = userEvent.setup();
+    const props = draw({
+      castState: 'available',
+      castDevices: [],
+      onCastTo: vi.fn(),
+      systemTarget: 'available',
+      onPickSystemTarget: vi.fn(),
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Cast to a device' }));
+    await user.click(await screen.findByRole('button', { name: /AirPlay devices/ }));
+
+    expect(props.onPickSystemTarget).toHaveBeenCalledTimes(1);
+  });
+
+  it('lists none of the browser’s own devices where it offers none', async () => {
+    const user = userEvent.setup();
+
+    draw({
+      castState: 'available',
+      castDevices: [{ id: 'living-room', name: 'Living Room TV', model: null }],
+      onCastTo: vi.fn(),
+      onPickSystemTarget: vi.fn(),
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Cast to a device' }));
+    await screen.findByRole('button', { name: /Living Room TV/ });
+
+    expect(screen.queryByRole('button', { name: /AirPlay devices/ })).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(PlayerControls.displayName).toBe('PlayerControls');
   });

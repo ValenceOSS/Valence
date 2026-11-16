@@ -7,6 +7,7 @@ const COMMANDS: &[&str] = &[
     "this_launch_write",
     "this_launch_forget",
     "what_is_now",
+    "carried_storage_taken",
     "go_to_the_server",
     "change_server",
     "frame_minimise",
@@ -30,6 +31,16 @@ const COMMANDS: &[&str] = &[
     "passkeys_sign_in_on_a_page",
     "passkeys_add_one_in_the_browser",
     "now_watching",
+    "cast_now",
+    "cast_connect",
+    "cast_load",
+    "cast_play",
+    "cast_pause",
+    "cast_seek",
+    "cast_volume",
+    "cast_disconnect",
+    "cast_address_of",
+    "press_a_shortcut",
 ];
 
 /// The commit this is built from, as `git` names it, for a build not told it by `VALENCE_COMMIT`;

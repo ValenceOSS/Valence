@@ -9,6 +9,8 @@ import type { PasskeyAssertion } from '@ValenceContracts/schemas/PasskeyAssertio
 import type { PasskeyAttestation } from '@ValenceContracts/schemas/PasskeyAttestation';
 import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
+import type { CastingNow } from '@ValenceContracts/schemas/CastingNow';
+import type { CastPlayed } from '@ValenceContracts/schemas/CastPlayed';
 
 type DeviceStore = {
   read: (key: string) => string | null;
@@ -96,6 +98,27 @@ type Passkeys =
     }
   | { kind: 'none'; why: string };
 
+type CastMedia = {
+  address: string;
+  contentType: string;
+  title: string;
+  startSeconds: number;
+};
+
+type Casting = {
+  now: () => CastingNow;
+  whenChanged: (listener: (now: CastingNow) => void) => () => void;
+  connect: (deviceId: string) => Promise<boolean>;
+  disconnect: () => Promise<void>;
+  load: (media: CastMedia) => Promise<boolean>;
+  whenPlayed: (listener: (played: CastPlayed) => void) => () => void;
+  play: () => void;
+  pause: () => void;
+  seek: (seconds: number) => void;
+  setVolume: (level: number) => void;
+  reachableAddress: (path: string) => Promise<string | null>;
+};
+
 type Platform = {
   store: DeviceStore;
   thisLaunch?: DeviceStore;
@@ -116,10 +139,13 @@ type Platform = {
   musicAudio: () => MusicAudio;
   listeningAudio: () => ListeningAudio;
   passkeys: () => Passkeys;
+  casting?: Casting;
 };
 
 export type {
   BuildInfo,
+  CastMedia,
+  Casting,
   ClientKind,
   DeviceStore,
   FetchedFile,

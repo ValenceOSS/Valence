@@ -43,13 +43,14 @@ import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
 import { PlaybackEngineErrorSchema } from '@ValenceClient/playback/PlaybackEngineErrorSchema';
 import {
   watchCastState,
+  watchPlaybackTargets,
+  castStateOfTarget,
   isReachableOrigin,
   promptForDevice,
-  absoluteStreamUrl,
 } from '@ValenceScreens/playback/castPlayback';
+import { mostEngagedCastState } from '@ValenceScreens/playback/mostEngagedCastState';
 import { handOverToDevice } from '@ValenceScreens/playback/handOverToDevice';
-import { loadCastSender, castStateOf, castStream } from '@ValenceScreens/playback/castSender';
-import { followCastPosition } from '@ValenceScreens/playback/followCastPosition';
+import { findACaster } from '@ValenceScreens/playback/findACaster';
 import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
@@ -122,7 +123,8 @@ import { StageCue } from './components/StageCue/StageCue';
 import { TrickplayFrame } from './components/TrickplayFrame/TrickplayFrame';
 import type { StageCueProps } from './components/StageCue/StageCue.types';
 import { NextEpisodeCard } from './components/NextEpisodeCard/NextEpisodeCard';
-import type { CastContext } from '@ValenceScreens/playback/castSender.types';
+import type { Caster } from '@ValenceScreens/playback/Caster.types';
+import type { CastDevice } from '@ValenceContracts/schemas/CastingNow';
 import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
 import { sourceForAFile, trickplayForAFile } from '@ValenceClient/downloads/keepingFiles';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
@@ -495,8 +497,12 @@ const VideoPlayer = ({
 
   const poppedRef = useRef<PoppedOut | null>(null);
   const [isPoppedOut, setIsPoppedOut] = useState(false);
-  const [castState, setCastState] = useState<CastState>('unavailable');
+  const [deviceCastState, setCastState] = useState<CastState>('unavailable');
+  const [targetState, setTargetState] = useState<CastState>('unavailable');
+  const castState = mostEngagedCastState(deviceCastState, targetState);
   const [isOnAChromecast, setIsOnAChromecast] = useState(false);
+  const [castDevices, setCastDevices] = useState<CastDevice[] | null>(null);
+  const [castingTo, setCastingTo] = useState<string | null>(null);
   const [sendingAt, setSendingAt] = useState<number | null>(null);
   const hasTelevision = useVideoDevices().some((device) => device.kind === 'tv');
 
@@ -606,7 +612,8 @@ const VideoPlayer = ({
     null,
   );
   const settledRef = useRef<Promise<void>>(Promise.resolve());
-  const castContextRef = useRef<CastContext | null>(null);
+  const casterRef = useRef<Caster | null>(null);
+  const castingRef = useRef<Caster | null>(null);
 
   const popOut = useCallback(() => {
     const element = videoRef.current;
@@ -657,34 +664,25 @@ const VideoPlayer = ({
     }
 
     let isAbandoned = false;
+    let stopWatching: (() => void) | null = null;
 
-    void loadCastSender().then((context) => {
-      if (isAbandoned || context === null) {
+    void findACaster().then((caster) => {
+      if (isAbandoned || caster === null) {
         return;
       }
 
-      castContextRef.current = context;
-
-      const said = () => {
-        const state = castStateOf(context);
-
-        setCastState(
-          state === 'CONNECTED' ? 'connected' : state === 'CONNECTING' ? 'connecting' : 'available',
-        );
-        setIsOnAChromecast(state === 'CONNECTED');
-      };
-
-      const framework = window.cast?.framework;
-
-      if (framework !== undefined) {
-        context.addEventListener(framework.CastContextEventType.CAST_STATE_CHANGED, said);
-      }
-
-      said();
+      casterRef.current = caster;
+      stopWatching = caster.watch((said) => {
+        setCastState(said.state);
+        setIsOnAChromecast(said.state === 'connected');
+        setCastDevices(said.devices);
+        setCastingTo(said.deviceId);
+      });
     });
 
     return () => {
       isAbandoned = true;
+      stopWatching?.();
     };
   }, [isAWindowOfOurOwn]);
 
@@ -693,6 +691,12 @@ const VideoPlayer = ({
 
     if (element === null || isAWindowOfOurOwn) {
       return;
+    }
+
+    if (platformInUse().casting !== undefined) {
+      return watchPlaybackTargets(element, (target) => {
+        setTargetState(castStateOfTarget(target));
+      });
     }
 
     return watchCastState(element, setCastState);
@@ -721,6 +725,7 @@ const VideoPlayer = ({
 
   const castAtRef = useRef<number | null>(null);
   const castTimeRef = useRef<(seconds: number) => void>(() => undefined);
+  const castPlayingRef = useRef<(isPlaying: boolean) => void>(() => undefined);
   const toCast = isOnAChromecast && keptSource === undefined;
 
   useEffect(() => {
@@ -766,56 +771,72 @@ const VideoPlayer = ({
       stopFollowing: null,
     };
 
-    const handOver = (address: string) => {
-      const context = castContextRef.current;
+    const toTheElement = (address: string, origin: string) => {
+      void handOverToDevice({
+        element,
+        url: address,
+        origin,
+        ...(releaseRef.current === null
+          ? {}
+          : {
+              release: async () => {
+                await releaseRef.current?.();
+                releaseRef.current = null;
+              },
+            }),
+      });
+    };
 
-      if (context === null) {
-        void handOverToDevice({
-          element,
-          url: address,
-          origin: window.location.origin,
-          ...(releaseRef.current === null
-            ? {}
-            : {
-                release: async () => {
-                  await releaseRef.current?.();
-                  releaseRef.current = null;
-                },
-              }),
+    const handOver = (address: string) => {
+      const caster = casterRef.current;
+
+      if (caster === null) {
+        toTheElement(address, window.location.origin);
+
+        return;
+      }
+
+      if (targetState === 'connected') {
+        void caster.reachableAddress(address).then((whole) => {
+          if (whole !== null && !handing.isOver) {
+            toTheElement(whole, whole);
+          }
         });
 
         return;
       }
 
-      const whole = absoluteStreamUrl(address, window.location.origin);
+      void caster
+        .load({
+          address,
+          title: media.title,
+          startSeconds: placeRef.current?.read() ?? element.currentTime,
+        })
+        .then((accepted) => {
+          if (!accepted) {
+            notify.failed(say('screens.videoPlayer.thatDeviceWouldNotTakeThis'), {
+              where: PLAYER_TOASTS,
+              isCompact: true,
+            });
 
-      if (whole === null) {
-        return;
-      }
+            return;
+          }
 
-      void castStream(context, {
-        url: whole,
-        title: media.title,
-        startSeconds: placeRef.current?.read() ?? element.currentTime,
-      }).then((accepted) => {
-        if (!accepted) {
-          notify.failed(say('screens.videoPlayer.thatDeviceWouldNotTakeThis'), {
-            where: PLAYER_TOASTS,
-            isCompact: true,
-          });
+          element.pause();
 
-          return;
-        }
-
-        element.pause();
-
-        if (!handing.isOver) {
-          handing.stopFollowing = followCastPosition((seconds) => {
-            castAtRef.current = seconds;
-            castTimeRef.current(seconds);
-          });
-        }
-      });
+          if (!handing.isOver) {
+            castingRef.current = caster;
+            handing.stopFollowing = caster.follow(
+              (seconds) => {
+                castAtRef.current = seconds;
+                castTimeRef.current(seconds);
+              },
+              (isPlayingThere) => {
+                castPlayingRef.current(isPlayingThere);
+              },
+            );
+          }
+        });
     };
 
     if (session.delivery.kind === 'direct') {
@@ -833,9 +854,11 @@ const VideoPlayer = ({
     return () => {
       handing.isOver = true;
       handing.stopFollowing?.();
+      castingRef.current = null;
     };
   }, [
     castState,
+    targetState,
     session,
     sessionMadeFor,
     media.title,
@@ -1163,10 +1186,7 @@ const VideoPlayer = ({
         startPlaybackSession(
           request.mediaId,
           request.isCast === true
-            ? castDeviceProfile(
-                castContextRef.current?.getCurrentSession()?.getCastDevice()?.friendlyName ??
-                  deviceProfile.name,
-              )
+            ? castDeviceProfile(casterRef.current?.deviceName() ?? deviceProfile.name)
             : engine === null || film === null
               ? deviceProfile
               : withTheEngine(deviceProfile, engine, {
@@ -2229,6 +2249,12 @@ const VideoPlayer = ({
       return;
     }
 
+    if (castingRef.current !== null) {
+      castingRef.current.playOrPause();
+
+      return;
+    }
+
     if (element.paused) {
       void element.play();
 
@@ -2263,6 +2289,14 @@ const VideoPlayer = ({
       }
 
       setPosition(seconds);
+
+      if (castingRef.current !== null) {
+        castAtRef.current = seconds;
+        castingRef.current.seek(seconds);
+
+        return;
+      }
+
       placeRef.current?.seek(seconds);
 
       element.currentTime = seconds;
@@ -3132,6 +3166,7 @@ const VideoPlayer = ({
 
   useEffect(() => {
     castTimeRef.current = asItPlays.onTimeUpdate;
+    castPlayingRef.current = asItPlays.onPlayingChange;
   });
 
   const theTitleBar = (
@@ -3580,6 +3615,7 @@ const VideoPlayer = ({
               }
 
               setVolume(next);
+              castingRef.current?.setVolume(next);
               isSilencedByPolicyRef.current = false;
               setIsMuted(next === 0);
             }}
@@ -3603,7 +3639,10 @@ const VideoPlayer = ({
                 return;
               }
 
-              if (!isReachableOrigin(window.location.origin)) {
+              const caster = casterRef.current;
+              const origin = window.location.origin;
+
+              if (!(caster?.canReach(origin) ?? isReachableOrigin(origin))) {
                 notify.failed(say('screens.videoPlayer.openValenceAtItsAddressOn'), {
                   where: PLAYER_TOASTS,
                   isCompact: true,
@@ -3615,10 +3654,8 @@ const VideoPlayer = ({
 
               notify.forget(CAST_NOTICE);
 
-              const context = castContextRef.current;
-
-              if (context !== null) {
-                void context.requestSession().catch(() => {});
+              if (caster !== null) {
+                caster.choose();
 
                 return;
               }
@@ -3636,6 +3673,35 @@ const VideoPlayer = ({
                 );
               });
             }}
+            {...(castDevices === null
+              ? {}
+              : {
+                  castDevices,
+                  castingTo,
+                  onCastTo: (deviceId: string) => {
+                    notify.forget(CAST_NOTICE);
+                    void casterRef.current?.castTo(deviceId).then((isConnected) => {
+                      if (!isConnected) {
+                        notify.failed(say('screens.videoPlayer.thatDeviceCouldNotBeReached'), {
+                          where: PLAYER_TOASTS,
+                          isCompact: true,
+                          id: CAST_NOTICE,
+                        });
+                      }
+                    });
+                  },
+                  onStopCasting: () => {
+                    casterRef.current?.stop();
+                  },
+                  systemTarget: targetState,
+                  onPickSystemTarget: () => {
+                    const element = videoRef.current;
+
+                    if (element !== null) {
+                      void promptForDevice(element);
+                    }
+                  },
+                })}
             {...(canPopOut ? { onPopOut: popOut } : {})}
             isPoppedOut={isPoppedOut}
             onToggleStats={() => {

@@ -5,7 +5,7 @@ mod feed;
 mod follow;
 mod install_mark;
 mod tauri_updater;
-mod update_log;
+pub mod update_log;
 mod update_window;
 
 use follow::{follow_the_updates, DesktopUpdate, Followed, Needs, CHECK_EVERY};

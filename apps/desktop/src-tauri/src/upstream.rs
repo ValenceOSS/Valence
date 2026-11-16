@@ -2,10 +2,12 @@
 //!
 //! One HTTP client and one cookie jar serve every request this app makes of the server, so the
 //! session the person signed in with goes with all of them, and the page never sees it. The jar is
-//! kept in `cookies.json` beside the app's other files, readable by this user alone.
+//! kept beside the app's other files, sealed with a key the system keeps (see [`crate::jar`]). On
+//! the first start, before this app has kept a jar of its own, it starts from the session the
+//! Electron app held for the chosen server.
 
 use std::fs;
-use std::io::{self, BufReader, Write};
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
@@ -14,6 +16,7 @@ use reqwest::{Client, Method, RequestBuilder, Response, Url};
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex};
 use tauri::{AppHandle, Manager};
 
+use crate::jar::{Jar, Kept, SystemKeychain};
 use crate::preferences::Preferences;
 
 /// The header that says which kind of app is asking.
@@ -34,14 +37,12 @@ const CARRIED: [&str; 6] = [
     "user-agent",
 ];
 
-const JAR: &str = "cookies.json";
-
 /// The client every request to the server goes out through, and the session it carries.
 #[derive(Clone)]
 pub struct Upstream {
     client: Client,
     jar: Arc<CookieStoreMutex>,
-    jar_file: Option<PathBuf>,
+    jar_file: Option<Jar>,
     saving: Arc<Mutex<()>>,
     preferences: Preferences,
 }
@@ -52,15 +53,26 @@ impl Upstream {
     /// # Errors
     ///
     /// When the HTTP client cannot be made.
-    pub fn new(
+    #[cfg(test)]
+    pub fn new(preferences: Preferences, jar_file: Option<Jar>) -> Result<Self, reqwest::Error> {
+        let store = match jar_file.as_ref().map(Jar::load) {
+            Some(Kept::Cookies(store)) => store,
+            _ => CookieStore::default(),
+        };
+
+        Self::holding(preferences, store, jar_file)
+    }
+
+    /// Makes the client, holding `store` and keeping it in `jar_file` where there is one.
+    ///
+    /// # Errors
+    ///
+    /// When the HTTP client cannot be made.
+    pub fn holding(
         preferences: Preferences,
-        jar_file: Option<PathBuf>,
+        store: CookieStore,
+        jar_file: Option<Jar>,
     ) -> Result<Self, reqwest::Error> {
-        let store = jar_file
-            .as_deref()
-            .and_then(|file| fs::File::open(file).ok())
-            .and_then(|file| cookie_store::serde::json::load(BufReader::new(file)).ok())
-            .unwrap_or_default();
         let jar = Arc::new(CookieStoreMutex::new(store));
         let client = Client::builder()
             .cookie_provider(Arc::clone(&jar))
@@ -131,13 +143,9 @@ impl Upstream {
             return;
         };
         let _saving = lock(&self.saving);
-        let mut text = Vec::new();
-        let saved = cookie_store::serde::json::save(&lock_jar(&self.jar), &mut text);
 
-        if saved.is_ok() {
-            if let Err(error) = write_privately(file, &text) {
-                eprintln!("Valence could not keep its session: {error}");
-            }
+        if let Err(error) = file.save(&lock_jar(&self.jar)) {
+            eprintln!("Valence could not keep its session: {error}");
         }
     }
 
@@ -170,7 +178,11 @@ fn lock_jar(jar: &CookieStoreMutex) -> MutexGuard<'_, CookieStore> {
 }
 
 /// Writes `bytes` to `file` through a file beside it that only this user may read.
-fn write_privately(file: &Path, bytes: &[u8]) -> io::Result<()> {
+///
+/// # Errors
+///
+/// When the file cannot be written.
+pub fn write_privately(file: &Path, bytes: &[u8]) -> io::Result<()> {
     if let Some(folder) = file.parent() {
         fs::create_dir_all(folder)?;
     }
@@ -262,6 +274,32 @@ pub fn upstream(app: &AppHandle) -> Option<Upstream> {
         .map(|upstream| upstream.inner().clone())
 }
 
+/// The cookies to start from: those kept in `jar`, or, where this app has never kept a jar, the
+/// session the Electron app held for the chosen server, which is kept in `jar` straight away. Where
+/// the Electron app held none, nothing is kept, so a later start looks again.
+fn starting_cookies(jar: &Jar, preferences: &Preferences, user_data: &Path) -> CookieStore {
+    match jar.load() {
+        Kept::Cookies(store) => store,
+        Kept::Unopenable => CookieStore::default(),
+        Kept::Nothing => {
+            let carried = preferences
+                .server_address()
+                .and_then(|server| crate::carry_over::session(user_data, &server));
+
+            match carried {
+                Some(store) => {
+                    if let Err(error) = jar.save(&store) {
+                        eprintln!("Valence could not keep the session it carried over: {error}");
+                    }
+
+                    store
+                }
+                None => CookieStore::default(),
+            }
+        }
+    }
+}
+
 /// Makes the client and its cookie jar.
 ///
 /// # Errors
@@ -273,7 +311,10 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         .ok_or("the preferences were not set up first")?
         .inner()
         .clone();
-    let upstream = Upstream::new(preferences, Some(crate::paths::user_data().join(JAR)))?;
+    let user_data = crate::paths::user_data();
+    let jar = Jar::in_folder(&user_data, &SystemKeychain);
+    let store = starting_cookies(&jar, &preferences, &user_data);
+    let upstream = Upstream::holding(preferences, store, Some(jar))?;
 
     app.manage(upstream);
     Ok(())
@@ -365,14 +406,15 @@ mod tests {
         let jar = folder.path().join("cookies.json");
         let preferences = Preferences::open(folder.path().join("preferences.json"));
         let server = Url::parse("http://nas:8420/api/x").expect("an address");
-        let first = Upstream::new(preferences.clone(), Some(jar.clone())).expect("a client");
+        let first =
+            Upstream::new(preferences.clone(), Some(Jar::plain(jar.clone()))).expect("a client");
 
         lock_jar(&first.jar)
             .parse("session=abc; Path=/; Max-Age=3600; HttpOnly", &server)
             .expect("a cookie");
         first.keep_cookies();
 
-        let second = Upstream::new(preferences, Some(jar.clone())).expect("a client");
+        let second = Upstream::new(preferences, Some(Jar::plain(jar.clone()))).expect("a client");
 
         assert_eq!(
             second
@@ -387,6 +429,39 @@ mod tests {
             let mode = fs::metadata(&jar).expect("the jar").permissions().mode();
             assert_eq!(mode & 0o777, 0o600);
         }
+    }
+
+    #[test]
+    fn starts_from_the_jar_this_app_kept() {
+        let folder = tempfile::tempdir().expect("a temporary folder");
+        let preferences = Preferences::open(folder.path().join("preferences.json"));
+        let server = Url::parse("http://nas:8420/api/x").expect("an address");
+        let jar = Jar::plain(folder.path().join("cookies.json"));
+        let mut kept = CookieStore::default();
+
+        kept.parse("session=abc; Path=/; Max-Age=3600", &server)
+            .expect("a cookie");
+        jar.save(&kept).expect("kept");
+
+        let starting = starting_cookies(&jar, &preferences, folder.path());
+
+        assert_eq!(starting.get_request_values(&server).count(), 1);
+    }
+
+    #[test]
+    fn starts_empty_and_keeps_nothing_where_the_electron_app_left_no_session() {
+        let folder = tempfile::tempdir().expect("a temporary folder");
+        let preferences = Preferences::open(folder.path().join("preferences.json"));
+        let jar = Jar::plain(folder.path().join("cookies.json"));
+
+        preferences
+            .write(crate::preferences::SERVER_ADDRESS, "http://nas:8420")
+            .expect("written");
+
+        let starting = starting_cookies(&jar, &preferences, folder.path());
+
+        assert_eq!(starting.iter_any().count(), 0);
+        assert!(!folder.path().join("cookies.json").exists());
     }
 
     #[test]

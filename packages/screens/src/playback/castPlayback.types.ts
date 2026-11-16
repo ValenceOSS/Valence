@@ -7,4 +7,9 @@ declare global {
 
 type CastState = 'unavailable' | 'available' | 'connecting' | 'connected';
 
-export type { CastState };
+type PlaybackTarget = {
+  isAvailable: boolean;
+  state: 'idle' | 'connecting' | 'connected';
+};
+
+export type { CastState, PlaybackTarget };

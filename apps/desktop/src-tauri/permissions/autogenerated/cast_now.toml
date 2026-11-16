@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cast-now"
+description = "Enables the cast_now command without any pre-configured scope."
+commands.allow = ["cast_now"]
+
+[[permission]]
+identifier = "deny-cast-now"
+description = "Denies the cast_now command without any pre-configured scope."
+commands.deny = ["cast_now"]

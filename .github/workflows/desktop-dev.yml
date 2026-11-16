@@ -6,7 +6,8 @@ name: Desktop dev channel
 #
 # The channel is one release, tagged `desktop-dev` and marked as a prerelease, which every build
 # replaces with a release of its own: the installers, the signed update bundles, and the latest.json
-# the app reads to find them, which desktop.yml writes with every address pointing at this release.
+# the app reads to find them, which desktop.yml writes with every address pointing at this release,
+# with the dev*.yml feeds a dev build of the old Electron app reads to update into this one.
 # A dev build's version says it is one, and the app reads that to follow this release and nothing
 # else; a released build follows the newest release, which a prerelease never is. Nothing else in the
 # repository answers to a tag that does not start with `v`, so moving this one starts nothing.

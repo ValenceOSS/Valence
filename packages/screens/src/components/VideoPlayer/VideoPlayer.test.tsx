@@ -22,6 +22,9 @@ import type * as SubtitlesModule from '@ValenceClient/playback/fetchSubtitles';
 import type * as TrickplayModule from '@ValenceClient/playback/fetchTrickplay';
 import type * as CastSenderModule from '@ValenceScreens/playback/castSender';
 import type * as CastPlaybackModule from '@ValenceScreens/playback/castPlayback';
+import type { Casting } from '@ValenceClient/platform/Platform.types';
+import type { CastingNow } from '@ValenceContracts/schemas/CastingNow';
+import type { CastPlayed } from '@ValenceContracts/schemas/CastPlayed';
 
 const startMock = vi.hoisted(() => vi.fn());
 const stopMock = vi.hoisted(() => vi.fn());
@@ -3864,6 +3867,7 @@ describe('while a Chromecast plays it', () => {
   const casting = async (onProgress = vi.fn()) => {
     const context = {
       addEventListener: vi.fn<(event: string, listener: () => void) => void>(),
+      removeEventListener: vi.fn(),
       requestSession: vi.fn(),
       getCurrentSession: () => null,
     };
@@ -3928,6 +3932,286 @@ describe('while a Chromecast plays it', () => {
       expect(startMock.mock.calls.at(-1)?.[3]).toBe(1500);
     });
     expect(startMock.mock.calls.at(-1)?.[9]).toBe(false);
+  });
+});
+
+describe('casting from a client that speaks to the devices itself', () => {
+  const LIVING_ROOM = { id: 'living-room', name: 'Living Room TV', model: 'Chromecast Ultra' };
+
+  /**
+   * A client that casts, as the desktop app does, whose state and device a test can move.
+   *
+   * @param first - Where casting stands to begin with.
+   * @returns The client's casting, and how to make it say things.
+   */
+  const aClientThatCasts = (first: CastingNow) => {
+    let now = first;
+    const changes = new Set<(said: CastingNow) => void>();
+    const plays = new Set<(said: CastPlayed) => void>();
+    const casting = {
+      now: () => now,
+      whenChanged: (listener: (said: CastingNow) => void) => {
+        changes.add(listener);
+        listener(now);
+
+        return () => {
+          changes.delete(listener);
+        };
+      },
+      connect: vi.fn(() => Promise.resolve(true)),
+      disconnect: vi.fn(() => Promise.resolve()),
+      load: vi.fn(() => Promise.resolve(true)),
+      whenPlayed: (listener: (said: CastPlayed) => void) => {
+        plays.add(listener);
+
+        return () => {
+          plays.delete(listener);
+        };
+      },
+      play: vi.fn(),
+      pause: vi.fn(),
+      seek: vi.fn(),
+      setVolume: vi.fn(),
+      reachableAddress: vi.fn((path: string) => Promise.resolve(`http://192.168.1.10:8420${path}`)),
+    } satisfies Casting;
+
+    installATestClient({ casting });
+
+    return {
+      casting,
+      change: (said: CastingNow) => {
+        now = said;
+        changes.forEach((listener) => {
+          listener(said);
+        });
+      },
+      play: (said: CastPlayed) => {
+        plays.forEach((listener) => {
+          listener(said);
+        });
+      },
+    };
+  };
+
+  afterEach(() => {
+    installATestClient();
+  });
+
+  it('lists the devices on the network and connects to the one chosen', async () => {
+    const { casting } = aClientThatCasts({
+      state: 'available',
+      devices: [LIVING_ROOM],
+      device: null,
+    });
+    const user = userEvent.setup();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+    await user.click(await screen.findByRole('button', { name: 'Cast to a device' }));
+    await user.click(await screen.findByRole('button', { name: /Living Room TV/ }));
+
+    expect(casting.connect).toHaveBeenCalledWith('living-room');
+    expect(loadCastSenderMock).not.toHaveBeenCalled();
+  });
+
+  it('casts from the address the desktop app is served from, which no browser could', async () => {
+    aClientThatCasts({ state: 'available', devices: [LIVING_ROOM], device: null });
+    isReachableOriginMock.mockReturnValue(false);
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+    await user.click(await screen.findByRole('button', { name: 'Cast to a device' }));
+
+    expect(screen.queryByText(/instead of localhost/)).not.toBeInTheDocument();
+  });
+
+  it('says so when the device chosen could not be reached', async () => {
+    const { casting } = aClientThatCasts({
+      state: 'available',
+      devices: [LIVING_ROOM],
+      device: null,
+    });
+    const user = userEvent.setup();
+
+    casting.connect.mockResolvedValue(false);
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+    await user.click(await screen.findByRole('button', { name: 'Cast to a device' }));
+    await user.click(await screen.findByRole('button', { name: /Living Room TV/ }));
+
+    expect(await screen.findByText(/connect to that device/)).toBeInTheDocument();
+  });
+
+  it('hands the client the ticketed path of a stream made for a Chromecast', async () => {
+    const { casting } = aClientThatCasts({
+      state: 'connected',
+      devices: [LIVING_ROOM],
+      device: LIVING_ROOM,
+    });
+
+    castAddressMock.mockResolvedValue('/api/playback/cast/ticket/index.m3u8');
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+    await settled();
+    fakeMediaElement(await screen.findByLabelText('Arrival')).loaded({
+      duration: 7200,
+      seekableTo: 7200,
+    });
+
+    await waitFor(() => {
+      expect(casting.load).toHaveBeenCalledWith(
+        expect.objectContaining({
+          address: '/api/playback/cast/ticket/index.m3u8',
+          contentType: 'application/x-mpegurl',
+          title: 'Arrival',
+        }),
+      );
+    });
+    expect(startMock.mock.calls.at(-1)?.[9]).toBe(true);
+    expect(startMock.mock.calls.at(-1)?.[1]).toMatchObject({ name: 'Living Room TV' });
+    expect(castStreamMock).not.toHaveBeenCalled();
+  });
+
+  it('plays, pauses and moves the device rather than this window while it casts', async () => {
+    const onProgress = vi.fn();
+    const { casting, play } = aClientThatCasts({
+      state: 'connected',
+      devices: [LIVING_ROOM],
+      device: LIVING_ROOM,
+    });
+    const user = userEvent.setup();
+
+    renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} onProgress={onProgress} isImmersive />,
+    );
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+
+    fakeMediaElement(element).loaded({ duration: 7200, seekableTo: 7200 });
+    await waitFor(() => {
+      expect(casting.load).toHaveBeenCalled();
+    });
+    act(() => {
+      play({ seconds: 1500, isPlaying: true });
+    });
+
+    expect(onProgress).toHaveBeenLastCalledWith(1500, expect.any(Number));
+
+    await user.click(await screen.findByRole('button', { name: 'Pause' }));
+
+    expect(casting.pause).toHaveBeenCalled();
+  });
+
+  describe('in a web view that offers AirPlay of its own', () => {
+    let isWireless = false;
+
+    beforeEach(() => {
+      isWireless = false;
+      Object.defineProperty(HTMLVideoElement.prototype, 'webkitShowPlaybackTargetPicker', {
+        configurable: true,
+        value: vi.fn(),
+      });
+      Object.defineProperty(HTMLVideoElement.prototype, 'webkitCurrentPlaybackTargetIsWireless', {
+        configurable: true,
+        get: () => isWireless,
+      });
+    });
+
+    afterEach(() => {
+      Reflect.deleteProperty(HTMLVideoElement.prototype, 'webkitShowPlaybackTargetPicker');
+      Reflect.deleteProperty(HTMLVideoElement.prototype, 'webkitCurrentPlaybackTargetIsWireless');
+    });
+
+    /**
+     * Has WebKit say an AirPlay receiver has appeared.
+     *
+     * @param element - The video element WebKit tells.
+     */
+    const anAirPlayReceiverAppears = (element: HTMLElement) => {
+      act(() => {
+        element.dispatchEvent(
+          Object.assign(new Event('webkitplaybacktargetavailabilitychanged'), {
+            availability: 'available',
+          }),
+        );
+      });
+    };
+
+    it('lists AirPlay beside the Chromecasts, and shows the system’s own list for it', async () => {
+      aClientThatCasts({ state: 'available', devices: [LIVING_ROOM], device: null });
+      promptForDeviceMock.mockResolvedValue('shown');
+
+      const user = userEvent.setup();
+
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+      await settled();
+      anAirPlayReceiverAppears(await screen.findByLabelText('Arrival'));
+      await user.click(await screen.findByRole('button', { name: 'Cast to a device' }));
+
+      expect(await screen.findByRole('button', { name: /Living Room TV/ })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /AirPlay devices/ }));
+
+      expect(promptForDeviceMock).toHaveBeenCalled();
+    });
+
+    it('offers AirPlay alone where no Chromecast is on the network', async () => {
+      aClientThatCasts({ state: 'unavailable', devices: [], device: null });
+
+      const user = userEvent.setup();
+
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+      await settled();
+
+      expect(screen.queryByRole('button', { name: 'Cast to a device' })).not.toBeInTheDocument();
+
+      anAirPlayReceiverAppears(await screen.findByLabelText('Arrival'));
+      await user.click(await screen.findByRole('button', { name: 'Cast to a device' }));
+
+      expect(await screen.findByRole('button', { name: /AirPlay devices/ })).toBeInTheDocument();
+    });
+
+    it('hands an AirPlay receiver the stream at an address the network reaches', async () => {
+      const { casting } = aClientThatCasts({ state: 'available', devices: [], device: null });
+
+      castAddressMock.mockResolvedValue('/api/playback/cast/ticket/index.m3u8');
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+      await settled();
+
+      const element = await screen.findByLabelText('Arrival');
+
+      fakeMediaElement(element).loaded({ duration: 7200, seekableTo: 7200 });
+      isWireless = true;
+      act(() => {
+        element.dispatchEvent(new Event('webkitcurrentplaybacktargetiswirelesschanged'));
+      });
+
+      await waitFor(() => {
+        expect(casting.reachableAddress).toHaveBeenCalledWith(
+          '/api/playback/cast/ticket/index.m3u8',
+        );
+      });
+      expect(casting.load).not.toHaveBeenCalled();
+      expect(screen.getByText('Playing on another device')).toBeInTheDocument();
+    });
+  });
+
+  it('stops casting when asked from the list', async () => {
+    const { casting } = aClientThatCasts({
+      state: 'connected',
+      devices: [LIVING_ROOM],
+      device: LIVING_ROOM,
+    });
+    const user = userEvent.setup();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+    await user.click(await screen.findByRole('button', { name: 'Playing on another device' }));
+    await user.click(await screen.findByRole('button', { name: /Stop casting/ }));
+
+    expect(casting.disconnect).toHaveBeenCalled();
   });
 });
 

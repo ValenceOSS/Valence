@@ -11,11 +11,13 @@
   "scripts": {
     "dev": "tauri dev",
     "build": "vite build",
+    "decoders": "tsx src/build/buildTheDecoders.ts",
     "package": "tauri build --config src-tauri/tauri.local.conf.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "renderer": "vite",
-    "update-manifest": "tsx src/build/writeUpdateManifest.ts"
+    "update-manifest": "tsx src/build/writeUpdateManifest.ts",
+    "sweep": "tsx src/build/sweepForLeaks.ts"
   },
   "dependencies": {
     "@keyline-icons/react": "1.8.0",

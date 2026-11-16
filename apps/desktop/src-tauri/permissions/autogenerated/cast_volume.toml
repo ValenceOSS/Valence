@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cast-volume"
+description = "Enables the cast_volume command without any pre-configured scope."
+commands.allow = ["cast_volume"]
+
+[[permission]]
+identifier = "deny-cast-volume"
+description = "Denies the cast_volume command without any pre-configured scope."
+commands.deny = ["cast_volume"]

@@ -6,12 +6,19 @@
 //! WebAssembly may be compiled because the player decodes some sound and pictures with it;
 //! pictures may come from anywhere over https because a catalogue's artwork lives at its own
 //! addresses; and the one thing a page may frame is the video host's player, for trailers.
+//!
+//! A page also says to name its origin, and only its origin, to any other site it asks something
+//! of. The video host's player refuses to play, with its error 153, for a page that names nobody,
+//! which is what the Electron app's custom scheme did until it named its website instead; a page
+//! served from this machine's loopback address has an origin of its own to name.
 
 use std::path::{Path, PathBuf};
 
 use axum::body::Body;
 use axum::extract::{Request, State};
-use axum::http::header::{CACHE_CONTROL, CONTENT_ENCODING, CONTENT_LENGTH, CONTENT_TYPE};
+use axum::http::header::{
+    CACHE_CONTROL, CONTENT_ENCODING, CONTENT_LENGTH, CONTENT_TYPE, REFERRER_POLICY,
+};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use reqwest::Url;
@@ -28,6 +35,10 @@ pub const VIDEO_HOSTS: [&str; 4] = [
 ];
 
 const CONTENT_SECURITY_POLICY: &str = "content-security-policy";
+
+/// What a page names itself to another site as: its origin alone, and nothing to a site over
+/// plain http.
+const NAMES_ITS_ORIGIN: &str = "strict-origin-when-cross-origin";
 
 /// Where the renderer's files come from.
 #[derive(Clone, Debug)]
@@ -180,6 +191,7 @@ fn a_page(bytes: Vec<u8>, policy: &str) -> Response {
                 HeaderValue::from_static("text/html; charset=utf-8"),
             ),
             (CACHE_CONTROL, HeaderValue::from_static("no-cache")),
+            (REFERRER_POLICY, HeaderValue::from_static(NAMES_ITS_ORIGIN)),
         ],
         bytes,
     )
@@ -284,6 +296,8 @@ pub fn under_the_policy(from: &HeaderMap, policy: &str) -> HeaderMap {
         if let Ok(policy) = HeaderValue::from_str(policy) {
             headers.insert(CONTENT_SECURITY_POLICY, policy);
         }
+
+        headers.insert(REFERRER_POLICY, HeaderValue::from_static(NAMES_ITS_ORIGIN));
     }
 
     headers
@@ -444,6 +458,10 @@ mod tests {
         let page = from_the_folder(folder.path(), "/", "policy").await;
 
         assert_eq!(page.headers()[CONTENT_SECURITY_POLICY], "policy");
+        assert_eq!(
+            page.headers()[REFERRER_POLICY],
+            "strict-origin-when-cross-origin"
+        );
         assert_eq!(body_of(page).await, "<p>page</p>");
 
         let script = from_the_folder(folder.path(), "/assets/a.js", "policy").await;
@@ -468,6 +486,26 @@ mod tests {
 
         assert_eq!(wasm.status(), StatusCode::NOT_FOUND);
 
+        std::fs::create_dir(folder.path().join("decoders")).expect("made");
+        std::fs::write(
+            folder
+                .path()
+                .join("decoders")
+                .join("valence-browser-decoders.wasm"),
+            b"\0asm",
+        )
+        .expect("written");
+
+        let decoders = from_the_folder(
+            folder.path(),
+            "/decoders/valence-browser-decoders.wasm",
+            "policy",
+        )
+        .await;
+
+        assert_eq!(decoders.status(), StatusCode::OK);
+        assert_eq!(decoders.headers()[CONTENT_TYPE], "application/wasm");
+
         let escaping = from_the_folder(folder.path(), "/../index.html", "policy").await;
 
         assert_eq!(escaping.status(), StatusCode::NOT_FOUND);
@@ -483,6 +521,7 @@ mod tests {
         let page = under_the_policy(&from, "policy");
 
         assert_eq!(page[CONTENT_SECURITY_POLICY], "policy");
+        assert_eq!(page[REFERRER_POLICY], "strict-origin-when-cross-origin");
         assert!(page.get(CONTENT_ENCODING).is_none());
         assert!(page.get(CONTENT_LENGTH).is_none());
 
@@ -493,6 +532,7 @@ mod tests {
         let kept = under_the_policy(&script, "policy");
 
         assert!(kept.get(CONTENT_SECURITY_POLICY).is_none());
+        assert!(kept.get(REFERRER_POLICY).is_none());
         assert_eq!(kept[CONTENT_LENGTH], "10");
     }
 }

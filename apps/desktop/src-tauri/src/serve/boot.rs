@@ -38,6 +38,7 @@ pub fn snapshot(app: &AppHandle) -> Value {
         "isReachable": crate::reach::is_reachable(app),
         "about": crate::about::about(app),
         "passkeyWay": passkey_way(std::env::consts::OS),
+        "carriedStorage": crate::carry_over::carried_storage(app),
     })
 }
 

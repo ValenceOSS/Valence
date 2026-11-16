@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cast-seek"
+description = "Enables the cast_seek command without any pre-configured scope."
+commands.allow = ["cast_seek"]
+
+[[permission]]
+identifier = "deny-cast-seek"
+description = "Denies the cast_seek command without any pre-configured scope."
+commands.deny = ["cast_seek"]

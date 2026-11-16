@@ -15,6 +15,7 @@
     "allow-this-launch-write",
     "allow-this-launch-forget",
     "allow-what-is-now",
+    "allow-carried-storage-taken",
     "allow-go-to-the-server",
     "allow-change-server",
     "allow-frame-minimise",
@@ -37,6 +38,16 @@
     "allow-passkeys-make",
     "allow-passkeys-sign-in-on-a-page",
     "allow-passkeys-add-one-in-the-browser",
-    "allow-now-watching"
+    "allow-now-watching",
+    "allow-cast-now",
+    "allow-cast-connect",
+    "allow-cast-load",
+    "allow-cast-play",
+    "allow-cast-pause",
+    "allow-cast-seek",
+    "allow-cast-volume",
+    "allow-cast-disconnect",
+    "allow-cast-address-of",
+    "allow-press-a-shortcut"
   ]
 }

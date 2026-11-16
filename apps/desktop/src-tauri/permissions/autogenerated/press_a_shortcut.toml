@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-press-a-shortcut"
+description = "Enables the press_a_shortcut command without any pre-configured scope."
+commands.allow = ["press_a_shortcut"]
+
+[[permission]]
+identifier = "deny-press-a-shortcut"
+description = "Denies the press_a_shortcut command without any pre-configured scope."
+commands.deny = ["press_a_shortcut"]

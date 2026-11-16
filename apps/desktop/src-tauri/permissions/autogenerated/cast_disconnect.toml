@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cast-disconnect"
+description = "Enables the cast_disconnect command without any pre-configured scope."
+commands.allow = ["cast_disconnect"]
+
+[[permission]]
+identifier = "deny-cast-disconnect"
+description = "Denies the cast_disconnect command without any pre-configured scope."
+commands.deny = ["cast_disconnect"]

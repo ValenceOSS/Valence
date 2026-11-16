@@ -23,6 +23,16 @@ name: Desktop app
 # .app.tar.gz rather than the .dmg; on Windows and Linux it is the installer and the AppImage
 # themselves. Without the manifest, a release looks like no release at all to every copy installed.
 #
+# Copies of the Electron app this one replaced are still installed, and they update themselves with
+# electron-updater, which reads its own feeds off the release: latest.yml for Windows,
+# latest-mac.yml for macOS and latest-linux.yml and latest-linux-arm64.yml for Linux, or dev.yml and
+# the like on the dev channel. The manifest job writes those too, each pointing at this app's own
+# installers, so an Electron copy updates straight into this app and nobody has to install it by
+# hand. On Windows it runs the NSIS installer quietly; the hooks written for the installer below run
+# the Electron app's uninstaller first, keeping its data, and start the app again after. On macOS it
+# installs from a .zip of the .app, made here beside the .dmg, which only takes where both apps are
+# signed by the same Developer ID. On Linux it puts the AppImage in place of the old one.
+#
 # The updater's key is not optional for a release or a dev channel build: one built without it could
 # never be updated, so those fail here rather than ship. A test build without the key is built
 # without updater bundles. It needs, under Settings → Secrets and variables → Actions:
@@ -165,9 +175,40 @@ jobs:
 
           echo "include=$include" >> "$GITHUB_OUTPUT"
 
+  # The player's own decoders for what no webview decodes, TrueHD sound and MPEG-2 pictures, built
+  # from Rust to WebAssembly once, here, and shipped in every platform's app at the address the
+  # player fetches them from, as the server's image ships them. One file serves every platform, and
+  # compiling the TrueHD decoder takes more memory than a macOS runner has.
+  decoders:
+    name: Build the browser decoders
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || inputs.tag }}
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: desktop-decoders
+
+      - run: cargo build --release -p valence-browser-decoders --target wasm32-unknown-unknown
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: browser-decoders
+          path: target/wasm32-unknown-unknown/release/valence_browser_decoders.wasm
+          if-no-files-found: error
+          retention-days: 1
+
   build:
     name: Build for ${{ matrix.name }}
-    needs: platforms
+    needs: [platforms, decoders]
     runs-on: ${{ matrix.runner }}
     env:
       IS_SIGNED: ${{ secrets.MAC_CERTIFICATE_P12 != '' }}
@@ -280,7 +321,37 @@ jobs:
           HAS_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
           PUBKEY: ${{ vars.TAURI_UPDATER_PUBKEY }}
 
-      - run: pnpm --filter @valence/desktop build
+      # Tauri's Windows installer runs hooks of the app's own around installing, written in NSIS,
+      # the only thing it reads. They are written here from TypeScript rather than kept in the
+      # repository: before installing, they run the Electron app's uninstaller where it is installed,
+      # keeping its data, and after it they start the app again where the Electron app's updater
+      # asked for that.
+      - name: Write the installer's hooks
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          hooks="$RUNNER_TEMP/installer-hooks.nsh"
+          pnpm --filter @valence/desktop exec tsx src/build/writeInstallerHooks.ts --out "$hooks"
+          jq --arg hooks "$hooks" '.bundle.windows.nsis.installerHooks = $hooks' \
+            "$TAURI_CI_CONFIG" > "$RUNNER_TEMP/tauri.ci.hooked.json"
+          mv "$RUNNER_TEMP/tauri.ci.hooked.json" "$TAURI_CI_CONFIG"
+
+      # The renderer, with the decoders built above where the player asks for them. Vite ships the
+      # app's public folder as it is, so the file goes there before it builds. `tauri build` would
+      # build both itself, and the configuration written above tells it not to.
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: browser-decoders
+          path: ${{ runner.temp }}/browser-decoders
+
+      - name: Build the renderer, with the decoders
+        shell: bash
+        run: |
+          mkdir -p apps/desktop/public/decoders
+          cp "$RUNNER_TEMP/browser-decoders/valence_browser_decoders.wasm" \
+            apps/desktop/public/decoders/valence-browser-decoders.wasm
+          pnpm --filter @valence/desktop exec vite build
+          test -s apps/desktop/dist/decoders/valence-browser-decoders.wasm
 
       # The certificate goes into a keychain of this job's own, made and unlocked here, and Tauri is
       # told which identity in it to sign with. Tauri can make a keychain itself from the certificate
@@ -360,6 +431,9 @@ jobs:
       # are gathered into one folder under the names the installers have always had, each with the
       # updater's signature beside it where there is one. The signature is over the file's contents,
       # so a new name leaves it good.
+      #
+      # On macOS the signed .app is zipped as well, with ditto, as the Electron app's builder zipped
+      # it: that .zip is what an Electron copy's updater installs this app from.
       - name: Gather the installers
         shell: bash
         run: |
@@ -408,6 +482,26 @@ jobs:
             esac
           done
 
+          zip_the_app() {
+            local name="$1"
+            shift
+            if [ "$#" -ne 1 ] || [ ! -d "$1" ]; then
+              echo "::error title=No app::Expected one app to zip as $name, and found: $*"
+              exit 1
+            fi
+            ditto -c -k --sequesterRsrc --keepParent "$1" "$out/$name"
+          }
+
+          for target in ${TARGETS//,/ }; do
+            bundle="target/$target/release/bundle"
+            case "$target" in
+              aarch64-apple-darwin)
+                zip_the_app "Valence-$version-arm64-mac.zip" "$bundle"/macos/*.app ;;
+              x86_64-apple-darwin)
+                zip_the_app "Valence-$version-x64-mac.zip" "$bundle"/macos/*.app ;;
+            esac
+          done
+
           ls -l "$out"
         env:
           TARGETS: ${{ matrix.targets }}
@@ -435,7 +529,8 @@ jobs:
           if-no-files-found: error
 
   # The updater's manifest, latest.json, written once every platform is built: one file names every
-  # platform's bundle, so no one build can write it. Only for a release or a dev channel build, whose
+  # platform's bundle, so no one build can write it. The Electron app's feeds are written beside it,
+  # from the installers, the .zip and the AppImages. Only for a release or a dev channel build, whose
   # bundles are signed and whose downloads have an address to point at: the release's tag, or the dev
   # channel's `desktop-dev`. Handed over as an artefact named like the platforms', so release.yml and
   # desktop-dev.yml hang it on the release with everything else.
@@ -486,9 +581,31 @@ jobs:
           TAG: ${{ inputs.tag }}
           DEV_VERSION: ${{ inputs.dev_version }}
 
+      - name: Write the Electron app's feeds
+        run: |
+          if [ -n "$TAG" ]; then
+            release=(--version "${TAG#v}")
+          else
+            release=(--version "$DEV_VERSION" --dev)
+          fi
+
+          pnpm --filter @valence/desktop exec tsx src/build/writeElectronFeeds.ts \
+            --folder "$GITHUB_WORKSPACE/release" \
+            --out "$RUNNER_TEMP/manifest" \
+            "${release[@]}"
+
+          for feed in "$RUNNER_TEMP"/manifest/*.yml; do
+            echo "::group::$(basename "$feed")"
+            cat "$feed"
+            echo "::endgroup::"
+          done
+        env:
+          TAG: ${{ inputs.tag }}
+          DEV_VERSION: ${{ inputs.dev_version }}
+
       - name: Hand over the manifest, for the release
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: valence-desktop-manifest
-          path: ${{ runner.temp }}/manifest/latest.json
+          path: ${{ runner.temp }}/manifest/
           if-no-files-found: error

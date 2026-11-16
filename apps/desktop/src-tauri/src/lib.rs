@@ -12,11 +12,17 @@
 mod about;
 mod app_icon;
 mod badge;
+mod carry_over;
+mod cast;
+mod debugging;
 mod discord;
 mod discovery;
 mod held;
+mod jar;
 mod listening;
+mod memory;
 mod menu;
+mod notices;
 mod passkeys;
 mod paths;
 mod preferences;
@@ -60,6 +66,8 @@ fn as_it_runs(app: &AppHandle, event: RunEvent) {
 
 /// Builds and runs the app until it quits.
 pub fn run() {
+    debugging::open_the_debugging_port();
+
     let builder = tauri::Builder::default();
 
     #[cfg(not(debug_assertions))]
@@ -76,19 +84,23 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
             window::prepare(app);
+            memory::setup()?;
             preferences::setup(app);
             this_launch::setup(app);
             about::setup(app);
+            carry_over::setup(app);
             upstream::setup(app)?;
             reach::setup(app)?;
             serve::setup(app)?;
             held::setup(app)?;
             listening::setup(app)?;
             discovery::setup(app)?;
+            cast::setup(app);
             passkeys::setup(app)?;
             updates::setup(app)?;
             discord::setup(app)?;
             badge::setup(app)?;
+            notices::setup(app)?;
             menu::setup(app)?;
             tray::setup(app)?;
             app_icon::setup(app)?;
@@ -102,6 +114,7 @@ pub fn run() {
             this_launch::this_launch_write,
             this_launch::this_launch_forget,
             serve::boot::what_is_now,
+            carry_over::carried_storage_taken,
             window::go_to_the_server,
             window::change_server,
             window::frame_minimise,
@@ -125,6 +138,16 @@ pub fn run() {
             passkeys::passkeys_sign_in_on_a_page,
             passkeys::passkeys_add_one_in_the_browser,
             discord::now_watching,
+            cast::cast_now,
+            cast::cast_connect,
+            cast::cast_load,
+            cast::cast_play,
+            cast::cast_pause,
+            cast::cast_seek,
+            cast::cast_volume,
+            cast::cast_disconnect,
+            cast::cast_address_of,
+            menu::press_a_shortcut,
         ])
         .build(tauri::generate_context!());
 

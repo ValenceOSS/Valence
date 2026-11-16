@@ -260,6 +260,21 @@ describe('installDesktopPlatform', () => {
     expect(platformInUse().describeThisDevice()).toEqual({ app: 'desktop', name: 'Studio Mac' });
   });
 
+  it('casts through the host, which speaks to the devices a web view cannot', () => {
+    const cast = { now: () => ({ state: 'unavailable', devices: [], device: null }) };
+
+    vi.stubGlobal('valence', { ...aBridge(), cast });
+    installDesktopPlatform();
+
+    expect(platformInUse().casting).toBe(cast);
+  });
+
+  it('casts with nothing where the host offers no casting', () => {
+    installDesktopPlatform();
+
+    expect(platformInUse().casting).toBeUndefined();
+  });
+
   it('says only that this is the desktop app where the computer gives no name', () => {
     vi.stubGlobal('valence', aBridge(true, null));
 

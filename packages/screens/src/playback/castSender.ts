@@ -6,6 +6,8 @@ const PATIENCE_MILLISECONDS = 8000;
 
 const RECEIVER = 'CC1AD845';
 
+const CAST_CONTENT_TYPE = 'application/x-mpegurl';
+
 /**
  * Loads the casting library on demand and hands back what it provides. Loaded only when somebody
  * asks to cast, since most sessions never do and it is not a small thing to fetch.
@@ -100,7 +102,7 @@ const castStream = async (
   }
 
   try {
-    const media = new chromecast.media.MediaInfo(url, 'application/x-mpegurl');
+    const media = new chromecast.media.MediaInfo(url, CAST_CONTENT_TYPE);
     const metadata = new chromecast.media.GenericMediaMetadata();
 
     metadata.title = title;
@@ -119,4 +121,4 @@ const castStream = async (
   }
 };
 
-export { loadCastSender, castStateOf, castStream, SENDER_URL, RECEIVER };
+export { loadCastSender, castStateOf, castStream, SENDER_URL, RECEIVER, CAST_CONTENT_TYPE };
