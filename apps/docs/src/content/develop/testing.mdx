@@ -229,6 +229,8 @@ pnpm rust:test
 
 which is `cargo test`. Lint with `pnpm rust:check`, which is `cargo clippy --all-targets -- -D warnings` followed by `cargo fmt --check`.
 
+Both compile the whole workspace, which includes the desktop app's Tauri host in `apps/desktop/src-tauri`. Its unit tests sit beside its modules, and anything that does not need a window, such as the loopback server's guard and routes, the update manifest's feed or the Discord frames, is tested as plain functions or against an in-process server. On Linux it builds against WebKitGTK, so install the libraries [Desktop app](/install/desktop-app#building-from-source) lists before running either. To test the host alone, run `cargo test -p valence-desktop`.
+
 - Negotiation logic is tested as pure functions over data, with no media files and no FFmpeg. `transcode_plan.rs` is the example.
 - Integration tests drive the real router with `tower::ServiceExt` and real FFmpeg, then assert on bytes it produced. Unit tests can prove an argument vector is right. Only these prove the arguments transcode something a player can read.
 - Cargo compiles each file directly under `tests/` as its own binary, so shared helpers live in `tests/common/mod.rs`. It reads `VALENCE_FFMPEG` and `VALENCE_FFPROBE` rather than asking for `ffmpeg` by name, and builds fixtures under the system temp directory.
@@ -267,7 +269,7 @@ It is separate from `ci.yml` because a Debian container, a Rust build and minute
 
 ## What CI runs
 
-`ci.yml` runs one shared build job, then lint, `pnpm db:check` and typecheck on one runner. Tests run in two kinds of job. The large suites are sharded: `@valence/screens` six ways, `@valence/server` four, `@valence/client` three, and `@valence/ui` as one. Every other package shares a single runner, two at a time. Each test job keeps its turbo test results in the Actions cache, so a package or shard whose inputs have not changed replays its last pass rather than running again. The Rust job runs only when a pull request touches `apps/transcoder`, `Cargo.toml`, `Cargo.lock` or the CI workflow itself, and always on `main`. See [Local setup](/develop/local-setup#hooks-and-ci) for the hooks that run the same checks before you push.
+`ci.yml` runs one shared build job, then lint, `pnpm db:check` and typecheck on one runner. Tests run in two kinds of job. The large suites are sharded: `@valence/screens` six ways, `@valence/server` four, `@valence/client` three, and `@valence/ui` as one. Every other package shares a single runner, two at a time. Each test job keeps its turbo test results in the Actions cache, so a package or shard whose inputs have not changed replays its last pass rather than running again. The Rust job runs only when a pull request touches `apps/transcoder`, `apps/desktop/src-tauri`, `packages/i18n/strings-en.json` (which the desktop host reads its words from), `Cargo.toml`, `Cargo.lock` or the CI workflow itself, and always on `main`. A pull request that touches the desktop host also lints and tests it on Windows, x64 and ARM64, and on macOS, since much of it compiles only there. See [Local setup](/develop/local-setup#hooks-and-ci) for the hooks that run the same checks before you push.
 
 ## Writing a good test here
 

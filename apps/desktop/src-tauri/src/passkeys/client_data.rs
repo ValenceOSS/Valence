@@ -101,10 +101,9 @@ mod tests {
     fn writes_the_fields_in_a_browsers_order() {
         assert_eq!(
             a_client_data(Ceremony::Get, "abc", "https://valence.example"),
-            Some(
-                r#"{"type":"webauthn.get","challenge":"abc","origin":"https://valence.example","crossOrigin":false}"#
-                    .to_owned()
-            )
+            Some(String::from(
+                "{\"type\":\"webauthn.get\",\"challenge\":\"abc\",\"origin\":\"https://valence.example\",\"crossOrigin\":false}"
+            ))
         );
     }
 

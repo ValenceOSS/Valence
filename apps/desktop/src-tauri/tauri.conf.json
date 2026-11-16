@@ -14,8 +14,28 @@
     "withGlobalTauri": false,
     "security": { "csp": null }
   },
-  "bundle": { "active": false, "icon": ["../build/icon.png"] },
+  "bundle": {
+    "active": true,
+    "createUpdaterArtifacts": true,
+    "publisher": "Valence contributors",
+    "copyright": "Copyright © Valence contributors",
+    "homepage": "https://getvalence.app",
+    "category": "Video",
+    "shortDescription": "Valence, a self-hosted streaming platform.",
+    "longDescription": "Valence, a self-hosted streaming platform, as a desktop app.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
   "plugins": {
-    "updater": { "pubkey": "", "endpoints": [] }
+    "updater": {
+      "pubkey": "",
+      "endpoints": ["https://github.com/ValenceOSS/Valence/releases/latest/download/latest.json"]
+    }
   }
 }

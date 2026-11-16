@@ -21,8 +21,6 @@ allowBuilds:
   better-sqlite3: false
   core-js: false
   dtrace-provider: false
-  electron: true
-  electron-winstaller: true
   esbuild: true
   lfa-ponyfill: false
   protobufjs: false

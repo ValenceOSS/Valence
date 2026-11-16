@@ -110,7 +110,15 @@ Repeat for `ghcr.io/valenceoss/valence-requests` and `qmcgaw/gluetun` if you use
 
 Nothing else is installed on the host. The compose file and `.env` are the only files, and the stack needed no certificate or other configuration file. Delete the stack folder when you are done. If you followed the [Quick start](/start/quick-start), that is `~/valence`.
 
-If you built the [desktop app](/install/desktop-app) on a computer, remove it the way you would any application, and delete its data folder if you want its remembered server address and its downloads gone. The desktop app keeps downloads in its own user data folder, not in your Downloads folder.
+If you installed the [desktop app](/install/desktop-app) on a computer, remove it the way you would any application: from **Installed apps** in Windows Settings, by dragging it from Applications to the Bin on macOS, or by deleting the AppImage, or with `sudo apt remove valence` for the `.deb`, on Linux. Removing it leaves your downloads and settings where they are, so a reinstall picks them up. The desktop app keeps downloads in its own data folder, not in your Downloads folder. Delete these as well to leave nothing behind:
+
+| What                                                          | Windows                    | macOS                                                                             | Linux                      |
+| :------------------------------------------------------------ | :------------------------- | :-------------------------------------------------------------------------------- | :------------------------- |
+| Downloads, the sign-in, the update log and the webview's data | `%APPDATA%\Valence`        | `~/Library/Application Support/Valence`                                           | `~/.config/Valence`        |
+| The remembered server and other preferences                   | `%APPDATA%\valence-nodejs` | `~/Library/Preferences/valence-nodejs`                                            | `~/.config/valence-nodejs` |
+| The webview's own storage and cache                           | In the first row           | `~/Library/WebKit/app.valence.desktop` and `~/Library/Caches/app.valence.desktop` | In the first row           |
+
+On Linux, `~/.config` is wherever `XDG_CONFIG_HOME` points, if you set it.
 
 ## If you enabled re-encoding
 

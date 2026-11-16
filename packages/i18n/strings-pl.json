@@ -9980,16 +9980,6 @@
     "context": "Read out by screen readers for the unread badge on Valence's taskbar button on Windows. {count} is filled in by the app."
   },
   {
-    "handler": "desktop.main.theApplication.hostCouldNotBeReached",
-    "text": "Nie udało się połączyć z {host}.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`). {host} is filled in by the app."
-  },
-  {
-    "handler": "desktop.main.theApplication.thePageStoppedWaiting",
-    "text": "Strona przekroczyła limit czasu.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`)."
-  },
-  {
     "handler": "desktop.main.theApplication.thisClientsOwnPagesCouldNot",
     "text": "Nie udało się wczytać stron tej aplikacji z {served}.",
     "context": "Shown in the main of the desktop app (from `serveTheApplication`). {served} is filled in by the app."

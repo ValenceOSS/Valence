@@ -9250,16 +9250,6 @@
     "context": "Read out by screen readers for the unread badge on Valence's taskbar button on Windows. {count} is filled in by the app."
   },
   {
-    "handler": "desktop.main.theApplication.hostCouldNotBeReached",
-    "text": "Yhteyttä ei saatu osoitteeseen {host}.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`). {host} is filled in by the app."
-  },
-  {
-    "handler": "desktop.main.theApplication.thePageStoppedWaiting",
-    "text": "Sivu aikakatkaistiin.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`)."
-  },
-  {
     "handler": "desktop.main.theApplication.thisClientsOwnPagesCouldNot",
     "text": "Tämän sovelluksen sivuja ei voitu ladata lähteestä {served}.",
     "context": "Shown in the main of the desktop app (from `serveTheApplication`). {served} is filled in by the app."

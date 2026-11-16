@@ -62,11 +62,23 @@ Accounts and sessions are handled by [better-auth](https://www.better-auth.com).
 
 Cookies should be secure whenever the instance is reached over HTTPS, which is the recommended state. Setup asks, and starts on when it is opened over HTTPS; `COOKIE_SECURE`, where set, wins at every start. Secure cookies are never sent over plain HTTP, so on a plain HTTP test system it must be `false`, or sign-in appears to work and then does not hold.
 
-Keep `TRUSTED_ORIGINS` to the addresses you actually use. Adding an origin lets pages served from it use the API with a signed-in user's cookies. The addresses the machine itself holds are trusted automatically, and so is the desktop client's own scheme, which only an application that registered it can use.
+Keep `TRUSTED_ORIGINS` to the addresses you actually use. Adding an origin lets pages served from it use the API with a signed-in user's cookies. The addresses the machine itself holds are trusted automatically, and so is `valence://app`, the scheme the desktop app served its pages from when it was built on Electron, which only an application that registered it can use. Today's desktop app needs no entry at all, as the next section explains.
 
 An account can be signed out of every device from its owner's account page, and by an administrator. Banning an account stops it signing in, and administrators can see and end each session. better-auth's own administration endpoints are closed, and account administration goes through Valence's permission checked routes under `/api/admin/accounts`.
 
 Passkeys tie to the hostname in `BETTER_AUTH_URL` and need a secure context, so they work over HTTPS and not over a plain HTTP address on your network.
+
+### The desktop app's loopback server
+
+The desktop app serves its window from a small server of its own on `127.0.0.1` and passes the window's API requests and its WebSocket on to your Valence from the app's own process. The session cookie your server sets is kept by the app, in `cookies.json` in its data folder, readable only by your user on macOS and Linux, and never reaches the page. Requests leave the app with your server's own address as their `Origin`, which is why the desktop app needs no entry in `TRUSTED_ORIGINS`.
+
+A server on loopback can be reached by any page open in any browser on the same computer, so the app's answers only the window it opened:
+
+- When the app starts it makes a random 256-bit key. The window's first page is `/enter` with that key, which sets it as a cookie, `valence-key`, that is `HttpOnly` and `SameSite=Strict`, and moves on. Every request for the API, the realtime socket, a downloaded file or the page's start-up values must carry that cookie, compared in constant time, or it is refused with `403`. The key is never written to disk, so it is new every launch.
+- Every such request must also name the loopback server itself in its `Host` header, so a web page cannot reach it through a name it controls that points at `127.0.0.1`.
+- Only the app's own built pages, which hold nothing of yours, are answered without the key.
+
+The app's pages carry a strict content security policy, the same as the web client's, and only the app's own windows on that loopback address may call into the app's host.
 
 ## Rate limiting
 

@@ -11,11 +11,24 @@ name: Desktop app
 # It builds; it does not publish. release.yml takes what it produced and hangs it on the release, and
 # desktop-dev.yml hangs a dev channel build on the dev channel's.
 #
-# What it hands over is more than the installers. The desktop app updates itself with
-# electron-updater, which finds a new version by reading latest.yml, latest-mac.yml or
-# latest-linux.yml (latest-linux-arm64.yml on ARM64) off the release, downloads the file named there, and uses the .blockmap beside
-# it to fetch only what changed. On macOS what it installs is the .zip rather than the .dmg. Without
-# those, a release looks like no release at all to every copy already installed.
+# The app is Tauri: a Rust host around the system's own webview. `tauri build` compiles the host for
+# one target at a time and bundles it, and the files it writes are renamed here to the names the
+# Electron app's installers had, so a link to `Valence-Setup-<version>-x64.exe` keeps its shape.
+#
+# What it hands over is more than the installers. The app updates itself with Tauri's updater, which
+# reads latest.json off the release, downloads the bundle named there for its platform, and installs
+# it only if it matches the signature beside it in the manifest. Each bundle is signed with the
+# updater's own key as it is built, and the manifest job below writes latest.json from the bundles
+# and their .sig files once every platform is done. On macOS what the updater installs is the
+# .app.tar.gz rather than the .dmg; on Windows and Linux it is the installer and the AppImage
+# themselves. Without the manifest, a release looks like no release at all to every copy installed.
+#
+# The updater's key is not optional for a release or a dev channel build: one built without it could
+# never be updated, so those fail here rather than ship. A test build without the key is built
+# without updater bundles. It needs, under Settings → Secrets and variables → Actions:
+#   TAURI_SIGNING_PRIVATE_KEY           secret: the private key `tauri signer generate` wrote
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  secret: the password it was generated with
+#   TAURI_UPDATER_PUBKEY                variable: the public key beside it, the .pub file's contents
 #
 # Each installer is also handed over by itself, unzipped, so one can be downloaded straight off the
 # run's page. Everything a run produces goes into one zipped artefact per platform as well, which is
@@ -86,15 +99,11 @@ jobs:
   # input directly, so the rows are written out here and the ones asked for handed to the build.
   #
   # Linux is two rows, each on a runner of its own processor: an AppImage holds one architecture,
-  # and building ARM64 natively is quicker and surer than under emulation. electron-builder names
-  # each one's update feed for its processor, latest-linux.yml and latest-linux-arm64.yml, and the
-  # updater reads the one for the machine it is on.
+  # and building ARM64 natively is quicker and surer than under emulation, WebKitGTK and all.
   #
-  # Windows is one row building both, an installer each: the updater finds a Windows update in
-  # latest.yml whatever the processor, so the two must be listed in one, which only one build
-  # writes. It picks the installer whose name carries its own processor, which is why both are
-  # named for theirs. The ARM64 app is packaged on the x64 runner, and its native module is
-  # cross-compiled there.
+  # Windows is one row building both, an installer each, the ARM64 one cross-compiled on the x64
+  # runner. macOS is one row too, building for Apple silicon and for Intel one after the other, each
+  # its own app: two downloads half the size of one universal app.
   platforms:
     name: Choose the platforms
     runs-on: ubuntu-24.04
@@ -107,72 +116,43 @@ jobs:
         run: |
           include=$(jq -c --arg asked "$ASKED" '
             ($asked | split(",") | map(select(. != ""))) as $wanted
-            | [.[] | select($asked == "" or (.platform as $platform | $wanted | index($platform)))
-                   | .files |= join("\n")]' <<'ROWS'
+            | [.[] | select($asked == "" or (.platform as $platform | $wanted | index($platform)))]' <<'ROWS'
           [
             {
               "name": "Windows",
               "artefact": "Windows",
               "platform": "Windows",
               "runner": "windows-2025-vs2026",
-              "flags": "--win --x64 --arm64",
-              "native": "--arch=x64 --arch=arm64",
+              "targets": "x86_64-pc-windows-msvc,aarch64-pc-windows-msvc",
               "installer": "apps/desktop/release/Valence-Setup-*-x64.exe",
-              "also": "apps/desktop/release/Valence-Setup-*-arm64.exe",
-              "files": [
-                "apps/desktop/release/Valence-Setup-*.exe",
-                "apps/desktop/release/Valence-Setup-*.exe.blockmap",
-                "apps/desktop/release/latest.yml",
-                "apps/desktop/release/dev.yml"
-              ]
+              "also": "apps/desktop/release/Valence-Setup-*-arm64.exe"
             },
             {
               "name": "macOS",
               "artefact": "macOS",
               "platform": "macOS",
               "runner": "macos-26",
-              "flags": "--mac --arm64 --x64",
-              "native": "",
+              "targets": "aarch64-apple-darwin,x86_64-apple-darwin",
               "installer": "apps/desktop/release/Valence-*-arm64.dmg",
-              "also": "apps/desktop/release/Valence-*-x64.dmg",
-              "files": [
-                "apps/desktop/release/Valence-*.dmg",
-                "apps/desktop/release/Valence-*.dmg.blockmap",
-                "apps/desktop/release/Valence-*-mac.zip",
-                "apps/desktop/release/Valence-*-mac.zip.blockmap",
-                "apps/desktop/release/latest-mac.yml",
-                "apps/desktop/release/dev-mac.yml"
-              ]
+              "also": "apps/desktop/release/Valence-*-x64.dmg"
             },
             {
               "name": "Linux",
               "artefact": "Linux",
               "platform": "Linux",
               "runner": "ubuntu-24.04",
-              "flags": "--linux --x64",
-              "native": "",
+              "targets": "x86_64-unknown-linux-gnu",
               "installer": "apps/desktop/release/Valence-*-x86_64.AppImage",
-              "also": "",
-              "files": [
-                "apps/desktop/release/Valence-*-x86_64.AppImage",
-                "apps/desktop/release/latest-linux.yml",
-                "apps/desktop/release/dev-linux.yml"
-              ]
+              "also": "apps/desktop/release/Valence-*-amd64.deb"
             },
             {
               "name": "Linux ARM64",
               "artefact": "Linux-ARM64",
               "platform": "Linux",
               "runner": "ubuntu-24.04-arm",
-              "flags": "--linux --arm64",
-              "native": "",
+              "targets": "aarch64-unknown-linux-gnu",
               "installer": "apps/desktop/release/Valence-*-arm64.AppImage",
-              "also": "",
-              "files": [
-                "apps/desktop/release/Valence-*-arm64.AppImage",
-                "apps/desktop/release/latest-linux-arm64.yml",
-                "apps/desktop/release/dev-linux-arm64.yml"
-              ]
+              "also": "apps/desktop/release/Valence-*-arm64.deb"
             }
           ]
           ROWS
@@ -204,6 +184,20 @@ jobs:
           ref: ${{ inputs.ref || inputs.tag }}
           persist-credentials: false
 
+      # What Tauri builds against on Linux: WebKitGTK and GTK for the window, the indicator library
+      # for the tray, and what the AppImage bundler runs. The GStreamer plugins are what the webview
+      # plays video and sound with, and the AppImage carries the ones installed here, so the
+      # decoders it ships are the ones listed: without libav there is no H.264 to play.
+      - name: Install what Tauri builds against
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev \
+            libxdo-dev libssl-dev patchelf file \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+            gstreamer1.0-libav
+
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -213,16 +207,24 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.targets }}
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: desktop-${{ matrix.artefact }}
+
       # The app's own package.json says 0.0.0, since versions are cut by release-please rather than
-      # written into packages. The installer is named for the release it belongs to, so the version
-      # is written into this checkout's copy before it is built. Not passed as a builder flag: a
-      # dotted `-c.extraMetadata.version` is split apart on the way through PowerShell.
+      # written into packages. Tauri reads the app's version from that file, and the installer is
+      # named for the release it belongs to, so the version is written into this checkout's copy
+      # before it is built.
       #
-      # A dev channel build is pointed at the dev channel's own release rather than at the newest
-      # release, and its version names the channel, so the builder writes dev.yml beside it rather
-      # than latest.yml and the app it builds asks for that. The updater only takes what is newer
-      # than what it is running, which is why desktop-dev.yml counts its builds up rather than
-      # naming them after a commit.
+      # A dev channel build's version names the channel, and the app reads that to follow the dev
+      # channel's release rather than the newest one. The updater only takes what is newer than what
+      # it is running, which is why desktop-dev.yml counts its builds up rather than naming them
+      # after a commit.
       - name: Stamp the release's version on it
         shell: bash
         working-directory: apps/desktop
@@ -231,33 +233,60 @@ jobs:
             npm pkg set version="${TAG#v}"
           elif [ -n "$DEV_VERSION" ]; then
             npm pkg set version="$DEV_VERSION"
-            npm pkg set --json "build.publish={\"provider\":\"generic\",\"url\":\"https://github.com/${REPO}/releases/download/desktop-dev\",\"channel\":\"dev\"}"
           else
             npm pkg set version="0.0.0-dev"
           fi
         env:
           TAG: ${{ inputs.tag }}
           DEV_VERSION: ${{ inputs.dev_version }}
+
+      # What this build adds to the app's configuration, written to a file rather than passed as JSON
+      # on the command line, which PowerShell and cmd quote differently. The renderer is built once,
+      # in the next step, rather than again for every target.
+      #
+      # A release or a dev channel build carries the updater's public key and signed update bundles,
+      # and fails here, before anything is compiled, when the key is not there to sign them with. A
+      # test build carries them where the key is there and goes without where it is not.
+      - name: Choose whether it can be updated
+        shell: bash
+        run: |
+          if [ -n "$TAG" ] || [ -n "$DEV_VERSION" ]; then
+            if [ "$HAS_KEY" != "true" ] || [ -z "$PUBKEY" ]; then
+              echo "::error title=No updater key::A release or dev channel build signs its update bundles. Set the TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD secrets and the TAURI_UPDATER_PUBKEY variable, as desktop.yml describes."
+              exit 1
+            fi
+            updates=true
+          elif [ "$HAS_KEY" = "true" ] && [ -n "$PUBKEY" ]; then
+            updates=true
+          else
+            updates=false
+          fi
+
+          if [ -n "$DEV_VERSION" ]; then
+            feed="https://github.com/${REPO}/releases/download/desktop-dev/latest.json"
+          else
+            feed="https://github.com/${REPO}/releases/latest/download/latest.json"
+          fi
+
+          jq -n --argjson updates "$updates" --arg pubkey "$PUBKEY" --arg feed "$feed" '
+            {build: {beforeBuildCommand: null}, bundle: {createUpdaterArtifacts: $updates}}
+            + (if $updates then {plugins: {updater: {pubkey: $pubkey, endpoints: [$feed]}}} else {} end)
+          ' > "$RUNNER_TEMP/tauri.ci.json"
+          echo "TAURI_CI_CONFIG=$RUNNER_TEMP/tauri.ci.json" >> "$GITHUB_ENV"
+        env:
+          TAG: ${{ inputs.tag }}
+          DEV_VERSION: ${{ inputs.dev_version }}
           REPO: ${{ github.repository }}
+          HAS_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+          PUBKEY: ${{ vars.TAURI_UPDATER_PUBKEY }}
 
-      - run: pnpm --filter @valence/desktop exec electron-vite build
+      - run: pnpm --filter @valence/desktop build
 
-      # The part of the app written in Rust, which asks Windows for a passkey. A Mac and Linux sign in
-      # with one in the browser, so they build nothing and need no toolchain.
-      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
-        if: matrix.native != ''
-        with:
-          toolchain: stable
-          targets: x86_64-pc-windows-msvc,aarch64-pc-windows-msvc
-
-      - name: Build the native module
-        if: matrix.native != ''
-        run: pnpm --filter @valence/desktop run native ${{ matrix.native }}
-
-      # The certificate goes into a keychain of this job's own, made and unlocked here, where the
-      # builder finds the Developer ID in it. The builder can make one itself from the certificate,
-      # but on current macOS runners it then cannot unlock what it made. The keychain and the
-      # notarising key go with the runner.
+      # The certificate goes into a keychain of this job's own, made and unlocked here, and Tauri is
+      # told which identity in it to sign with. Tauri can make a keychain itself from the certificate
+      # in APPLE_CERTIFICATE, but a keychain made for the build on current macOS runners has not
+      # always unlocked, and this one is known to. The keychain and the notarising key go with the
+      # runner.
       - name: Put the signing certificate in a keychain of its own
         if: matrix.name == 'macOS' && env.IS_SIGNED == 'true'
         shell: bash
@@ -275,32 +304,46 @@ jobs:
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
           rm "$RUNNER_TEMP/certificate.p12"
 
+          identity="$(security find-identity -v -p codesigning "$keychain" \
+            | sed -n 's/.*"\(Developer ID Application: .*\)"$/\1/p' | head -1)"
+          if [ -z "$identity" ]; then
+            echo "::error title=No signing identity::The certificate in MAC_CERTIFICATE_P12 holds no Developer ID Application identity."
+            exit 1
+          fi
+
           mkdir -p "$RUNNER_TEMP/notarising"
           printf '%s' "$ASC_API_KEY_P8" > "$RUNNER_TEMP/notarising/AuthKey_$ASC_KEY_ID.p8"
-          echo "CSC_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+          echo "APPLE_SIGNING_IDENTITY=$identity" >> "$GITHUB_ENV"
         env:
           MAC_CERTIFICATE_P12: ${{ secrets.MAC_CERTIFICATE_P12 }}
           MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
 
-      # Signed and notarised on macOS where the certificate was put in a keychain above; otherwise
-      # no identity is looked for, since there is none and looking on a runner only warns.
+      # One build per target. Signed and notarised on macOS where the certificate was put in a
+      # keychain above, which Tauri does while it bundles; otherwise built unsigned. The commit goes
+      # into the host as it is compiled, for the app's About.
       - name: Build
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "macOS" ] && [ "$IS_SIGNED" = "true" ]; then
-            export APPLE_API_KEY="$RUNNER_TEMP/notarising/AuthKey_$ASC_KEY_ID.p8"
-            export APPLE_API_KEY_ID="$ASC_KEY_ID"
+            export APPLE_API_KEY="$ASC_KEY_ID"
             export APPLE_API_ISSUER="$ASC_ISSUER_ID"
-          else
-            export CSC_IDENTITY_AUTO_DISCOVERY=false
+            export APPLE_API_KEY_PATH="$RUNNER_TEMP/notarising/AuthKey_$ASC_KEY_ID.p8"
           fi
 
-          pnpm --filter @valence/desktop exec electron-builder ${{ matrix.flags }} --publish never
+          VALENCE_COMMIT="$(git rev-parse --short=7 HEAD)"
+          export VALENCE_COMMIT
+
+          for target in ${TARGETS//,/ }; do
+            pnpm --filter @valence/desktop exec tauri build --target "$target" --config "$TAURI_CI_CONFIG"
+          done
         env:
+          TARGETS: ${{ matrix.targets }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       # A signature that is there but wrong fails here rather than on somebody's Mac: every app
       # built is checked, and Gatekeeper is asked whether it would open it.
@@ -308,10 +351,66 @@ jobs:
         if: matrix.name == 'macOS' && env.IS_SIGNED == 'true'
         shell: bash
         run: |
-          for app in apps/desktop/release/mac*/Valence.app; do
+          for app in target/*-apple-darwin/release/bundle/macos/Valence.app; do
             codesign --verify --deep --strict --verbose=2 "$app"
             spctl --assess --type execute --verbose "$app"
           done
+
+      # Tauri names its bundles `Valence_<version>_<arch>` in a folder per target and per kind. They
+      # are gathered into one folder under the names the installers have always had, each with the
+      # updater's signature beside it where there is one. The signature is over the file's contents,
+      # so a new name leaves it good.
+      - name: Gather the installers
+        shell: bash
+        run: |
+          version="$(jq -r .version apps/desktop/package.json)"
+          out=apps/desktop/release
+          mkdir -p "$out"
+
+          take() {
+            local name="$1" needed="$2"
+            shift 2
+            if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
+              if [ "$needed" = "needed" ]; then
+                echo "::error title=No bundle::Expected one file to hand over as $name, and found: $*"
+                exit 1
+              fi
+              return 0
+            fi
+            cp "$1" "$out/$name"
+            if [ -f "$1.sig" ]; then
+              cp "$1.sig" "$out/$name.sig"
+            fi
+          }
+
+          for target in ${TARGETS//,/ }; do
+            bundle="target/$target/release/bundle"
+            case "$target" in
+              aarch64-apple-darwin)
+                take "Valence-$version-arm64.dmg" needed "$bundle"/dmg/*.dmg
+                take "Valence-$version-arm64.app.tar.gz" optional "$bundle"/macos/*.app.tar.gz ;;
+              x86_64-apple-darwin)
+                take "Valence-$version-x64.dmg" needed "$bundle"/dmg/*.dmg
+                take "Valence-$version-x64.app.tar.gz" optional "$bundle"/macos/*.app.tar.gz ;;
+              x86_64-pc-windows-msvc)
+                take "Valence-Setup-$version-x64.exe" needed "$bundle"/nsis/*-setup.exe ;;
+              aarch64-pc-windows-msvc)
+                take "Valence-Setup-$version-arm64.exe" needed "$bundle"/nsis/*-setup.exe ;;
+              x86_64-unknown-linux-gnu)
+                take "Valence-$version-x86_64.AppImage" needed "$bundle"/appimage/*.AppImage
+                take "Valence-$version-amd64.deb" needed "$bundle"/deb/*.deb ;;
+              aarch64-unknown-linux-gnu)
+                take "Valence-$version-arm64.AppImage" needed "$bundle"/appimage/*.AppImage
+                take "Valence-$version-arm64.deb" needed "$bundle"/deb/*.deb ;;
+              *)
+                echo "::error title=Unknown target::Nothing says what to hand over for $target."
+                exit 1 ;;
+            esac
+          done
+
+          ls -l "$out"
+        env:
+          TARGETS: ${{ matrix.targets }}
 
       - name: Hand over the installer on its own
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -332,5 +431,64 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: valence-desktop-${{ matrix.artefact }}
-          path: ${{ matrix.files }}
+          path: apps/desktop/release/
+          if-no-files-found: error
+
+  # The updater's manifest, latest.json, written once every platform is built: one file names every
+  # platform's bundle, so no one build can write it. Only for a release or a dev channel build, whose
+  # bundles are signed and whose downloads have an address to point at: the release's tag, or the dev
+  # channel's `desktop-dev`. Handed over as an artefact named like the platforms', so release.yml and
+  # desktop-dev.yml hang it on the release with everything else.
+  manifest:
+    name: Write the update manifest
+    needs: build
+    if: inputs.tag != '' || inputs.dev_version != ''
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || inputs.tag }}
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: valence-desktop-*
+          merge-multiple: true
+          path: release
+
+      - name: Write latest.json
+        run: |
+          mkdir -p "$RUNNER_TEMP/manifest"
+
+          if [ -n "$TAG" ]; then
+            release=(--version "${TAG#v}" --tag "$TAG")
+          else
+            release=(--version "$DEV_VERSION" --dev)
+          fi
+
+          pnpm --filter @valence/desktop exec tsx src/build/writeUpdateManifest.ts \
+            --folder "$GITHUB_WORKSPACE/release" \
+            --repository "$GITHUB_REPOSITORY" \
+            --out "$RUNNER_TEMP/manifest/latest.json" \
+            "${release[@]}"
+
+          cat "$RUNNER_TEMP/manifest/latest.json"
+        env:
+          TAG: ${{ inputs.tag }}
+          DEV_VERSION: ${{ inputs.dev_version }}
+
+      - name: Hand over the manifest, for the release
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: valence-desktop-manifest
+          path: ${{ runner.temp }}/manifest/latest.json
           if-no-files-found: error

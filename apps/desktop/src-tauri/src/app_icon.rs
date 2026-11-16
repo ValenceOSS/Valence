@@ -93,8 +93,7 @@ fn the_dock_icon() {
     if let Some(picture) = NSImage::initWithData(NSImage::alloc(), &data) {
         let app = NSApplication::sharedApplication(main_thread);
 
-        // SAFETY: on the main thread, as the marker proves, with an image that lives as long as
-        // the app holds it.
+        // SAFETY: on the main thread, as the marker proves, with an image that lives as long as the app holds it.
         unsafe { app.setApplicationIconImage(Some(&picture)) };
     }
 }

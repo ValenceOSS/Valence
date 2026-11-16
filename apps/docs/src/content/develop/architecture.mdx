@@ -14,7 +14,7 @@ Valence is a TypeScript and Rust monorepo. One container carries three things: a
 | Media service      | `apps/transcoder` | Rust (axum, tokio)              | A process beside the server, on a unix socket                         | FFmpeg and ffprobe as child processes, the disk                       |
 | Requests service   | `apps/requests`   | TypeScript (Hono)               | An optional container on port 8421                                    | The database (its own tables), indexers, download clients, the server |
 | Web client         | `apps/web`        | TypeScript (React)              | Static files served by the server                                     | The server over HTTP and one WebSocket                                |
-| Desktop client     | `apps/desktop`    | TypeScript (Electron)           | A window onto a server                                                | The server, through the main process                                  |
+| Desktop client     | `apps/desktop`    | TypeScript and Rust (Tauri)     | A window onto a server                                                | The server, through the app's own loopback server                     |
 | Phone app          | `apps/mobile`     | TypeScript (Expo, React Native) | An app on the phone                                                   | The server over HTTP and one WebSocket                                |
 | Television app     | `apps/tv`         | TypeScript (Expo, React Native) | An app on the television, or a layout a television's browser is given | The server over HTTP and one WebSocket                                |
 | Marketing site     | `apps/landing`    | TypeScript (React)              | Its own image                                                         | Nothing at run time                                                   |
@@ -23,9 +23,9 @@ Valence is a TypeScript and Rust monorepo. One container carries three things: a
 The application itself, meaning everything a viewer sees, is not in `apps/web`. It lives in two packages, `packages/client` and `packages/screens`, and a client is a host that runs it. See [Repository layout](/develop/repository-layout) for the full directory map.
 
 ```
-                    Browser                 Desktop (Electron)
+                    Browser                 Desktop (Tauri)
                        |                           |
-                       |  HTTP  +  one WebSocket   |  valence:// scheme, then HTTP
+                       |  HTTP  +  one WebSocket   |  loopback server, then HTTP
                        v                           v
         +--------------------------------------------------------+
         |                    apps/server (Hono)                  |
@@ -128,13 +128,13 @@ Valence shows nothing about requesting until both `REQUESTS_URL` and `REQUESTS_S
 | `packages/ui`         | ValenceUI, the component library. See [UI library](/develop/ui-library).      |
 | `packages/plugin-sdk` | The public plugin manifest contract. See [Plugins](/develop/plugins).         |
 
-Anything a package needs from the host is a port on `Platform`: a device store, what to call this client, which client this is, held files, reachability and opening a socket. A host installs them with `installPlatform` before anything else runs. That is how one application runs in a browser tab and in an Electron window.
+Anything a package needs from the host is a port on `Platform`: a device store, what to call this client, which client this is, held files, reachability and opening a socket. A host installs them with `installPlatform` before anything else runs. That is how one application runs in a browser tab and in the desktop app's window.
 
 Data fetching uses TanStack Query and routing uses TanStack Router. The cache does not poll. It listens to the socket and invalidates what the server says changed. See [Realtime](/develop/realtime).
 
 ## The desktop client
 
-`apps/desktop` is an Electron application that is a window onto a server, not a server. It serves the same application from a custom `valence://app` scheme with a strict content security policy, forwards API requests to whichever Valence the person chose, and looks for a Valence on the same machine at the usual address, asking the person where it is only if none answers. It also owns the things a browser cannot: downloaded files kept on disk, the menu, the dock icon and Discord presence. It installs a desktop platform (`installDesktopPlatform`) whose ports are backed by files and IPC rather than by `localStorage`. See [Desktop app](/install/desktop-app) for installing it.
+`apps/desktop` is a Tauri application that is a window onto a server, not a server. A host written in Rust, in `apps/desktop/src-tauri`, opens a window in the system's own webview and serves the same application to it from a small server of its own on `127.0.0.1`, with a strict content security policy. That loopback server forwards API requests and the realtime socket to whichever Valence the person chose, keeping the session's cookies in the host rather than in the page, and answers only the window it opened: every request has to carry a key the window was given when it opened. The host looks for a Valence on the same machine at the usual address, asking the person where it is only if none answers, and owns the things a browser cannot: downloaded files kept on disk, the menu, the tray, the dock icon, Windows Hello, updates and Discord presence. In the page, `apps/desktop/src/bridge` builds `window.valence` from Tauri's commands and events, and the desktop platform (`installDesktopPlatform`) is backed by it rather than by `localStorage`. See [Desktop app](/install/desktop-app) for installing it.
 
 ## Realtime
 

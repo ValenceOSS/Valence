@@ -9250,16 +9250,6 @@
     "context": "Read out by screen readers for the unread badge on Valence's taskbar button on Windows. {count} is filled in by the app."
   },
   {
-    "handler": "desktop.main.theApplication.hostCouldNotBeReached",
-    "text": "Không thể kết nối đến {host}.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`). {host} is filled in by the app."
-  },
-  {
-    "handler": "desktop.main.theApplication.thePageStoppedWaiting",
-    "text": "Trang đã hết thời gian chờ.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`)."
-  },
-  {
     "handler": "desktop.main.theApplication.thisClientsOwnPagesCouldNot",
     "text": "Không thể tải các trang của ứng dụng này từ {served}.",
     "context": "Shown in the main of the desktop app (from `serveTheApplication`). {served} is filled in by the app."

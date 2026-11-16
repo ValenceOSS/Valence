@@ -90,8 +90,7 @@ fn lay_over(window: &WebviewWindow, png: Option<Vec<u8>>, description: String) {
     let _ = window.run_on_main_thread(move || {
         let window = HWND(handle as *mut core::ffi::c_void);
         let icon = drawn.and_then(|(bgra, mask, width, height)| {
-            // SAFETY: the mask and the colours are one entry and four bytes a pixel for every
-            // pixel of a picture of this size, alive for the call.
+            // SAFETY: the mask and the colours are one entry and four bytes a pixel for every pixel of a picture of this size, alive for the call.
             unsafe {
                 CreateIcon(
                     None,
@@ -112,8 +111,7 @@ fn lay_over(window: &WebviewWindow, png: Option<Vec<u8>>, description: String) {
         if let Some(taskbar) = taskbar {
             let words = HSTRING::from(description);
 
-            // SAFETY: the window is the app's own, the icon is ours or none, and the words live for
-            // the call; the taskbar keeps a copy of the icon.
+            // SAFETY: the window is the app's own, the icon is ours or none, and the words live for the call; the taskbar keeps a copy of the icon.
             let _ = unsafe { taskbar.SetOverlayIcon(window, icon.unwrap_or_default(), &words) };
         }
 

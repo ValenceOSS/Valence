@@ -278,7 +278,14 @@ In development the web client runs on port 5173 and proxies `/api` to 8420, so b
 
 ## Desktop and web
 
-The web client has no configuration of its own: the server serves it. The desktop client is a window onto a server, and reads two variables, both for testing it: `VALENCE_DEBUG_PORT` opens Chrome's remote debugging on that port, and `VALENCE_UPDATE_FEED_URL` points its updater at another feed. During development, `electron-vite` sets `ELECTRON_RENDERER_URL` for the desktop main process to find the dev server, and you do not set it yourself. To sign in from the desktop dev server, add its address to `TRUSTED_ORIGINS`, for example `http://localhost:5174`. The packaged desktop client is trusted without being listed.
+The web client has no configuration of its own: the server serves it. The desktop client is a window onto a server, and reads two variables when it starts, both for working on it:
+
+| Variable                  | Description                                                                                                                                                                                                                                                                                                                                                            |
+| :------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VALENCE_RENDERER_URL`    | Where the app's own pages come from: a Vite dev server, such as `http://127.0.0.1:5174`, which the app's loopback server then passes everything but the API through to. Unset, a development build uses the dev server address in `tauri.conf.json` and an installed build uses the pages built into it.                                                               |
+| `VALENCE_UPDATE_FEED_URL` | Where an installed build looks for updates, for trying an update end to end. A folder, such as `http://127.0.0.1:8080/feed/`, is looked in for `latest.json`; an address ending in `.json` is read as the manifest itself. Unset, a release follows the newest release and a dev channel build the `desktop-dev` release. A development build never looks for updates. |
+
+Building the desktop app reads `VALENCE_COMMIT`, the commit to show in its About, and the updater's signing key in `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`; [Releasing](/develop/releasing#the-desktop-app) covers those. The desktop client needs no entry in `TRUSTED_ORIGINS`, in development or installed, because it asks the server from its own process and names the server's address as its origin.
 
 ## Tooling and tests
 

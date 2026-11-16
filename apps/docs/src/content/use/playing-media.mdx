@@ -82,6 +82,16 @@ Sound that has to be re-encoded becomes AAC. The iPhone, iPad and Apple TV apps,
 
 Every decision carries a reason (for example "Client does not support the mkv container" or "Quality step limits resolution to 1280x720"), and the administrator can see how each live session is being delivered in the admin **Sessions** panel. Transcoding uses your server's processor or graphics card, so prefer direct play where you can. If the server has a supported graphics card, see [Hardware transcoding](/install/hardware-transcoding).
 
+### In the desktop app
+
+The desktop app plays through the webview your operating system provides, not a browser of its own, so what it can play without the server converting it is what that webview can play: Microsoft Edge's on Windows, Safari's on macOS, and WebKitGTK's on Linux. It is asked before every film, the same as a browser, and the server converts whatever it says no to.
+
+- **Windows.** Edge's WebView2 plays H.264, VP9 and AV1. HEVC plays where the graphics hardware decodes it and the HEVC Video Extensions are installed.
+- **macOS.** Safari's engine plays H.264 and HEVC, HDR included, and Dolby Digital Plus, but no MKV or WebM files, which the server repackages.
+- **Linux.** WebKitGTK plays through GStreamer, so the GStreamer plugins on the machine decide. The AppImage carries its own, with the common codecs; the `.deb` uses the system's, so install `gstreamer1.0-plugins-good`, `gstreamer1.0-plugins-bad` and `gstreamer1.0-libav` for the same.
+
+Expect more films to be converted in the desktop app than in Chrome or Edge on the same machine, and more than in the desktop app's earlier, Electron-based releases, which carried a Chromium of their own. **Stats for nerds** says why for each one.
+
 ### Playing more in the browser
 
 A browser with WebGPU can play many files it could not play by itself, so the server does not have to convert them. Turn it on under **My account**, then **Play more films in this browser**. The setting is kept in that browser for that address, not on your account. Turn it on again in each browser you use, and again if you reach the same server at a second address.

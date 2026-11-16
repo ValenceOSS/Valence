@@ -9250,16 +9250,6 @@
     "context": "Read out by screen readers for the unread badge on Valence's taskbar button on Windows. {count} is filled in by the app."
   },
   {
-    "handler": "desktop.main.theApplication.hostCouldNotBeReached",
-    "text": "{host}에 연결할 수 없어요.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`). {host} is filled in by the app."
-  },
-  {
-    "handler": "desktop.main.theApplication.thePageStoppedWaiting",
-    "text": "페이지 시간 초과.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`)."
-  },
-  {
     "handler": "desktop.main.theApplication.thisClientsOwnPagesCouldNot",
     "text": "이 앱의 페이지를 {served}에서 불러올 수 없어요.",
     "context": "Shown in the main of the desktop app (from `serveTheApplication`). {served} is filled in by the app."

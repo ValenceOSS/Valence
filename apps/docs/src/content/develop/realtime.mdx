@@ -23,7 +23,7 @@ The socket lives at `/api/realtime`, registered in `apps/server/src/Main.ts` wit
 
 Anything a client sends is parsed with Zod (`FromClientSchema`) before it is believed. An unreadable message is dropped rather than closing the connection, so a tab on an older build sending a message this server does not know loses that one message, not its whole feed.
 
-The desktop app cannot use the browser's same-origin socket, because its pages are served from a custom `valence://` scheme. It installs its own `openSocket` port that dials the chosen server directly. See [Architecture](/develop/architecture).
+The desktop app's pages are served by its own loopback server rather than by Valence, so its `openSocket` port dials `/api/realtime` on that loopback server, which opens the socket to the chosen server from the app's host, carrying the session's cookie, and passes frames both ways. See [Architecture](/develop/architecture).
 
 ## Message shapes
 
@@ -195,5 +195,5 @@ The client answers the server's `ping` with `pong`. The server sends one every 2
 - No events arriving: check the `subscribed` reply. A topic in `refused` means the account lacks the permission.
 - A feed stops after a permission change: look for a `dropped` frame.
 - Events arrive only as one frame with a large `folded`: that is coalescing working. Refetch instead of reading every payload.
-- Sign-in works but the socket does nothing: the cookie is not being sent. On the desktop app, remember the page origin and the server differ.
+- Sign-in works but the socket does nothing: the cookie is not being sent. On the desktop app the cookie is added by the app's host, not the page: sign in again in the app, and check `/api/realtime` reaches the server through any proxy in front of it.
 - Behind a reverse proxy, WebSocket upgrade headers must be forwarded. See [Reverse proxy](/install/reverse-proxy).

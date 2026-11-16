@@ -48,19 +48,30 @@ Both images carry a Docker health check that runs every 30 seconds.
 
 These are used when you work on Valence from a checkout. See [Local setup](/develop/local-setup).
 
-| Port                           | What                                            | Notes                                                                                                                                                                                           |
-| :----------------------------- | :---------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `5173`                         | Web client dev server (Vite)                    | Listens on all interfaces, so another device on your network can reach it. It proxies `/api` to `http://localhost:8420`, WebSocket included.                                                    |
-| `8420`                         | Server (`pnpm dev`)                             | From the `PORT` setting, default 8420.                                                                                                                                                          |
-| `8421`                         | Requests service (`pnpm dev`)                   | From `REQUESTS_PORT`, default 8421.                                                                                                                                                             |
-| `5174`                         | Landing site dev server                         | Fixed in its Vite configuration. The desktop client's dev renderer is also addressed at `http://localhost:5174` in `.env.example`, so add that origin to `TRUSTED_ORIGINS` when you work on it. |
-| `5175`                         | Documentation site dev server                   | Fixed in its Vite configuration. Started with `pnpm --filter @valence/docs dev`, after `pnpm --filter @valence/docs spec` has written the API document.                                         |
-| `3000`                         | `pnpm start` for the landing and docs sites     | Serves the built site. Set `PORT` to change it.                                                                                                                                                 |
-| `5432`                         | Postgres from `docker/compose.dev.yaml`         | Published to the host so the server running on your machine can reach it.                                                                                                                       |
-| `8421`                         | Requests service from `docker/compose.dev.yaml` | Published to the host in the development file only.                                                                                                                                             |
-| `/tmp/valence-transcoder.sock` | Media service                                   | The example value in `.env.example`. Outside a container `/run` is usually not writable, so choose a temporary path, `TRANSCODER_URL=unix:/tmp/valence-transcoder.sock`.                        |
+| Port                           | What                                            | Notes                                                                                                                                                                    |
+| :----------------------------- | :---------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `5173`                         | Web client dev server (Vite)                    | Listens on all interfaces, so another device on your network can reach it. It proxies `/api` to `http://localhost:8420`, WebSocket included.                             |
+| `8420`                         | Server (`pnpm dev`)                             | From the `PORT` setting, default 8420.                                                                                                                                   |
+| `8421`                         | Requests service (`pnpm dev`)                   | From `REQUESTS_PORT`, default 8421.                                                                                                                                      |
+| `5174`                         | Landing site dev server                         | Fixed in its Vite configuration. The desktop client's renderer dev server uses the same port on `127.0.0.1`, so run one of the two at a time.                            |
+| `5175`                         | Documentation site dev server                   | Fixed in its Vite configuration. Started with `pnpm --filter @valence/docs dev`, after `pnpm --filter @valence/docs spec` has written the API document.                  |
+| `3000`                         | `pnpm start` for the landing and docs sites     | Serves the built site. Set `PORT` to change it.                                                                                                                          |
+| `5432`                         | Postgres from `docker/compose.dev.yaml`         | Published to the host so the server running on your machine can reach it.                                                                                                |
+| `8421`                         | Requests service from `docker/compose.dev.yaml` | Published to the host in the development file only.                                                                                                                      |
+| `/tmp/valence-transcoder.sock` | Media service                                   | The example value in `.env.example`. Outside a container `/run` is usually not writable, so choose a temporary path, `TRANSCODER_URL=unix:/tmp/valence-transcoder.sock`. |
 
 The development compose file publishes more than the production one, because the code you are running sits outside the containers. Do not use it for a server other people depend on.
+
+## The desktop app
+
+The desktop app serves its own pages to its window from a small server on `127.0.0.1`, which also carries the window's requests and its WebSocket to your Valence. It listens on loopback only, so nothing on the network can reach it, and it answers only requests carrying a key it gave its own window when it opened.
+
+| Port                   | What                             | Notes                                                                                                                                                                                                                  |
+| :--------------------- | :------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `41847` to `41856`     | The app's loopback server        | The first of these that is free, remembered for next time, so the page's own storage stays put between launches. Where all ten are taken it takes any free port, and that launch starts with the page's storage empty. |
+| Any free port, briefly | Passkey hand-back (macOS, Linux) | While you sign in with a passkey in the browser, the app listens on `127.0.0.1` for the browser to hand you back, and stops once it has.                                                                               |
+
+The app reaches your server on whatever address you gave it, so a firewall between the two needs to let that through, the same as for a browser.
 
 ## The media service socket
 

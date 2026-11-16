@@ -100,12 +100,12 @@ Its jobs run in this order.
 | Job                  | What it does                                                                                                                                                                                                                          |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `verify`             | Checks out the tag and runs `pnpm lint`, `pnpm typecheck`, `pnpm db:check` and `pnpm test`                                                                                                                                            |
-| `verify-rust`        | In a `debian:bookworm-slim` container with Valence's FFmpeg, runs `cargo fmt --all --check`, `cargo clippy --all-targets -- -D warnings` and `cargo test`                                                                             |
+| `verify-rust`        | In a `debian:bookworm-slim` container with Valence's FFmpeg and WebKitGTK, runs `cargo fmt --all --check`, `cargo clippy --all-targets -- -D warnings` and `cargo test`                                                               |
 | `image`              | Runs `image.yml` for two images, in parallel: `valence` (from `docker/server.Dockerfile`) and `valence-requests` (from `apps/requests/Dockerfile`), each for amd64 and arm64                                                          |
 | `artefacts`          | Runs `pnpm build` and packs `compose.yaml`, `compose.native-transcoder.yaml`, `env.example` (from `docker/env.example`) and `valence-web.tar.gz` (the built web client)                                                               |
 | `transcoder-mac`     | On a macOS runner, builds the transcoder for Apple silicon and Intel and packs each with valence-ffmpeg's portable build as `valence-transcoder-macos-arm64.tar.gz` and `valence-transcoder-macos-x64.tar.gz`                         |
 | `transcoder-windows` | On an x64 and an ARM64 Windows runner, builds the transcoder natively on each and packs it with valence-ffmpeg's portable build for that processor as `valence-transcoder-windows-x64.zip` and `valence-transcoder-windows-arm64.zip` |
-| `desktop`            | Runs `desktop.yml`: builds and signs the desktop app for Windows, macOS and Linux, and attaches it to the release                                                                                                                     |
+| `desktop`            | Runs `desktop.yml`: builds the desktop app for Windows, macOS and Linux, signs and notarises the macOS app, and writes the updater's `latest.json`. See [The desktop app](#the-desktop-app)                                           |
 | `publish`            | Replaces the release notes with GitHub's generated ones and uploads the artefacts                                                                                                                                                     |
 | `announce`           | Posts to Discord                                                                                                                                                                                                                      |
 | `apps`               | Runs `apps.yml` once the release is published: the phone and Apple TV apps to TestFlight, and, where `PUBLISH_ANDROID` is on, the phone and Android TV apps to Google Play's internal testing and the Fire TV APK to the release      |
@@ -117,6 +117,42 @@ Its jobs run in this order.
 The release already exists when `publish` runs, because release-please created it. Its notes come from commit messages, which carry no author and no pull request number. So the job replaces the body with the notes GitHub generates from merged pull requests, where each line reads "title by @somebody in #number". `.github/release.yml` configures that, and it deliberately has no categories, because Conventional Commit titles already say `feat` or `fix` at the start of each line. A pull request labelled `ignore-for-release` is excluded.
 
 `CHANGELOG.md` in the repository keeps release-please's version, so the file reads as a history and not as a list of pull requests.
+
+## The desktop app
+
+`desktop.yml` builds the desktop app with Tauri on four runners: one Windows runner building an installer for x64 and one for ARM64, one macOS runner building an app for Apple silicon and one for Intel, and one Linux runner for each processor, each building an AppImage and a `.deb`. It stamps the release's version into `apps/desktop/package.json`, which Tauri reads, builds the renderer with `pnpm --filter @valence/desktop build`, then runs `tauri build --target <target>` once per target. Tauri names its bundles its own way, so the workflow renames them to the names the installers have always had, which the download page and existing links rely on.
+
+| Platform | Installer                                                               | What the updater installs             |
+| :------- | :---------------------------------------------------------------------- | :------------------------------------ |
+| Windows  | `Valence-Setup-<version>-x64.exe`, `Valence-Setup-<version>-arm64.exe`  | The installer itself                  |
+| macOS    | `Valence-<version>-arm64.dmg`, `Valence-<version>-x64.dmg`              | `Valence-<version>-<arch>.app.tar.gz` |
+| Linux    | `Valence-<version>-x86_64.AppImage`, `Valence-<version>-arm64.AppImage` | The AppImage itself                   |
+| Linux    | `Valence-<version>-amd64.deb`, `Valence-<version>-arm64.deb`            | The `.deb`, where the build signed it |
+
+Only the macOS app is signed with a certificate. Where `MAC_CERTIFICATE_P12` is set, the workflow puts the Developer ID certificate in a keychain of its own, Tauri signs the app with the hardened runtime and notarises it with the App Store Connect key, and the workflow checks the result with `codesign` and `spctl`. Windows and Linux builds are not code signed, so Windows SmartScreen warns on first run.
+
+Every bundle the updater installs is also signed with the updater's own key, which is separate from any code signing certificate, and an installed app takes an update only when its signature matches the public key it was built with. Once every platform is built, the `manifest` job runs `apps/desktop/src/build/writeUpdateManifest.ts` over the bundles and their `.sig` files and writes `latest.json`: the version, a link to the release and, for each platform, the bundle's download address on the release and its signature. Linux bundles are listed by installer, as `linux-x86_64-appimage` and `linux-x86_64-deb`, never as plain `linux-x86_64`: an app installed from a `.deb` falls back to the plain name, and would be handed an AppImage to install as a package. `release.yml` and `desktop-dev.yml` hang it on the release with everything else. An installed app reads `https://github.com/ValenceOSS/Valence/releases/latest/download/latest.json`, and a dev channel build reads the same file from the `desktop-dev` release.
+
+A release or dev channel build fails at the start, before anything is compiled, when the updater's key is missing, since an app built without it could never update. A build started from `desktop-test-build.yml` without the key is built without update bundles.
+
+| Where           | Name                                            | What it is                                                               |
+| --------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
+| GitHub secret   | `TAURI_SIGNING_PRIVATE_KEY`                     | The updater's private key, as `tauri signer generate` wrote it           |
+| GitHub secret   | `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`            | The password the key was made with                                       |
+| GitHub variable | `TAURI_UPDATER_PUBKEY`                          | The public key beside it: the whole contents of the `.pub` file          |
+| GitHub secret   | `MAC_CERTIFICATE_P12`                           | The Developer ID Application certificate exported as a `.p12`, in base64 |
+| GitHub secret   | `MAC_CERTIFICATE_PASSWORD`                      | The password the `.p12` was exported with                                |
+| GitHub secrets  | `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8` | The App Store Connect key, shared with the phone apps, for notarising    |
+
+To make the updater's key, run this once and store the two files' contents as above:
+
+```bash
+pnpm --filter @valence/desktop exec tauri signer generate -w ~/.tauri/valence-updater.key
+```
+
+Keep the private key somewhere safe as well as in the secret. Losing it means installed apps can no longer be updated: every copy would have to be installed again by hand from a build signed with a new key.
+
+The Electron app that came before read `latest.yml` rather than `latest.json`, so a copy of it installed before the move to Tauri does not find a Tauri release on its own. Each person installs the new app once by hand; [Desktop app](/install/desktop-app#coming-from-the-electron-app) says what carries over.
 
 ## Image tags
 

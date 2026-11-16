@@ -8,17 +8,17 @@ This page takes you from a fresh clone to a running Valence development environm
 
 ## Prerequisites
 
-| Tool    | Version                                            | Why                                                                                                                  |
-| ------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Node.js | The version in `.nvmrc` (currently 24)             | Runs the server, the tooling and every build. `package.json` requires `node` at 24 or newer.                         |
-| pnpm    | 12.16.1, from the `packageManager` field           | The workspace manager. Enable it with `corepack enable`.                                                             |
-| Docker  | Any recent Docker with Compose                     | Runs Postgres for development, and MySQL and MariaDB for the engine tests.                                           |
-| Rust    | Stable, through [rustup](https://rustup.rs)        | Builds the media service, and the desktop app's native module on Windows. Optional if you only touch the web client. |
-| FFmpeg  | Valence's own build, fetched by `pnpm ffmpeg:sync` | The media service drives it as a child process.                                                                      |
+| Tool    | Version                                            | Why                                                                                                   |
+| ------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Node.js | The version in `.nvmrc` (currently 24)             | Runs the server, the tooling and every build. `package.json` requires `node` at 24 or newer.          |
+| pnpm    | 12.16.1, from the `packageManager` field           | The workspace manager. Enable it with `corepack enable`.                                              |
+| Docker  | Any recent Docker with Compose                     | Runs Postgres for development, and MySQL and MariaDB for the engine tests.                            |
+| Rust    | Stable, through [rustup](https://rustup.rs)        | Builds the media service and the desktop app's Tauri host. Optional if you only touch the web client. |
+| FFmpeg  | Valence's own build, fetched by `pnpm ffmpeg:sync` | The media service drives it as a child process.                                                       |
 
 Two notes on that table.
 
-- Skipping Rust is fine for web work. The dev script for the media service tells you in a sentence that `cargo` was not found, rather than failing with a stack trace. The desktop app's does the same and starts without its native module, so passkeys in it do not work until you install Rust.
+- Skipping Rust is fine for web work. The dev script for the media service tells you in a sentence that `cargo` was not found, rather than failing with a stack trace. The desktop app cannot start without Rust, since its host is a Rust program, so leave it out of `pnpm dev` with a filter. On Linux the desktop app's host also builds against WebKitGTK, and so does `pnpm rust:check`, which compiles the whole Rust workspace: install the libraries [Desktop app](/install/desktop-app#building-from-source) lists first.
 - Skipping the FFmpeg sync is not fatal but it is worse than it looks. The media service falls back to whatever `ffmpeg` is on your `PATH`. On a Mac, Homebrew's build has no `overlay_videotoolbox` or `tonemap_videotoolbox`, so subtitles and HDR quietly leave the hardware and nothing says so.
 
 ## Clone and install
@@ -31,8 +31,6 @@ pnpm install
 ```
 
 `pnpm install` also runs the `prepare` script, which installs the husky git hooks. See [Hooks and CI](#hooks-and-ci) below.
-
-The install reports one unmet peer dependency, from `electron-vite` about Vite 8. It is expected and nothing is broken: the desktop app builds, and the warning describes a Vite range the tool was released before.
 
 ## Environment
 
@@ -53,7 +51,7 @@ cp .env.example .env
 | `TRANSCODER_URL`     | `unix:/tmp/valence-transcoder.sock`           | The server dials it and the media service binds it. `/run` is root owned outside a container, so a temporary path is used.            |
 | `MIGRATE_ON_START`   | `true`                                        | The server migrates the database when it starts. See [Database and migrations](/develop/database-and-migrations).                     |
 
-The desktop client is trusted without being listed. Its dev server is an ordinary web address though, so add `http://localhost:5174` to `TRUSTED_ORIGINS` to work on it. For every variable, see [Environment variables](/reference/environment-variables) and [Configuration](/install/configuration).
+The desktop client needs no entry in `TRUSTED_ORIGINS`, in development or installed: it asks the server from its own process and names the server's own address as its origin. For every variable, see [Environment variables](/reference/environment-variables) and [Configuration](/install/configuration).
 
 ### Valence's FFmpeg
 
@@ -119,13 +117,13 @@ pnpm --filter @valence/transcoder dev
 pnpm --filter @valence/requests dev
 ```
 
-| Service          | Command                                 | What it does                                                                                                | Port                                              |
-| ---------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Server           | `pnpm --filter @valence/server dev`     | `tsx watch` over `src/Main.ts`, reading the root `.env`                                                     | 8420                                              |
-| Web client       | `pnpm --filter @valence/web dev`        | Vite dev server that proxies `/api` (with WebSockets) to 8420                                               | 5173                                              |
-| Media service    | `pnpm --filter @valence/transcoder dev` | Runs `cargo run --bin valence-transcoder -- serve` through `apps/transcoder/scripts/dev/serveTranscoder.ts` | The unix socket in `TRANSCODER_URL`               |
-| Requests service | `pnpm --filter @valence/requests dev`   | `tsx watch` over its `src/Main.ts`                                                                          | 8421, from `REQUESTS_PORT`                        |
-| Desktop          | `pnpm --filter @valence/desktop dev`    | Builds the native module with `apps/desktop/src/build/buildDesktopNative.ts`, then `electron-vite dev`      | The renderer's dev server, 5174 in `.env.example` |
+| Service          | Command                                 | What it does                                                                                                | Port                                |
+| ---------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Server           | `pnpm --filter @valence/server dev`     | `tsx watch` over `src/Main.ts`, reading the root `.env`                                                     | 8420                                |
+| Web client       | `pnpm --filter @valence/web dev`        | Vite dev server that proxies `/api` (with WebSockets) to 8420                                               | 5173                                |
+| Media service    | `pnpm --filter @valence/transcoder dev` | Runs `cargo run --bin valence-transcoder -- serve` through `apps/transcoder/scripts/dev/serveTranscoder.ts` | The unix socket in `TRANSCODER_URL` |
+| Requests service | `pnpm --filter @valence/requests dev`   | `tsx watch` over its `src/Main.ts`                                                                          | 8421, from `REQUESTS_PORT`          |
+| Desktop          | `pnpm --filter @valence/desktop dev`    | `tauri dev`: starts the renderer's Vite dev server, then builds and opens the Rust host, which serves it    | The renderer's dev server, 5174     |
 
 The media service dev script decides for you what to do. With a `unix:` address in `TRANSCODER_URL` it starts the Rust service. With an `http://` address it assumes the service runs elsewhere and starts nothing. With no address it stops and tells you to copy `.env.example`.
 
@@ -262,7 +260,7 @@ Husky installs three hooks.
 
 Do not use `--no-verify` to get past a failing hook. CI runs the same checks, so it only delays the failure.
 
-`.github/workflows/ci.yml` runs on every pull request and every push to `main`. One job builds every package other packages depend on and caches turbo's output. Lint, format, `pnpm db:check` and typecheck then run together in one job, and every test job restores that cache, so nothing rebuilds. The smaller packages share one runner, two at a time, and the largest are sharded across runners of their own: `@valence/screens` six ways, `@valence/server` four and `@valence/client` three. [Testing](/develop/testing) has the details. The Rust job runs only on pull requests that touch the transcoder or the desktop app's native module, in a Debian container with Valence's FFmpeg, and always on `main`. The native module's Windows Hello code only compiles on Windows, so a pull request that touches it is also linted and built on Windows, on an x64 runner and an ARM64 one. The transcoder is built and tested on both as well, since each is released for Windows on Arm too. The media pipeline has its own workflow, described in [Testing](/develop/testing).
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`. One job builds every package other packages depend on and caches turbo's output. Lint, format, `pnpm db:check` and typecheck then run together in one job, and every test job restores that cache, so nothing rebuilds. The smaller packages share one runner, two at a time, and the largest are sharded across runners of their own: `@valence/screens` six ways, `@valence/server` four and `@valence/client` three. [Testing](/develop/testing) has the details. The Rust job runs only on pull requests that touch the transcoder, the desktop app's Tauri host or the English strings the host reads, and always on `main`; it installs WebKitGTK first, because the host is part of the workspace it compiles. Much of the host only compiles on one system, Windows Hello on Windows and the window's traffic lights on macOS, so a pull request that touches it is also linted and tested on Windows, on an x64 runner and an ARM64 one, and on macOS. The transcoder is built and tested on both as well, since each is released for Windows on Arm too. The media pipeline has its own workflow, described in [Testing](/develop/testing).
 
 ## When something does not start
 

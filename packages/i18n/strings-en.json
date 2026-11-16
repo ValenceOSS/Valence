@@ -9246,16 +9246,6 @@
     "context": "Read out by screen readers for the unread badge on Valence's taskbar button on Windows. {count} is filled in by the app."
   },
   {
-    "handler": "desktop.main.theApplication.hostCouldNotBeReached",
-    "text": "Couldn’t connect to {host}.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`). {host} is filled in by the app."
-  },
-  {
-    "handler": "desktop.main.theApplication.thePageStoppedWaiting",
-    "text": "The page timed out.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`)."
-  },
-  {
     "handler": "desktop.main.theApplication.thisClientsOwnPagesCouldNot",
     "text": "Couldn’t load this app’s pages from {served}.",
     "context": "Shown in the main of the desktop app (from `serveTheApplication`). {served} is filled in by the app."

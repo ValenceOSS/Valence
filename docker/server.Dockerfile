@@ -11,7 +11,9 @@ FROM rust:1-bookworm AS transcoder-build
 WORKDIR /build
 COPY Cargo.toml Cargo.lock rustfmt.toml ./
 COPY apps/transcoder ./apps/transcoder
-COPY apps/desktop/native ./apps/desktop/native
+# The desktop app's host is copied only because cargo reads every member of the workspace before
+# it builds any; naming the transcoder's binary builds the transcoder and nothing of the desktop's.
+COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
 COPY packages/browser-decoders ./packages/browser-decoders
 RUN cargo build --release --bin valence-transcoder
 

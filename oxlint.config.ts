@@ -202,8 +202,6 @@ export default defineConfig({
   env: { browser: true, es2024: true },
   ignorePatterns: [
     '**/dist/**',
-    '**/dist-main/**',
-    '**/dist-preload/**',
     '**/coverage/**',
     '**/node_modules/**',
     'target/**',

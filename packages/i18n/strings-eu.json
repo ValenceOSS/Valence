@@ -9258,16 +9258,6 @@
     "context": "Read out by screen readers for the unread badge on Valence's taskbar button on Windows. {count} is filled in by the app."
   },
   {
-    "handler": "desktop.main.theApplication.hostCouldNotBeReached",
-    "text": "Ezin izan da {host}-ra konektatu.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`). {host} is filled in by the app."
-  },
-  {
-    "handler": "desktop.main.theApplication.thePageStoppedWaiting",
-    "text": "Orriak denbora-muga gainditu du.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`)."
-  },
-  {
     "handler": "desktop.main.theApplication.thisClientsOwnPagesCouldNot",
     "text": "Ezin izan dira aplikazio honen orriak {served}-tik kargatu.",
     "context": "Shown in the main of the desktop app (from `serveTheApplication`). {served} is filled in by the app."

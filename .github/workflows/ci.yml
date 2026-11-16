@@ -66,7 +66,8 @@ jobs:
       light: ${{ steps.what.outputs.light }}
       shards: ${{ steps.what.outputs.shards }}
       rust: ${{ steps.what.outputs.rust }}
-      native: ${{ steps.what.outputs.native }}
+      transcoder: ${{ steps.what.outputs.transcoder }}
+      tauri: ${{ steps.what.outputs.tauri }}
       expo: ${{ steps.what.outputs.expo }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -87,7 +88,8 @@ jobs:
             {
               echo 'code=true'
               echo 'rust=true'
-              echo 'native=true'
+              echo 'transcoder=true'
+              echo 'tauri=true'
               echo 'expo=true'
             } >> "$GITHUB_OUTPUT"
             packages="$testable"
@@ -128,16 +130,22 @@ jobs:
 
             changed=$(git diff --name-only "origin/$BASE...HEAD")
 
-            if echo "$changed" | grep -qE '^(apps/transcoder/|apps/desktop/native/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
+            if echo "$changed" | grep -qE '^(apps/transcoder/|apps/desktop/src-tauri/|packages/i18n/strings-en\.json$|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
               echo 'rust=true' >> "$GITHUB_OUTPUT"
             else
               echo 'rust=false' >> "$GITHUB_OUTPUT"
             fi
 
-            if echo "$changed" | grep -qE '^(apps/desktop/native/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
-              echo 'native=true' >> "$GITHUB_OUTPUT"
+            if echo "$changed" | grep -qE '^(apps/transcoder/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
+              echo 'transcoder=true' >> "$GITHUB_OUTPUT"
             else
-              echo 'native=false' >> "$GITHUB_OUTPUT"
+              echo 'transcoder=false' >> "$GITHUB_OUTPUT"
+            fi
+
+            if echo "$changed" | grep -qE '^(apps/desktop/src-tauri/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)'; then
+              echo 'tauri=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'tauri=false' >> "$GITHUB_OUTPUT"
             fi
 
             if echo "$changed" | grep -qE '^(apps/mobile/|apps/tv/|packages/native/|patches/|pnpm-lock\.yaml$|\.github/workflows/ci\.yml$)'; then
@@ -365,6 +373,15 @@ jobs:
         with:
           persist-credentials: false
 
+      # The desktop app's Tauri host is a crate in this workspace, and on Linux it compiles against
+      # WebKitGTK and GTK, so clippy and the tests need their headers.
+      - name: Install what the desktop app's host builds against
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev \
+            libxdo-dev libssl-dev
+
       - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
           toolchain: stable
@@ -383,15 +400,15 @@ jobs:
   # The transcoder also runs natively on Windows, where it reaches the GPU through Direct3D 11 rather
   # than through /dev/dri (VAL-338). The Linux job cannot see a Windows-only compile error, a path
   # that splits on the drive's colon, or a test that assumes a forward slash, so it is linted and its
-  # unit tests run here too, on the same pull requests as the Linux job. The suites that drive a real
-  # FFmpeg stay on Linux: there is no Valence FFmpeg for this runner to fetch from a package.
+  # unit tests run here too, on the pull requests that touch the transcoder. The suites that drive a
+  # real FFmpeg stay on Linux: there is no Valence FFmpeg for this runner to fetch from a package.
   # On x64 and on Windows on Arm, each natively, so a compile error only one architecture has shows
   # up on the pull request rather than in a release (VAL-355).
   transcoder-windows:
     name: Transcoder on Windows (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     needs: changes
-    if: needs.changes.outputs.rust == 'true'
+    if: needs.changes.outputs.transcoder == 'true'
     permissions:
       contents: read
     strategy:
@@ -418,26 +435,29 @@ jobs:
 
       - run: cargo test -p valence-transcoder --lib --bins --test path_map_requests
 
-  # The Rust job builds on Linux, where the desktop app's native module holds nothing but a helper.
-  # Its Windows Hello code only compiles on Windows, so it is linted and built there, on the pull
-  # requests that touch it.
+  # The Rust job builds the desktop app's Tauri host on Linux. Much of it is written for one system
+  # only: Windows Hello and the taskbar's badge on Windows, the traffic lights, the dock and the
+  # notarised bundle's paths on macOS. None of that compiles on Linux, so the host is linted and its
+  # tests run on Windows and macOS too, on the pull requests that touch it.
   #
   # On both of Windows' architectures, as the transcoder is: the desktop app ships an ARM64 build too.
-  desktop-native:
-    name: Desktop native module on Windows (${{ matrix.arch }})
+  desktop-host:
+    name: Desktop host on ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     needs: changes
-    if: needs.changes.outputs.native == 'true'
+    if: needs.changes.outputs.tauri == 'true'
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
         include:
-          - arch: x64
+          - name: Windows (x64)
             runner: windows-2025-vs2026
-          - arch: arm64
+          - name: Windows (arm64)
             runner: windows-11-arm
+          - name: macOS
+            runner: macos-26
     steps:
       # Nothing here pushes, and cargo runs build scripts from every crate it builds, so the token
       # is not left behind in the checkout for them to find.
@@ -452,11 +472,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
 
-      - run: cargo clippy -p valence-desktop-native --all-targets -- -D warnings
+      - run: cargo clippy -p valence-desktop --all-targets -- -D warnings
 
-      - run: cargo test -p valence-desktop-native
-
-      - run: cargo build --release -p valence-desktop-native
+      - run: cargo test -p valence-desktop
 
   # The phone and television apps' native projects, generated the way a store build generates them,
   # on the pull requests that could change them. Every config plugin runs, so a broken one fails here

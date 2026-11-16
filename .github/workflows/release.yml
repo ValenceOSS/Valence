@@ -85,11 +85,15 @@ jobs:
       VALENCE_FFMPEG: /usr/lib/valence-ffmpeg/ffmpeg
       VALENCE_FFPROBE: /usr/lib/valence-ffmpeg/ffprobe
     steps:
+      # The libraries are the desktop app's: its Tauri host is in the same workspace, and clippy and
+      # the tests compile every crate in it against WebKitGTK and GTK.
       - name: Everything the image does not carry
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            ca-certificates curl git xz-utils build-essential pkg-config
+            ca-certificates curl git xz-utils build-essential pkg-config \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev \
+            libxdo-dev libssl-dev
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -367,6 +371,8 @@ jobs:
           name: release-artefacts
           path: release
 
+      # Every platform's installers and signed update bundles, and the latest.json desktop.yml wrote
+      # from them, which is what every installed desktop app reads to find this release.
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: valence-desktop-*

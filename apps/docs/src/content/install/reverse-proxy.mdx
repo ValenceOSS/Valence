@@ -46,7 +46,7 @@ Some consequences worth knowing:
 - **Several addresses.** The shipped compose file sets `TRUSTED_ORIGINS` from `PUBLIC_URL` alone. If people also reach Valence by a LAN address or a Tailscale name, edit that line to a comma separated list, for example `https://valence.example.com,http://192.168.1.40:8420`. The addresses the machine itself holds are trusted without being listed, over either scheme, so this is for everything else. Reaching Valence from an address that is missing here is the most common cause of a sign-in that does nothing.
 - **Passkeys are tied to a hostname.** They derive their relying party from the hostname in `BETTER_AUTH_URL`, and a passkey works only on the hostname it was registered against. Changing the domain after people have enrolled passkeys invalidates them. Choose the domain before you enrol.
 - **`COOKIE_SECURE=true` over HTTP looks like a login that fails silently.** Sign-in appears to succeed and the browser then drops the cookie. If you serve HTTP to a LAN address for a while, set `COOKIE_SECURE=false` and change it back when you move behind HTTPS.
-- **The desktop app** is trusted without being listed, because it is not a page anybody can navigate to. See [Desktop app](/install/desktop-app).
+- **The desktop app** needs no entry: it asks the server from its own process and names the server's own address as its origin. See [Desktop app](/install/desktop-app).
 
 The first-run wizard also asks for the trusted origins and whether the server is reached over HTTPS. Its suggestions are worked out from the address you opened. Confirm they match your real address.
 

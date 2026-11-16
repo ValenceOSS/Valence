@@ -4,26 +4,27 @@ description: What the desktop app is, how it finds your server, where to downloa
 order: 7
 ---
 
-The desktop app is an Electron application that gives Valence a window of its own on macOS, Windows and Linux. It is a window onto a server and nothing more: it does not run a server, keep a library or replace the browser client's role. Everything you see is the same application the web client runs. You still need a running Valence server to use it.
+The desktop app gives Valence a window of its own on macOS, Windows and Linux. It is built with Tauri: a small program written in Rust that opens a window drawn by the webview your operating system already has, rather than carrying a browser of its own. It is a window onto a server and nothing more: it does not run a server, keep a library or replace the browser client's role. Everything you see is the same application the web client runs. You still need a running Valence server to use it.
 
 ## Getting it
 
 Each release attaches the desktop app for the three platforms on the [releases page](https://github.com/ValenceOSS/Valence/releases).
 
-| Platform | File                                                                       | Notes                                                                                                       |
-| :------- | :------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- |
-| Windows  | `Valence-Setup-<version>-x64.exe` and `Valence-Setup-<version>-arm64.exe`  | `x64` for Intel and AMD PCs, `arm64` for Windows on Arm. An installer that lets you choose where to put it. |
-| macOS    | `Valence-<version>-arm64.dmg` and `Valence-<version>-x64.dmg`              | `arm64` for Apple silicon, `x64` for Intel.                                                                 |
-| Linux    | `Valence-<version>-x86_64.AppImage` and `Valence-<version>-arm64.AppImage` | `x86_64` for Intel and AMD, `arm64` for ARM64. Mark it executable, then run it.                             |
+| Platform | File                                                                       | Notes                                                                                                                                      |
+| :------- | :------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| Windows  | `Valence-Setup-<version>-x64.exe` and `Valence-Setup-<version>-arm64.exe`  | `x64` for Intel and AMD PCs, `arm64` for Windows on Arm. Installs for you alone, with no administrator needed, where you choose.           |
+| macOS    | `Valence-<version>-arm64.dmg` and `Valence-<version>-x64.dmg`              | `arm64` for Apple silicon, `x64` for Intel. macOS 12 or later.                                                                             |
+| Linux    | `Valence-<version>-x86_64.AppImage` and `Valence-<version>-arm64.AppImage` | `x86_64` for Intel and AMD, `arm64` for ARM64. Mark it executable, then run it.                                                            |
+| Linux    | `Valence-<version>-amd64.deb` and `Valence-<version>-arm64.deb`            | For Debian, Ubuntu and their relatives, with WebKitGTK 4.1: Debian 12 or Ubuntu 22.04 and later. Install with `sudo apt install ./<file>`. |
 
-Each updates itself to the next release for the same processor. A Windows on Arm PC that has the `x64` app, which runs there under emulation, keeps updating to `x64`: install the `arm64` one over it to switch. Older releases have only the `x64` builds for Windows and Linux, named without the processor.
+The Windows installer, the Mac app and the AppImage each update themselves to the next release for the same processor: the app checks in the background, offers the update, and installs it when you say so. A Windows on Arm PC that has the `x64` app, which runs there under emulation, keeps updating to `x64`: install the `arm64` one over it to switch. A `.deb` install is offered an update only where the release carries a signed `.deb`; otherwise install the next release's `.deb` over it. Older releases have only the `x64` builds for Windows and Linux, named without the processor.
 
-<Callout title="The apps are not signed yet" tone="warning">
-  There are no code signing certificates, so Windows SmartScreen may warn that the publisher is
-  unknown, and macOS Gatekeeper may refuse to open the app on a double click. On Windows choose
-  **More info**, then **Run anyway**. On macOS open it from the context menu with **Open**, or allow
-  it under **Privacy and Security** in System Settings. Only do either for a file you downloaded
-  from the releases page of this repository.
+<Callout title="Only the Mac app is signed" tone="warning">
+  The macOS app is signed and notarised by Apple, so it opens with a double click. There is no code
+  signing certificate for Windows yet, so SmartScreen may warn that the publisher is unknown: choose
+  **More info**, then **Run anyway**. Only do that for a file you downloaded from the releases page
+  of this repository. Every update, on every platform, is checked against Valence's own update key
+  before it is installed.
 </Callout>
 
 You can also build it yourself, as described at the end of this page.
@@ -32,15 +33,20 @@ You can also build it yourself, as described at the end of this page.
 
 Valence's front end is split into packages. One holds what Valence is (readers, queries, realtime, sessions), one holds what it looks like (every screen and its routes), and a **client** is a host that runs them. The browser is one host. The desktop app is another, with different answers to the four things a host is asked: where preferences live, what to call this client, which client this is, and how to open a socket.
 
-Because both clients run the same code, features arrive on both together. The repository describes the desktop as "a window onto the server", and that is the right model to keep in mind. The screens are drawn by the app rather than fetched from the server as pages, and requests to the server go out through the application's own process, so nothing is cross-origin and signing in is an ordinary request.
+Because both clients run the same code, features arrive on both together. The repository describes the desktop as "a window onto the server", and that is the right model to keep in mind. The screens are drawn by the app rather than fetched from the server as pages: the app serves them to its own window from a small server on `127.0.0.1`, and that same loopback server carries the window's requests on to your server from the app's own process. Nothing is cross-origin, signing in is an ordinary request, and your session's cookie stays with the app rather than in the page. [Security](/reference/security#the-desktop-apps-loopback-server) explains how the loopback server answers only the app's own window.
 
 ## What it adds over a browser
 
-- **Its own window.** A frameless window with a draggable strip along the top, an application menu and a Dock icon on macOS.
+- **Its own window.** A frameless window with a draggable strip along the top, an application menu, a tray icon, and a Dock icon on macOS.
 - **Finding your server.** It looks for a server on the same machine and only asks you for an address when it does not find one. See below.
-- **Downloads it can keep.** Films, albums, playlists, liked songs and audiobooks can be downloaded to listen to and watch offline, from the download button on their pages, and are listed under Downloads and on the offline screen. Offline downloads are held in the app's own user data folder, not your operating system's Downloads folder. A file in Downloads gets renamed, moved and tidied away by other programs, and the app would keep listing something that was gone. In its own folder, one thing owns the files and can say honestly what is still on disk.
+- **Downloads it can keep.** Films, albums, playlists, liked songs and audiobooks can be downloaded to listen to and watch offline, from the download button on their pages, and are listed under Downloads and on the offline screen. Offline downloads are held in the app's own data folder, not your operating system's Downloads folder. A file in Downloads gets renamed, moved and tidied away by other programs, and the app would keep listing something that was gone. In its own folder, one thing owns the files and can say honestly what is still on disk.
+- **Passkeys.** On Windows, Windows Hello asks for one inside the app. On macOS and Linux, signing in with a passkey happens in your browser, which hands you back to the app. See [Passkeys](/use/accounts-and-roles#passkeys).
 - **Discord activity.** Where Discord is running on the same machine, the app can show what you are watching in your Discord status. It is optional and quiet: if Discord is not running, nothing happens and nothing complains.
 - **Change server.** A menu item to point the window at a different server.
+
+## What plays without converting
+
+The app plays through your operating system's webview: Microsoft Edge's WebView2 on Windows, Safari's engine on macOS and WebKitGTK on Linux. What a film needs converting for is decided by what that webview can play, so it differs by system, and the server converts more for the desktop app than for Chrome or Edge on the same machine. On Linux the GStreamer plugins on the machine decide; the AppImage carries its own. [Playing media](/use/playing-media#in-the-desktop-app) has the details.
 
 ## How it finds the server
 
@@ -61,14 +67,46 @@ Choose **Change server** from the **File** menu, or press `Ctrl+Shift+S` on Wind
 
 ### Server settings that matter
 
-- **Trusted origins.** The desktop client is trusted without being listed in `TRUSTED_ORIGINS`, since it is not a page anybody can navigate to. Sign in works against a server that lists only its public address.
+- **Trusted origins.** The desktop app needs no entry in `TRUSTED_ORIGINS`, in development or installed. It asks the server from its own process and names the server's own address as its origin, so sign-in works against a server that lists only its public address.
 - **HTTPS.** A server behind a reverse proxy works the same way as it does in a browser. Type the `https://` address.
-- **Development builds.** The desktop dev server is an ordinary web address, so if you work on it, add `http://localhost:5174` to `TRUSTED_ORIGINS`.
 - **Versions.** The app carries its own copy of the screens, built from the same repository as the server. The repository does not state a compatibility guarantee across versions, so keep the app and the server at the same release when you can.
+
+## Where it keeps its files
+
+| What                                                          | Windows                    | macOS                                                                             | Linux                      |
+| :------------------------------------------------------------ | :------------------------- | :-------------------------------------------------------------------------------- | :------------------------- |
+| Downloads, the sign-in, the update log and the webview's data | `%APPDATA%\Valence`        | `~/Library/Application Support/Valence`                                           | `~/.config/Valence`        |
+| The remembered server and other preferences                   | `%APPDATA%\valence-nodejs` | `~/Library/Preferences/valence-nodejs`                                            | `~/.config/valence-nodejs` |
+| The webview's own storage and cache                           | In the first row           | `~/Library/WebKit/app.valence.desktop` and `~/Library/Caches/app.valence.desktop` | In the first row           |
+
+Downloads are in a `held` folder inside the first. On Linux, `~/.config` is wherever `XDG_CONFIG_HOME` points, if you set it. [Uninstalling](/install/uninstalling#files-on-the-host) says what to delete to leave nothing behind.
+
+## Coming from the Electron app
+
+Releases before the move to Tauri were built with Electron. Those copies look for updates in a format the Tauri app does not publish, so they do not update to it on their own: download the new app from the releases page and install it once. On macOS and Linux it replaces the old one. On Windows it installs into a folder of its own, so afterwards remove the older **Valence** from **Installed apps** in Settings; that leaves your downloads and preferences in place.
+
+The new app uses the same folders as the old one, so these carry over:
+
+- **Your preferences**, including the server you chose, so it opens straight onto your server.
+- **Your offline downloads**, films, music and audiobooks alike.
+- **The update log.**
+
+These do not:
+
+- **Your sign-in.** The old app kept its session in Chromium's own cookie store, which the new app cannot read. Sign in once again.
+- **Anything the old app kept in its browser storage.** That is settings kept per device, such as the player's volume, streaming format and connections per stream, the library's grid size and how the sidebar was laid out, which go back to their defaults. Anything on your account, such as watch history, is on the server and is unaffected.
 
 ## Building from source
 
-You need Node 24 or newer and pnpm 10, the same as for [local development](/develop/local-setup). Clone the repository and install its dependencies:
+You need Node 24 or newer and pnpm, the same as for [local development](/develop/local-setup), and Rust, stable, through [rustup](https://rustup.rs). Each system also needs what Tauri builds against:
+
+| System  | What to install                                                                                                                                                                                                                                                                   |
+| :------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Windows | The Microsoft C++ Build Tools, with **Desktop development with C++**. WebView2 is already part of Windows 11, and of Windows 10 with current updates.                                                                                                                             |
+| macOS   | Xcode's command line tools: `xcode-select --install`.                                                                                                                                                                                                                             |
+| Linux   | On Debian and Ubuntu: `sudo apt install build-essential curl file patchelf libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev`, and to play films in it, `gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav`. |
+
+Clone the repository and install its dependencies:
 
 ```bash
 git clone https://github.com/ValenceOSS/Valence.git
@@ -77,13 +115,13 @@ corepack enable
 pnpm install
 ```
 
-The desktop app uses a build of Electron from castlabs (a fork that supports Widevine), fetched from a GitHub release mirror named in `apps/desktop/package.json`. The install therefore needs internet access to GitHub, and the first install downloads a full Electron.
-
 To run it in development, against a server you already have running:
 
 ```bash
 pnpm --filter @valence/desktop dev
 ```
+
+That is `tauri dev`. It starts the renderer's Vite dev server on `127.0.0.1:5174`, then compiles the Rust host and opens its window onto it, with hot reload for the screens. The first run compiles every Rust dependency and takes several minutes; later ones take seconds. The landing site's dev server uses port 5174 too, so run one at a time. A development build shares its folders with an installed copy of the app on the same computer, and never looks for updates.
 
 To make an installable package for the operating system you are on:
 
@@ -91,25 +129,30 @@ To make an installable package for the operating system you are on:
 pnpm --filter @valence/desktop package
 ```
 
-That builds the app with `electron-vite` and packages it with `electron-builder`. The output goes to `apps/desktop/release`. The builder is configured for macOS, Windows and Linux, with application id `app.valence.desktop`. As with most Electron builds, produce each platform's package on that platform. The repository does not document cross-building.
+That is `tauri build`. It builds the renderer with Vite, compiles the host in release mode and bundles it, with application id `app.valence.desktop`. The output goes to `target/release/bundle` at the root of the repository, which is where Cargo builds the whole Rust workspace: a `.app` and a `.dmg` on macOS, an installer `.exe` on Windows, an AppImage and a `.deb` on Linux. Build each platform's package on that platform. A package built this way has no update bundles and is not signed; a release signs both, as [Releasing](/develop/releasing#the-desktop-app) describes.
 
-Run the tests and type checks for the package with:
+Run the tests and type checks with:
 
 ```bash
 pnpm --filter @valence/desktop test
 pnpm --filter @valence/desktop typecheck
+cargo test -p valence-desktop
 ```
 
-The desktop app's own code lives in `apps/desktop`. Read [Repository layout](/develop/repository-layout) and [Contributing](/develop/contributing) if you want to change it.
+The host lives in `apps/desktop/src-tauri`, and the page's side, the screens' entry points and the bridge that hands the page what the host knows, in `apps/desktop/src`. Read [Repository layout](/develop/repository-layout) and [Contributing](/develop/contributing) if you want to change it.
 
 ## Troubleshooting
 
-| Symptom                                           | Likely cause                                                                                                                                                               |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| It does not find my server                        | Only this machine is looked at, and servers that announce themselves on the same network. Type the address. Check that `/api/health` answers at that address in a browser. |
-| Sign-in fails from the app but works in a browser | Check `PUBLIC_URL`, `COOKIE_SECURE` and your proxy. See [Reverse proxy](/install/reverse-proxy).                                                                           |
-| I typed the wrong address                         | Use **Change server** in the **File** menu.                                                                                                                                |
-| Nothing updates on its own                        | The WebSocket is not passing through your proxy. Same cause and fix as in a browser.                                                                                       |
-| The install fails downloading Electron            | The install needs access to GitHub's release downloads. Check the network and any proxy.                                                                                   |
+| Symptom                                               | Likely cause                                                                                                                                                               |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| It does not find my server                            | Only this machine is looked at, and servers that announce themselves on the same network. Type the address. Check that `/api/health` answers at that address in a browser. |
+| Sign-in fails from the app but works in a browser     | Check `PUBLIC_URL`, `COOKIE_SECURE` and your proxy. See [Reverse proxy](/install/reverse-proxy).                                                                           |
+| I typed the wrong address                             | Use **Change server** in the **File** menu.                                                                                                                                |
+| Nothing updates on its own                            | The WebSocket is not passing through your proxy. Same cause and fix as in a browser.                                                                                       |
+| A film plays in a browser but is converted in the app | The system's webview cannot play it. See [What plays without converting](#what-plays-without-converting).                                                                  |
+| On Linux, films do not play at all                    | GStreamer is missing the plugins. With the `.deb`, install `gstreamer1.0-plugins-good`, `gstreamer1.0-plugins-bad` and `gstreamer1.0-libav`.                               |
+| On Linux, the window stays blank                      | Some graphics drivers, often NVIDIA's, do not draw WebKitGTK's window. Start it with `WEBKIT_DISABLE_DMABUF_RENDERER=1` set.                                               |
+| On Windows, the window stays blank                    | WebView2 is missing or damaged. Install the Evergreen WebView2 Runtime from Microsoft and start the app again.                                                             |
+| `pnpm --filter @valence/desktop dev` fails to compile | The tools in [Building from source](#building-from-source) are missing. On Linux the message usually names `webkit2gtk-4.1` or `gtk+-3.0`.                                 |
 
 See [Troubleshooting](/reference/troubleshooting) for the rest.

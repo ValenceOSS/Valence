@@ -9258,16 +9258,6 @@
     "context": "Read out by screen readers for the unread badge on Valence's taskbar button on Windows. {count} is filled in by the app."
   },
   {
-    "handler": "desktop.main.theApplication.hostCouldNotBeReached",
-    "text": "Δεν ήταν δυνατή η σύνδεση με τον {host}.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`). {host} is filled in by the app."
-  },
-  {
-    "handler": "desktop.main.theApplication.thePageStoppedWaiting",
-    "text": "Η σελίδα έληξε λόγω χρονικού ορίου.",
-    "context": "Shown in the main of the desktop app (from `serveTheApplication`)."
-  },
-  {
     "handler": "desktop.main.theApplication.thisClientsOwnPagesCouldNot",
     "text": "Δεν ήταν δυνατή η φόρτωση των σελίδων αυτής της εφαρμογής από το {served}.",
     "context": "Shown in the main of the desktop app (from `serveTheApplication`). {served} is filled in by the app."
