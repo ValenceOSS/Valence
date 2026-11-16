@@ -35,6 +35,28 @@ describe('passOnWhatThePageSays', () => {
     });
   });
 
+  it('asks for the controls again as a picture leaves full screen', () => {
+    const within = document.implementation.createHTMLDocument();
+
+    passOnWhatThePageSays(within);
+    within.documentElement.dataset['valenceWatching'] = 'hidden';
+    vi.mocked(invoke).mockClear();
+    Object.defineProperty(within, 'fullscreenElement', { value: null });
+    within.dispatchEvent(new Event('fullscreenchange'));
+
+    expect(invoke).toHaveBeenCalledWith('show_the_window_controls', { isShown: false });
+  });
+
+  it('leaves the controls be as a picture goes full screen', () => {
+    const within = document.implementation.createHTMLDocument();
+
+    passOnWhatThePageSays(within);
+    Object.defineProperty(within, 'fullscreenElement', { value: within.body });
+    within.dispatchEvent(new Event('fullscreenchange'));
+
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
   it('keeps the screen on, and lets it go, as the page asks', () => {
     const within = document.implementation.createHTMLDocument();
 

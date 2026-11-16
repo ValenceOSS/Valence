@@ -4577,14 +4577,45 @@ describe('in a window of our own', () => {
     delete document.documentElement.dataset['valenceDesktop'];
   });
 
-  it('offers no picture-in-picture, which belongs to a browser', async () => {
+  const withPictureInPicture = (isEnabled: boolean) => {
+    Object.defineProperty(document, 'pictureInPictureEnabled', {
+      configurable: true,
+      writable: true,
+      value: isEnabled,
+    });
+    Object.defineProperty(document, 'pictureInPictureElement', {
+      configurable: true,
+      writable: true,
+      value: null,
+    });
+  };
+
+  it('offers picture-in-picture where its webview has it, as macOS’s does', async () => {
     document.documentElement.dataset['valenceDesktop'] = 'true';
+    withPictureInPicture(true);
+
+    try {
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      expect(
+        await screen.findByRole('button', { name: /Pop out|Picture in picture/i }),
+      ).toBeInTheDocument();
+    } finally {
+      withPictureInPicture(false);
+    }
+  });
+
+  it('offers no picture-in-picture where its webview has none, as Linux’s has not', async () => {
+    document.documentElement.dataset['valenceDesktop'] = 'true';
+    withPictureInPicture(false);
 
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
     await screen.findByLabelText('Arrival');
 
-    expect(screen.queryByRole('button', { name: /picture in picture/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Pop out|Picture in picture/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('offers no casting, and does not go looking for a sender to do it with', async () => {

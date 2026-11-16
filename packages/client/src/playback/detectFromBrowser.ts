@@ -59,6 +59,7 @@ const detectFromBrowser = (
     isTypeSupported,
     canPlayFile: (mimeType) => video.canPlayType(mimeType) !== '',
     platform: page.navigator.platform,
+    userAgent: page.navigator.userAgent ?? '',
     supportsHdr: page.matchMedia?.('(dynamic-range: high)').matches ?? false,
     screenWidth: Math.round(page.screen.width * page.devicePixelRatio),
     screenHeight: Math.round(page.screen.height * page.devicePixelRatio),

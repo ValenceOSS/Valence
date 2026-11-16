@@ -65,7 +65,9 @@ objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std"
 objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSData"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
 secret-service = "5"
+webkit2gtk = "2.0.2"
 zbus = "5"
 
 [dev-dependencies]

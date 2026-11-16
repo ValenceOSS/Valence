@@ -34,6 +34,7 @@ const LOWEST_PORT: u16 = 1024;
 
 /// What Edge's webview is started with when nothing else is asked for, which Tauri would have
 /// given it: no mini menu over selected words, and no Smart Screen checks on the app's own pages.
+/// Setting the variable replaces what Tauri passes, so the player's autoplay is kept separately.
 #[cfg_attr(
     not(windows),
     allow(dead_code, reason = "only Windows's webview takes arguments this way")
@@ -46,6 +47,14 @@ const WEBVIEW_ARGUMENTS: &str = "--disable-features=msWebOOUI,msPdfOOUI,msSmartS
     allow(dead_code, reason = "only Windows's webview takes arguments this way")
 )]
 const WEBVIEW_ARGUMENTS_VARIABLE: &str = "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS";
+
+/// The argument that lets the player start playing without a click, which Tauri gives Edge's
+/// webview and the variable would otherwise take away.
+#[cfg_attr(
+    not(windows),
+    allow(dead_code, reason = "only Windows's webview takes arguments this way")
+)]
+const AUTOPLAY_ARGUMENT: &str = "--autoplay-policy=no-user-gesture-required";
 
 /// The port `asked` names: a whole number from 1024 to 65535, or none.
 #[must_use]
@@ -97,7 +106,8 @@ pub fn inspector_addresses(port: u16) -> Vec<String> {
 }
 
 /// The arguments Edge's webview starts with to open remote debugging on `port`: those already
-/// asked for, or else the ones Tauri would have given it, then the port.
+/// asked for, or else the ones Tauri would have given it, then autoplay where they lack it, then the
+/// port.
 #[cfg_attr(
     not(windows),
     allow(dead_code, reason = "only Windows's webview takes arguments this way")
@@ -109,7 +119,11 @@ pub fn webview_arguments(already: Option<&str>, port: u16) -> String {
         .filter(|already| !already.is_empty())
         .unwrap_or(WEBVIEW_ARGUMENTS);
 
-    format!("{already} --remote-debugging-port={port}")
+    if already.contains("--autoplay-policy") {
+        format!("{already} --remote-debugging-port={port}")
+    } else {
+        format!("{already} {AUTOPLAY_ARGUMENT} --remote-debugging-port={port}")
+    }
 }
 
 /// Opens remote debugging on the asked port: Chrome's on Windows, and `WebKitGTK`'s remote inspector
@@ -180,18 +194,22 @@ mod tests {
     }
 
     #[test]
-    fn keeps_the_webviews_own_arguments_beside_the_port() {
+    fn keeps_the_webviews_own_arguments_and_autoplay_beside_the_port() {
         assert_eq!(
             webview_arguments(None, 9222),
-            "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --remote-debugging-port=9222"
+            "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required --remote-debugging-port=9222"
         );
         assert_eq!(
             webview_arguments(Some("  "), 9222),
-            "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --remote-debugging-port=9222"
+            "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required --remote-debugging-port=9222"
         );
         assert_eq!(
             webview_arguments(Some("--lang=fr"), 9333),
-            "--lang=fr --remote-debugging-port=9333"
+            "--lang=fr --autoplay-policy=no-user-gesture-required --remote-debugging-port=9333"
+        );
+        assert_eq!(
+            webview_arguments(Some("--autoplay-policy=user-gesture-required"), 9333),
+            "--autoplay-policy=user-gesture-required --remote-debugging-port=9333"
         );
     }
 }

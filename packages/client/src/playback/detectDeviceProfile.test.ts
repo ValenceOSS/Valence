@@ -12,6 +12,12 @@ const supportingCodecs =
   (mimeType: string) =>
     supported.includes(/codecs="([^"]+)"/.exec(mimeType)?.[1] ?? mimeType);
 
+const WEBKITGTK =
+  'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/60.5 Safari/605.1.15';
+
+const CHROMIUM_ON_LINUX =
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36';
+
 const build = (
   isTypeSupported: (mimeType: string) => boolean,
   overrides: Partial<Parameters<typeof detectDeviceProfile>[0]> = {},
@@ -293,6 +299,27 @@ describe('a build that claims Dolby it cannot decode', () => {
     expect(
       build(dolby, { platform: 'CrOS x86_64' }).directPlayProfiles[0]?.audioCodecs,
     ).not.toContain('eac3');
+  });
+
+  it('believes WebKit on Linux, which says yes only where GStreamer has the decoder', () => {
+    const profile = build(dolby, { platform: 'Linux x86_64', userAgent: WEBKITGTK });
+
+    expect(profile.directPlayProfiles[0]?.audioCodecs).toEqual(['aac', 'ac3', 'eac3']);
+    expect(profile.surroundAudioCodec).toBe('eac3');
+  });
+
+  it('still refuses Chromium on Linux, which carries WebKit in its name', () => {
+    const audio = build(dolby, { platform: 'Linux x86_64', userAgent: CHROMIUM_ON_LINUX })
+      .directPlayProfiles[0]?.audioCodecs;
+
+    expect(audio).not.toContain('ac3');
+    expect(audio).not.toContain('eac3');
+  });
+
+  it('refuses Linux where the engine does not say what it is', () => {
+    expect(
+      build(dolby, { platform: 'Linux x86_64', userAgent: '' }).directPlayProfiles[0]?.audioCodecs,
+    ).not.toContain('ac3');
   });
 
   it('asks for surround in Dolby Digital Plus only where its own decoders are believed', () => {

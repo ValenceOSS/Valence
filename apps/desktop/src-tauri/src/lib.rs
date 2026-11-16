@@ -25,6 +25,7 @@ mod menu;
 mod notices;
 mod passkeys;
 mod paths;
+mod playback;
 mod preferences;
 mod reach;
 mod runtime;
@@ -67,6 +68,7 @@ fn as_it_runs(app: &AppHandle, event: RunEvent) {
 /// Builds and runs the app until it quits.
 pub fn run() {
     debugging::open_the_debugging_port();
+    playback::before_any_webview();
 
     let builder = tauri::Builder::default();
 

@@ -162,16 +162,16 @@ With `--app` the sweep starts the app itself with the port open and closes it wh
 
 ## Troubleshooting
 
-| Symptom                                               | Likely cause                                                                                                                                                               |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| It does not find my server                            | Only this machine is looked at, and servers that announce themselves on the same network. Type the address. Check that `/api/health` answers at that address in a browser. |
-| Sign-in fails from the app but works in a browser     | Check `PUBLIC_URL`, `COOKIE_SECURE` and your proxy. See [Reverse proxy](/install/reverse-proxy).                                                                           |
-| I typed the wrong address                             | Use **Change server** in the **File** menu.                                                                                                                                |
-| Nothing updates on its own                            | The WebSocket is not passing through your proxy. Same cause and fix as in a browser.                                                                                       |
-| A film plays in a browser but is converted in the app | The system's webview cannot play it. See [What plays without converting](#what-plays-without-converting).                                                                  |
-| On Linux, films do not play at all                    | GStreamer is missing the plugins. With the `.deb`, install `gstreamer1.0-plugins-good`, `gstreamer1.0-plugins-bad` and `gstreamer1.0-libav`.                               |
-| On Linux, the window stays blank                      | Some graphics drivers, often NVIDIA's, do not draw WebKitGTK's window. Start it with `WEBKIT_DISABLE_DMABUF_RENDERER=1` set.                                               |
-| On Windows, the window stays blank                    | WebView2 is missing or damaged. Install the Evergreen WebView2 Runtime from Microsoft and start the app again.                                                             |
-| `pnpm --filter @valence/desktop dev` fails to compile | The tools in [Building from source](#building-from-source) are missing. On Linux the message usually names `webkit2gtk-4.1` or `gtk+-3.0`.                                 |
+| Symptom                                               | Likely cause                                                                                                                                                                                      |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| It does not find my server                            | Only this machine is looked at, and servers that announce themselves on the same network. Type the address. Check that `/api/health` answers at that address in a browser.                        |
+| Sign-in fails from the app but works in a browser     | Check `PUBLIC_URL`, `COOKIE_SECURE` and your proxy. See [Reverse proxy](/install/reverse-proxy).                                                                                                  |
+| I typed the wrong address                             | Use **Change server** in the **File** menu.                                                                                                                                                       |
+| Nothing updates on its own                            | The WebSocket is not passing through your proxy. Same cause and fix as in a browser.                                                                                                              |
+| A film plays in a browser but is converted in the app | The system's webview cannot play it. See [What plays without converting](#what-plays-without-converting).                                                                                         |
+| On Linux, films do not play at all                    | GStreamer is missing the plugins. The `.deb` installs them; where they were removed, install `gstreamer1.0-plugins-good`, `gstreamer1.0-plugins-bad`, `gstreamer1.0-libav` and `gstreamer1.0-gl`. |
+| On Linux, the window stays blank                      | Some graphics drivers, often NVIDIA's, do not draw WebKitGTK's window. Start it with `WEBKIT_DISABLE_DMABUF_RENDERER=1` set.                                                                      |
+| On Windows, the window stays blank                    | WebView2 is missing or damaged. Install the Evergreen WebView2 Runtime from Microsoft and start the app again.                                                                                    |
+| `pnpm --filter @valence/desktop dev` fails to compile | The tools in [Building from source](#building-from-source) are missing. On Linux the message usually names `webkit2gtk-4.1` or `gtk+-3.0`.                                                        |
 
 See [Troubleshooting](/reference/troubleshooting) for the rest.

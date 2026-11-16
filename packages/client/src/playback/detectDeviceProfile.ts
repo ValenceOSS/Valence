@@ -6,6 +6,7 @@ type DetectDeviceProfileOptions = {
   isTypeSupported: CodecProbe;
   canPlayFile?: CodecProbe;
   platform: string;
+  userAgent?: string;
   supportsHdr: boolean;
   screenWidth: number;
   screenHeight: number;
@@ -102,6 +103,17 @@ const containersPlayedWhole = (
   });
 
 /**
+ * Whether the engine is `WebKit`, which on Linux is WebKitGTK — the desktop app's window among
+ * them — and answers what it plays from the `GStreamer` decoders actually installed rather than from
+ * a list built in. Chromium carries `WebKit` in its name too, so it is told apart by its own.
+ *
+ * @param userAgent - What the client says about itself.
+ * @returns Whether its answers come from the decoders it has.
+ */
+const answersFromItsOwnDecoders = (userAgent: string): boolean =>
+  /AppleWebKit\//.test(userAgent) && !/Chrome\/|Chromium\//.test(userAgent);
+
+/**
  * Whether what this client says about Dolby can be believed.
  *
  * A build with `enable_platform_ac3_eac3_audio` turned on — castLabs' Electron is one — answers that
@@ -113,13 +125,19 @@ const containersPlayedWhole = (
  * a client claiming Dolby it cannot decode gets direct play and hands somebody a film with no sound —
  * where a client that admits it cannot gets an honest transcode and a working one.
  *
+ * WebKit on Linux is believed, because it says yes only where `GStreamer` has a decoder for it — the
+ * desktop app's packages bring one — and plays what it says it does, sound and all. Any other engine
+ * on Linux is not.
+ *
  * Reported by a tester on castLabs' own build and confirmed by castLabs:
  * https://github.com/castlabs/electron-releases/issues/221
  *
  * @param platform - What the client says it is running on.
+ * @param userAgent - What the client says about itself.
  * @returns Whether a claim of Dolby support means anything here.
  */
-const dolbyCanBeBelieved = (platform: string): boolean => !/linux|x11|cros/i.test(platform);
+const dolbyCanBeBelieved = (platform: string, userAgent: string): boolean =>
+  !/linux|x11|cros/i.test(platform) || answersFromItsOwnDecoders(userAgent);
 
 const HE_AAC_PROBES = ['audio/mp4; codecs="mp4a.40.5"', 'audio/mp4; codecs="mp4a.40.29"'] as const;
 
@@ -231,6 +249,7 @@ const detectDeviceProfile = ({
   isTypeSupported,
   canPlayFile = () => false,
   platform,
+  userAgent = '',
   supportsHdr,
   screenWidth,
   screenHeight,
@@ -243,7 +262,7 @@ const detectDeviceProfile = ({
     (probe) => probe.codec,
   );
 
-  const believable = dolbyCanBeBelieved(platform);
+  const believable = dolbyCanBeBelieved(platform, userAgent);
 
   const audioCodecs = AUDIO_PROBES.filter(
     (probe) =>

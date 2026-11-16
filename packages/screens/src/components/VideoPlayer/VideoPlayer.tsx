@@ -490,10 +490,7 @@ const VideoPlayer = ({
 
   const isAWindowOfOurOwn = isTheDesktopClient();
 
-  const canPopOut =
-    !isAWindowOfOurOwn &&
-    typeof document !== 'undefined' &&
-    document.pictureInPictureEnabled === true;
+  const canPopOut = typeof document !== 'undefined' && document.pictureInPictureEnabled === true;
 
   const poppedRef = useRef<PoppedOut | null>(null);
   const [isPoppedOut, setIsPoppedOut] = useState(false);

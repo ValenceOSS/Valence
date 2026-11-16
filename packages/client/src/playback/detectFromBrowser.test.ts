@@ -82,6 +82,34 @@ describe('detectFromBrowser', () => {
     expect(profile.needsIdrKeyframes).toBe(false);
   });
 
+  it('believes the Dolby WebKitGTK says it plays, since GStreamer decodes what it claims', () => {
+    const profile = detectFromBrowser(
+      aPage({
+        MediaSource: { isTypeSupported: (mimeType) => /avc1|mp4a|ac-3|ec-3/.test(mimeType) },
+        navigator: {
+          platform: 'Linux x86_64',
+          userAgent:
+            'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/60.5 Safari/605.1.15',
+        },
+      }),
+      NO_FILES,
+    );
+
+    expect(profile.directPlayProfiles[0]?.audioCodecs).toEqual(['aac', 'ac3', 'eac3']);
+  });
+
+  it('refuses the Dolby a browser on Linux claims without saying it is WebKit', () => {
+    const profile = detectFromBrowser(
+      aPage({
+        MediaSource: { isTypeSupported: (mimeType) => /avc1|mp4a|ac-3|ec-3/.test(mimeType) },
+        navigator: { platform: 'Linux x86_64' },
+      }),
+      NO_FILES,
+    );
+
+    expect(profile.directPlayProfiles[0]?.audioCodecs).toEqual(['aac']);
+  });
+
   it('assumes any keyframe will do where the browser does not say what it is', () => {
     expect(detectFromBrowser(aPage(), NO_FILES).needsIdrKeyframes).toBe(false);
   });

@@ -6224,6 +6224,7 @@ dependencies = [
  "if-addrs",
  "keepawake",
  "keyring",
+ "libc",
  "mdns-sd",
  "objc2",
  "objc2-app-kit",
@@ -6255,6 +6256,7 @@ dependencies = [
  "tokio-rustls",
  "tokio-tungstenite 0.26.2",
  "tokio-util",
+ "webkit2gtk",
  "windows",
  "zbus",
 ]

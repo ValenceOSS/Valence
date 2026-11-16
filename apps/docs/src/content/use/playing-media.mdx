@@ -88,7 +88,7 @@ The desktop app plays through the webview your operating system provides, not a 
 
 - **Windows.** Edge's WebView2 plays H.264, VP9 and AV1. HEVC plays where the graphics hardware decodes it and the HEVC Video Extensions are installed.
 - **macOS.** Safari's engine plays H.264 and HEVC, HDR included, and Dolby Digital Plus, but no MKV or WebM files, which the server repackages.
-- **Linux.** WebKitGTK plays through GStreamer, so the GStreamer plugins on the machine decide. The AppImage carries its own, with the common codecs; the `.deb` uses the system's, so install `gstreamer1.0-plugins-good`, `gstreamer1.0-plugins-bad` and `gstreamer1.0-libav` for the same.
+- **Linux.** WebKitGTK plays through GStreamer, so the GStreamer plugins on the machine decide. The `.deb` installs the ones it needs (`gstreamer1.0-plugins-good`, `gstreamer1.0-plugins-bad`, `gstreamer1.0-libav` and `gstreamer1.0-gl`) and the AppImage carries its own. With them it plays H.264, HEVC, AV1 and VP9, AAC, Dolby Digital and Dolby Digital Plus, Opus and FLAC, and MKV and WebM files whole. The graphics card decodes where a VA-API driver is installed; the `.deb` recommends Mesa's. It shows no HDR, so the server tone maps HDR films, and it has no picture in picture.
 
 Expect more films to be converted in the desktop app than in Chrome or Edge on the same machine, and more than in the desktop app's earlier, Electron-based releases, which carried a Chromium of their own. **Stats for nerds** says why for each one.
 

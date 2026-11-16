@@ -218,6 +218,8 @@ pub fn open_the_main_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
 
     let window = builder.build()?;
 
+    crate::playback::tune(&window);
+
     if let Some(windows) = app.try_state::<Windows>() {
         windows.are_controls_shown.store(true, Ordering::SeqCst);
         lock(&windows.frames).insert(MAIN.to_owned(), frame_of(&window));
