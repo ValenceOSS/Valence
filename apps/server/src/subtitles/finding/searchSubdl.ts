@@ -69,6 +69,9 @@ const searchSubdl = async (
     downloads: null,
     score: 0,
     reasons: [],
+    matches: [],
+    misses: [],
+    unknowns: [],
   }));
 };
 

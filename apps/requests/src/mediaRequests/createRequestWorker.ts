@@ -52,6 +52,7 @@ import { MediaRequestDraftSchema } from '@ValenceContracts/schemas/MediaRequest'
 import { episodesInDownload } from '@ValenceRequests/mediaRequests/episodesInDownload';
 import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import { showMediaRequest } from '@ValenceRequests/mediaRequests/showMediaRequest';
+import { releaseNameOf } from '@ValenceRequests/mediaRequests/releaseNameOf';
 import { wantsUpgrade } from '@ValenceRequests/mediaRequests/wantsUpgrade';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
 import { createTurns } from '@ValenceRequests/timing/createTurns';
@@ -1414,11 +1415,12 @@ const createRequestWorker = ({
       }
 
       try {
-        const { filed, missing, refused, trackCounts, books } = isMusicRequest(request.kind)
+        const { filed, named, missing, refused, trackCounts, books } = isMusicRequest(request.kind)
           ? {
               ...(await fileMusic(request, filing, path, keepsItsFiles(download.protocol, client))),
               refused: NOTHING_REFUSED,
               books: undefined,
+              named: undefined,
             }
           : isBookRequest(request.kind)
             ? {
@@ -1430,6 +1432,7 @@ const createRequestWorker = ({
                 )),
                 refused: NOTHING_REFUSED,
                 trackCounts: NO_TRACKS,
+                named: undefined,
               }
             : {
                 ...(await file(
@@ -1490,6 +1493,7 @@ const createRequestWorker = ({
               : null,
             filePath: path,
             filedTitle,
+            releaseName: releaseNameOf(named?.get(item.id) ?? null, item.releaseTitle),
             score,
             filedScore: score,
             attempts: 0,

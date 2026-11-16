@@ -6,6 +6,7 @@ type RequestItemRecord = RequestItem & {
   requestId: string;
   indexerId: string | null;
   filedTitle: string | null;
+  releaseName?: string | null;
   filedScore: number | null;
   attempts: number;
   isPickedByHand: boolean;

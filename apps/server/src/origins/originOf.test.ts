@@ -5,7 +5,7 @@ describe('originOf', () => {
   it('takes what the requests service filed first', () => {
     expect(
       originOf(
-        { source: 'download', via: 'qBittorrent' },
+        { source: 'download', via: 'qBittorrent', release: 'Heat.1995.1080p.BluRay-GROUP' },
         { source: 'import', via: 'Plex' },
         'linked',
       ),

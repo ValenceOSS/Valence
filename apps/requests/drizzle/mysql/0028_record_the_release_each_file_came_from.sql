@@ -1,0 +1,1 @@
+ALTER TABLE `requests_request_item` ADD `release_name` mediumtext;

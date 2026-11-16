@@ -26,6 +26,7 @@ const aRequestItem = (overrides: Partial<RequestItemRecord> = {}): RequestItemRe
   filePath: null,
   score: null,
   filedTitle: null,
+  releaseName: null,
   filedScore: null,
   downloadedBytes: null,
   downloadSeconds: null,

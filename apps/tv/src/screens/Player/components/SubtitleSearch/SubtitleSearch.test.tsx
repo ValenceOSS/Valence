@@ -15,6 +15,9 @@ const FOUND: FoundSubtitle = {
   downloads: null,
   score: 61,
   reasons: ['sameSource'],
+  matches: [],
+  misses: [],
+  unknowns: [],
 };
 
 const FRESH: SubtitleTrack = {

@@ -352,7 +352,7 @@ describe('SubtitleLine', () => {
     );
     const lineOf = (drawn: typeof low) => drawn.getByText('Later on').parent?.parent ?? null;
 
-    expect(lineOf(low)).not.toHaveStyle({ bottom: 300 });
+    expect(lineOf(low)).toHaveStyle({ bottom: 32 });
     expect(lineOf(lifted)).toHaveStyle({ bottom: 300 });
   });
 

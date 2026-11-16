@@ -54,6 +54,7 @@ const createDatabaseLinkSharingStore = (db: AnyValenceDatabase): LinkSharingStor
         takesTheirControls: linkedServer.takesTheirControls,
         allowsDownloads: linkedServer.allowsDownloads,
         takesTheirRequests: linkedServer.takesTheirRequests,
+        findsTheirSubtitles: linkedServer.findsTheirSubtitles,
         playsDirect: linkedServer.playsDirect,
         invitesTheirPeople: linkedServer.invitesTheirPeople,
       })
@@ -80,6 +81,7 @@ const createDatabaseLinkSharingStore = (db: AnyValenceDatabase): LinkSharingStor
       takesTheirControls: server.takesTheirControls,
       allowsDownloads: server.allowsDownloads,
       takesTheirRequests: server.takesTheirRequests,
+      findsTheirSubtitles: server.findsTheirSubtitles,
       playsDirect: server.playsDirect,
       invitesTheirPeople: server.invitesTheirPeople,
     };

@@ -7,7 +7,9 @@ const RadarrMovieSchema = z.object({
   path: z.string().nullish(),
   monitored: z.boolean(),
   hasFile: z.boolean().default(false),
-  movieFile: z.object({ path: z.string().nullish() }).nullish(),
+  movieFile: z
+    .object({ path: z.string().nullish(), sceneName: z.string().nullish().catch(null) })
+    .nullish(),
 });
 
 type RadarrMovie = z.infer<typeof RadarrMovieSchema>;

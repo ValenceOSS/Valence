@@ -1010,6 +1010,7 @@ const ENGLISH = {
   'common.federationAction.media': 'Looked up a title',
   'common.federationAction.parties': 'Joined a watch party',
   'common.federationAction.requests': 'Requested a title',
+  'common.federationAction.subtitles': 'Found subtitles',
   'common.federationOutcome.aboveTheAge': 'Above the age limit',
   'common.federationOutcome.notShared': 'Not shared',
   'common.federationOutcome.tooMany': 'Rate limited',
@@ -2413,6 +2414,8 @@ const ENGLISH = {
     'Your server is sending too many requests. Try again in a minute.',
   'error.linking.yourServerIsPlayingAsMuchAsItMay':
     'Your server has reached its stream limit on this server. Stop a stream first.',
+  'error.linking.yourServerMayNotFindSubtitlesHere':
+    'This server doesn’t let yours find subtitles for its titles.',
   'error.listening.noSuchTrackInThatBook': 'No such track in that book.',
   'error.live.iptvOrgCouldNotBeReached': 'iptv-org couldn’t be reached.',
   'error.live.noSuchChannel': 'There’s no such channel.',
@@ -5324,6 +5327,7 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.aboutThisServer': 'About this server',
   'screens.adminArea.linkedServersPanel.ageLimit': 'Age limit',
   'screens.adminArea.linkedServersPanel.ageLimitForName': 'Age limit for {name}',
+  'screens.adminArea.linkedServersPanel.allowSubtitleSearch': 'Allow subtitle search',
   'screens.adminArea.linkedServersPanel.allowUncertificatedThingsForName':
     'Allow unrated titles for {name}',
   'screens.adminArea.linkedServersPanel.anInviteLinksOneServer':
@@ -5401,6 +5405,8 @@ const ENGLISH = {
     '{name}’s people can request films and series from this server. Their requests appear in your queue, labelled with their server, for you to approve.',
   'screens.adminArea.linkedServersPanel.namesPeopleMayDownloadWhatIs':
     '{name}’s people can download shared titles in their original quality to watch offline.',
+  'screens.adminArea.linkedServersPanel.namesPeopleMayFindSubtitles':
+    '{name}’s people can find and add subtitles for shared titles.',
   'screens.adminArea.linkedServersPanel.neitherServerReachesTheOther':
     'Neither server can reach the other until you link them again with a new invite. Watch history from it is saved and restored if you link again.',
   'screens.adminArea.linkedServersPanel.nobodyFromNameHasAskedFor':
@@ -5432,6 +5438,8 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.runsOutWhen': 'Expires {when}',
   'screens.adminArea.linkedServersPanel.savedThisServer': 'Saved this server’s linking details.',
   'screens.adminArea.linkedServersPanel.savedWhatNameCanSee': 'Saved what {name} can see.',
+  'screens.adminArea.linkedServersPanel.searchesUseYourSubtitleSites':
+    'Searches use this server’s subtitle sites, so their downloads count against your daily limits. Subtitles they add show up for your people too.',
   'screens.adminArea.linkedServersPanel.seenWhen': 'Seen {when}',
   'screens.adminArea.linkedServersPanel.sendThisToTheOtherServers':
     'Send this to the other server’s admin. It works once and runs out in a day, and you approve their server before it’s linked.',
@@ -6731,7 +6739,6 @@ const ENGLISH = {
     'A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB and 1.6 GB.',
   'screens.adminArea.subtitlesCard.askedToo':
     'Searched alongside OpenSubtitles, and often stronger for shows.',
-  'screens.adminArea.subtitlesCard.closeMatch': 'Close match',
   'screens.adminArea.subtitlesCard.episodeMatch': 'Episode match',
   'screens.adminArea.subtitlesCard.episodeMatchDetail':
     'How closely a subtitle must match an episode to be fetched.',
@@ -6763,7 +6770,7 @@ const ENGLISH = {
   'screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks':
     'The languages offered first when someone looks for subtitles.',
   'screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores':
-    'Out of 100. A subtitle made for the exact file scores 100; the same release with the same frame rate scores about 80. One timed to a different frame rate, or translated by a machine, is never fetched on its own.',
+    'Out of 100, scored the way Bazarr scores subtitles. A subtitle made for the exact file scores 100, the same release about 98 and the same source about 90. One timed to a different frame rate, or translated by a machine, is never fetched on its own.',
   'screens.adminArea.subtitlesCard.openSubtitles': 'OpenSubtitles',
   'screens.adminArea.subtitlesCard.openSubtitlesDetail':
     'The biggest catalogue, and it can find subtitles timed to your exact file.',
@@ -6771,7 +6778,7 @@ const ENGLISH = {
     'The biggest catalogue. Downloads count against {username}.',
   'screens.adminArea.subtitlesCard.readingTheSubtitleSettings': 'Loading subtitle settings',
   'screens.adminArea.subtitlesCard.savedTheSubtitleSettings': 'Subtitle settings saved',
-  'screens.adminArea.subtitlesCard.scoreOrMore': 'Score {score} or more',
+  'screens.adminArea.subtitlesCard.scoreOrMore': '{score}% or more',
   'screens.adminArea.subtitlesCard.subdl': 'SubDL',
   'screens.adminArea.subtitlesCard.theBiggestCatalogueAKeyIs':
     'The biggest catalogue, and it can find subtitles timed to your exact file. Downloads are counted against the account you sign in with.',
@@ -7781,17 +7788,17 @@ const ENGLISH = {
     'Choose a folder to move it to. Its name stays the same.',
   'screens.filesPanel.moveEntryDialog.moveName': 'Move {name}',
   'screens.filesPanel.moveEntryDialog.moveThis': 'Move this',
+  'screens.findSubtitlesDialog.addSubtitles': 'Add subtitles',
+  'screens.findSubtitlesDialog.audioCodec': 'Audio codec',
   'screens.findSubtitlesDialog.differentFrameRateWillDrift': 'Different frame rate, will drift',
+  'screens.findSubtitlesDialog.edition': 'Edition',
   'screens.findSubtitlesDialog.findSubtitles': 'Find subtitles',
   'screens.findSubtitlesDialog.findSubtitlesForName': 'Find subtitles for {name}',
-  'screens.findSubtitlesDialog.get': 'Get',
   'screens.findSubtitlesDialog.looking': 'Looking for subtitles',
   'screens.findSubtitlesDialog.machineTranslated': 'Machine translated',
   'screens.findSubtitlesDialog.madeForThisFile': 'Made for this file',
-  'screens.findSubtitlesDialog.match': 'Match',
   'screens.findSubtitlesDialog.noSubtitleSiteIsSetUp':
     'No subtitle site is set up yet. Add an OpenSubtitles or SubDL key under System › Subtitles.',
-  'screens.findSubtitlesDialog.notes': 'Notes',
   'screens.findSubtitlesDialog.nothingWasFoundInThatLanguage':
     'Nothing was found in that language.',
   'screens.findSubtitlesDialog.sameAudioCodec': 'Same audio codec',
@@ -7803,11 +7810,18 @@ const ENGLISH = {
   'screens.findSubtitlesDialog.sameService': 'Same streaming service',
   'screens.findSubtitlesDialog.sameSource': 'Same source',
   'screens.findSubtitlesDialog.sameVideoCodec': 'Same video codec',
-  'screens.findSubtitlesDialog.saved': 'Saved',
   'screens.findSubtitlesDialog.savedBesideTheVideo':
-    'Best matches first. The one you pick is kept in Valence, so every app can show it.',
+    'Ranked by how well each matches this file. Subtitles you add work in every app.',
   'screens.findSubtitlesDialog.savedName': 'Added {name} subtitles',
   'screens.findSubtitlesDialog.sdh': 'SDH',
+  'screens.findSubtitlesDialog.searchesSites': 'Searches {sites}',
+  'screens.findSubtitlesDialog.searchesSitesOnServer': 'Searches {sites} on {server}',
+  'screens.findSubtitlesDialog.serverDoesNotAllowThisServer':
+    '{server} doesn’t allow this server to search for subtitles.',
+  'screens.findSubtitlesDialog.serverHasNoSubtitleSite': '{server} has no subtitle site set up.',
+  'screens.findSubtitlesDialog.serverNeedsAnUpdate':
+    '{server} needs an update before this server can search for subtitles there.',
+  'screens.findSubtitlesDialog.streamingService': 'Streaming service',
   'screens.findSubtitlesDialog.subtitlesFound': 'Subtitles found',
   'screens.findSubtitlesDialog.theSubtitleSitesCouldNotBe': 'Couldn’t reach the subtitle sites.',
   'screens.finishOnAnotherDevice.finishSettingUpOnYourPhone': 'Finish setting up on your phone',

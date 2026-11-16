@@ -57,6 +57,7 @@ const createMemoryLinkSharingStore = (
         takesTheirControls: change.takesTheirControls ?? held.takesTheirControls,
         allowsDownloads: change.allowsDownloads ?? held.allowsDownloads,
         takesTheirRequests: change.takesTheirRequests ?? held.takesTheirRequests,
+        findsTheirSubtitles: change.findsTheirSubtitles ?? held.findsTheirSubtitles,
         playsDirect: change.playsDirect ?? held.playsDirect,
         invitesTheirPeople: change.invitesTheirPeople ?? held.invitesTheirPeople,
       };

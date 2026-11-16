@@ -1292,7 +1292,7 @@ describe('createRequestsClient with requests for films and series', () => {
 
     expect(await client.filedOrigins(['/films/Heat.mkv'])).toEqual({
       kind: 'answered',
-      value: { '/films/Heat.mkv': { source: 'download', via: 'qBittorrent' } },
+      value: { '/films/Heat.mkv': { source: 'download', via: 'qBittorrent', release: null } },
     });
     expect(fetch).toHaveBeenCalledWith(
       'http://requests:8421/api/origins',

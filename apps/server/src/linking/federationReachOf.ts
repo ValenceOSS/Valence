@@ -1,5 +1,6 @@
 import { FEDERATION_PATH } from './FEDERATION_PATH';
 import type { FederationReach, PeerClaimKind, PeerSubject } from './FederationReach';
+import type { FederationAction } from '@ValenceContracts/schemas/LinkSharing';
 
 const ID = '[0-9a-fA-F-]{36}';
 
@@ -30,7 +31,24 @@ const CATALOGUE_ROUTE = new RegExp(`^/catalogue/(${ID})$`);
 
 const TICKET_ROUTE = /^\/direct\/[A-Za-z0-9_-]{32,64}\/[^/]+$/;
 
-const SUBJECT_ROUTES: readonly { method: string; path: RegExp; kind: PeerSubject['kind'] }[] = [
+const SUBJECT_ROUTES: readonly {
+  method: string;
+  path: RegExp;
+  kind: PeerSubject['kind'];
+  action?: FederationAction;
+}[] = [
+  {
+    method: 'GET',
+    path: new RegExp(`^/api/media/(${ID})/subtitles/(?:found|finding)$`),
+    kind: 'item',
+    action: 'subtitles',
+  },
+  {
+    method: 'POST',
+    path: new RegExp(`^/api/media/(${ID})/subtitles/found$`),
+    kind: 'item',
+    action: 'subtitles',
+  },
   { method: 'GET', path: new RegExp(`^/api/media/(${ID})/image/[a-z]+$`), kind: 'item' },
   { method: 'GET', path: new RegExp(`^/api/media/(${ID})/segments$`), kind: 'item' },
   { method: 'GET', path: new RegExp(`^/api/media/(${ID})/chapters$`), kind: 'item' },
@@ -108,7 +126,7 @@ const passedThroughTo = (method: string, inner: string): FederationReach => {
     if (found?.[1] !== undefined) {
       return {
         kind: 'subject',
-        action: 'media',
+        action: route.action ?? 'media',
         subject: { kind: route.kind, id: found[1] },
         inner,
       };

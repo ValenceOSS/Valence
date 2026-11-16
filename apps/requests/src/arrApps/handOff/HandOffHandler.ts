@@ -5,7 +5,7 @@ import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaReq
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
 type ItemSighting =
-  | { itemId: string; kind: 'imported'; path: string; folder: string }
+  | { itemId: string; kind: 'imported'; path: string; folder: string; release?: string | null }
   | { itemId: string; kind: 'queued'; record: ArrQueueRecord }
   | { itemId: string; kind: 'missing' }
   | { itemId: string; kind: 'unchanged' };

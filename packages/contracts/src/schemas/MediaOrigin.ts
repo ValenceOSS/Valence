@@ -23,6 +23,7 @@ const MediaOriginsSchema = z.object({
 const FiledOriginSchema = z.object({
   source: z.enum(FILED_SOURCES),
   via: z.string().nullable(),
+  release: z.string().nullable().default(null),
 });
 
 const FiledOriginsSchema = z.object({

@@ -251,6 +251,12 @@ const createLinkSharingService = ({
         return refused(403, 'error.linking.thatIsNotSharedWithYourServer');
       }
 
+      if (reach.action === 'subtitles' && shared?.findsTheirSubtitles !== true) {
+        await record(reach.action, 'notShared');
+
+        return refused(403, 'error.linking.yourServerMayNotFindSubtitlesHere');
+      }
+
       if (reach.kind === 'subject') {
         const outcome =
           subject === null || shared === null ? 'notShared' : peerMayReach(shared, subject);

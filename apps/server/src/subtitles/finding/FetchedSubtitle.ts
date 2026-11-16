@@ -8,6 +8,7 @@ const FetchedSubtitleEntrySchema = z.object({
   id: z.string(),
   release: z.string(),
   score: z.number().int(),
+  scale: z.literal('bazarr').optional(),
   isHearingImpaired: z.boolean(),
   format: z.string(),
   fetchedAt: z.string(),

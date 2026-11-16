@@ -167,6 +167,8 @@ const createHandOffWorker = ({
           problemCode: null,
           filePath,
           filedTitle: basename(filePath),
+          releaseName:
+            sighting.release === undefined || sighting.release === '' ? null : sighting.release,
         });
         filed.push({ item, folder: mapClientPath(sighting.folder, app) });
         continue;

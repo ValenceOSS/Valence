@@ -27,8 +27,8 @@ const SubtitleSetupChangeSchema = z.object({
   subdlKey: z.string().trim().max(200).default(''),
   languages: z.array(z.string().min(2).max(3)).max(20),
   isAutomatic: z.boolean().default(false),
-  filmMinimumScore: z.number().int().min(0).max(100).default(60),
-  episodeMinimumScore: z.number().int().min(0).max(100).default(50),
+  filmMinimumScore: z.number().int().min(0).max(100).default(70),
+  episodeMinimumScore: z.number().int().min(0).max(100).default(90),
   writesSubtitles: z.boolean().default(false),
   whisperModel: z.enum(WHISPER_MODELS).default('base'),
   whisperLanguage: z.string().min(2).max(3).nullable().default(null),
@@ -52,6 +52,30 @@ const SUBTITLE_REASONS = [
 
 const SubtitleReasonSchema = z.enum(SUBTITLE_REASONS);
 
+const SUBTITLE_CRITERIA = [
+  'source',
+  'edition',
+  'releaseGroup',
+  'frameRate',
+  'resolution',
+  'videoCodec',
+  'audioCodec',
+  'streamingService',
+] as const;
+
+const SubtitleCriterionSchema = z.enum(SUBTITLE_CRITERIA);
+
+const SubtitleCriteriaSchema = z
+  .array(z.string())
+  .default([])
+  .transform((given) =>
+    given.flatMap((one) => {
+      const known = SubtitleCriterionSchema.safeParse(one);
+
+      return known.success ? [known.data] : [];
+    }),
+  );
+
 const FoundSubtitleSchema = z.object({
   source: SubtitleSourceSchema,
   id: z.string().min(1),
@@ -64,6 +88,24 @@ const FoundSubtitleSchema = z.object({
   downloads: z.number().int().nonnegative().nullable(),
   score: z.number().int().min(0).max(100).default(0),
   reasons: z.array(SubtitleReasonSchema).default([]),
+  matches: SubtitleCriteriaSchema,
+  misses: SubtitleCriteriaSchema,
+  unknowns: SubtitleCriteriaSchema,
+});
+
+const SUBTITLE_FINDING_STATES = [
+  'ready',
+  'notSetUp',
+  'notAllowed',
+  'notSupported',
+  'unreachable',
+] as const;
+
+const SubtitleFindingSchema = z.object({
+  state: z.enum(SUBTITLE_FINDING_STATES),
+  sites: z.array(SubtitleSourceSchema),
+  languages: z.array(z.string()),
+  server: z.string().nullable(),
 });
 
 const FoundSubtitlesSchema = z.object({
@@ -87,9 +129,13 @@ type SubtitleSetup = z.infer<typeof SubtitleSetupSchema>;
 type SubtitleSetupChange = z.input<typeof SubtitleSetupChangeSchema>;
 type SubtitleSource = z.infer<typeof SubtitleSourceSchema>;
 type SubtitleReason = z.infer<typeof SubtitleReasonSchema>;
+type SubtitleCriterion = z.infer<typeof SubtitleCriterionSchema>;
+type SubtitleFinding = z.infer<typeof SubtitleFindingSchema>;
 
 export type {
   FetchedSubtitle,
+  SubtitleCriterion,
+  SubtitleFinding,
   FoundSubtitle,
   FoundSubtitles,
   SubtitleChoice,
@@ -103,10 +149,14 @@ export {
   FetchedSubtitleSchema,
   FoundSubtitleSchema,
   FoundSubtitlesSchema,
+  SUBTITLE_CRITERIA,
+  SUBTITLE_FINDING_STATES,
   SUBTITLE_REASONS,
   SubtitleChoiceSchema,
   SubtitleSetupChangeSchema,
   SubtitleSetupSchema,
+  SubtitleCriterionSchema,
+  SubtitleFindingSchema,
   SubtitleReasonSchema,
   SubtitleSourceSchema,
 };

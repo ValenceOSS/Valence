@@ -9,6 +9,7 @@ const FEDERATION_ACTIONS = [
   'media',
   'parties',
   'requests',
+  'subtitles',
 ] as const;
 
 const FEDERATION_OUTCOMES = ['allowed', 'notShared', 'aboveTheAge', 'blocked', 'tooMany'] as const;
@@ -28,6 +29,7 @@ const LinkSharingSchema = z.object({
   takesTheirControls: z.boolean(),
   allowsDownloads: z.boolean(),
   takesTheirRequests: z.boolean(),
+  findsTheirSubtitles: z.boolean(),
   playsDirect: z.boolean(),
   invitesTheirPeople: z.boolean(),
 });
@@ -43,6 +45,7 @@ const LinkSharingChangeSchema = z.object({
   takesTheirControls: z.boolean().optional(),
   allowsDownloads: z.boolean().optional(),
   takesTheirRequests: z.boolean().optional(),
+  findsTheirSubtitles: z.boolean().optional(),
   playsDirect: z.boolean().optional(),
   invitesTheirPeople: z.boolean().optional(),
 });

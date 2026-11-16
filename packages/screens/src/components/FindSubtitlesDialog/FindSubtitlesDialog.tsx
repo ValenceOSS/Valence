@@ -1,66 +1,229 @@
 import { useState } from 'react';
 import { saidByTheServer } from '@ValenceClient/query/saidByTheServer';
 import { useQuery } from '@tanstack/react-query';
-import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
+import { ChoiceList } from '@ValenceUI/ChoiceList';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { DataTable } from '@ValenceUI/DataTable';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { Badge } from '@ValenceUI/Badge';
 import { SelectField } from '@ValenceUI/SelectField';
-import { Spinner } from '@ValenceUI/Spinner';
+import { Skeleton } from '@ValenceUI/Skeleton';
+import { cn } from '@ValenceUI/cn';
 import { notify } from '@ValenceUI/notify';
-import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { findSubtitles } from '@ValenceClient/library/findSubtitles';
+import { readSubtitleFinding } from '@ValenceClient/library/readSubtitleFinding';
 import { fetchFoundSubtitle } from '@ValenceClient/library/fetchFoundSubtitle';
 import { languageName } from '@ValenceClient/playback/languageName';
+import { SUBTITLE_CRITERION_LABELS } from '@ValenceClient/library/SUBTITLE_CRITERION_LABELS';
 import { SUBTITLE_REASON_LABELS } from '@ValenceClient/library/SUBTITLE_REASON_LABELS';
 import { SUBTITLE_SITE_NAMES } from '@ValenceClient/library/SUBTITLE_SITE_NAMES';
 import { SUBTITLE_LANGUAGES } from '@ValenceContracts/constants/SUBTITLE_LANGUAGES';
-import type { FoundSubtitle, SubtitleReason } from '@ValenceContracts/schemas/SubtitleFinding';
-import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import { SUBTITLE_CRITERIA } from '@ValenceContracts/schemas/SubtitleFinding';
+import type { FoundSubtitle, SubtitleFinding } from '@ValenceContracts/schemas/SubtitleFinding';
+import type { BadgeTone } from '@ValenceUI/Badge.types';
+import type { Choice } from '@ValenceUI/ChoiceList.types';
 import type { FindSubtitlesDialogProps } from './FindSubtitlesDialog.types';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
-const REASON_TONES = {
-  madeForThisFile: 'success',
-  sameRelease: 'accent',
-  sameGroup: 'quiet',
-  sameSource: 'quiet',
-  sameResolution: 'quiet',
-  sameVideoCodec: 'quiet',
-  sameAudioCodec: 'quiet',
-  sameService: 'quiet',
-  sameEdition: 'quiet',
-  sameFrameRate: 'quiet',
-  differentFrameRate: 'danger',
-} as const satisfies Record<SubtitleReason, 'success' | 'accent' | 'quiet' | 'danger'>;
+const WAITING_ROWS = 4;
+
+type Check = { label: string; look: 'matches' | 'misses' | 'unknowns' | 'warns' };
 
 /**
- * Looks for subtitles for one film or episode on the sites Valence has keys for, in a language
- * chosen from the ones the server offers first, and fetches the one chosen, which the server keeps
- * so every app finds it. They are listed by how well they fit this file, each saying why: made for
- * this very file, the same release, the same frame rate, or a different one that will drift.
+ * Names a subtitle found on a site by where it came from and its id there, which together are
+ * unique.
+ *
+ * @param subtitle - The subtitle.
+ * @returns Its key.
+ */
+const keyOf = (subtitle: Pick<FoundSubtitle, 'source' | 'id'>): string =>
+  `${subtitle.source}:${subtitle.id}`;
+
+/**
+ * What a subtitle shares with the file and what it does not: each thing it was checked on, ticked
+ * where it matches, crossed where it does not and marked unknown where the file or the subtitle
+ * does not say, with a frame rate that differs said as the warning it is. A server that does not say what it checked gives only
+ * what matched.
+ *
+ * @param subtitle - The subtitle.
+ * @returns Each line, by its label and whether it matched, missed or warns.
+ */
+const checksOf = (subtitle: FoundSubtitle): Check[] => {
+  const warnings = [
+    ...(subtitle.reasons.includes('differentFrameRate')
+      ? [SUBTITLE_REASON_LABELS.differentFrameRate]
+      : []),
+    ...(subtitle.isMachineTranslated ? [say('screens.findSubtitlesDialog.machineTranslated')] : []),
+  ].map((label): Check => ({ label, look: 'warns' }));
+
+  if (
+    subtitle.matches.length === 0 &&
+    subtitle.misses.length === 0 &&
+    subtitle.unknowns.length === 0
+  ) {
+    return [
+      ...subtitle.reasons
+        .filter((reason) => reason !== 'madeForThisFile' && reason !== 'differentFrameRate')
+        .map((reason) => ({ label: SUBTITLE_REASON_LABELS[reason], look: 'matches' as const })),
+      ...warnings,
+    ];
+  }
+
+  return [
+    ...SUBTITLE_CRITERIA.flatMap((criterion): Check[] =>
+      subtitle.matches.includes(criterion)
+        ? [{ label: SUBTITLE_CRITERION_LABELS[criterion], look: 'matches' as const }]
+        : subtitle.misses.includes(criterion) && criterion !== 'frameRate'
+          ? [{ label: SUBTITLE_CRITERION_LABELS[criterion], look: 'misses' as const }]
+          : subtitle.unknowns.includes(criterion)
+            ? [{ label: SUBTITLE_CRITERION_LABELS[criterion], look: 'unknowns' as const }]
+            : [],
+    ),
+    ...warnings,
+  ];
+};
+
+const CHECK_TONES = {
+  matches: 'success',
+  misses: 'danger',
+  unknowns: 'ended',
+  warns: 'warning',
+} as const satisfies Record<Check['look'], BadgeTone>;
+
+/**
+ * Lays one subtitle found out as a row to pick: its release name, what it shares with this file
+ * and what it does not, and down its right side the site it is from, whether it describes sounds
+ * and how often it has been downloaded, above how well it matches.
+ *
+ * @param subtitle - The subtitle.
+ * @param isFirst - Whether it heads the list, the best of them.
+ * @returns The row.
+ */
+const choiceOf = (subtitle: FoundSubtitle, isFirst: boolean): Choice => {
+  const checks = checksOf(subtitle);
+  const note = subtitle.reasons.includes('madeForThisFile')
+    ? SUBTITLE_REASON_LABELS.madeForThisFile
+    : isFirst && subtitle.score > 0
+      ? say('screens.chooseSourceDialog.bestMatch')
+      : undefined;
+
+  return {
+    id: keyOf(subtitle),
+    title: subtitle.name,
+    ...(note === undefined ? {} : { note }),
+    detail: (
+      <>
+        {checks.length === 0 ? null : (
+          <span className="mt-2 flex flex-wrap gap-1.5">
+            {checks.map((check) => (
+              <Badge key={check.label} tone={CHECK_TONES[check.look]}>
+                {check.label}
+              </Badge>
+            ))}
+          </span>
+        )}
+      </>
+    ),
+    aside: (
+      <span className="flex h-full flex-col items-end justify-between gap-3">
+        <span className="flex flex-col items-end gap-1">
+          <span className="flex items-center gap-1.5 text-xs text-text-muted">
+            {subtitle.isHearingImpaired ? (
+              <Badge>{say('screens.findSubtitlesDialog.sdh')}</Badge>
+            ) : null}
+            {SUBTITLE_SITE_NAMES[subtitle.source]}
+          </span>
+          {subtitle.downloads === null ? null : (
+            <span className="text-xs tabular-nums text-text-muted">
+              {sayCount('common.count.downloads', subtitle.downloads)}
+            </span>
+          )}
+        </span>
+        <span
+          className={cn(
+            'text-sm font-medium tabular-nums',
+            checks.some((check) => check.look === 'warns') ? 'text-warning' : 'text-text',
+          )}
+        >
+          {say('client.library.describeFoundSubtitle.scoreMatch', {
+            score: subtitle.score.toString(),
+          })}
+        </span>
+      </span>
+    ),
+  };
+};
+
+/**
+ * Says why subtitles cannot be found for a title: its server has no subtitle site, or it is on a
+ * linked server that does not let this one search, is too old to be asked, or cannot be reached.
+ *
+ * @param finding - What the server that holds it said.
+ * @returns What to tell somebody.
+ */
+const whyNotOf = ({ state, server }: SubtitleFinding): string =>
+  state === 'notAllowed'
+    ? say('screens.findSubtitlesDialog.serverDoesNotAllowThisServer', { server: server ?? '' })
+    : state === 'notSupported'
+      ? say('screens.findSubtitlesDialog.serverNeedsAnUpdate', { server: server ?? '' })
+      : state === 'unreachable'
+        ? say('screens.adminArea.linkedServersPanel.nameCouldNotBeReached', { name: server ?? '' })
+        : server === null
+          ? say('screens.findSubtitlesDialog.noSubtitleSiteIsSetUp')
+          : say('screens.findSubtitlesDialog.serverHasNoSubtitleSite', { server });
+
+/**
+ * Says which sites a title's subtitles are looked for on, and on which server where it is not this
+ * one.
+ *
+ * @param finding - What the server that holds it said.
+ * @returns The line.
+ */
+const searchesOf = ({ sites, server }: SubtitleFinding): string => {
+  const named = new Intl.ListFormat(undefined, { style: 'long', type: 'conjunction' }).format(
+    sites.map((site) => SUBTITLE_SITE_NAMES[site]),
+  );
+
+  return server === null
+    ? say('screens.findSubtitlesDialog.searchesSites', { sites: named })
+    : say('screens.findSubtitlesDialog.searchesSitesOnServer', { sites: named, server });
+};
+
+/**
+ * Looks for subtitles for one film or episode on the sites the server that holds its file has keys
+ * for — this one, or the linked server it comes from, which searches and keeps it — in a language
+ * chosen from the ones that server offers first, and adds the one picked, which the server keeps so
+ * every app finds it. Where that server cannot search, it says why rather than offering nothing. They are listed best first, the best already picked, each ticking what it
+ * shares with this file, crossing what it does not and warning of what would make it a poor choice,
+ * with how well it matches out of 100, scored the way Bazarr scores them.
  *
  * @param media - The film or episode, by its id and name, or nothing while the dialog is shut.
- * @param onClose - Called when it is dismissed.
- * @param onFetched - Told when a subtitle has been fetched, so what lists the subtitles can look
+ * @param onClose - Called when it is dismissed, or once a subtitle has been added.
+ * @param onFetched - Told when a subtitle has been added, so what lists the subtitles can look
  *   again.
  */
 const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogProps) => {
-  const setup = useQuery({ ...adminQueries.subtitleSetup(), retry: false });
-  const preferred = setup.data?.languages ?? [];
+  const finding = useQuery({
+    queryKey: ['subtitles', 'finding', media?.id ?? null],
+    queryFn: () => readSubtitleFinding(media?.id ?? ''),
+    enabled: media !== null,
+    retry: false,
+    staleTime: 0,
+  });
+  const canSearch = finding.data?.state === 'ready' || finding.isError;
+  const preferred = finding.data?.languages ?? [];
   const [chosen, setChosen] = useState<string | null>(null);
   const language = chosen ?? preferred[0] ?? 'en';
-  const [fetching, setFetching] = useState<string | null>(null);
-  const [fetched, setFetched] = useState<ReadonlySet<string>>(new Set());
+  const [picked, setPicked] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const found = useQuery({
     queryKey: ['subtitles', 'found', media?.id ?? null, language],
     queryFn: () => findSubtitles(media?.id ?? '', language),
-    enabled: media !== null,
+    enabled: media !== null && canSearch,
     retry: false,
     staleTime: 0,
   });
@@ -72,20 +235,27 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
     media === null
       ? say('screens.findSubtitlesDialog.findSubtitles')
       : say('screens.findSubtitlesDialog.findSubtitlesForName', { name: media.name });
+  const subtitles = found.data?.isSetUp === true ? found.data.subtitles : [];
+  const chosenSubtitle =
+    subtitles.find((subtitle) => keyOf(subtitle) === picked) ?? subtitles[0] ?? null;
 
-  const take = (subtitle: FoundSubtitle) => {
-    if (media === null) {
+  const close = () => {
+    setPicked(null);
+    setProblem(null);
+    onClose();
+  };
+
+  const add = () => {
+    if (media === null || chosenSubtitle === null) {
       return;
     }
 
-    const key = `${subtitle.source}:${subtitle.id}`;
-
-    setFetching(key);
+    setIsAdding(true);
     setProblem(null);
 
     void fetchFoundSubtitle(media.id, {
-      source: subtitle.source,
-      id: subtitle.id,
+      source: chosenSubtitle.source,
+      id: chosenSubtitle.id,
       language,
     })
       .then((answer) => {
@@ -95,130 +265,21 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
           return;
         }
 
-        setFetched(new Set([...fetched, key]));
         notify.worked(
           say('screens.findSubtitlesDialog.savedName', {
             name: languageName(language),
           }),
         );
         onFetched?.();
+        close();
       })
       .finally(() => {
-        setFetching(null);
+        setIsAdding(false);
       });
   };
 
-  const columns: DataTableColumn<FoundSubtitle>[] = [
-    {
-      id: 'release',
-      header: say('common.release'),
-      accessorFn: (subtitle) => subtitle.name,
-      meta: { fills: true },
-      cell: ({ row }) => (
-        <span className="block max-w-[28rem] truncate text-text" title={row.original.name}>
-          {row.original.name}
-        </span>
-      ),
-    },
-    {
-      id: 'score',
-      header: say('screens.findSubtitlesDialog.match'),
-      accessorFn: (subtitle) => subtitle.score,
-      meta: { shrinks: true },
-      cell: ({ row }) => <span className="tabular-nums text-text">{row.original.score}</span>,
-    },
-    {
-      id: 'why',
-      header: say('common.why'),
-      enableSorting: false,
-      cell: ({ row }) => (
-        <span className="flex flex-wrap gap-1.5">
-          {row.original.reasons.map((reason) => (
-            <Badge key={reason} size="sm" tone={REASON_TONES[reason]}>
-              {SUBTITLE_REASON_LABELS[reason]}
-            </Badge>
-          ))}
-        </span>
-      ),
-    },
-    {
-      id: 'notes',
-      header: say('screens.findSubtitlesDialog.notes'),
-      enableSorting: false,
-      meta: { shrinks: true },
-      cell: ({ row }) => (
-        <span className="flex flex-wrap gap-1.5">
-          {row.original.isHearingImpaired ? (
-            <Badge size="sm">{say('screens.findSubtitlesDialog.sdh')}</Badge>
-          ) : null}
-          {row.original.isMachineTranslated ? (
-            <Badge size="sm" tone="warning">
-              {say('screens.findSubtitlesDialog.machineTranslated')}
-            </Badge>
-          ) : null}
-        </span>
-      ),
-    },
-    {
-      id: 'source',
-      header: say('common.site'),
-      accessorFn: (subtitle) => SUBTITLE_SITE_NAMES[subtitle.source],
-      meta: { shrinks: true },
-      cell: ({ row }) => (
-        <span className="text-text-muted">{SUBTITLE_SITE_NAMES[row.original.source]}</span>
-      ),
-    },
-    {
-      id: 'downloads',
-      header: say('common.downloads'),
-      accessorFn: (subtitle) => subtitle.downloads ?? -1,
-      meta: { shrinks: true },
-      cell: ({ row }) => (
-        <span className="tabular-nums text-text-muted">
-          {row.original.downloads === null ? '—' : row.original.downloads.toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      id: 'get',
-      header: '',
-      enableSorting: false,
-      meta: { shrinks: true },
-      cell: ({ row }) => {
-        const key = `${row.original.source}:${row.original.id}`;
-
-        return fetched.has(key) ? (
-          <Badge size="sm" tone="success">
-            {say('screens.findSubtitlesDialog.saved')}
-          </Badge>
-        ) : (
-          <Button
-            variant="secondary"
-            size="xs"
-            isLoading={fetching === key}
-            disabled={fetching !== null && fetching !== key}
-            onClick={() => {
-              take(row.original);
-            }}
-          >
-            {say('screens.findSubtitlesDialog.get')}
-          </Button>
-        );
-      },
-    },
-  ];
-
   return (
-    <DialogCompanion
-      size="stage"
-      label={title}
-      isOpen={media !== null}
-      onClose={() => {
-        setProblem(null);
-        setFetched(new Set());
-        onClose();
-      }}
-    >
+    <DialogCompanion label={title} isOpen={media !== null} onClose={close}>
       <DialogTitle
         size="compact"
         title={title}
@@ -226,15 +287,36 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
       />
 
       <DialogContent className="flex flex-col gap-4">
-        <SelectField
-          label={say('screens.adminArea.subtitlesCard.languages')}
-          options={languages}
-          value={language}
-          onSelect={setChosen}
-          className="max-w-xs"
-        />
+        {finding.data !== undefined && !canSearch ? null : (
+          <div className="flex items-end justify-between gap-4">
+            <SelectField
+              label={say('common.language')}
+              options={languages}
+              value={language}
+              onSelect={(code) => {
+                setChosen(code);
+                setPicked(null);
+                setProblem(null);
+              }}
+              className="w-56"
+            />
 
-        {found.isError ? (
+            <span className="flex flex-col items-end gap-0.5 pb-2.5 text-end text-text-muted">
+              {finding.data === undefined || finding.data.sites.length === 0 ? null : (
+                <span className="text-xs">{searchesOf(finding.data)}</span>
+              )}
+              {subtitles.length === 0 ? null : (
+                <span className="text-sm tabular-nums">
+                  {sayCount('common.count.results', subtitles.length)}
+                </span>
+              )}
+            </span>
+          </div>
+        )}
+
+        {finding.data !== undefined && !canSearch ? (
+          <p className="text-sm text-text-muted">{whyNotOf(finding.data)}</p>
+        ) : found.isError ? (
           <CouldNotRead
             said={say('screens.findSubtitlesDialog.theSubtitleSitesCouldNotBe')}
             why={saidByTheServer(found.error)}
@@ -243,29 +325,47 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
               void found.refetch();
             }}
           />
-        ) : found.data === undefined ? (
-          <Spinner isCentered size="sm" label={say('screens.findSubtitlesDialog.looking')} />
+        ) : finding.isPending || found.data === undefined ? (
+          <div className="flex flex-col gap-1.5">
+            {Array.from({ length: WAITING_ROWS }, (_, at) => (
+              <Skeleton
+                key={at}
+                {...(at === 0 ? { label: say('screens.findSubtitlesDialog.looking') } : {})}
+                className="h-[4.5rem] w-full"
+              />
+            ))}
+          </div>
         ) : !found.data.isSetUp ? (
           <p className="text-sm text-text-muted">
             {say('screens.findSubtitlesDialog.noSubtitleSiteIsSetUp')}
           </p>
-        ) : found.data.subtitles.length === 0 ? (
+        ) : subtitles.length === 0 ? (
           <p className="text-sm text-text-muted">
             {say('screens.findSubtitlesDialog.nothingWasFoundInThatLanguage')}
           </p>
         ) : (
-          <DataTable
+          <ChoiceList
             label={say('screens.findSubtitlesDialog.subtitlesFound')}
-            columns={columns}
-            rows={found.data.subtitles}
-            getRowId={(subtitle) => `${subtitle.source}:${subtitle.id}`}
-            pageSize={50}
-            height="compact"
+            choices={subtitles.map((subtitle, at) => choiceOf(subtitle, at === 0))}
+            value={chosenSubtitle === null ? null : keyOf(chosenSubtitle)}
+            onChoose={(key) => {
+              setPicked(key);
+              setProblem(null);
+            }}
           />
         )}
       </DialogContent>
 
-      <DialogFooter note={problem} dismiss={{ onChoose: onClose, label: say('common.done') }} />
+      <DialogFooter
+        note={problem}
+        dismiss={{ onChoose: close }}
+        confirm={{
+          label: say('screens.findSubtitlesDialog.addSubtitles'),
+          onChoose: add,
+          isLoading: isAdding,
+          isDisabled: chosenSubtitle === null,
+        }}
+      />
     </DialogCompanion>
   );
 };

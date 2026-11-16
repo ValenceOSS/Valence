@@ -14,6 +14,9 @@ const FOUND: FoundSubtitle = {
   downloads: 120,
   score: 92,
   reasons: ['madeForThisFile', 'sameRelease'],
+  matches: [],
+  misses: [],
+  unknowns: [],
 };
 
 describe('describeFoundSubtitle', () => {

@@ -240,6 +240,7 @@ import { LINKED_PARTY } from '@ValenceServer/linking/parties/LINKED_PARTY';
 import { localIdOf } from '@ValenceServer/linking/catalogue/localIdOf';
 import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
 import type { AskedAlong } from '@ValenceContracts/schemas/LinkSharing';
+import { createLinkedSubtitleFinder } from '@ValenceServer/linking/content/createLinkedSubtitleFinder';
 import { createLinkedSubtitles } from '@ValenceServer/linking/content/createLinkedSubtitles';
 import { createLinkedSegments } from '@ValenceServer/linking/content/createLinkedSegments';
 import { createLinkedDownloads } from '@ValenceServer/linking/content/createLinkedDownloads';
@@ -1066,6 +1067,15 @@ const subtitleFinder = createSubtitleFinder({
   settings,
   store: fetchedSubtitles,
   canWriteSubtitles: async () => (await transcoder.capabilities()).canWriteSubtitles,
+  releaseOf: async (path) => {
+    if (requestsClient === null || requests?.overview().isReachable !== true) {
+      return null;
+    }
+
+    const answer = await requestsClient.filedOrigins([path]);
+
+    return answer.kind === 'answered' ? (answer.value[path]?.release ?? null) : null;
+  },
 });
 
 const requestPasswordReset = createPasswordResetRequests({
@@ -5703,7 +5713,12 @@ const app = createApp({
   playbackSessions: createPlaybackSessions(),
   email: emailService,
   telemetry,
-  subtitleFinder,
+  subtitleFinder: createLinkedSubtitleFinder(
+    subtitleFinder,
+    linkedTitleOf,
+    linkedAsker,
+    async (serverId) => (await linkStore.readServer(serverId))?.name ?? null,
+  ),
   requestPasswordReset,
   onNamesChanged: tellRequestsWhoIsWhoLater,
   sayALinkWasWithdrawn: async ({ accountId, profileId, title, byName }) => {

@@ -23,7 +23,8 @@ type FederationRefusalCode =
   | 'error.linking.thatIsNotSharedWithYourServer'
   | 'error.linking.thatServerDoesNotShowItsRecord'
   | 'error.linking.thisPersonMayNotWatchFromHere'
-  | 'error.linking.yourServerIsAskingTooOften';
+  | 'error.linking.yourServerIsAskingTooOften'
+  | 'error.linking.yourServerMayNotFindSubtitlesHere';
 
 type Admission =
   | { kind: 'pairing' }

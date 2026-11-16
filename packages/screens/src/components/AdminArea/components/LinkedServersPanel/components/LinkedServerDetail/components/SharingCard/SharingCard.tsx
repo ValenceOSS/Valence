@@ -247,6 +247,17 @@ const SharingCard = ({ server, thisServer }: SharingCardProps) => {
             change({ allowsDownloads: !sharing.allowsDownloads });
           },
         )}
+        {toggleRow(
+          say('screens.adminArea.linkedServersPanel.allowSubtitleSearch'),
+          say('screens.adminArea.linkedServersPanel.namesPeopleMayFindSubtitles', {
+            name: server.name,
+          }),
+          sharing.findsTheirSubtitles,
+          () => {
+            change({ findsTheirSubtitles: !sharing.findsTheirSubtitles });
+          },
+          say('screens.adminArea.linkedServersPanel.searchesUseYourSubtitleSites'),
+        )}
       </SettingList>
 
       {head(say('screens.adminArea.linkedServersPanel.betweenTheServers'))}

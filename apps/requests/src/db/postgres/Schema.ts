@@ -368,6 +368,7 @@ const requestItem = requestsSchema.table(
     filePath: text('file_path'),
     score: doublePrecision('score'),
     filedTitle: text('filed_title'),
+    releaseName: text('release_name'),
     filedScore: doublePrecision('filed_score'),
     downloadedBytes: doublePrecision('downloaded_bytes'),
     downloadSeconds: doublePrecision('download_seconds'),

@@ -31,6 +31,7 @@ type Fileable = Pick<
 
 type Filed = {
   filed: ReadonlyMap<string, string>;
+  named?: ReadonlyMap<string, string>;
   missing: readonly string[];
   refused: ReadonlyMap<string, Said>;
 };
@@ -147,7 +148,8 @@ const videoFor = (
  *   its resolution measured where it could be probed, and otherwise as its name says — or nothing
  *   where it is. Each video is checked beside where it goes, under a name of its own, and moved into
  *   place only once it is taken, so a copy it would replace is never lost to one that is refused.
- * @returns Where each was filed, which could not be found in it, and which were refused and why.
+ * @returns Where each was filed and the name of the video it was filed from, which could not be
+ *   found in it, and which were refused and why.
  */
 const fileDownload = async (
   request: Pick<
@@ -164,6 +166,7 @@ const fileDownload = async (
   const files = await findDownloadedFiles(contentPath);
   const videos = files.filter(isFeature);
   const filed = new Map<string, string>();
+  const named = new Map<string, string>();
   const missing: string[] = [];
   const refused = new Map<string, Said>();
 
@@ -253,6 +256,7 @@ const fileDownload = async (
 
     for (const one of held) {
       filed.set(one.id, destination);
+      named.set(one.id, videoStem);
     }
   }
 
@@ -269,7 +273,7 @@ const fileDownload = async (
     }
   }
 
-  return { filed, missing, refused };
+  return { filed, named, missing, refused };
 };
 
 export { fileDownload };

@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."request_item" ADD COLUMN "release_name" text;

@@ -115,6 +115,7 @@ const createRadarrHandOff = (caller: Pick<ArrCaller, 'read' | 'send'>): HandOffH
           kind: 'imported',
           path: filePath,
           folder: movie.path ?? dirname(filePath),
+          release: movie.movieFile?.sceneName ?? null,
         };
       }
 

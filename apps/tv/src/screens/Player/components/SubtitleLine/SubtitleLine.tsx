@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     right: tokens.space.edge,
     alignItems: 'center',
   },
-  bottom: { bottom: tokens.space.xl * 1.5 },
+  bottom: { bottom: tokens.space.sm * 2 },
   top: { top: tokens.space.xl },
   middle: { top: 0, bottom: 0, justifyContent: 'center' },
   text: { paddingHorizontal: tokens.space.xs },

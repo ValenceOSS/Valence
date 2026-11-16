@@ -15,6 +15,8 @@ const CLEAR_OF_THE_CONTROLS = '18%';
 
 const NEAR_THE_EDGE = '8%';
 
+const NEAR_THE_FOOT = '4%';
+
 const ROWS = ['top', 'middle', 'bottom'] as const satisfies readonly SubtitleRow[];
 
 const STACKED: Record<SubtitleRow, string> = {
@@ -46,8 +48,10 @@ type LiveMoment = {
  * every other line joins the row its alignment names — along the top, across the middle or along the
  * foot — and stacks there with the rest. The foot stacks upwards, the first line said lowest and each
  * later one above it, as a renderer of the script stacks them, so a line being read stays where it is
- * when another starts. The rows move out of the way of the controls when they are up, which a browser
- * only manages through a positioning hint that has to be rewritten into the file.
+ * when another starts. The foot sits low enough that two lines stay in the black bar under a film
+ * wider than the screen, as most are, rather than over its picture. The rows move out of the way
+ * of the controls when they are up, which a browser only manages through a positioning hint that
+ * has to be rewritten into the file.
  *
  * The rows are laid along the player, which is where the controls are. A line placed at a point is
  * placed on the picture instead, in a box of the picture's own shape centred in the player, so that
@@ -126,11 +130,10 @@ const SubtitleCues = ({
     return null;
   }
 
-  const edge = isLifted ? CLEAR_OF_THE_CONTROLS : NEAR_THE_EDGE;
   const rowAt: Record<SubtitleRow, CSSProperties> = {
-    top: { top: edge },
+    top: { top: isLifted ? CLEAR_OF_THE_CONTROLS : NEAR_THE_EDGE },
     middle: { top: '50%', transform: 'translateY(-50%)' },
-    bottom: { bottom: edge },
+    bottom: { bottom: isLifted ? CLEAR_OF_THE_CONTROLS : NEAR_THE_FOOT },
   };
 
   return (
