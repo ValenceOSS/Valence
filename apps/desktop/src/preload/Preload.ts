@@ -53,6 +53,7 @@ import { keepTheLatest } from '@ValenceDesktop/preload/keepTheLatest';
 import {
   WHAT_THIS_COMPUTER_IS_CALLED,
   WHAT_VERSION_THIS_IS,
+  IS_IT_A_DEV_BUILD,
 } from '@ValenceDesktop/main/aboutChannels';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
 import {
@@ -125,6 +126,8 @@ const canReachNow = (): boolean =>
   z.boolean().catch(true).parse(ipcRenderer.sendSync(CAN_REACH_NOW));
 
 const thisVersion = z.string().catch('').parse(ipcRenderer.sendSync(WHAT_VERSION_THIS_IS));
+
+const isThisADevBuild = z.boolean().catch(false).parse(ipcRenderer.sendSync(IS_IT_A_DEV_BUILD));
 
 const computerName = z
   .string()
@@ -248,6 +251,7 @@ contextBridge.exposeInMainWorld('valence', {
   },
   about: {
     version: thisVersion,
+    isADevBuild: isThisADevBuild,
     computerName,
     commit: __VALENCE_COMMIT__,
     arch: process.arch,

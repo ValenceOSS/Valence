@@ -9,6 +9,7 @@ import { theDiscordPreview } from './theDiscordPreview';
 import { theCardOf } from './theCardOf';
 import type { PreviewState } from './theDiscordPreview';
 import type { DiscordPreviewProps } from './DiscordPreview.types';
+import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
 import { say } from '@ValenceI18n/say';
 
 const STATES = [
@@ -34,7 +35,7 @@ const DiscordPreview = ({ settings }: DiscordPreviewProps) => {
   const [state, setState] = useState<PreviewState>('film');
   const [now] = useState(Date.now);
   const samples = useDiscordSamples();
-  const activity = theDiscordPreview(state, samples, settings, now);
+  const activity = theDiscordPreview(state, samples, settings, now, theBuildInfo());
 
   return (
     <PanelCard

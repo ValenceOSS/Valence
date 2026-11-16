@@ -1,12 +1,15 @@
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import type { DiscordLook } from '@ValenceContracts/schemas/DiscordPresence';
+import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
 
 const WATCHING = 3;
 
 const LISTENING = 2;
 
 const LOGOS = { light: 'valence-desktop', dark: 'valence-desktop-dark' } as const;
+
+const DEV_LOGOS = { light: 'valence-desktop-dev', dark: 'valence-desktop-dev-dark' } as const;
 
 const SHOWS_THE_DETAILS = 2;
 
@@ -249,25 +252,31 @@ const theTracksArtworkFor = (artwork: string | null): string | undefined => {
  * @param playing - What is happening and how it should look, or nothing where the status should come
  *   down.
  * @param openedAt - When Valence opened, in milliseconds, which browsing counts from.
+ * @param build - Which Valence is saying so, named by its version beside the logo, where it is known;
+ *   a build still being worked on wears the dev logo, so its status is never mistaken for a
+ *   release's.
  * @returns The activity to send, or nothing to clear it.
  */
 const aDiscordActivity = (
   playing: WhatIsPlaying | null,
   openedAt: number,
+  build: Pick<BuildInfo, 'version' | 'isADevBuild'> | null = null,
 ): DiscordActivity | null => {
   if (playing === null) {
     return null;
   }
 
   const { look } = playing;
-  const logo = LOGOS[look.logo];
+  const logo = (build?.isADevBuild === true ? DEV_LOGOS : LOGOS)[look.logo];
+  const named =
+    build === null ? VALENCE : say('screens.adminPage.valenceVersion', { version: build.version });
 
   if (playing.kind === 'browsing') {
     return {
       type: WATCHING,
       details: BROWSING,
       timestamps: { start: Math.floor(openedAt / A_SECOND) },
-      assets: { large_image: logo, large_text: VALENCE },
+      assets: { large_image: logo, large_text: named },
     };
   }
 
@@ -298,7 +307,7 @@ const aDiscordActivity = (
       ...timestamps,
       assets: {
         large_image: (look.showsArtwork ? theTracksArtworkFor(playing.artwork) : undefined) ?? logo,
-        large_text: VALENCE,
+        large_text: named,
         small_image: logo,
         small_text: theBadgeTextFor(playing.isPaused),
       },
@@ -308,7 +317,7 @@ const aDiscordActivity = (
 
   const assets = {
     large_image: (look.showsArtwork ? theArtworkFor(playing.artwork) : undefined) ?? logo,
-    large_text: VALENCE,
+    large_text: named,
   };
 
   const episode =

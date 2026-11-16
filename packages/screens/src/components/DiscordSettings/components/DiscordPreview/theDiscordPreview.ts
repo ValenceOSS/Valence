@@ -5,6 +5,7 @@ import { theWatchingStatus } from '@ValenceScreens/playback/theWatchingStatus';
 import { theListeningStatus } from '@ValenceScreens/playback/theListeningStatus';
 import { theTracksArtworkUrl } from '@ValenceScreens/music/theTracksArtworkUrl';
 import type { DiscordActivity } from '@ValenceClient/discord/aDiscordActivity';
+import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { DiscordSamples } from './useDiscordSamples';
@@ -45,6 +46,8 @@ const aThirdThrough = (durationSeconds: number | undefined): number =>
  *   are none, in which case a made-up one stands in.
  * @param settings - The profile's Discord settings as they would be saved.
  * @param now - The time now in milliseconds.
+ * @param build - Which Valence is showing it, whose version the status names and whose dev builds
+ *   wear the dev logo, where it is known.
  * @returns The activity Discord would be sent, or nothing where the status would be cleared.
  */
 const theDiscordPreview = (
@@ -52,9 +55,14 @@ const theDiscordPreview = (
   { film, episode, track }: Pick<DiscordSamples, 'film' | 'episode' | 'track'>,
   settings: DiscordPresence,
   now: number,
+  build: Pick<BuildInfo, 'version' | 'isADevBuild'> | null = null,
 ): DiscordActivity | null => {
   const idle = settings.showsBrowsing
-    ? aDiscordActivity({ kind: 'browsing', look: discordLookOf(settings) }, now - 20 * A_MINUTE)
+    ? aDiscordActivity(
+        { kind: 'browsing', look: discordLookOf(settings) },
+        now - 20 * A_MINUTE,
+        build,
+      )
     : null;
 
   if (state === 'browsing') {
@@ -80,6 +88,7 @@ const theDiscordPreview = (
         now,
       }),
       now,
+      build,
     );
   }
 
@@ -119,6 +128,7 @@ const theDiscordPreview = (
       now,
     }),
     now,
+    build,
   );
 };
 

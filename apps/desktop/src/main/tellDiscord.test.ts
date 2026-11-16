@@ -145,6 +145,17 @@ describe('tellDiscord', () => {
     expect(sockets.made).toBe(1);
   });
 
+  it('wears the dev logo for a build still being worked on', () => {
+    const discord = tellDiscord('/tmp', 1_755_000_000_000, { version: '0.0.0', isADevBuild: true });
+
+    discord.about({ kind: 'browsing', look: LOOK });
+
+    const said = lastStatus(readyToTalk());
+
+    expect(said).toContain('"large_image":"valence-desktop-dev"');
+    expect(said).toContain('"large_text":"Valence 0.0.0"');
+  });
+
   it('clears the status straight away when the window closes', () => {
     const discord = tellDiscord('/tmp', 1_755_000_000_000);
 

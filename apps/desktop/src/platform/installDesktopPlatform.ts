@@ -45,10 +45,11 @@ const installDesktopPlatform = (): void => {
     reachability: theDesktopsReach(),
     openSocket: theDesktopsSocket,
     buildInfo: () => {
-      const { version, commit, arch, electron, chrome } = window.valence.about;
+      const { version, isADevBuild, commit, arch, electron, chrome } = window.valence.about;
 
       return {
         version,
+        isADevBuild,
         commit,
         runsOn: say('desktop.platform.installDesktopPlatform.archElectronElectronChromiumChrome', {
           arch,

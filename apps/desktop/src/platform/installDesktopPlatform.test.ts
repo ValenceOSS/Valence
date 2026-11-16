@@ -20,6 +20,7 @@ const KEPT = aKeptListening({ quality: 'high', artworkFrom: null });
 const aBridge = (isReachable = true, computerName: string | null = 'Studio Mac') => ({
   about: {
     version: '1.2.0',
+    isADevBuild: true,
     computerName,
     commit: '2ae1bc1',
     arch: 'arm64',
@@ -89,6 +90,12 @@ describe('installDesktopPlatform', () => {
     installDesktopPlatform();
 
     expect(() => platformInUse()).not.toThrow();
+  });
+
+  it('says whether it is a build still being worked on, so the Discord preview wears the right logo', () => {
+    installDesktopPlatform();
+
+    expect(platformInUse().buildInfo()?.isADevBuild).toBe(true);
   });
 
   it('writes the address down where the process that owns the window will read it', () => {

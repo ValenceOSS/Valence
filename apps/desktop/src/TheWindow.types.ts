@@ -59,6 +59,7 @@ type FrameControls = {
 
 type AboutTheBuild = {
   version: string;
+  isADevBuild: boolean;
   computerName: string | null;
   commit: string;
   arch: string;
