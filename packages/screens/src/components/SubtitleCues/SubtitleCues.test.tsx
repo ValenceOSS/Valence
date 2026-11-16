@@ -318,7 +318,7 @@ describe('SubtitleCues', () => {
     expect(line.parentElement).toHaveStyle({ bottom: '18%' });
   });
 
-  it('sits lower once they go away', async () => {
+  it('sits low enough once they go away that two lines stay in the bar under a wide film', async () => {
     served(A_FILE);
 
     render(
@@ -328,7 +328,7 @@ describe('SubtitleCues', () => {
 
     const line = await screen.findByText('Hello there');
 
-    expect(line.parentElement).toHaveStyle({ bottom: '8%' });
+    expect(line.parentElement).toHaveStyle({ bottom: '4%' });
   });
 
   it('draws them the way this viewer likes captions drawn', async () => {

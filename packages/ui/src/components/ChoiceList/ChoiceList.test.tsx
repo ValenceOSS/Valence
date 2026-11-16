@@ -33,6 +33,31 @@ describe('ChoiceList', () => {
     expect(screen.getByText('20 GB')).toBeInTheDocument();
   });
 
+  it('lays out a detail made of more than words, without cutting it short', () => {
+    render(
+      <ChoiceList
+        label="Size"
+        choices={[
+          {
+            id: 'original',
+            title: 'Original',
+            detail: (
+              <>
+                <span>First line</span>
+                <span>Second line</span>
+              </>
+            ),
+          },
+        ]}
+        value={null}
+        onChoose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('First line').parentElement).not.toHaveClass('line-clamp-2');
+    expect(screen.getByText('Second line')).toBeInTheDocument();
+  });
+
   it('says which row was pressed', async () => {
     const onChoose = vi.fn();
 

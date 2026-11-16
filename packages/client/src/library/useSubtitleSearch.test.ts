@@ -27,6 +27,9 @@ const FOUND: FoundSubtitle = {
   downloads: null,
   score: 80,
   reasons: [],
+  matches: [],
+  misses: [],
+  unknowns: [],
 };
 
 beforeEach(() => {

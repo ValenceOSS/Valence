@@ -7,7 +7,8 @@ import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 /**
  * Reads which library files this service filed and how: from the download client a download was
  * fetched with, or from the app a request was handed to. A file counts as filed where a request's
- * item names it, or names the folder it is in, as a filed album or book does.
+ * item names it, or names the folder it is in, as a filed album or book does. A file an item names
+ * itself carries the release it came from, where that is known.
  *
  * @param db - The database.
  * @returns How to ask it of some paths.
@@ -25,6 +26,7 @@ const createDatabaseFiledOrigins =
     const items = await db
       .select({
         filePath: requestItem.filePath,
+        releaseName: requestItem.releaseName,
         downloadId: requestItem.downloadId,
         handOff: mediaRequest.handOff,
       })
@@ -66,11 +68,13 @@ const createDatabaseFiledOrigins =
         originAt.set(item.filePath, {
           source: 'download',
           via: clientOf.get(item.downloadId) ?? null,
+          release: item.releaseName,
         });
       } else if (item.handOff !== null && !originAt.has(item.filePath)) {
         originAt.set(item.filePath, {
           source: 'handOff',
           via: appOf.get(item.handOff.appId) ?? null,
+          release: item.releaseName,
         });
       }
     }
@@ -79,7 +83,9 @@ const createDatabaseFiledOrigins =
       [...above.entries()].flatMap(([path, places]) => {
         const found = places.map((place) => originAt.get(place)).find((one) => one !== undefined);
 
-        return found === undefined ? [] : [[path, found]];
+        return found === undefined
+          ? []
+          : [[path, originAt.has(path) ? found : { ...found, release: null }]];
       }),
     );
   };

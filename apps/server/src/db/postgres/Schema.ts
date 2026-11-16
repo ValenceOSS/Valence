@@ -1774,6 +1774,7 @@ const linkedServer = pgTable(
     takesTheirControls: boolean('takesTheirControls').notNull().default(true),
     allowsDownloads: boolean('allowsDownloads').notNull().default(false),
     takesTheirRequests: boolean('takesTheirRequests').notNull().default(false),
+    findsTheirSubtitles: boolean('findsTheirSubtitles').notNull().default(true),
     playsDirect: boolean('playsDirect').notNull().default(false),
     invitesTheirPeople: boolean('invitesTheirPeople').notNull().default(true),
     pictureAt: text('pictureAt'),

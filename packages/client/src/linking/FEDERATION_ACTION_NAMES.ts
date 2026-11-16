@@ -8,6 +8,7 @@ const FEDERATION_ACTION_NAMES: Readonly<Record<FederationAction, string>> = {
   media: say('common.federationAction.media'),
   parties: say('common.federationAction.parties'),
   requests: say('common.federationAction.requests'),
+  subtitles: say('common.federationAction.subtitles'),
 };
 
 export { FEDERATION_ACTION_NAMES };

@@ -5,6 +5,7 @@ import type { RecordAudit } from '@ValenceServer/audit/RecordAudit';
 import {
   fetchSubtitleRoute,
   findSubtitlesRoute,
+  readSubtitleFindingRoute,
   readSubtitleSetupRoute,
   saveSubtitleSetupRoute,
 } from '@ValenceServer/routes/SubtitleFindingRoute';
@@ -19,22 +20,39 @@ type SubtitleFindingRouteOptions = {
   recordAudit?: RecordAudit;
   finder: SubtitleFinder;
   requires: (headers: Headers, permission: Permission) => Promise<boolean>;
+  isFromALinkedServer?: (headers: Headers) => boolean;
 };
 
 /**
- * Registers the routes that set up where subtitles are found, look for them for one film or
- * episode, and fetch the one chosen — the last two for anybody who may find subtitles, or may
- * correct an item, which always let them.
+ * Registers the routes that set up where subtitles are found, say whether they can be found for one
+ * film or episode, look for them, and fetch the one chosen — the last three for anybody who may
+ * find subtitles, or may correct an item, which always let them, and for a linked server's people
+ * where this server lets that server find subtitles, which was settled before the request got here.
  *
  * @param app - The application to register them on.
- * @param options - The finder, and how to tell what the person asking may do.
+ * @param options - The finder, how to tell what the person asking may do, and whether a request
+ *   was passed through from a linked server.
  */
 const registerSubtitleFindingRoutes = (
   app: OpenAPIHono,
-  { finder, requires, recordAudit }: SubtitleFindingRouteOptions,
+  { finder, requires, recordAudit, isFromALinkedServer = () => false }: SubtitleFindingRouteOptions,
 ): void => {
   const mayFind = async (headers: Headers): Promise<boolean> =>
-    (await requires(headers, 'media.subtitles')) || requires(headers, 'media.override');
+    isFromALinkedServer(headers) ||
+    (await requires(headers, 'media.subtitles')) ||
+    requires(headers, 'media.override');
+
+  app.openapi(readSubtitleFindingRoute, async (context) => {
+    if (!(await mayFind(context.req.raw.headers))) {
+      return context.json(MAY_NOT, 403);
+    }
+
+    const finding = await finder.finding(context.req.valid('param').id);
+
+    return finding === null
+      ? context.json(refuse('error.common.noSuchItem'), 404)
+      : context.json(finding, 200);
+  });
 
   app.openapi(readSubtitleSetupRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.settings'))) {
@@ -103,6 +121,8 @@ const registerSubtitleFindingRoutes = (
       case 'readOnly':
       case 'denied':
         return context.json(refuse('error.subtitles.valenceMayNotWriteBesideIt'), 403);
+      case 'notAllowed':
+        return context.json(refuse('error.linking.yourServerMayNotFindSubtitlesHere'), 403);
       case 'failed':
         return context.json(refuse('error.subtitles.theSubtitleCouldNotBeKept'), 502);
     }

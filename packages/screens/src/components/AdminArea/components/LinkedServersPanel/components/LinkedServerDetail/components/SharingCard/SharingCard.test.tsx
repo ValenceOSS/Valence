@@ -92,6 +92,7 @@ describe('SharingCard', () => {
     ['Stream directly from their server', { playsDirect: true }],
     ['Invite their people to watch parties', { invitesTheirPeople: false }],
     ['Allow downloads', { allowsDownloads: true }],
+    ['Allow subtitle search', { findsTheirSubtitles: false }],
     ['Let their admin pause and message your people', { takesTheirControls: false }],
   ])('switches %s', async (name, change) => {
     renderInAnAddress(<SharingCard server={FILMS} thisServer="Anime" />);

@@ -4151,6 +4151,11 @@
     "context": "In the record of what a linked server asked for: one of its people asked this server to get something."
   },
   {
+    "handler": "common.federationAction.subtitles",
+    "text": "Found subtitles",
+    "context": "In the record of what a linked server asked for: one of its people looked for or added subtitles for a title here."
+  },
+  {
     "handler": "common.federationOutcome.aboveTheAge",
     "text": "超過年齡限制",
     "context": "In the record of what a linked server asked for: refused, because the title is above the age that server was given."
@@ -10204,6 +10209,11 @@
     "handler": "error.linking.yourServerIsPlayingAsMuchAsItMay",
     "text": "你的伺服器已達到此伺服器的串流上限。請先停止一個串流。",
     "context": "Refusal sent to a linked Valence server whose people are already watching as many streams at once as this server's admin allows it."
+  },
+  {
+    "handler": "error.linking.yourServerMayNotFindSubtitlesHere",
+    "text": "This server doesn’t let yours find subtitles for its titles.",
+    "context": "Sent to a linked server whose people tried to find subtitles where this server's administrator turned that off."
   },
   {
     "handler": "error.listening.noSuchTrackInThatBook",
@@ -21101,6 +21111,11 @@
     "context": "Accessible name of the menu choosing the highest age a linked server's people may watch. {name} is the server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.allowSubtitleSearch",
+    "text": "Allow subtitle search",
+    "context": "A setting for a linked server: whether its people may find and add subtitles for this server's titles."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.allowUncertificatedThingsForName",
     "text": "允許 {name} 觀看未分級的作品",
     "context": "Accessible name of the button letting a linked server's people watch titles nobody certificated, under an age limit. {name} is the server."
@@ -21366,6 +21381,11 @@
     "context": "Explains the setting letting a linked server's people download shared titles. {name} is that server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.namesPeopleMayFindSubtitles",
+    "text": "{name}’s people can find and add subtitles for shared titles.",
+    "context": "Under the allow subtitle search setting. {name} is the linked server."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.neitherServerReachesTheOther",
     "text": "在你以新邀請重新連結之前，兩台伺服器都無法互相連線。若重新連結，其觀看紀錄會被保存並還原。",
     "context": "Detail of the confirmation before unlinking a server."
@@ -21469,6 +21489,11 @@
     "handler": "screens.adminArea.linkedServersPanel.savedWhatNameCanSee",
     "text": "已儲存 {name} 可見的內容。",
     "context": "Toast after changing what a linked server is shared. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.searchesUseYourSubtitleSites",
+    "text": "Searches use this server’s subtitle sites, so their downloads count against your daily limits. Subtitles they add show up for your people too.",
+    "context": "More about the allow subtitle search setting for a linked server."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.seenWhen",
@@ -26466,11 +26491,6 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
-    "handler": "screens.adminArea.subtitlesCard.closeMatch",
-    "text": "接近吻合",
-    "context": "Subtitle match level: a close match."
-  },
-  {
     "handler": "screens.adminArea.subtitlesCard.episodeMatch",
     "text": "集數吻合度",
     "context": "A setting: how closely a subtitle must match an episode to be fetched."
@@ -26613,7 +26633,7 @@
   {
     "handler": "screens.adminArea.subtitlesCard.scoreOrMore",
     "text": "分數 {score} 以上",
-    "context": "A subtitle match level saved before the levels were fixed. {score} is the minimum score."
+    "context": "A minimum score for fetching subtitles on their own, out of 100. {score} is the score."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.subdl",
@@ -30682,9 +30702,24 @@
     "context": "The title of the dialog for moving a file or folder in a library, before it knows which one."
   },
   {
+    "handler": "screens.findSubtitlesDialog.addSubtitles",
+    "text": "Add subtitles",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The button that fetches the subtitle picked and saves it."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.audioCodec",
+    "text": "Audio codec",
+    "context": "In the dialog that looks for subtitles for a film or episode, a pill on each subtitle found, ticked where it matches the video file, crossed where it does not and marked unknown where one of them does not say."
+  },
+  {
     "handler": "screens.findSubtitlesDialog.differentFrameRateWillDrift",
     "text": "影格率不同，會逐漸失去同步",
     "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed to another frame rate, so it will slowly fall out of step."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.edition",
+    "text": "Edition",
+    "context": "In the dialog that looks for subtitles for a film or episode, a pill on each subtitle found, ticked where it matches the video file, crossed where it does not and marked unknown where one of them does not say. Such as the extended cut."
   },
   {
     "handler": "screens.findSubtitlesDialog.findSubtitles",
@@ -30695,11 +30730,6 @@
     "handler": "screens.findSubtitlesDialog.findSubtitlesForName",
     "text": "為 {name} 尋找字幕",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Its title. {name} is the film or episode."
-  },
-  {
-    "handler": "screens.findSubtitlesDialog.get",
-    "text": "取得",
-    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The button that fetches a subtitle and saves it."
   },
   {
     "handler": "screens.findSubtitlesDialog.looking",
@@ -30717,19 +30747,9 @@
     "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed against this exact file."
   },
   {
-    "handler": "screens.findSubtitlesDialog.match",
-    "text": "吻合度",
-    "context": "Column heading in the find subtitles dialog for how well a subtitle matches the video file."
-  },
-  {
     "handler": "screens.findSubtitlesDialog.noSubtitleSiteIsSetUp",
     "text": "尚未設定字幕網站。請在「系統 › 字幕」中新增 OpenSubtitles 或 SubDL 金鑰。",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
-  },
-  {
-    "handler": "screens.findSubtitlesDialog.notes",
-    "text": "備註",
-    "context": "A column heading in the table of subtitles found for a film or episode. Such as SDH or machine translated."
   },
   {
     "handler": "screens.findSubtitlesDialog.nothingWasFoundInThatLanguage",
@@ -30782,11 +30802,6 @@
     "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
   },
   {
-    "handler": "screens.findSubtitlesDialog.saved",
-    "text": "已儲存",
-    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle once it has been saved."
-  },
-  {
     "handler": "screens.findSubtitlesDialog.savedBesideTheVideo",
     "text": "最符合的在前。你選擇的字幕會保存在 Valence 中，因此每個應用程式都能顯示。",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Beneath its title."
@@ -30800,6 +30815,36 @@
     "handler": "screens.findSubtitlesDialog.sdh",
     "text": "SDH",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle that describes sounds as well as dialogue, for deaf and hard-of-hearing viewers."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.searchesSites",
+    "text": "Searches {sites}",
+    "context": "In the dialog that looks for subtitles for a film or episode. Which subtitle sites it looks on. {sites} is a list such as OpenSubtitles and SubDL."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.searchesSitesOnServer",
+    "text": "Searches {sites} on {server}",
+    "context": "In the dialog that looks for subtitles for a film or episode. The title is on a linked server, {server}, which looks on its own sites. {sites} is a list such as OpenSubtitles and SubDL."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.serverDoesNotAllowThisServer",
+    "text": "{server} doesn’t allow this server to search for subtitles.",
+    "context": "In the dialog that looks for subtitles for a film or episode. The title is on a linked server, {server}, whose administrator turned subtitle search off for this server."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.serverHasNoSubtitleSite",
+    "text": "{server} has no subtitle site set up.",
+    "context": "In the dialog that looks for subtitles for a film or episode. The title is on a linked server, {server}, which has no OpenSubtitles or SubDL key."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.serverNeedsAnUpdate",
+    "text": "{server} needs an update before this server can search for subtitles there.",
+    "context": "In the dialog that looks for subtitles for a film or episode. The title is on a linked server, {server}, running an older Valence."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.streamingService",
+    "text": "Streaming service",
+    "context": "In the dialog that looks for subtitles for a film or episode, a pill on each subtitle found, ticked where it matches the video file, crossed where it does not and marked unknown where one of them does not say. Such as Netflix."
   },
   {
     "handler": "screens.findSubtitlesDialog.subtitlesFound",

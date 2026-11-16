@@ -78,22 +78,26 @@ const ChoiceList = ({
 
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="flex items-center gap-2 text-sm font-semibold text-text">
-                {choice.title}
+                <span className="min-w-0 [overflow-wrap:anywhere]">{choice.title}</span>
 
                 {choice.note === undefined ? null : (
-                  <Badge size="sm" tone="quiet">
+                  <Badge size="sm" tone="quiet" className="shrink-0">
                     {choice.note}
                   </Badge>
                 )}
               </span>
 
-              {choice.detail === undefined ? null : (
+              {choice.detail === undefined ? null : typeof choice.detail === 'string' ? (
                 <span className="line-clamp-2 text-xs text-text-muted">{choice.detail}</span>
+              ) : (
+                <span className="flex flex-col gap-1 text-xs text-text-muted">{choice.detail}</span>
               )}
             </span>
 
             {choice.aside === undefined ? null : (
-              <span className="shrink-0 text-end">{choice.aside}</span>
+              <span className="flex shrink-0 flex-col justify-center self-stretch text-end">
+                {choice.aside}
+              </span>
             )}
           </Button>
         );

@@ -116,11 +116,17 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     subtitleFinder,
     history,
     recordAudit,
+    peerRequests,
   } = context;
 
   registerEmailRoutes(app, { email, requires, recordAudit });
   registerTelemetryRoutes(app, { telemetry, requires, recordAudit });
-  registerSubtitleFindingRoutes(app, { finder: subtitleFinder, requires, recordAudit });
+  registerSubtitleFindingRoutes(app, {
+    finder: subtitleFinder,
+    requires,
+    recordAudit,
+    isFromALinkedServer: (headers) => peerRequests.has(headers),
+  });
 
   app.openapi(searchCatalogueRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {

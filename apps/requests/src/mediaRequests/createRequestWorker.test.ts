@@ -1561,6 +1561,31 @@ describe('createRequestWorker', () => {
       expect(item?.score).not.toBe(2200);
     });
 
+    it('remembers the release a filed copy came from, by the name of the video it was filed from', async () => {
+      const path = '/media/Films/Dune (2021)/Dune (2021) [1080p][WEBDL][x264].mkv';
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({
+          filed: new Map([[aRequestItem().id, path]]),
+          named: new Map([[aRequestItem().id, 'Dune.2021.1080p.WEB-DL.H264-GROUP']]),
+          missing: [],
+          refused: new Map(),
+        }),
+      );
+      const { worker, items } = aWorker({
+        items: [downloading()],
+        sent: [done()],
+        filed,
+        localPath: '/srv/downloads',
+      });
+
+      await worker.tick();
+
+      expect(await theItem(items)).toMatchObject({
+        state: 'filed',
+        releaseName: 'Dune.2021.1080p.WEB-DL.H264-GROUP',
+      });
+    });
+
     it('judges what is filed against the request’s profile', async () => {
       const filed = vi.fn<typeof fileDownload>(() =>
         Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),

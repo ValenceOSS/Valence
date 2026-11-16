@@ -81,8 +81,10 @@ const draftOf = (setup: SubtitleSetup): Draft => ({
 
 const MATCH_CHOICES = [
   { id: '100', label: say('screens.adminArea.subtitlesCard.exactFileOnly') },
-  { id: '80', label: say('screens.findSubtitlesDialog.sameRelease') },
-  { id: '60', label: say('screens.adminArea.subtitlesCard.closeMatch') },
+  ...[95, 90, 85, 80, 75, 70, 60, 50].map((score) => ({
+    id: score.toString(),
+    label: say('screens.adminArea.subtitlesCard.scoreOrMore', { score: score.toString() }),
+  })),
   { id: '0', label: say('common.anything') },
 ];
 
@@ -102,7 +104,7 @@ const about = (label: string, detail: string) => (
 );
 
 /**
- * The match levels to offer, keeping one saved before the levels were fixed.
+ * The minimum scores to offer, keeping one saved that is not among them.
  *
  * @param value - The minimum score saved.
  * @returns The choices.

@@ -335,7 +335,7 @@ const MediaDetailDialog = ({
         </Button>
       ) : (
         <SplitButton
-          size="lg"
+          size="play"
           choiceLabel={say('screens.mediaDetailDialog.whichEditionToPlay')}
           choiceName={say('screens.mediaDetailDialog.editions')}
           onClick={() => {

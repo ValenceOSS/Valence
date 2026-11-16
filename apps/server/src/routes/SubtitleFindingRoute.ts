@@ -5,6 +5,7 @@ import {
   FetchedSubtitleSchema,
   FoundSubtitlesSchema,
   SubtitleChoiceSchema,
+  SubtitleFindingSchema,
   SubtitleSetupChangeSchema,
   SubtitleSetupSchema,
 } from '@ValenceContracts/schemas/SubtitleFinding';
@@ -73,6 +74,25 @@ const findSubtitlesRoute = createRoute({
   },
 });
 
+const readSubtitleFindingRoute = createRoute({
+  method: 'get',
+  path: '/api/media/{id}/subtitles/finding',
+  tags: ['Library'],
+  summary: 'Whether subtitles can be found for a film or episode, and on which sites',
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description:
+        'The sites the server that holds it searches and the languages it offers first, or why it cannot search',
+      content: {
+        'application/json': { schema: SubtitleFindingSchema.openapi('SubtitleFinding') },
+      },
+    },
+    403: refused('Not somebody who may change what the library holds'),
+    404: refused('No such item'),
+  },
+});
+
 const fetchSubtitleRoute = createRoute({
   method: 'post',
   path: '/api/media/{id}/subtitles/found',
@@ -100,4 +120,10 @@ const fetchSubtitleRoute = createRoute({
   },
 });
 
-export { fetchSubtitleRoute, findSubtitlesRoute, readSubtitleSetupRoute, saveSubtitleSetupRoute };
+export {
+  fetchSubtitleRoute,
+  findSubtitlesRoute,
+  readSubtitleFindingRoute,
+  readSubtitleSetupRoute,
+  saveSubtitleSetupRoute,
+};

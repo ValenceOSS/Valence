@@ -11,6 +11,7 @@ const NOTHING_SHARED: LinkSharing = {
   takesTheirControls: true,
   allowsDownloads: false,
   takesTheirRequests: false,
+  findsTheirSubtitles: true,
   playsDirect: false,
   invitesTheirPeople: true,
 };

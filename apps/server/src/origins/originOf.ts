@@ -21,7 +21,7 @@ const originOf = (
   link: MediaLink | null,
 ): MediaOrigin => {
   if (filed !== undefined) {
-    return { ...filed, link };
+    return { source: filed.source, via: filed.via, link };
   }
 
   if (recorded !== undefined) {

@@ -22,18 +22,26 @@ describe('createDatabaseFiledOrigins', () => {
     await createDatabaseSentDownloadStore(db).insert(download);
     await createDatabaseMediaRequestStore(db).insert(aMediaRequest());
     await createDatabaseRequestItemStore(db).insert(
-      aRequestItem({ downloadId: download.id, filePath: '/media/films/Dune/Dune.mkv' }),
+      aRequestItem({
+        downloadId: download.id,
+        filePath: '/media/films/Dune/Dune.mkv',
+        releaseName: 'Dune.2021.1080p.WEB-DL.H264-GROUP',
+      }),
     );
 
     const filed = createDatabaseFiledOrigins(db);
 
     expect(await filed(['/media/films/Dune/Dune.mkv', '/media/films/Heat/Heat.mkv'])).toEqual({
-      '/media/films/Dune/Dune.mkv': { source: 'download', via: 'qBittorrent' },
+      '/media/films/Dune/Dune.mkv': {
+        source: 'download',
+        via: 'qBittorrent',
+        release: 'Dune.2021.1080p.WEB-DL.H264-GROUP',
+      },
     });
     expect(await filed([])).toEqual({});
   });
 
-  it('says which app a handed-off request was fetched by, for the files in its folder', async () => {
+  it('says which app a handed-off request was fetched by, for the files in its folder, but not the release, which was the folder’s', async () => {
     const db = await aScratchDatabase();
 
     await db.insert(arrApp).values({
@@ -54,11 +62,11 @@ describe('createDatabaseFiledOrigins', () => {
       }),
     );
     await createDatabaseRequestItemStore(db).insert(
-      aRequestItem({ filePath: '/media/books/Dune' }),
+      aRequestItem({ filePath: '/media/books/Dune', releaseName: 'Dune.Collection-GROUP' }),
     );
 
     expect(await createDatabaseFiledOrigins(db)(['/media/books/Dune/Dune.epub'])).toEqual({
-      '/media/books/Dune/Dune.epub': { source: 'handOff', via: 'Radarr' },
+      '/media/books/Dune/Dune.epub': { source: 'handOff', via: 'Radarr', release: null },
     });
   });
 });

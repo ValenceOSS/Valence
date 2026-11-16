@@ -405,6 +405,7 @@ const requestItem = requestsSchema(
     filePath: mediumtext('file_path'),
     score: double('score'),
     filedTitle: mediumtext('filed_title'),
+    releaseName: mediumtext('release_name'),
     filedScore: double('filed_score'),
     downloadedBytes: double('downloaded_bytes'),
     downloadSeconds: double('download_seconds'),

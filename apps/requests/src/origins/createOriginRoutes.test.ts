@@ -6,7 +6,10 @@ describe('createOriginRoutes', () => {
     const routes = createOriginRoutes((paths) =>
       Promise.resolve(
         Object.fromEntries(
-          paths.map((path) => [path, { source: 'download' as const, via: 'SABnzbd' }]),
+          paths.map((path) => [
+            path,
+            { source: 'download' as const, via: 'SABnzbd', release: 'A.Film.2020.WEB-GROUP' },
+          ]),
         ),
       ),
     );
@@ -18,7 +21,9 @@ describe('createOriginRoutes', () => {
 
     expect(answer.status).toBe(200);
     expect(await answer.json()).toEqual({
-      filed: { '/a.mkv': { source: 'download', via: 'SABnzbd' } },
+      filed: {
+        '/a.mkv': { source: 'download', via: 'SABnzbd', release: 'A.Film.2020.WEB-GROUP' },
+      },
     });
   });
 

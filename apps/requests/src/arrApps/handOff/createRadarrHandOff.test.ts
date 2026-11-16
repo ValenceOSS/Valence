@@ -106,7 +106,11 @@ describe('createRadarrHandOff', () => {
         body: {
           ...DUNE,
           hasFile: true,
-          movieFile: { path: '/movies/Dune (2021)/Dune (2021).mkv', id: 3 },
+          movieFile: {
+            path: '/movies/Dune (2021)/Dune (2021).mkv',
+            id: 3,
+            sceneName: 'Dune.2021.1080p.WEB-DL.H264-GROUP',
+          },
         },
       },
     });
@@ -126,6 +130,7 @@ describe('createRadarrHandOff', () => {
         kind: 'imported',
         path: '/movies/Dune (2021)/Dune (2021).mkv',
         folder: '/movies/Dune (2021)',
+        release: 'Dune.2021.1080p.WEB-DL.H264-GROUP',
       },
     ]);
     expect(

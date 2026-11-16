@@ -17,6 +17,7 @@ const UP_TO_TWELVE: LinkSharing = {
   takesTheirControls: false,
   allowsDownloads: false,
   takesTheirRequests: false,
+  findsTheirSubtitles: true,
   playsDirect: false,
   invitesTheirPeople: true,
 };

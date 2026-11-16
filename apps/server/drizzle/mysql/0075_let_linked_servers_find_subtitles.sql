@@ -1,0 +1,1 @@
+ALTER TABLE `linked_server` ADD `findsTheirSubtitles` boolean DEFAULT true NOT NULL;

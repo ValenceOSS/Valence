@@ -17,6 +17,8 @@ const READS_AT = 19;
 
 const NEAR_THE_EDGE = 0.08;
 
+const NEAR_THE_FOOT = 0.04;
+
 const CLEAR_OF_THE_CONTROLS = 0.22;
 
 const SMALLEST_SIGN = 11;
@@ -32,7 +34,6 @@ const styles = StyleSheet.create({
   halo: { textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 3 },
   italic: { fontStyle: 'italic' },
   line: { borderRadius: 6, overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 3 },
-  low: { bottom: '8%' },
   middle: { bottom: 0, justifyContent: 'center', top: 0 },
   placed: { position: 'absolute' },
   raised: { bottom: '22%' },
@@ -156,7 +157,15 @@ const TheSubtitles = ({
       )}
 
       {rows.bottom.length === 0 ? null : (
-        <View style={[styles.row, aside, isClearOfTheControls ? styles.raised : styles.low]}>
+        <View
+          style={[
+            styles.row,
+            aside,
+            isClearOfTheControls
+              ? styles.raised
+              : { bottom: Math.max(room.bottom, screen.height * NEAR_THE_FOOT) },
+          ]}
+        >
           {linesOf(rows.bottom, caption).reverse()}
         </View>
       )}

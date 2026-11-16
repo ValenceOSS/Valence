@@ -4151,6 +4151,11 @@
     "context": "In the record of what a linked server asked for: one of its people asked this server to get something."
   },
   {
+    "handler": "common.federationAction.subtitles",
+    "text": "Found subtitles",
+    "context": "In the record of what a linked server asked for: one of its people looked for or added subtitles for a title here."
+  },
+  {
     "handler": "common.federationOutcome.aboveTheAge",
     "text": "Above the age limit",
     "context": "In the record of what a linked server asked for: refused, because the title is above the age that server was given."
@@ -10204,6 +10209,11 @@
     "handler": "error.linking.yourServerIsPlayingAsMuchAsItMay",
     "text": "Your server has reached its stream limit on this server. Stop a stream first.",
     "context": "Refusal sent to a linked Valence server whose people are already watching as many streams at once as this server's admin allows it."
+  },
+  {
+    "handler": "error.linking.yourServerMayNotFindSubtitlesHere",
+    "text": "This server doesn’t let yours find subtitles for its titles.",
+    "context": "Sent to a linked server whose people tried to find subtitles where this server's administrator turned that off."
   },
   {
     "handler": "error.listening.noSuchTrackInThatBook",
@@ -21101,6 +21111,11 @@
     "context": "Accessible name of the menu choosing the highest age a linked server's people may watch. {name} is the server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.allowSubtitleSearch",
+    "text": "Allow subtitle search",
+    "context": "A setting for a linked server: whether its people may find and add subtitles for this server's titles."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.allowUncertificatedThingsForName",
     "text": "Allow unrated titles for {name}",
     "context": "Accessible name of the button letting a linked server's people watch titles nobody certificated, under an age limit. {name} is the server."
@@ -21366,6 +21381,11 @@
     "context": "Explains the setting letting a linked server's people download shared titles. {name} is that server."
   },
   {
+    "handler": "screens.adminArea.linkedServersPanel.namesPeopleMayFindSubtitles",
+    "text": "{name}’s people can find and add subtitles for shared titles.",
+    "context": "Under the allow subtitle search setting. {name} is the linked server."
+  },
+  {
     "handler": "screens.adminArea.linkedServersPanel.neitherServerReachesTheOther",
     "text": "Neither server can reach the other until you link them again with a new invite. Watch history from it is saved and restored if you link again.",
     "context": "Detail of the confirmation before unlinking a server."
@@ -21469,6 +21489,11 @@
     "handler": "screens.adminArea.linkedServersPanel.savedWhatNameCanSee",
     "text": "Saved what {name} can see.",
     "context": "Toast after changing what a linked server is shared. {name} is that server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.searchesUseYourSubtitleSites",
+    "text": "Searches use this server’s subtitle sites, so their downloads count against your daily limits. Subtitles they add show up for your people too.",
+    "context": "More about the allow subtitle search setting for a linked server."
   },
   {
     "handler": "screens.adminArea.linkedServersPanel.seenWhen",
@@ -26466,11 +26491,6 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
-    "handler": "screens.adminArea.subtitlesCard.closeMatch",
-    "text": "Close match",
-    "context": "Subtitle match level: a close match."
-  },
-  {
     "handler": "screens.adminArea.subtitlesCard.episodeMatch",
     "text": "Episode match",
     "context": "A setting: how closely a subtitle must match an episode to be fetched."
@@ -26582,7 +26602,7 @@
   },
   {
     "handler": "screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores",
-    "text": "Out of 100. A subtitle made for the exact file scores 100; the same release with the same frame rate scores about 80. One timed to a different frame rate, or translated by a machine, is never fetched on its own.",
+    "text": "Out of 100, scored the way Bazarr scores subtitles. A subtitle made for the exact file scores 100, the same release about 98 and the same source about 90. One timed to a different frame rate, or translated by a machine, is never fetched on its own.",
     "context": "On the admin’s Subtitles page, under System."
   },
   {
@@ -26612,8 +26632,8 @@
   },
   {
     "handler": "screens.adminArea.subtitlesCard.scoreOrMore",
-    "text": "Score {score} or more",
-    "context": "A subtitle match level saved before the levels were fixed. {score} is the minimum score."
+    "text": "{score}% or more",
+    "context": "A minimum score for fetching subtitles on their own, out of 100. {score} is the score."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.subdl",
@@ -30686,9 +30706,24 @@
     "context": "The title of the dialog for moving a file or folder in a library, before it knows which one."
   },
   {
+    "handler": "screens.findSubtitlesDialog.addSubtitles",
+    "text": "Add subtitles",
+    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The button that fetches the subtitle picked and saves it."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.audioCodec",
+    "text": "Audio codec",
+    "context": "In the dialog that looks for subtitles for a film or episode, a pill on each subtitle found, ticked where it matches the video file, crossed where it does not and marked unknown where one of them does not say."
+  },
+  {
     "handler": "screens.findSubtitlesDialog.differentFrameRateWillDrift",
     "text": "Different frame rate, will drift",
     "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed to another frame rate, so it will slowly fall out of step."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.edition",
+    "text": "Edition",
+    "context": "In the dialog that looks for subtitles for a film or episode, a pill on each subtitle found, ticked where it matches the video file, crossed where it does not and marked unknown where one of them does not say. Such as the extended cut."
   },
   {
     "handler": "screens.findSubtitlesDialog.findSubtitles",
@@ -30699,11 +30734,6 @@
     "handler": "screens.findSubtitlesDialog.findSubtitlesForName",
     "text": "Find subtitles for {name}",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Its title. {name} is the film or episode."
-  },
-  {
-    "handler": "screens.findSubtitlesDialog.get",
-    "text": "Get",
-    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. The button that fetches a subtitle and saves it."
   },
   {
     "handler": "screens.findSubtitlesDialog.looking",
@@ -30721,19 +30751,9 @@
     "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did. It was timed against this exact file."
   },
   {
-    "handler": "screens.findSubtitlesDialog.match",
-    "text": "Match",
-    "context": "Column heading in the find subtitles dialog for how well a subtitle matches the video file."
-  },
-  {
     "handler": "screens.findSubtitlesDialog.noSubtitleSiteIsSetUp",
     "text": "No subtitle site is set up yet. Add an OpenSubtitles or SubDL key under System › Subtitles.",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen."
-  },
-  {
-    "handler": "screens.findSubtitlesDialog.notes",
-    "text": "Notes",
-    "context": "A column heading in the table of subtitles found for a film or episode. Such as SDH or machine translated."
   },
   {
     "handler": "screens.findSubtitlesDialog.nothingWasFoundInThatLanguage",
@@ -30786,13 +30806,8 @@
     "context": "A badge on a subtitle found for a film or episode, saying why it ranked where it did."
   },
   {
-    "handler": "screens.findSubtitlesDialog.saved",
-    "text": "Saved",
-    "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle once it has been saved."
-  },
-  {
     "handler": "screens.findSubtitlesDialog.savedBesideTheVideo",
-    "text": "Best matches first. The one you pick is kept in Valence, so every app can show it.",
+    "text": "Ranked by how well each matches this file. Subtitles you add work in every app.",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. Beneath its title."
   },
   {
@@ -30804,6 +30819,36 @@
     "handler": "screens.findSubtitlesDialog.sdh",
     "text": "SDH",
     "context": "In the dialog that looks for subtitles for a film or episode on subtitle sites and saves the one chosen. A badge on a subtitle that describes sounds as well as dialogue, for deaf and hard-of-hearing viewers."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.searchesSites",
+    "text": "Searches {sites}",
+    "context": "In the dialog that looks for subtitles for a film or episode. Which subtitle sites it looks on. {sites} is a list such as OpenSubtitles and SubDL."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.searchesSitesOnServer",
+    "text": "Searches {sites} on {server}",
+    "context": "In the dialog that looks for subtitles for a film or episode. The title is on a linked server, {server}, which looks on its own sites. {sites} is a list such as OpenSubtitles and SubDL."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.serverDoesNotAllowThisServer",
+    "text": "{server} doesn’t allow this server to search for subtitles.",
+    "context": "In the dialog that looks for subtitles for a film or episode. The title is on a linked server, {server}, whose administrator turned subtitle search off for this server."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.serverHasNoSubtitleSite",
+    "text": "{server} has no subtitle site set up.",
+    "context": "In the dialog that looks for subtitles for a film or episode. The title is on a linked server, {server}, which has no OpenSubtitles or SubDL key."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.serverNeedsAnUpdate",
+    "text": "{server} needs an update before this server can search for subtitles there.",
+    "context": "In the dialog that looks for subtitles for a film or episode. The title is on a linked server, {server}, running an older Valence."
+  },
+  {
+    "handler": "screens.findSubtitlesDialog.streamingService",
+    "text": "Streaming service",
+    "context": "In the dialog that looks for subtitles for a film or episode, a pill on each subtitle found, ticked where it matches the video file, crossed where it does not and marked unknown where one of them does not say. Such as Netflix."
   },
   {
     "handler": "screens.findSubtitlesDialog.subtitlesFound",

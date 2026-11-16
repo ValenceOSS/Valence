@@ -21,6 +21,8 @@ import {
 } from '@ValenceServer/routes/LinkSharingRoute';
 import { createLinkKeeper } from '@ValenceServer/api/createLinkKeeper';
 import { handlePartyMessage } from '@ValenceServer/parties/handlePartyMessage';
+import { asALinkedServerReadsIt } from '@ValenceServer/linking/asALinkedServerReadsIt';
+import { innerRequestOf } from '@ValenceServer/linking/innerRequestOf';
 import { peerMayReach } from '@ValenceServer/linking/peerMayReach';
 import { innerAddressOf } from '@ValenceServer/linking/innerAddressOf';
 import { whatAPeerMayAsk } from '@ValenceServer/linking/whatAPeerMayAsk';
@@ -243,7 +245,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
 
     return entries === null
       ? context.json(refuse('error.linking.thatServerDoesNotShowItsRecord'), 403)
-      : context.json({ entries }, 200);
+      : context.json({ entries: entries.map(asALinkedServerReadsIt) }, 200);
   });
 
   app.post(`${FEDERATION_PATH}/changed`, (context) => {
@@ -624,11 +626,7 @@ const serveLinkSharing = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.linking.thatIsNotSharedWithYourServer'), 403);
     }
 
-    const inner = new Request(address, {
-      method,
-      headers,
-      ...(body === null ? {} : { body }),
-    });
+    const inner = innerRequestOf(address, method, headers, body);
 
     peerRequests.set(inner.headers, who.serverId);
 

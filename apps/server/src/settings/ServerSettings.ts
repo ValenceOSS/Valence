@@ -29,6 +29,7 @@ import {
 } from '@ValenceContracts/schemas/DevicePlacement';
 import { AnnouncementSchema } from '@ValenceContracts/schemas/Announcement';
 import { LINK_SETTINGS_DEFAULTS, LinkSettingsSchema } from '@ValenceServer/linking/LinkSettings';
+import { withBazarrScores } from '@ValenceServer/settings/withBazarrScores';
 import { withPreTranscodeTargets } from '@ValenceServer/settings/withPreTranscodeTargets';
 
 const ServerSettingsSchema = z.object({
@@ -85,7 +86,7 @@ const ServerSettingsSchema = z.object({
     .default(PRE_TRANSCODING_DEFAULTS),
   seerr: SeerrSettingsSchema.default(SEERR_DEFAULTS),
   email: EmailSettingsSchema.default(EMAIL_DEFAULTS),
-  subtitles: SubtitleSettingsSchema.default(SUBTITLE_DEFAULTS),
+  subtitles: z.preprocess(withBazarrScores, SubtitleSettingsSchema).default(SUBTITLE_DEFAULTS),
   linking: LinkSettingsSchema.default(LINK_SETTINGS_DEFAULTS),
   preRoll: PreRollSettingsSchema.default(PRE_ROLL_DEFAULTS),
   pluginTrustedKeys: z.array(z.object({ id: z.string(), publicKey: z.string() })).default([]),

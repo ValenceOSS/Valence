@@ -73,6 +73,22 @@ describe('federationReachOf', () => {
     });
   });
 
+  it('names finding subtitles for a title apart from reading its tracks', () => {
+    for (const [method, route] of [
+      ['GET', 'finding'],
+      ['GET', 'found'],
+      ['POST', 'found'],
+    ] as const) {
+      expect(
+        federationReachOf(method, `${AT}/api/media/${A_TITLE}/subtitles/${route}`),
+      ).toMatchObject({ kind: 'subject', action: 'subtitles', subject: { id: A_TITLE } });
+    }
+
+    expect(federationReachOf('GET', `${AT}/api/media/${A_TITLE}/subtitles/en`)).toMatchObject({
+      action: 'media',
+    });
+  });
+
   it('names a session or set of thumbnails the asking server started, and its heartbeat', () => {
     expect(federationReachOf('GET', `${AT}/api/playback/session/abc/index.m3u8`)).toEqual({
       kind: 'claimed',

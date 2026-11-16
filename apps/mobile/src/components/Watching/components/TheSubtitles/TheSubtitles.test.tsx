@@ -63,14 +63,14 @@ describe('TheSubtitles', () => {
     expect(drawn.queryByText('Hello there')).toBeNull();
   });
 
-  it('stacks the lines at the foot in one column, so two said at once never sit on each other', async () => {
+  it('stacks the lines low at the foot in one column, clear of the home indicator, so two said at once never sit on each other', async () => {
     const drawn = await render(
       drawing({ cues: [aCue(0, 4, 'First speaker'), aCue(1, 3, 'Second speaker')] }),
     );
     const column = drawn.getByText('First speaker').parent?.parent;
 
     expect(drawn.getByText('Second speaker').parent?.parent).toBe(column);
-    expect(column).toHaveStyle({ bottom: '8%' });
+    expect(column).toHaveStyle({ bottom: 34 });
   });
 
   it('stacks the lines at the foot upwards, the earliest lowest, so a line being read stays put', async () => {

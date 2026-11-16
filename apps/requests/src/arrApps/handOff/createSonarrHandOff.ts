@@ -276,6 +276,7 @@ const createSonarrHandOff = (
             kind: 'imported',
             path: file.path,
             folder: series.path ?? dirname(dirname(file.path)),
+            release: file.sceneName ?? null,
           };
         }
 

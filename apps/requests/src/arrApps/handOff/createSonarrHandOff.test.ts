@@ -276,6 +276,7 @@ describe('createSonarrHandOff', () => {
         kind: 'imported',
         path: '/tv/Severance/Season 02/Severance - S02E01.mkv',
         folder: '/tv/Severance',
+        release: null,
       },
       { itemId: 'queued', kind: 'queued', record: queue[0] },
       { itemId: 'missing', kind: 'missing' },

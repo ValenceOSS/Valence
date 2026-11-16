@@ -18,7 +18,9 @@ describe('readMediaOrigins', () => {
       {
         recorded,
         filed: () =>
-          Promise.resolve({ '/films/Heat.mkv': { source: 'download', via: 'qBittorrent' } }),
+          Promise.resolve({
+            '/films/Heat.mkv': { source: 'download', via: 'qBittorrent', release: null },
+          }),
         linkOf: (path) => Promise.resolve(path === '/films/Heat.mkv' ? 'linked' : 'alone'),
       },
     );

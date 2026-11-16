@@ -229,6 +229,7 @@ describe('createHandOffWorker', () => {
           kind: 'imported',
           path: '/movies/Dune (2021)/Dune (2021).mkv',
           folder: '/movies/Dune (2021)',
+          release: 'Dune.2021.1080p.WEB-DL.H264-GROUP',
         })),
     });
 
@@ -238,6 +239,7 @@ describe('createHandOffWorker', () => {
       state: 'filed',
       filePath: '/media/Films/Dune (2021)/Dune (2021).mkv',
       filedTitle: 'Dune (2021).mkv',
+      releaseName: 'Dune.2021.1080p.WEB-DL.H264-GROUP',
     });
     expect(await events.pending()).toMatchObject([
       {

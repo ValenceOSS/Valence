@@ -283,6 +283,33 @@ describe('createLinkSharingService', () => {
     ]);
   });
 
+  it('lets the other server’s people find subtitles for a shared title only while its admin allows', async () => {
+    const { animeSharing, filmsAtAnime, filmsAsks } = await twoSharingServers();
+    const sam = { profileId: 'sam', name: 'Sam' };
+
+    await animeSharing.changeSharing(filmsAtAnime, { libraryIds: [FILMS] });
+
+    expect(await filmsAsks(`/api/media/${ARRIVAL}/subtitles/finding`, sam)).toMatchObject({
+      kind: 'admitted',
+      action: 'subtitles',
+    });
+    expect((await filmsAsks(`/api/media/${ARRIVAL}/subtitles/found`, sam, 'POST')).kind).toBe(
+      'admitted',
+    );
+
+    await animeSharing.changeSharing(filmsAtAnime, { findsTheirSubtitles: false });
+
+    expect(await filmsAsks(`/api/media/${ARRIVAL}/subtitles/found`, sam, 'POST')).toEqual({
+      kind: 'refused',
+      status: 403,
+      code: 'error.linking.yourServerMayNotFindSubtitlesHere',
+    });
+    expect((await filmsAsks(`/api/media/${ARRIVAL}/subtitles`, sam)).kind).toBe('admitted');
+    expect(await animeSharing.activity(filmsAtAnime)).toContainEqual(
+      expect.objectContaining({ action: 'subtitles', outcome: 'notShared' }),
+    );
+  });
+
   it('turns away a person its admin blocked, and only them', async () => {
     const { animeSharing, filmsAtAnime, filmsAsks } = await twoSharingServers();
 

@@ -62,6 +62,27 @@ describe('SplitButton', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
+  it('stands as tall as a title’s Play button, its arrow too, at the play size', () => {
+    render(
+      <SplitButton
+        size="play"
+        onClick={vi.fn()}
+        choiceLabel="Which edition to play"
+        choiceName="Editions"
+        options={EDITIONS}
+        selectedId="bluray"
+        onSelect={vi.fn()}
+      >
+        Resume
+      </SplitButton>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Resume' })).toHaveClass('h-[3.25rem]');
+    expect(screen.getByRole('button', { name: 'Which edition to play' })).toHaveClass(
+      'size-[3.25rem]',
+    );
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(SplitButton.displayName).toBe('SplitButton');
   });

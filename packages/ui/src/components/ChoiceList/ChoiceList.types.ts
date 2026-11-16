@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 type Choice = {
   id: string;
   title: string;
-  detail?: string;
+  detail?: ReactNode;
   note?: string;
   aside?: ReactNode;
   isDisabled?: boolean;

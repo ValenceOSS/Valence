@@ -91,6 +91,9 @@ const searchOpenSubtitles = async (
       downloads: attributes.download_count,
       score: 0,
       reasons: [],
+      matches: [],
+      misses: [],
+      unknowns: [],
     })),
   );
 };
