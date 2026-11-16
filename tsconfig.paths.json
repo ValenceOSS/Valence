@@ -501,6 +501,7 @@
       "@ValenceUI/useSectionInView": ["./packages/ui/src/functions/useSectionInView.ts"],
       "@ValenceUI/isOverDialogs": ["./packages/ui/src/functions/isOverDialogs.ts"],
       "@ValenceUI/useFitWidth": ["./packages/ui/src/functions/useFitWidth.ts"],
+      "@ValenceUI/useElementWidth": ["./packages/ui/src/functions/useElementWidth.ts"],
       "@ValenceUI/useReached": ["./packages/ui/src/functions/useReached.ts"],
       "@ValenceUI/placeFaces": ["./packages/ui/src/functions/placeFaces.ts"],
       "@ValenceWeb/*": ["./apps/web/src/*"]

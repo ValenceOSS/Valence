@@ -264,6 +264,7 @@ const PartyPanel = ({
                 return {
                   id: member.connectionId,
                   atSeconds: whereTheRoomIs(member, atMs),
+                  name: member.name,
                   face: faceOf(
                     member.name,
                     people.find((someone) => someone.id === member.profileId),

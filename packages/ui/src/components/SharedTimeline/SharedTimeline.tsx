@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
+import { CountMark } from '@ValenceUI/CountMark';
 import { FACE_PX, FANNED_LIFT_PX, placeFaces } from '@ValenceUI/placeFaces';
 import { Tooltip } from '@ValenceUI/Tooltip';
-import { useFitWidth } from '@ValenceUI/useFitWidth';
+import { useElementWidth } from '@ValenceUI/useElementWidth';
 import type { SharedTimelineProps } from './SharedTimeline.types';
+import { say } from '@ValenceI18n/say';
 
 const SECONDS_BETWEEN_REPORTS = 1;
 
@@ -28,10 +30,13 @@ const percentAlong = (seconds: number, durationSeconds: number): string =>
  * time in all beneath it.
  *
  * People at about the same point overlap around it like circles in a Venn diagram, and the group
- * fans outwards and upwards when it is pointed at, so every face can be seen. Somebody who drifts
- * far enough away moves out to their own point and rises a little above the line. Faces glide
- * between the reports, which arrive about a second apart, rather than jumping, and spring open and
- * shut.
+ * fans outwards and upwards when it is pointed at, so every face can be seen. A group of more than
+ * six shows only its first to join and a count of the rest, which names them on hover, and does
+ * not fan. Somebody who drifts far enough away moves out to their own point and rises a little
+ * above the line. Faces glide between the reports, which arrive about a second apart, rather than
+ * jumping, and spring open and shut; a group that has to move inwards to open near an end springs
+ * there too, then glides with the reports again. They first appear already in place once the bar
+ * has been measured, rather than gliding in from where they would be on a bar of no known width.
  *
  * What counts as pointing at a group is the space its faces take once fanned, worked out from
  * where the pointer is rather than from the faces themselves: they move as they open, and a pointer
@@ -43,7 +48,7 @@ const percentAlong = (seconds: number, durationSeconds: number): string =>
  * @param durationSeconds - How long the title is.
  * @param inSyncSeconds - How far apart two people can be and still keep their order in a group.
  * @param filledSeconds - How far the bar fills, which is wherever the party keeps time.
- * @param people - Everybody on it, with the face to draw and what their tooltip says.
+ * @param people - Everybody on it, with their name, the face to draw and what their tooltip says.
  * @param elapsed - The time along, as the caller writes it.
  * @param total - The time in all, as the caller writes it.
  * @param status - What to show between the two times, such as whether everybody is together.
@@ -62,9 +67,16 @@ const SharedTimeline = ({
   className,
 }: SharedTimelineProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
-  const bar = useRef<HTMLDivElement>(null);
-  const width = useFitWidth(bar);
+  const { ref: bar, width } = useElementWidth<HTMLDivElement>();
+  const isMeasured = width !== null && width > 0;
   const [fanned, setFanned] = useState<string | null>(null);
+  const [settling, setSettling] = useState<string | null>(null);
+  const fan = (key: string | null) => {
+    if (key !== fanned) {
+      setSettling(key ?? fanned);
+      setFanned(key);
+    }
+  };
   const { faces: placed, groups } = placeFaces(
     people,
     durationSeconds,
@@ -87,7 +99,9 @@ const SharedTimeline = ({
     }
 
     return (
-      groups.find((group) => group.size > 1 && Math.abs(x - group.x) <= group.reach)?.key ?? null
+      groups.find(
+        (group) => group.size > 1 && group.more === 0 && Math.abs(x - group.x) <= group.reach,
+      )?.key ?? null
     );
   };
   const glide = {
@@ -105,10 +119,10 @@ const SharedTimeline = ({
         className="-mt-4 pt-16"
         data-fanned={fanned ?? ''}
         onPointerMove={(event) => {
-          setFanned(groupUnder(event.clientX, event.clientY));
+          fan(groupUnder(event.clientX, event.clientY));
         }}
         onPointerLeave={() => {
-          setFanned(null);
+          fan(null);
         }}
       >
         <div ref={bar} className="relative h-1 w-full rounded-full bg-track">
@@ -123,19 +137,34 @@ const SharedTimeline = ({
 
             return (
               <motion.span
-                key={person.id}
-                className="absolute bottom-3 -translate-x-1/2"
+                key={`${person.id}:${isMeasured ? 'placed' : 'unplaced'}`}
+                className={cn(
+                  'absolute bottom-3 -translate-x-1/2',
+                  place?.isFolded === true && 'pointer-events-none',
+                )}
+                aria-hidden={place?.isFolded === true ? true : undefined}
                 style={{ zIndex: people.length - index }}
                 initial={false}
                 animate={{
                   left:
-                    width === null || width === 0 || place === undefined
+                    !isMeasured || place === undefined
                       ? percentAlong(person.atSeconds, durationSeconds)
                       : `${place.x.toString()}px`,
-                  x: width === null || width === 0 ? 0 : (place?.offset ?? 0),
+                  x: isMeasured ? (place?.offset ?? 0) : 0,
                   y: -(place?.lift ?? 0),
+                  opacity: place?.isFolded === true ? 0 : 1,
                 }}
-                transition={{ left: glide, x: rise, y: rise }}
+                transition={{
+                  left: place?.group === settling ? rise : glide,
+                  x: rise,
+                  y: rise,
+                  opacity: rise,
+                }}
+                onAnimationComplete={() => {
+                  if (place?.group === settling) {
+                    setSettling(null);
+                  }
+                }}
               >
                 <Tooltip label={person.label}>
                   <span
@@ -149,6 +178,30 @@ const SharedTimeline = ({
               </motion.span>
             );
           })}
+          {isMeasured &&
+            groups
+              .filter((group) => group.more > 0)
+              .map((group) => (
+                <motion.span
+                  key={`${group.key}:more`}
+                  className="absolute bottom-3 -translate-x-1/2"
+                  initial={{ opacity: 0 }}
+                  animate={{ left: `${group.moreAt.toString()}px`, opacity: 1 }}
+                  transition={{ left: glide, opacity: rise }}
+                >
+                  <CountMark
+                    count={group.more}
+                    label={say('ui.sharedTimeline.alsoHere', {
+                      names: new Intl.ListFormat(undefined, { type: 'conjunction' }).format(
+                        group.folded.map(
+                          (id) => people.find((person) => person.id === id)?.name ?? id,
+                        ),
+                      ),
+                    })}
+                    className="size-7 text-xs ring-2 ring-surface-raised"
+                  />
+                </motion.span>
+              ))}
         </div>
       </div>
       <div className="flex items-center justify-between gap-2 text-xs tabular-nums text-text-muted">

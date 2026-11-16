@@ -1,4 +1,4 @@
-import { useElementWidth } from './useElementWidth';
+import { useElementWidth } from '@ValenceUI/useElementWidth';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { thumbnailAt } from '@ValenceClient/playback/fetchTrickplay';
 import type { TrickplayFrameProps } from './TrickplayFrame.types';

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 type TimelinePerson = {
   id: string;
   atSeconds: number;
+  name: string;
   label: string;
   face: ReactNode;
 };
