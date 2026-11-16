@@ -268,6 +268,7 @@ impl Inner {
 
         let fetching = keep_a_download(WhatToFetch {
             asking,
+            loaded: this.upstream.loaded(),
             onto: file_kept(&this.folder, &download_id),
             already: row.bytes,
             report: Box::new(move |progress| {

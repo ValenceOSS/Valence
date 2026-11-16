@@ -5,19 +5,24 @@
 //! kept beside the app's other files, sealed with a key the system keeps (see [`crate::jar`]). On
 //! the first start, before this app has kept a jar of its own, it starts from the session the
 //! Electron app held for the chosen server.
+//!
+//! Reading the jar asks the system for its key, which can wait on the person to unlock it, so it is
+//! read on a thread of its own once the app has started. Until it has been, everything that carries
+//! the session waits for it, and nothing is written over the jar on disk.
 
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError};
 use std::time::Duration;
 
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ORIGIN, SET_COOKIE};
 use reqwest::{Client, Method, RequestBuilder, Response, Url};
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex};
 use tauri::{AppHandle, Manager};
+use tokio::sync::watch;
 
-use crate::jar::{Jar, Kept, SystemKeychain};
+use crate::jar::{Jar, Kept, Keychain, SystemKeychain};
 use crate::preferences::Preferences;
 
 /// The header that says which kind of app is asking.
@@ -47,38 +52,67 @@ const CARRIED: [&str; 6] = [
 pub struct Upstream {
     client: Client,
     jar: Arc<CookieStoreMutex>,
-    jar_file: Option<Jar>,
+    jar_file: Arc<OnceLock<Jar>>,
+    loaded: Loaded,
     saving: Arc<Mutex<()>>,
     preferences: Preferences,
 }
 
+/// Whether the session has been read from the disk yet, and a way to wait until it has.
+#[derive(Clone)]
+pub struct Loaded(Arc<watch::Sender<bool>>);
+
+impl Loaded {
+    /// Not loaded yet.
+    fn not_yet() -> Self {
+        Self(Arc::new(watch::Sender::new(false)))
+    }
+
+    /// Says the session has been loaded, letting everything waiting on it go.
+    fn finish(&self) {
+        self.0.send_replace(true);
+    }
+
+    /// Whether the session has been loaded.
+    #[must_use]
+    pub fn is_loaded(&self) -> bool {
+        *self.0.borrow()
+    }
+
+    /// Waits until the session has been loaded.
+    pub async fn wait(&self) {
+        let mut watching = self.0.subscribe();
+
+        drop(watching.wait_for(|is_loaded| *is_loaded).await);
+    }
+}
+
 impl Upstream {
-    /// Makes the client, with the cookies kept in `jar_file` where there is one.
+    /// Makes the client, with the cookies kept in `jar_file` where there is one, read now.
     ///
     /// # Errors
     ///
     /// When the HTTP client cannot be made.
     #[cfg(test)]
     pub fn new(preferences: Preferences, jar_file: Option<Jar>) -> Result<Self, reqwest::Error> {
+        let upstream = Self::loading(preferences)?;
         let store = match jar_file.as_ref().map(Jar::load) {
             Some(Kept::Cookies(store)) => store,
             _ => CookieStore::default(),
         };
 
-        Self::holding(preferences, store, jar_file)
+        upstream.fill(store, jar_file);
+        Ok(upstream)
     }
 
-    /// Makes the client, holding `store` and keeping it in `jar_file` where there is one.
+    /// Makes the client with no cookies yet, holding back everything that carries the session
+    /// until [`Upstream::fill`] gives it them.
     ///
     /// # Errors
     ///
     /// When the HTTP client cannot be made.
-    pub fn holding(
-        preferences: Preferences,
-        store: CookieStore,
-        jar_file: Option<Jar>,
-    ) -> Result<Self, reqwest::Error> {
-        let jar = Arc::new(CookieStoreMutex::new(store));
+    pub fn loading(preferences: Preferences) -> Result<Self, reqwest::Error> {
+        let jar = Arc::new(CookieStoreMutex::new(CookieStore::default()));
         let client = crate::tls::a_client(
             Client::builder().cookie_provider(Arc::clone(&jar)),
             LONGEST_TO_CONNECT,
@@ -87,13 +121,37 @@ impl Upstream {
         Ok(Self {
             client,
             jar,
-            jar_file,
+            jar_file: Arc::new(OnceLock::new()),
+            loaded: Loaded::not_yet(),
             saving: Arc::new(Mutex::new(())),
             preferences,
         })
     }
 
-    /// The HTTP client, which carries the session's cookies on every request it makes.
+    /// Fills the session with `store`, read from `jar_file` where there is one and kept there from
+    /// now on, and lets everything waiting on it go. Only the first fill counts.
+    pub fn fill(&self, store: CookieStore, jar_file: Option<Jar>) {
+        if self.loaded.is_loaded() {
+            return;
+        }
+
+        *lock_jar(&self.jar) = store;
+
+        if let Some(jar_file) = jar_file {
+            drop(self.jar_file.set(jar_file));
+        }
+
+        self.loaded.finish();
+    }
+
+    /// Whether the session has been read from the disk yet, and a way to wait until it has.
+    #[must_use]
+    pub fn loaded(&self) -> Loaded {
+        self.loaded.clone()
+    }
+
+    /// The HTTP client. It carries the session's cookies only once they are loaded: wait on
+    /// [`Upstream::loaded`] before asking anything that needs them.
     #[must_use]
     pub fn client(&self) -> &Client {
         &self.client
@@ -123,12 +181,14 @@ impl Upstream {
         Some(self.client.request(method, url).headers(headers))
     }
 
-    /// Sends `request`, keeping any cookies the answer sets.
+    /// Sends `request` once the session is loaded, keeping any cookies the answer sets.
     ///
     /// # Errors
     ///
     /// When the server cannot be asked.
     pub async fn send(&self, request: RequestBuilder) -> Result<Response, reqwest::Error> {
+        self.loaded.wait().await;
+
         let answer = request.send().await?;
 
         self.keep_cookies_from(answer.headers());
@@ -136,8 +196,8 @@ impl Upstream {
         Ok(answer)
     }
 
-    /// Keeps the jar on disk where `headers` set a cookie: off the runtime's own threads where
-    /// there is a runtime, since writing it waits on the disk.
+    /// Keeps the jar on disk where `headers` set a cookie, once the session is loaded: off the
+    /// runtime's own threads where there is a runtime, since writing it waits on the disk.
     pub fn keep_cookies_from(&self, headers: &HeaderMap) {
         if !headers.contains_key(SET_COOKIE) {
             return;
@@ -147,15 +207,23 @@ impl Upstream {
             Ok(runtime) => {
                 let keeping = self.clone();
 
-                runtime.spawn_blocking(move || keeping.keep_cookies());
+                runtime.spawn(async move {
+                    keeping.loaded.wait().await;
+                    drop(tokio::task::spawn_blocking(move || keeping.keep_cookies()).await);
+                });
             }
             Err(_) => self.keep_cookies(),
         }
     }
 
-    /// Keeps the jar on disk, as it is now.
+    /// Keeps the jar on disk, as it is now, unless the session has not been loaded yet, so what is
+    /// on disk is never written over before it has been read.
     pub fn keep_cookies(&self) {
-        let Some(file) = &self.jar_file else {
+        if !self.loaded.is_loaded() {
+            return;
+        }
+
+        let Some(file) = self.jar_file.get() else {
             return;
         };
         let _saving = lock(&self.saving);
@@ -165,9 +233,11 @@ impl Upstream {
         }
     }
 
-    /// The `Cookie` header the session sends to `url`, or nothing where it sends none.
-    #[must_use]
-    pub fn cookie_header_for(&self, url: &Url) -> Option<HeaderValue> {
+    /// The `Cookie` header the session sends to `url`, once it is loaded, or nothing where it
+    /// sends none.
+    pub async fn cookie_header_for(&self, url: &Url) -> Option<HeaderValue> {
+        self.loaded.wait().await;
+
         let jar = lock_jar(&self.jar);
         let carried = jar
             .get_request_values(url)
@@ -320,7 +390,32 @@ fn starting_cookies(jar: &Jar, preferences: &Preferences, user_data: &Path) -> C
     }
 }
 
-/// Makes the client and its cookie jar.
+/// Reads the jar in `user_data`, sealed with the key `keychain` keeps, on a blocking thread, and
+/// fills `upstream`'s session with what it held, or with what the Electron app held where it held
+/// nothing. Where reading it fails outright, the session starts empty and is kept nowhere.
+fn start_loading(
+    upstream: &Upstream,
+    user_data: PathBuf,
+    keychain: impl Keychain + Send + 'static,
+) {
+    let filling = upstream.clone();
+    let reading = crate::runtime::handle().spawn_blocking(move || {
+        let jar = Jar::in_folder(&user_data, &keychain);
+        let store = starting_cookies(&jar, &filling.preferences, &user_data);
+
+        filling.fill(store, Some(jar));
+    });
+    let settling = upstream.clone();
+
+    crate::runtime::spawn(async move {
+        if let Err(error) = reading.await {
+            eprintln!("Valence could not read its session: {error}");
+            settling.fill(CookieStore::default(), None);
+        }
+    });
+}
+
+/// Makes the client, and starts reading its cookie jar in the background.
 ///
 /// # Errors
 ///
@@ -331,12 +426,10 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         .ok_or("the preferences were not set up first")?
         .inner()
         .clone();
-    let user_data = crate::paths::user_data();
-    let jar = Jar::in_folder(&user_data, &SystemKeychain);
-    let store = starting_cookies(&jar, &preferences, &user_data);
-    let upstream = Upstream::holding(preferences, store, Some(jar))?;
+    let upstream = Upstream::loading(preferences)?;
 
-    app.manage(upstream);
+    app.manage(upstream.clone());
+    start_loading(&upstream, crate::paths::user_data(), SystemKeychain);
     Ok(())
 }
 
@@ -429,8 +522,8 @@ mod tests {
         assert_eq!(origin_of(&url), "https://nas.example:8443");
     }
 
-    #[test]
-    fn keeps_the_session_between_launches() {
+    #[tokio::test]
+    async fn keeps_the_session_between_launches() {
         let folder = tempfile::tempdir().expect("a temporary folder");
         let jar = folder.path().join("cookies.json");
         let preferences = Preferences::open(folder.path().join("preferences.json"));
@@ -448,6 +541,7 @@ mod tests {
         assert_eq!(
             second
                 .cookie_header_for(&server)
+                .await
                 .and_then(|v| v.to_str().ok().map(str::to_owned)),
             Some("session=abc".to_owned())
         );
@@ -488,7 +582,7 @@ mod tests {
 
         let kept = Upstream::new(preferences, Some(Jar::plain(jar))).expect("a client");
 
-        assert!(kept.cookie_header_for(&server).is_some());
+        assert!(kept.cookie_header_for(&server).await.is_some());
     }
 
     #[test]
@@ -522,6 +616,174 @@ mod tests {
 
         assert_eq!(starting.iter_any().count(), 0);
         assert!(!folder.path().join("cookies.json").exists());
+    }
+
+    struct Gated(Mutex<std::sync::mpsc::Receiver<()>>);
+
+    impl Keychain for Gated {
+        fn read(&self) -> Result<Option<[u8; 32]>, crate::jar::Unavailable> {
+            lock(&self.0).recv().ok();
+            Err(crate::jar::Unavailable)
+        }
+
+        fn write(&self, _key: &[u8; 32]) -> Result<(), crate::jar::Unavailable> {
+            Err(crate::jar::Unavailable)
+        }
+    }
+
+    struct Slow(Duration);
+
+    impl Keychain for Slow {
+        fn read(&self) -> Result<Option<[u8; 32]>, crate::jar::Unavailable> {
+            std::thread::sleep(self.0);
+            Err(crate::jar::Unavailable)
+        }
+
+        fn write(&self, _key: &[u8; 32]) -> Result<(), crate::jar::Unavailable> {
+            Err(crate::jar::Unavailable)
+        }
+    }
+
+    fn a_kept_session(folder: &Path, server: &str) {
+        let server = Url::parse(server).expect("an address");
+        let mut kept = CookieStore::default();
+
+        kept.parse("session=abc; Path=/; Max-Age=3600", &server)
+            .expect("a cookie");
+        Jar::plain(folder.join("cookies.json"))
+            .save(&kept)
+            .expect("kept");
+    }
+
+    #[tokio::test]
+    async fn holds_a_request_until_the_jar_is_read_then_sends_the_session() {
+        let folder = tempfile::tempdir().expect("a temporary folder");
+        let preferences = Preferences::open(folder.path().join("preferences.json"));
+        let asked = Arc::new(Mutex::new(Vec::new()));
+        let hearing = Arc::clone(&asked);
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("a port");
+        let address = listener.local_addr().expect("an address");
+        let router = axum::Router::new().route(
+            "/api/me",
+            axum::routing::get(move |headers: HeaderMap| {
+                let cookie = headers
+                    .get("cookie")
+                    .and_then(|value| value.to_str().ok())
+                    .unwrap_or_default()
+                    .to_owned();
+
+                lock(&hearing).push(cookie.clone());
+                async move { cookie }
+            }),
+        );
+
+        tokio::spawn(async move { axum::serve(listener, router).await });
+        a_kept_session(folder.path(), &format!("http://{address}/"));
+        preferences
+            .write(
+                crate::preferences::SERVER_ADDRESS,
+                &format!("http://{address}"),
+            )
+            .expect("written");
+
+        let upstream = Upstream::loading(preferences).expect("a client");
+        let (unlock, unlocked) = std::sync::mpsc::channel();
+
+        start_loading(
+            &upstream,
+            folder.path().to_path_buf(),
+            Gated(Mutex::new(unlocked)),
+        );
+
+        let asking = upstream.request(Method::GET, "/api/me").expect("a request");
+        let sending = upstream.clone();
+        let answer = tokio::spawn(async move { sending.send(asking).await });
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        assert!(!answer.is_finished());
+        assert!(lock(&asked).is_empty());
+
+        unlock.send(()).expect("unlocked");
+
+        let said = answer
+            .await
+            .expect("sent")
+            .expect("answered")
+            .text()
+            .await
+            .expect("a body");
+
+        assert_eq!(said, "session=abc");
+        assert_eq!(*lock(&asked), ["session=abc"]);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn a_slow_keychain_does_not_hold_up_starting() {
+        let folder = tempfile::tempdir().expect("a temporary folder");
+        let preferences = Preferences::open(folder.path().join("preferences.json"));
+        let server = Url::parse("http://nas:8420/api/x").expect("an address");
+        let upstream = Upstream::loading(preferences).expect("a client");
+        let started = std::time::Instant::now();
+
+        a_kept_session(folder.path(), "http://nas:8420/");
+        start_loading(
+            &upstream,
+            folder.path().to_path_buf(),
+            Slow(Duration::from_millis(500)),
+        );
+
+        assert!(started.elapsed() < Duration::from_millis(250));
+        assert!(!upstream.loaded().is_loaded());
+
+        let carried = upstream.cookie_header_for(&server).await;
+
+        assert!(started.elapsed() >= Duration::from_millis(500));
+        assert_eq!(
+            carried.and_then(|v| v.to_str().ok().map(str::to_owned)),
+            Some("session=abc".to_owned())
+        );
+    }
+
+    #[test]
+    fn writes_nothing_over_the_jar_before_it_has_been_read() {
+        let folder = tempfile::tempdir().expect("a temporary folder");
+        let preferences = Preferences::open(folder.path().join("preferences.json"));
+        let server = Url::parse("http://nas:8420/api/x").expect("an address");
+        let jar = Jar::plain(folder.path().join("cookies.json"));
+        let upstream = Upstream::loading(preferences).expect("a client");
+
+        a_kept_session(folder.path(), "http://nas:8420/");
+        lock_jar(&upstream.jar)
+            .parse("other=1; Path=/; Max-Age=3600", &server)
+            .expect("a cookie");
+        upstream.keep_cookies_from(&headers(&[("set-cookie", "other=1")]));
+        upstream.keep_cookies();
+
+        let Kept::Cookies(on_disk) = jar.load() else {
+            panic!("the jar was not kept");
+        };
+
+        assert_eq!(on_disk.iter_any().count(), 1);
+
+        let Kept::Cookies(store) = jar.load() else {
+            panic!("the jar was not kept");
+        };
+
+        upstream.fill(store, Some(jar.clone()));
+        upstream.keep_cookies();
+
+        let Kept::Cookies(on_disk) = jar.load() else {
+            panic!("the jar was not kept");
+        };
+        let names = on_disk
+            .iter_any()
+            .map(|cookie| cookie.name().to_owned())
+            .collect::<Vec<_>>();
+
+        assert_eq!(names, ["session"]);
     }
 
     #[test]

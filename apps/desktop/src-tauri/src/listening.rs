@@ -84,6 +84,7 @@ impl Listening {
 
         let fetching = keep_a_download(WhatToFetch {
             asking,
+            loaded: self.upstream.loaded(),
             onto: onto.clone(),
             already: 0,
             report: Box::new(move |progress| {

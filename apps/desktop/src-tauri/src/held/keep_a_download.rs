@@ -1,6 +1,7 @@
 //! Fetches a prepared file to the disk, can be stopped, and picks up where it stopped.
 
 use super::words::say_it;
+use crate::upstream::Loaded;
 use futures_util::future::{BoxFuture, FutureExt, Shared};
 use reqwest::header::{HeaderMap, CONTENT_LENGTH, CONTENT_RANGE, RANGE};
 use reqwest::{RequestBuilder, StatusCode};
@@ -30,9 +31,11 @@ pub struct Outcome {
     pub(crate) failure: Option<String>,
 }
 
-/// What to fetch, where to put it, how much is already there, and who to tell how it goes.
+/// What to fetch once the session is loaded, where to put it, how much is already there, and who
+/// to tell how it goes.
 pub struct WhatToFetch {
     pub(crate) asking: RequestBuilder,
+    pub(crate) loaded: Loaded,
     pub(crate) onto: PathBuf,
     pub(crate) already: u64,
     pub(crate) report: Box<dyn Fn(Progress) + Send + Sync>,
@@ -109,12 +112,20 @@ fn unfinished(bytes: u64, failure: Option<String>) -> Outcome {
     }
 }
 
-/// Asks for the file, or for the rest of it, and hands back an answer that is sending one.
+/// Asks for the file, or for the rest of it, once the session is loaded, and hands back an answer
+/// that is sending one.
 async fn ask(
     asking: RequestBuilder,
+    loaded: &Loaded,
     already: u64,
     stopper: &CancellationToken,
 ) -> Result<reqwest::Response, Outcome> {
+    tokio::select! {
+        biased;
+        () = stopper.cancelled() => return Err(unfinished(already, None)),
+        () = loaded.wait() => {}
+    }
+
     let asking = if already > 0 {
         asking.header(RANGE, format!("bytes={already}-"))
     } else {
@@ -155,7 +166,7 @@ async fn ask(
 
 /// Fetches the file, ending when it has all arrived, something went wrong, or it was stopped.
 async fn run(asked: WhatToFetch, stopper: CancellationToken) -> Outcome {
-    let mut answer = match ask(asked.asking, asked.already, &stopper).await {
+    let mut answer = match ask(asked.asking, &asked.loaded, asked.already, &stopper).await {
         Ok(answer) => answer,
         Err(outcome) => return outcome,
     };
@@ -337,6 +348,10 @@ pub(crate) mod tests {
         response
     }
 
+    fn folder_of(file: &Path) -> &Path {
+        file.parent().unwrap()
+    }
+
     fn pieces(of: &[&str]) -> Vec<String> {
         of.iter().map(|piece| (*piece).to_owned()).collect()
     }
@@ -377,6 +392,7 @@ pub(crate) mod tests {
 
         let fetching = keep_a_download(WhatToFetch {
             asking: reqwest::Client::new().get(format!("{server}/api/downloads/one/file")),
+            loaded: an_upstream(None, folder_of(onto)).loaded(),
             onto: onto.to_path_buf(),
             already,
             report: Box::new(move |progress| telling.lock().unwrap().push(progress)),

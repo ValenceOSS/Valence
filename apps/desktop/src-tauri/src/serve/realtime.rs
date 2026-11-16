@@ -106,7 +106,7 @@ pub async fn answer(State(served): State<Served>, request: Request) -> Response 
     };
     let headers = asking.headers_mut();
 
-    if let Some(cookie) = served.upstream.cookie_header_for(&page) {
+    if let Some(cookie) = served.upstream.cookie_header_for(&page).await {
         headers.insert(COOKIE, cookie);
     }
 

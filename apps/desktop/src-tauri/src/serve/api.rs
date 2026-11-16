@@ -85,6 +85,8 @@ pub async fn answer(State(served): State<Served>, request: Request) -> Response 
         ));
     }
 
+    served.upstream.loaded().wait().await;
+
     let reach = served.reach.clone();
     let _watching = Watching(crate::runtime::spawn(async move {
         tokio::time::sleep(SLOW_ANSWER).await;
