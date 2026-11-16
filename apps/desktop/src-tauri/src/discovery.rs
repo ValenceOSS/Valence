@@ -155,7 +155,10 @@ pub async fn servers_reach(
 /// the screen that asks for an address as it was.
 pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let discovery = Discovery {
-        client: reqwest::Client::builder().build()?,
+        client: crate::tls::a_client(
+            reqwest::Client::builder(),
+            crate::upstream::LONGEST_TO_CONNECT,
+        )?,
         found: Mutex::new(Vec::new()),
         nearby: Mutex::new(Vec::new()),
         looking: Mutex::new(None),

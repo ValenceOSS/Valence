@@ -34,6 +34,7 @@ mod say;
 mod screen;
 mod serve;
 mod this_launch;
+mod tls;
 mod tray;
 mod updates;
 mod upstream;

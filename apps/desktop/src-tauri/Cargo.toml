@@ -23,7 +23,8 @@ tauri-plugin-notification = "2.8"
 tauri-plugin-opener = "2.7"
 tauri-plugin-updater = "2.14"
 axum = { version = "0.8", features = ["ws"] }
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream", "cookies", "json"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "http2", "stream", "cookies", "json"] }
+rustls-platform-verifier = "0.7"
 reqwest_cookie_store = "0.8"
 cookie_store = "0.21"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "io-util", "time", "net", "sync"] }

@@ -10,6 +10,7 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use std::time::Duration;
 
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ORIGIN, SET_COOKIE};
 use reqwest::{Client, Method, RequestBuilder, Response, Url};
@@ -27,6 +28,10 @@ pub const DEVICE_HEADER: &str = "x-valence-device";
 
 /// The kind of app this is, as the server knows it.
 pub const CLIENT_KIND: &str = "desktop";
+
+/// How long a server has to answer a connection before it is taken to be out of reach, rather than
+/// left to the system, which can wait minutes on an address that drops what is sent to it.
+pub const LONGEST_TO_CONNECT: Duration = Duration::from_secs(10);
 
 const CARRIED: [&str; 6] = [
     "accept",
@@ -74,9 +79,10 @@ impl Upstream {
         jar_file: Option<Jar>,
     ) -> Result<Self, reqwest::Error> {
         let jar = Arc::new(CookieStoreMutex::new(store));
-        let client = Client::builder()
-            .cookie_provider(Arc::clone(&jar))
-            .build()?;
+        let client = crate::tls::a_client(
+            Client::builder().cookie_provider(Arc::clone(&jar)),
+            LONGEST_TO_CONNECT,
+        )?;
 
         Ok(Self {
             client,
@@ -130,10 +136,20 @@ impl Upstream {
         Ok(answer)
     }
 
-    /// Keeps the jar on disk where `headers` set a cookie.
+    /// Keeps the jar on disk where `headers` set a cookie: off the runtime's own threads where
+    /// there is a runtime, since writing it waits on the disk.
     pub fn keep_cookies_from(&self, headers: &HeaderMap) {
-        if headers.contains_key(SET_COOKIE) {
-            self.keep_cookies();
+        if !headers.contains_key(SET_COOKIE) {
+            return;
+        }
+
+        match tokio::runtime::Handle::try_current() {
+            Ok(runtime) => {
+                let keeping = self.clone();
+
+                runtime.spawn_blocking(move || keeping.keep_cookies());
+            }
+            Err(_) => self.keep_cookies(),
         }
     }
 
@@ -442,6 +458,37 @@ mod tests {
             let mode = fs::metadata(&jar).expect("the jar").permissions().mode();
             assert_eq!(mode & 0o777, 0o600);
         }
+    }
+
+    #[tokio::test]
+    async fn keeps_a_cookie_an_answer_set_off_the_runtimes_threads() {
+        let folder = tempfile::tempdir().expect("a temporary folder");
+        let jar = folder.path().join("cookies.json");
+        let preferences = Preferences::open(folder.path().join("preferences.json"));
+        let server = Url::parse("http://nas:8420/api/x").expect("an address");
+        let upstream =
+            Upstream::new(preferences.clone(), Some(Jar::plain(jar.clone()))).expect("a client");
+
+        lock_jar(&upstream.jar)
+            .parse("session=abc; Path=/; Max-Age=3600", &server)
+            .expect("a cookie");
+        upstream.keep_cookies_from(&HeaderMap::new());
+
+        assert!(!jar.exists());
+
+        upstream.keep_cookies_from(&headers(&[("set-cookie", "session=abc")]));
+
+        for _ in 0..100 {
+            if jar.exists() {
+                break;
+            }
+
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+
+        let kept = Upstream::new(preferences, Some(Jar::plain(jar))).expect("a client");
+
+        assert!(kept.cookie_header_for(&server).is_some());
     }
 
     #[test]

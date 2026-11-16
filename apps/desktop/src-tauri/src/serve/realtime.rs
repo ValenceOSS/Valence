@@ -16,10 +16,13 @@ use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::protocol::frame::coding::CloseCode;
 use tokio_tungstenite::tungstenite::protocol::CloseFrame as ServerClose;
 use tokio_tungstenite::tungstenite::{Error as SocketError, Message as ServerMessage};
+use tokio_tungstenite::Connector;
 
 use super::{said, Served};
 use crate::say::say;
-use crate::upstream::{on_the_server, origin_of, CLIENT_KIND, CLIENT_KIND_HEADER};
+use crate::upstream::{
+    on_the_server, origin_of, CLIENT_KIND, CLIENT_KIND_HEADER, LONGEST_TO_CONNECT,
+};
 
 /// Whether `headers` ask to open a WebSocket.
 #[must_use]
@@ -121,7 +124,17 @@ pub async fn answer(State(served): State<Served>, request: Request) -> Response 
         }
     }
 
-    match tokio_tungstenite::connect_async(asking).await {
+    let connecting = tokio_tungstenite::connect_async_tls_with_config(
+        asking,
+        None,
+        false,
+        crate::tls::for_sockets().map(Connector::Rustls),
+    );
+    let Ok(connected) = tokio::time::timeout(LONGEST_TO_CONNECT, connecting).await else {
+        return could_not_reach(&served, &chosen);
+    };
+
+    match connected {
         Ok((upstream, answered)) => {
             served.reach.note_reached();
 
