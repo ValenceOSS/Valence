@@ -73,6 +73,7 @@ const Badge = ({
   className,
 }: BadgeProps) => {
   const mark = icon ?? (colour === null ? TONE_ICONS[tone] : undefined);
+  const words = size === 'count' ? 'block [text-box:trim-both_cap_alphabetic]' : undefined;
 
   return (
     <span
@@ -94,9 +95,11 @@ const Badge = ({
       )}
     >
       {colour === null && tone === 'busy' ? (
-        <span className="valence-shimmer-text">{children}</span>
-      ) : (
+        <span className={cn('valence-shimmer-text', words)}>{children}</span>
+      ) : words === undefined ? (
         children
+      ) : (
+        <span className={words}>{children}</span>
       )}
       {colour === null && tone === 'busy' ? (
         <Spinner size="xs" label={say('common.inProgress')} />

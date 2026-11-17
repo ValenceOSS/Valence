@@ -47,8 +47,8 @@ describe('CatalogueTiles', () => {
       />,
     );
 
-    expect(screen.getByText('5')).toHaveClass('bg-danger/15');
-    expect(screen.getByText('2')).not.toHaveClass('bg-danger/15');
+    expect(screen.getByText('5').closest('span.inline-flex')).toHaveClass('bg-danger/15');
+    expect(screen.getByText('2').closest('span.inline-flex')).not.toHaveClass('bg-danger/15');
   });
 
   it('sets a display name so devtools can identify it', () => {
