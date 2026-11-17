@@ -625,6 +625,64 @@ describe('the linked server routes', () => {
     });
   });
 
+  it('stops showing a session from a linked server once its stream is stopped here', async () => {
+    const network = aNetwork();
+    const title = '00000000-0000-4000-8000-0000000000c4';
+    const film = aJellyfinDetail(aJellyfinFilm({ id: title, libraryId: FILMS.id }));
+    const anime = await network.serverAt(
+      'https://anime.example',
+      ['administrator'],
+      [FILMS],
+      {
+        subjectOf: ({ id }) =>
+          Promise.resolve(
+            id === title
+              ? {
+                  id,
+                  title: 'Arrival',
+                  libraryId: FILMS.id,
+                  certificationAge: 12,
+                  isNeverRated: false,
+                }
+              : null,
+          ),
+      },
+      [film],
+    );
+    const films = await network.serverAt('https://films.example');
+    const { guestAtHost, hostAtGuest } = await linkThem(anime, films);
+    const marques = { profileId: 'profile-1', name: 'Marques' };
+
+    await anime.request(`/api/linked-servers/${guestAtHost}/sharing`, 'PATCH', {
+      libraryIds: [FILMS.id],
+    });
+
+    await films.askAt(
+      hostAtGuest,
+      `/api/playback/${title}/session`,
+      'POST',
+      { deviceProfile: aDeviceProfile() },
+      marques,
+    );
+
+    const linked = async () =>
+      z
+        .array(z.object({ clientId: z.string(), fromServer: z.string().nullable() }))
+        .parse(await (await anime.request('/api/admin/sessions')).json())
+        .filter((session) => session.fromServer !== null);
+    const [watching] = await linked();
+
+    expect(watching).toBeDefined();
+
+    const stopped = await anime.request(
+      `/api/admin/sessions/${encodeURIComponent(watching?.clientId ?? '')}`,
+      'DELETE',
+    );
+
+    expect(stopped.status).toBe(204);
+    expect(await linked()).toEqual([]);
+  });
+
   it('lets go of a session from a linked server once it goes quiet, and keeps one it still hears from', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
 

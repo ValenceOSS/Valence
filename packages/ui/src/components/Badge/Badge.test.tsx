@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { Badge } from './Badge';
 
 /**
- * The badge saying something: the element holding its words, or, where a badge for something under
- * way wraps its words in a shimmer, the badge around them.
+ * The badge saying something, found from its words, which it may wrap in a shimmer or trim to the
+ * height of its figures.
  *
  * @param text - What the badge says.
  * @returns The badge.
@@ -13,9 +13,7 @@ import { Badge } from './Badge';
 const badgeOf = (text: string): HTMLElement => {
   const found = screen.getByText(text);
 
-  return found.classList.contains('valence-shimmer-text') && found.parentElement !== null
-    ? found.parentElement
-    : found;
+  return found.closest<HTMLElement>('span.inline-flex') ?? found;
 };
 
 describe('Badge', () => {
@@ -70,6 +68,17 @@ describe('Badge', () => {
     expect(badgeOf('76')).toHaveClass('gap-1', 'pe-0.5');
     expect(badgeOf('20')).toHaveClass('px-1.5');
     expect(badgeOf('20')).not.toHaveClass('pe-0.5');
+  });
+
+  it('trims a count to the height of its figures, so they sit in the middle on every system', () => {
+    render(
+      <Badge tone="danger" size="count">
+        2
+      </Badge>,
+    );
+
+    expect(screen.getByText('2')).toHaveClass('[text-box:trim-both_cap_alphabetic]');
+    expect(badgeOf('2')).not.toBe(screen.getByText('2'));
   });
 
   it('sets a display name so devtools can identify it', () => {

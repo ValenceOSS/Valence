@@ -48,7 +48,8 @@ const BASE_TEXT_PX = 16;
  * runs in, where the icon set has only generic shapes. The mark is a file referenced by its address
  * and painted through as a mask, so it takes the colour of the text around it the way an icon does
  * and no SVG is inlined. A mark whose weight sits high or low in its square is moved to centre its
- * weight rather than its square, so it lines up with what sits beside it.
+ * weight rather than its square, so it lines up with what sits beside it, and a mark that fills
+ * far more of its square than the others is drawn smaller, so it does not outweigh them.
  *
  * @param of - Whose mark it is.
  * @param size - How large to draw it, in pixels at the default text size.
@@ -59,7 +60,8 @@ const BASE_TEXT_PX = 16;
 const BrandGlyph = ({ of, size = 16, label, className }: BrandGlyphProps) => {
   const mark = `url("${MARKS[of]}")`;
   const side = `${(size / BASE_TEXT_PX).toString()}rem`;
-  const lift = (0.5 - (BRAND_OPTICS[of]?.middle ?? 0.5)) * 100;
+  const optics = BRAND_OPTICS[of];
+  const lift = (0.5 - (optics?.middle ?? 0.5)) * 100;
 
   return (
     <span
@@ -74,6 +76,7 @@ const BrandGlyph = ({ of, size = 16, label, className }: BrandGlyphProps) => {
         maskRepeat: 'no-repeat',
         maskPosition: 'center',
         translate: `0 ${lift.toFixed(1)}%`,
+        ...(optics?.scale === undefined ? {} : { scale: optics.scale.toString() }),
       }}
     />
   );
