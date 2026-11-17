@@ -3116,6 +3116,10 @@ const VideoPlayer = ({
       duration,
     );
 
+    if (party?.isTimekeeper === true && party.isPlaying) {
+      party.onCommand({ kind: 'pause', atSeconds: duration });
+    }
+
     if (seekedToTheEndRef.current) {
       playsOnFromTheEndRef.current = isPlaying;
       setHeldAtTheEndOf(media.id);

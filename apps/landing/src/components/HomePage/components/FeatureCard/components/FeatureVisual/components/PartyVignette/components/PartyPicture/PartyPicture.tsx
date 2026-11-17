@@ -53,6 +53,7 @@ const PartyPicture = ({ isInSync = false }: PartyPictureProps) => {
           people={PEOPLE.map((name) => ({
             id: name,
             atSeconds: atOf(name),
+            name,
             face: <ShowcaseFace name={name} className="size-10 text-base" />,
             label: say('screens.partyPanel.nameAtPosition', {
               name,

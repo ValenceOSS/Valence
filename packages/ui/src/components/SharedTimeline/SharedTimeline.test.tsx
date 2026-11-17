@@ -1,18 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SharedTimeline } from './SharedTimeline';
 
 const face = (initial: string) => <span>{initial}</span>;
 
 const TOGETHER = [
-  { id: 'dan', atSeconds: 600, label: 'Dan, at 10:00', face: face('D') },
-  { id: 'sam', atSeconds: 600, label: 'Sam, at 10:00', face: face('S') },
+  { id: 'dan', atSeconds: 600, name: 'Dan', label: 'Dan, at 10:00', face: face('D') },
+  { id: 'sam', atSeconds: 600, name: 'Sam', label: 'Sam, at 10:00', face: face('S') },
 ];
 
 const timeline = (
   people = [
-    { id: 'dan', atSeconds: 600, label: 'Dan, at 10:00', face: face('D') },
-    { id: 'sam', atSeconds: 1200, label: 'Sam, at 20:00', face: face('S') },
+    { id: 'dan', atSeconds: 600, name: 'Dan', label: 'Dan, at 10:00', face: face('D') },
+    { id: 'sam', atSeconds: 1200, name: 'Sam', label: 'Sam, at 20:00', face: face('S') },
   ],
 ) => (
   <SharedTimeline
@@ -52,8 +52,8 @@ describe('SharedTimeline', () => {
   it('keeps somebody past the end, or before the start, on the bar', () => {
     render(
       timeline([
-        { id: 'early', atSeconds: -30, label: 'Early', face: face('E') },
-        { id: 'late', atSeconds: 9000, label: 'Late', face: face('L') },
+        { id: 'early', atSeconds: -30, name: 'Early', label: 'Early', face: face('E') },
+        { id: 'late', atSeconds: 9000, name: 'Late', label: 'Late', face: face('L') },
       ]),
     );
 
@@ -63,6 +63,46 @@ describe('SharedTimeline', () => {
     expect(screen.getByRole('img', { name: 'Late' }).closest('span[style]')).toHaveStyle({
       left: '100%',
     });
+  });
+
+  it('counts the people folded away in a big group, naming them', () => {
+    const offsetWidth = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(300);
+
+    render(
+      timeline(
+        Array.from({ length: 9 }, (_, index) => ({
+          id: `person${index.toString()}`,
+          atSeconds: 600,
+          name: `Person ${index.toString()}`,
+          label: `Person ${index.toString()}`,
+          face: face('P'),
+        })),
+      ),
+    );
+
+    expect(
+      screen.getByRole('img', {
+        name: 'Also here: Person 1, Person 2, Person 3, Person 4, Person 5, Person 6, Person 7, and Person 8',
+      }),
+    ).toHaveTextContent('+8');
+    expect(screen.queryByRole('img', { name: 'Person 3' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Person 0' })).toBeInTheDocument();
+
+    offsetWidth.mockRestore();
+  });
+
+  it('first shows somebody at the start wholly on a measured bar, rather than gliding in', () => {
+    const offsetWidth = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(300);
+
+    render(
+      timeline([{ id: 'dan', atSeconds: 0, name: 'Dan', label: 'Dan, at 0:00', face: face('D') }]),
+    );
+
+    expect(screen.getByRole('img', { name: 'Dan, at 0:00' }).closest('span[style]')).toHaveStyle({
+      left: '14px',
+    });
+
+    offsetWidth.mockRestore();
   });
 
   it('shows the time along and the time in all', () => {

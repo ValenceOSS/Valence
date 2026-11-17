@@ -41866,6 +41866,11 @@
     "context": "A button beside how many rows of a table are ticked that ticks every row there is, those not shown yet too. {count} is how many there are in all."
   },
   {
+    "handler": "ui.sharedTimeline.alsoHere",
+    "text": "Also here: {names}",
+    "context": "Shown on hover and read out for the small count circle beside a face on a shared timeline, which stands for the other people at the same point whose faces are folded away. {names} is their names as a list."
+  },
+  {
     "handler": "ui.sidebarGroup.labelWaiting",
     "text": "{label}, {count} wartend",
     "context": "Read out for a sidebar item with things waiting behind it. {label} is the item, {count} how many."

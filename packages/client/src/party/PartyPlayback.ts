@@ -7,6 +7,7 @@ type PartyPlayback = {
   referenceSeconds: number | null;
   jitterMs: number;
   isPlaying: boolean;
+  isTimekeeper: boolean;
   isHeld: boolean;
   waitingFor: readonly string[];
   members: number;

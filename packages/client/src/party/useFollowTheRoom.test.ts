@@ -75,6 +75,7 @@ const aParty = (change: Partial<PartyPlayback> = {}): PartyPlayback => ({
   referenceSeconds: null,
   jitterMs: 0,
   isPlaying: true,
+  isTimekeeper: false,
   isHeld: false,
   waitingFor: [],
   members: 2,

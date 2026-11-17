@@ -252,9 +252,9 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
           elapsed="50:00"
           total="1:50:00"
           people={[
-            { id: 'a', atSeconds: 3000, label: 'Sam', face: faceOf('S') },
-            { id: 'b', atSeconds: 2980, label: 'Alex', face: faceOf('A') },
-            { id: 'c', atSeconds: 2400, label: 'Jo', face: faceOf('J') },
+            { id: 'a', atSeconds: 3000, name: 'Sam', label: 'Sam', face: faceOf('S') },
+            { id: 'b', atSeconds: 2980, name: 'Alex', label: 'Alex', face: faceOf('A') },
+            { id: 'c', atSeconds: 2400, name: 'Jo', label: 'Jo', face: faceOf('J') },
           ]}
         />
       ),
