@@ -44,6 +44,26 @@ describe('BrandGlyph', () => {
     );
   });
 
+  it('draws a mark that fills far more of its square smaller, so it does not outweigh the rest', () => {
+    const scale = BRAND_OPTICS.valence?.scale;
+    const { container } = render(<BrandGlyph of="valence" />);
+
+    expect(scale).toBeLessThan(1);
+    expect(container.firstElementChild).toHaveAttribute(
+      'style',
+      expect.stringContaining(`scale: ${String(scale)}`),
+    );
+  });
+
+  it('leaves the size of a mark that fills its square like the rest', () => {
+    const { container } = render(<BrandGlyph of="apple" />);
+
+    expect(container.firstElementChild).not.toHaveAttribute(
+      'style',
+      expect.stringContaining('scale:'),
+    );
+  });
+
   it('leaves a mark that sits in the middle of its square where it is', () => {
     const { container } = render(<BrandGlyph of="chrome" />);
 
