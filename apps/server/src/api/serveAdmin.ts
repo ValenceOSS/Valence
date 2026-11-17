@@ -1,3 +1,4 @@
+import { isShownAsASession } from '@ValenceServer/presence/isShownAsASession';
 import { stopPlayingOn } from '@ValenceServer/presence/stopPlayingOn';
 import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import { nameTheClient } from '@ValenceCore/functions/nameTheClient';
@@ -555,6 +556,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     };
 
     const everyone = presence.list();
+    const shown = everyone.filter(isShownAsASession);
     const limits = new Map<string, Promise<StreamLimit>>();
     const limitOf = (accountId: string): Promise<StreamLimit> => {
       const known = limits.get(accountId);
@@ -577,7 +579,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json(
       await Promise.all(
-        everyone.map(async (entry) => ({
+        shown.map(async (entry) => ({
           clientId: entry.clientId,
           accountId: entry.accountId,
           profileId: entry.profileId,
