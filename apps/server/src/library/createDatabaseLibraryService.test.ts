@@ -753,7 +753,7 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
               seriesTitle: 'Show',
               seasonNumber: 1,
               episodeNumber: number,
-              rating: 6 + number / 10,
+              rating: number === 5 ? 9 : 6 + number / 10,
               addedAt: added(10 + number),
             }),
           ),
@@ -809,7 +809,7 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
           offset: 0,
         });
 
-        expect(titlesIn(found).filter((title) => title.startsWith('Show'))).toEqual(['Show 6']);
+        expect(titlesIn(found).filter((title) => title.startsWith('Show'))).toEqual(['Show 5']);
       });
 
       it('keeps to whatever else was asked of the items', async () => {
