@@ -136,6 +136,40 @@ describe('ordering a listing', () => {
 
     expect(found?.items.map((one) => one.id)).toEqual(['new', 'old']);
   });
+
+  it('stands each programme once by its newest episode where asked, counting programmes', async () => {
+    const episode = (id: string, number: number, addedAt: string) =>
+      film({
+        id,
+        title: id,
+        addedAt,
+        metadata: {
+          hasPoster: false,
+          hasBackdrop: false,
+          hasLogo: false,
+          seriesTitle: 'Show',
+          seasonNumber: 1,
+          episodeNumber: number,
+        },
+      });
+    const service = createMemoryLibraryService({
+      libraries: [theLibrary],
+      media: [
+        episode('first', 1, '2026-08-02T00:00:00.000Z'),
+        episode('second', 2, '2026-08-03T00:00:00.000Z'),
+        film({ id: 'film', addedAt: '2026-08-01T00:00:00.000Z' }),
+      ],
+    });
+
+    const found = await service.listItems(asTheServer, LIBRARY_ID, {
+      ...everything,
+      order: 'newest',
+      showsOnce: true,
+    });
+
+    expect(found?.items.map((one) => one.id)).toEqual(['second', 'film']);
+    expect(found?.total).toBe(2);
+  });
 });
 
 describe('a film held as more than one version', () => {

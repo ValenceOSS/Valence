@@ -227,6 +227,22 @@ describe('homeRows', () => {
     ]);
   });
 
+  it('offers a programme under one category only, whichever of its episodes each was sent', () => {
+    const rows = homeRows(
+      input({
+        genres: [
+          { genre: 'Drama', items: [episode('pilot', 1, 1), ...many('drama', 4)] },
+          { genre: 'Mystery', items: [episode('finale', 3, 8), ...many('mystery', 4)] },
+        ],
+      }),
+    );
+
+    expect(rows.map((row) => row.items.some((item) => item.seriesId === 'series-1'))).toEqual([
+      true,
+      false,
+    ]);
+  });
+
   it('still lets a film stand in a row at the top and in its category', () => {
     const both = media('avengers');
     const rows = homeRows(

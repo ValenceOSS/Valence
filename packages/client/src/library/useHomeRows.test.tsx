@@ -786,6 +786,22 @@ describe('useHomeRows', () => {
     );
   });
 
+  it('asks for each programme once in every row that stands a programme as one card', async () => {
+    renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), { wrapper: inACache });
+
+    await waitFor(() => {
+      expect(itemsMock).toHaveBeenCalledWith(
+        LIBRARY,
+        expect.objectContaining({ order: 'newest', showsOnce: true }),
+      );
+    });
+
+    expect(itemsMock).toHaveBeenCalledWith(
+      LIBRARY,
+      expect.objectContaining({ minRating: 7.5, showsOnce: true }),
+    );
+  });
+
   it('reads the next genres ahead of the reader without drawing them until told', async () => {
     const genres = Array.from({ length: 9 }, (_, at) => `Genre ${at.toString()}`);
 

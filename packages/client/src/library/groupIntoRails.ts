@@ -1,4 +1,5 @@
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
+import { HOME_ROW_SIZE } from '@ValenceContracts/constants/HOME_ROW_SIZE';
 import { inBroadcastOrder } from '@ValenceCore/functions/inBroadcastOrder';
 import { isOnContinueWatching } from '@ValenceContracts/schemas/WatchProgress';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -15,7 +16,7 @@ type Rail = {
 
 const RESUMING = 'resume';
 
-const RAIL_LIMIT = 24;
+const RAIL_LIMIT: number = HOME_ROW_SIZE.most;
 
 const SERIES_RAIL_LIMIT = 60;
 

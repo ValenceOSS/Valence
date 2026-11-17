@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { HOME_ROW_SIZE } from '@ValenceContracts/constants/HOME_ROW_SIZE';
 import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
+import { titleKeyOf } from '@ValenceCore/functions/titleKeyOf';
 import { roundOrder } from '@ValenceCore/functions/roundOrder';
 import type { HomeShelf, HomeShelves } from '@ValenceContracts/schemas/HomeShelves';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -75,6 +76,7 @@ const askedFor = ({
   ...(genre === null ? {} : { genre }),
   ...(decade === null ? {} : { yearFrom: decade, yearTo: decade + DECADE_SPAN }),
   offset: page * READ,
+  showsOnce: true,
   counted: kind === 'genre',
 });
 
@@ -223,7 +225,7 @@ const createHomeShelves = <Viewer>({ listItems, listFacets, now = Date.now }: Vi
       for (const [index, spec] of batch.entries()) {
         const answer = read[index] ?? { items: [], total: 0 };
         const fresh = collapseToShows(answer.items)
-          .filter((media) => !walk.placed.has(media.id))
+          .filter((media) => !walk.placed.has(titleKeyOf(media)))
           .slice(0, HOME_ROW_SIZE.most);
 
         if (spec.kind === 'genre' && spec.genre !== null) {
@@ -237,7 +239,7 @@ const createHomeShelves = <Viewer>({ listItems, listFacets, now = Date.now }: Vi
         const shelf: HomeShelf = { ...spec, id: idOf(spec), items: fresh };
 
         for (const media of fresh) {
-          walk.placed.add(media.id);
+          walk.placed.add(titleKeyOf(media));
         }
 
         if (spec.kind === 'genre' && spec.genre !== null) {

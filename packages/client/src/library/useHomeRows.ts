@@ -253,22 +253,30 @@ const useHomeRows = (
   const [readFrom, setReadFrom] = useState(watchable);
 
   const rowOf = useCallback(
-    (options: ListItemsOptions) => ({
-      ...libraryQueries.across(watchable, options),
-      enabled: canAsk,
-      placeholderData: (): MediaSummary[] | undefined =>
-        cache.getQueryData(libraryQueries.across(readFrom, options).queryKey),
-    }),
+    (asked: ListItemsOptions) => {
+      const options = { ...asked, showsOnce: true };
+
+      return {
+        ...libraryQueries.across(watchable, options),
+        enabled: canAsk,
+        placeholderData: (): MediaSummary[] | undefined =>
+          cache.getQueryData(libraryQueries.across(readFrom, options).queryKey),
+      };
+    },
     [watchable, canAsk, cache, readFrom],
   );
 
   const countedRowOf = useCallback(
-    (options: ListItemsOptions) => ({
-      ...libraryQueries.acrossCounted(watchable, options),
-      enabled: canAsk,
-      placeholderData: (): MediaPage | undefined =>
-        cache.getQueryData(libraryQueries.acrossCounted(readFrom, options).queryKey),
-    }),
+    (asked: ListItemsOptions) => {
+      const options = { ...asked, showsOnce: true };
+
+      return {
+        ...libraryQueries.acrossCounted(watchable, options),
+        enabled: canAsk,
+        placeholderData: (): MediaPage | undefined =>
+          cache.getQueryData(libraryQueries.acrossCounted(readFrom, options).queryKey),
+      };
+    },
     [watchable, canAsk, cache, readFrom],
   );
   const [genreLimit, setGenreLimit] = useState(FIRST_GENRES);

@@ -56,6 +56,7 @@ import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import { jsonObjectElements } from '@ValenceDatabase/jsonObjectElements';
 import { jsonTextElements } from '@ValenceDatabase/jsonTextElements';
 import { nullsLast } from '@ValenceDatabase/nullsLast';
+import { firstOfEachShow } from '@ValenceServer/library/firstOfEachShow';
 import { upsert } from '@ValenceDatabase/upsert';
 import {
   ageCeiling,
@@ -1194,7 +1195,10 @@ const createDatabaseLibraryService = ({
         : [gte(yourStars(options.profileId), options.minYourStars)]),
     ];
 
-    const filters = and(...asked);
+    const filters =
+      options.showsOnce === true
+        ? and(...asked, firstOfEachShow(and(...asked), orderingFor(options)))
+        : and(...asked);
 
     const [rows, totals] = await Promise.all([
       db

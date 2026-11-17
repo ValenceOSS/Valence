@@ -402,7 +402,20 @@ const itemsIn = (
         : left.title.localeCompare(right.title);
     });
 
-  return matching;
+  if (options.showsOnce !== true) {
+    return matching;
+  }
+
+  const shown = new Set<string>();
+
+  return matching.filter((item) => {
+    const show = item.metadata.seriesTitle ?? item.id;
+    const isFirst = !shown.has(show);
+
+    shown.add(show);
+
+    return isFirst;
+  });
 };
 
 /**

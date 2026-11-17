@@ -157,6 +157,10 @@ const ItemsQuery = z.object({
   order: z.enum(['title', 'newest', 'rated', 'yourRating']).optional(),
   minYourStars: z.coerce.number().int().min(1).max(5).optional(),
   versions: z.enum(['all']).optional(),
+  shows: z.enum(['once']).optional().openapi({
+    description:
+      'once: each programme stands once, as whichever of its episodes comes first in the order asked for, so a page counts programmes and films rather than files',
+  }),
   limit: z.coerce.number().int().positive().max(200).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
 });
