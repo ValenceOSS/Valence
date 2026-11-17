@@ -7,6 +7,7 @@ import { Tooltip } from '@ValenceUI/Tooltip';
 import { useElementWidth } from '@ValenceUI/useElementWidth';
 import type { SharedTimelineProps } from './SharedTimeline.types';
 import { say } from '@ValenceI18n/say';
+import { sayList } from '@ValenceI18n/sayList';
 
 const SECONDS_BETWEEN_REPORTS = 1;
 
@@ -192,7 +193,7 @@ const SharedTimeline = ({
                   <CountMark
                     count={group.more}
                     label={say('ui.sharedTimeline.alsoHere', {
-                      names: new Intl.ListFormat(undefined, { type: 'conjunction' }).format(
+                      names: sayList(
                         group.folded.map(
                           (id) => people.find((person) => person.id === id)?.name ?? id,
                         ),

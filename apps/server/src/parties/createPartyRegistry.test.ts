@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createPartyRegistry } from './createPartyRegistry';
 
 const someone = (connectionId: string, name: string) => ({
@@ -631,6 +631,28 @@ describe('holding the room until everybody can play', () => {
     const party = registry.report('sam', { ...ready, positionSeconds: 20 });
 
     expect(party?.isHeld).toBe(true);
+  });
+
+  it('waits for everybody again on the next title, after giving up on somebody', () => {
+    vi.useFakeTimers({ now: 0 });
+
+    try {
+      const registry = createWorld();
+      const opened = openWith(registry);
+
+      registry.join({ partyId: opened.id, ...someone('sam', 'Sam') });
+      registry.report('host', ready);
+      registry.report('sam', { ...ready, isReady: false });
+      vi.setSystemTime(60_000);
+
+      expect(registry.report('sam', { ...ready, isReady: false })?.isHeld).toBe(false);
+
+      registry.issue(opened.id, 'host', { kind: 'changeWhatIsPlaying', mediaId: 'episode-2' }, 1);
+
+      expect(registry.find(opened.id)?.isHeld).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('starts a party ready to play rather than waiting to be told', () => {

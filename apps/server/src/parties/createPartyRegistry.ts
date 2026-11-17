@@ -368,7 +368,7 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
                 ),
               },
               sequence,
-              holding,
+              intended.kind === 'watch' ? { ...holding, heldSinceMs: null } : holding,
             )
           : save(intended, sequence, holding);
 
