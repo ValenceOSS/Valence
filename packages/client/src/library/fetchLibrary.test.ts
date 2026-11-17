@@ -323,6 +323,18 @@ describe('fetchLibraryItems', () => {
     expect(String(fetchMock.mock.calls.at(-1)?.[0])).not.toContain('versions=');
   });
 
+  it('asks for each programme once only where told to', async () => {
+    fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
+
+    await fetchLibraryItems(library.id, { showsOnce: true });
+
+    expect(String(fetchMock.mock.calls.at(-1)?.[0])).toContain('shows=once');
+
+    await fetchLibraryItems(library.id);
+
+    expect(String(fetchMock.mock.calls.at(-1)?.[0])).not.toContain('shows=');
+  });
+
   it('omits an empty search term', async () => {
     fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
 

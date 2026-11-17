@@ -65,6 +65,7 @@ type ListItemsOptions = {
   profileId?: string;
   minYourStars?: number;
   withVersions?: boolean;
+  showsOnce?: boolean;
   limit: number;
   offset: number;
 };

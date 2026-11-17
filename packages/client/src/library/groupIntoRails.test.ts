@@ -77,6 +77,17 @@ describe('groupIntoRails', () => {
     expect(rails.map((rail) => rail.title)).not.toContain('Recently added');
   });
 
+  it('holds as many recent arrivals as a row on the front page, newest first', () => {
+    const many = Array.from({ length: 30 }, (_, at) =>
+      media({ id: `film-${at.toString()}`, addedAt: daysAgo(at % 10) }),
+    );
+
+    const recent = groupIntoRails(many, NOW).find((rail) => rail.id === 'recent');
+
+    expect(recent?.items).toHaveLength(20);
+    expect(recent?.items[0]?.addedAt).toBe(daysAgo(0));
+  });
+
   it('gives a programme one row, not one row per season', () => {
     const rails = groupIntoRails(
       [

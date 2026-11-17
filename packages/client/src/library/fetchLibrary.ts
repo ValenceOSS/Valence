@@ -60,6 +60,7 @@ type ListItemsOptions = {
   order?: 'title' | 'newest' | 'rated' | 'yourRating';
   minYourStars?: number;
   withVersions?: boolean;
+  showsOnce?: boolean;
   limit?: number;
   offset?: number;
 };
@@ -177,6 +178,7 @@ const itemsQueryOf = ({
   order,
   minYourStars,
   withVersions = false,
+  showsOnce = false,
   limit = 60,
   offset = 0,
 }: ListItemsOptions = {}): URLSearchParams => {
@@ -240,6 +242,10 @@ const itemsQueryOf = ({
 
   if (withVersions) {
     query.set('versions', 'all');
+  }
+
+  if (showsOnce) {
+    query.set('shows', 'once');
   }
 
   return query;

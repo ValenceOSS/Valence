@@ -52,15 +52,30 @@ const aLibrary = (
     },
   );
 
-  return createHomeShelves<string>({
-    listItems,
-    listFacets: () =>
-      Promise.resolve({
-        genres: Object.keys(byGenre),
-        decades: Object.keys(byDecade).map(Number),
-      }),
-  });
+  return Object.assign(
+    createHomeShelves<string>({
+      listItems,
+      listFacets: () =>
+        Promise.resolve({
+          genres: Object.keys(byGenre),
+          decades: Object.keys(byDecade).map(Number),
+        }),
+    }),
+    { listItems },
+  );
 };
+
+/**
+ * Episodes of one programme, each its own file.
+ */
+const episodesOf = (seriesId: string, prefix: string, count: number): MediaSummary[] =>
+  films(prefix, count).map((one, at) => ({
+    ...one,
+    seriesId,
+    seriesTitle: seriesId,
+    seasonNumber: 1,
+    episodeNumber: at + 1,
+  }));
 
 describe('createHomeShelves', () => {
   it('serves a shelf for each genre, those leaned towards first, then each decade', async () => {
@@ -89,6 +104,29 @@ describe('createHomeShelves', () => {
     const page = await shelves.read('viewer', { libraryIds: ['library'], leaning: [], count: 2 });
 
     expect(page.shelves.map((one) => one.id)).toEqual(['genre:Drama', 'genre:War']);
+  });
+
+  it('shows a programme on one shelf only, whichever of its episodes each shelf was sent', async () => {
+    const [pilot, finale] = episodesOf('show', 'show', 2);
+    const shelves = aLibrary({
+      Drama: [...(pilot === undefined ? [] : [pilot]), ...films('drama', 4)],
+      Crime: [...(finale === undefined ? [] : [finale]), ...films('crime', 4)],
+    });
+
+    const page = await shelves.read('viewer', { libraryIds: ['library'], leaning: [], count: 2 });
+
+    expect(page.shelves.map((one) => one.items.some((item) => item.seriesId === 'show'))).toEqual([
+      true,
+      false,
+    ]);
+  });
+
+  it('asks the libraries for each programme once, so a shelf is not a season pack', async () => {
+    const shelves = aLibrary({ Drama: films('drama', 5) });
+
+    await shelves.read('viewer', { libraryIds: ['library'], leaning: [], count: 1 });
+
+    expect(shelves.listItems.mock.calls[0]?.[2]).toMatchObject({ showsOnce: true });
   });
 
   it('carries on from where the last page left off', async () => {

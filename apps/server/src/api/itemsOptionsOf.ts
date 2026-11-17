@@ -24,7 +24,7 @@ const itemsOptionsOf = (
   profileId: string | null,
 ): ListItemsOptions => {
   const { search, kind, genre, yearFrom, yearTo, minRating, ids, order, limit, offset } = query;
-  const { minYourStars, versions, genres, decades } = query;
+  const { minYourStars, versions, shows, genres, decades } = query;
   const { audioLanguages, audioCodecs, audioChannels } = query;
 
   return {
@@ -60,6 +60,7 @@ const itemsOptionsOf = (
     ...(profileId === null ? {} : { profileId }),
     ...(minYourStars === undefined ? {} : { minYourStars }),
     ...(versions === 'all' ? { withVersions: true } : {}),
+    ...(shows === 'once' ? { showsOnce: true } : {}),
     limit: limit ?? DEFAULT_LIMIT,
     offset: offset ?? 0,
   };

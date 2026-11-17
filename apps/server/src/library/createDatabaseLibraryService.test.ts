@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { access, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, inArray } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
   continueWatchingDismissal,
@@ -726,6 +726,115 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
         (await service.listItemsAcross(SERVER, [FILMS_ID, SHOWS_ID], { ...asked, counted: false }))
           .total,
       ).toBe(3);
+    });
+
+    describe('each programme once', () => {
+      /**
+       * A library whose newest arrivals are a whole season of one programme, then the films.
+       *
+       * @returns The service and the database under it.
+       */
+      const withASeasonPack = async () => {
+        const made = await aLibrary();
+        const added = (day: number) => new Date(Date.UTC(2026, 10, day));
+
+        await made.db.insert(series).values({
+          id: 'other-show',
+          libraryId: SHOWS_ID,
+          key: 'other',
+          title: 'Other',
+        });
+        await made.db.insert(mediaItem).values([
+          ...[1, 2, 3, 4, 5, 6].map((number) =>
+            aFilm(`pack-${number.toString()}`, `Show ${number.toString()}`, {
+              libraryId: SHOWS_ID,
+              path: `/shows/pack-${number.toString()}.mkv`,
+              seriesId: 'a-show',
+              seriesTitle: 'Show',
+              seasonNumber: 1,
+              episodeNumber: number,
+              rating: 6 + number / 10,
+              addedAt: added(10 + number),
+            }),
+          ),
+          aFilm('other-1', 'Other 1', {
+            libraryId: SHOWS_ID,
+            path: '/shows/other-1.mkv',
+            seriesId: 'other-show',
+            seriesTitle: 'Other',
+            seasonNumber: 1,
+            episodeNumber: 1,
+            addedAt: added(9),
+          }),
+          aFilm('loose', 'Loose 1', {
+            libraryId: SHOWS_ID,
+            path: '/shows/loose.mkv',
+            seriesTitle: 'Loose',
+            addedAt: added(8),
+          }),
+          aFilm('loose-2', 'Loose 2', {
+            libraryId: SHOWS_ID,
+            path: '/shows/loose-2.mkv',
+            seriesTitle: 'Loose',
+            addedAt: added(7),
+          }),
+        ]);
+        await made.db
+          .update(mediaItem)
+          .set({ addedAt: added(1) })
+          .where(inArray(mediaItem.id, ['arrival', 'alien', 'brazil', 'alien-cut']));
+
+        return made;
+      };
+
+      it('counts a page in programmes and films, each programme by its newest episode', async () => {
+        const { service } = await withASeasonPack();
+        const found = await service.listItemsAcross(SERVER, [FILMS_ID, SHOWS_ID], {
+          order: 'newest',
+          showsOnce: true,
+          limit: 4,
+          offset: 0,
+        });
+
+        expect(titlesIn(found)).toEqual(['Show 6', 'Other 1', 'Loose 1', 'Alien']);
+        expect(found.total).toBe(6);
+      });
+
+      it('stands a programme by its best episode where the best are asked for', async () => {
+        const { service } = await withASeasonPack();
+        const found = await service.listItemsAcross(SERVER, [FILMS_ID, SHOWS_ID], {
+          order: 'rated',
+          showsOnce: true,
+          limit: 10,
+          offset: 0,
+        });
+
+        expect(titlesIn(found).filter((title) => title.startsWith('Show'))).toEqual(['Show 6']);
+      });
+
+      it('keeps to whatever else was asked of the items', async () => {
+        const { service } = await withASeasonPack();
+        const found = await service.listItemsAcross(SERVER, [FILMS_ID, SHOWS_ID], {
+          order: 'newest',
+          minRating: 6.25,
+          showsOnce: true,
+          limit: 10,
+          offset: 0,
+        });
+
+        expect(titlesIn(found)).toEqual(['Show 6', 'Alien', 'Arrival']);
+      });
+
+      it('lists every file where each programme once is not asked for', async () => {
+        const { service } = await withASeasonPack();
+        const found = await service.listItemsAcross(SERVER, [FILMS_ID, SHOWS_ID], {
+          order: 'newest',
+          limit: 4,
+          offset: 0,
+        });
+
+        expect(titlesIn(found)).toEqual(['Show 6', 'Show 5', 'Show 4', 'Show 3']);
+      });
     });
 
     it('leaves a library of programmes out where films are asked for', async () => {

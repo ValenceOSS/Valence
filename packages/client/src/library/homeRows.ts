@@ -1,5 +1,6 @@
 import { collapseToShows } from '@ValenceCore/functions/collapseToShows';
 import { roundOrder } from '@ValenceCore/functions/roundOrder';
+import { titleKeyOf } from '@ValenceCore/functions/titleKeyOf';
 import { shelfTitle } from '@ValenceClient/library/shelfTitle';
 import type { HomeShelf } from '@ValenceContracts/schemas/HomeShelves';
 import { HOME_ROW_SIZE } from '@ValenceContracts/constants/HOME_ROW_SIZE';
@@ -74,11 +75,11 @@ const categoryRows = (
   const placed = new Set<string>();
 
   return candidates.flatMap(({ id, title, items }) => {
-    const fresh = collapseToShows(unique(items)).filter((media) => !placed.has(media.id));
+    const fresh = collapseToShows(unique(items)).filter((media) => !placed.has(titleKeyOf(media)));
     const drawn = row(id, title, fresh);
 
     for (const media of drawn.flatMap((one) => one.items)) {
-      placed.add(media.id);
+      placed.add(titleKeyOf(media));
     }
 
     return drawn;

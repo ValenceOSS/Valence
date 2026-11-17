@@ -20,6 +20,7 @@ describe('itemsOptionsOf', () => {
           order: 'rated',
           minYourStars: 4,
           versions: 'all',
+          shows: 'once',
           limit: 20,
           offset: 40,
         },
@@ -36,6 +37,7 @@ describe('itemsOptionsOf', () => {
       profileId: 'profile-1',
       minYourStars: 4,
       withVersions: true,
+      showsOnce: true,
       limit: 20,
       offset: 40,
     });
