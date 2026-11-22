@@ -142,6 +142,8 @@ DASH is offered when the picture and sound are sent apart, which is how browsers
 
 **Settings** then **Audio track** lists every track in the file by language and format. Valence prefers the language set as **Force default audio track** on the library, if the file has one, and otherwise the file's own default.
 
+The language you pick is remembered on that device and carried to the next film or episode, so a series watched in Japanese stays in Japanese from one episode to the next. Where the next file has a track in that language, it plays in place of the library's language: the main track in it rather than a commentary, and the file is still played as it is where that track is the one it plays by itself. A file with no track in your language falls back to the library's language as before. This needs a server that reports the `playback.audioLanguage` feature; with an older server the apps ask for the track by number instead, which keeps the language but may convert a file that would otherwise play as it is.
+
 ### Subtitles
 
 Press the subtitles button to turn them on and off, or open **Settings** then **Subtitles/CC** to pick a track. Valence finds subtitles in three places:
