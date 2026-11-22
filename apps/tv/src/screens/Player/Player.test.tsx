@@ -450,6 +450,7 @@ const playingAt = async (position: number, duration = 3000) => {
 describe('Player', () => {
   beforeEach(() => {
     global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
+    jest.mocked(startPlaybackSession).mockClear();
     mockVideo.current = mockAFakeVideoPlayer();
     mockSession.current = READY;
     mockSession.asked = [];
@@ -562,6 +563,42 @@ describe('Player', () => {
       await draw({ detail: IN_JAPANESE_FIRST, features: 'unanswered' });
 
       expect(mockSession.asked.some((asked) => asked.held === true)).toBe(false);
+    });
+
+    it('hands the next episode the language it was sent, or the one chosen since', async () => {
+      const { drawn, onNext } = await draw({ show: SHOW, audioLanguage: 'eng' });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Next episode' }));
+
+      expect(onNext).toHaveBeenLastCalledWith(NEXT_EPISODE, 0, 'eng');
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Audio, English · 5.1 · EAC3' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Français · Stereo · AAC' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Next episode' }));
+
+      expect(onNext).toHaveBeenLastCalledWith(NEXT_EPISODE, 0, 'fra');
+    });
+
+    it('readies the next episode in the language it was sent, over the one it remembers', async () => {
+      saveAudioLanguage('jpn');
+      mockSession.current = { ...READY, started: { ...STARTED, playsEpisodesGapless: true } };
+
+      await draw({
+        detail: IN_JAPANESE_FIRST,
+        show: SHOW,
+        nextDetail: IN_JAPANESE_FIRST,
+        audioLanguage: 'eng',
+      });
+      await playingAt(2970);
+
+      await waitFor(() => {
+        expect(
+          jest
+            .mocked(startPlaybackSession)
+            .mock.calls.find((call) => call[0] === NEXT_EPISODE.id)?.[14],
+        ).toBe('en');
+      });
     });
 
     it('readies the next episode to be heard in it', async () => {
@@ -782,7 +819,7 @@ describe('Player', () => {
 
       await userEvent.press(drawn.getByRole('button', { name: 'Next episode' }));
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0, undefined);
     });
 
     it('offer no next episode for a film', async () => {
@@ -1048,7 +1085,7 @@ describe('Player', () => {
       await userEvent.press(drawn.getByRole('button', { name: 'Episodes, S1: E2' }));
       await userEvent.press(drawn.getByRole('button', { name: 'S1: E3, In Perpetuity' }));
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0, undefined);
     });
 
     it('closes the episodes without playing anything on choosing the one playing', async () => {
@@ -1542,7 +1579,7 @@ describe('Player', () => {
 
       await tell('playToEnd', {});
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 2);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 2, undefined);
     });
 
     it('starts the count of episodes followed on untouched again when Play Next is pressed', async () => {
@@ -1552,7 +1589,7 @@ describe('Player', () => {
       await tell('timeUpdate', { currentTime: 2990 });
       await userEvent.press(drawn.getByRole('button', { name: 'Play Next' }));
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0, undefined);
     });
 
     it('counts this episode finished when the next is started during its credits', async () => {
@@ -1655,7 +1692,7 @@ describe('Player', () => {
 
       await userEvent.press(drawn.getByRole('button', { name: 'Keep watching' }));
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0, undefined);
     });
 
     it('leaves once the credits have ended and somebody chose to stay', async () => {

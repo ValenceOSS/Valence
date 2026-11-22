@@ -5,8 +5,8 @@ import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 
 /**
  * What the television asks to hear, once it knows enough to say: nothing where it remembers no
- * language, and otherwise the language or the track in it once both the title's soundtracks and
- * whether the server picks a track by language are known.
+ * language, the language as soon as the server says it picks a track by one, and the track in it
+ * from an older server once the title's soundtracks are known too.
  *
  * @param remembered - The language to hear, or nothing.
  * @param streams - The title's soundtracks, nothing where the title could not be read, or
@@ -22,7 +22,7 @@ const soundtrackOnceKnown = (
 ): SoundtrackAsked | null =>
   remembered === null
     ? NOTHING_ASKED
-    : streams === undefined || hearsLanguages === null
+    : hearsLanguages === null || (hearsLanguages === false && streams === undefined)
       ? null
       : soundtrackAsked(remembered, streams ?? [], hearsLanguages);
 

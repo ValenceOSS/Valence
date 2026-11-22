@@ -12,9 +12,16 @@ describe('soundtrackOnceKnown', () => {
     expect(soundtrackOnceKnown(null, undefined, null)).toBe(NOTHING_ASKED);
   });
 
-  it('waits for the title and for the server to say what it can do', () => {
-    expect(soundtrackOnceKnown('jpn', undefined, true)).toBeNull();
+  it('waits for the server to say what it can do, and an older one for the title too', () => {
     expect(soundtrackOnceKnown('jpn', STREAMS, null)).toBeNull();
+    expect(soundtrackOnceKnown('jpn', undefined, false)).toBeNull();
+  });
+
+  it('asks a server that picks by language without waiting for the title', () => {
+    expect(soundtrackOnceKnown('jpn', undefined, true)).toEqual({
+      audioStreamIndex: undefined,
+      audioLanguage: 'ja',
+    });
   });
 
   it('asks a server that picks by language for the language', () => {
@@ -31,7 +38,7 @@ describe('soundtrackOnceKnown', () => {
     });
   });
 
-  it('asks for nothing where the title could not be read', () => {
-    expect(soundtrackOnceKnown('jpn', null, true)).toBe(NOTHING_ASKED);
+  it('asks an older server for nothing where the title could not be read', () => {
+    expect(soundtrackOnceKnown('jpn', null, false)).toBe(NOTHING_ASKED);
   });
 });

@@ -205,9 +205,10 @@ const qualityLabelOf = (quality: QualityPreference): string =>
  * @param onLeave - Told when the title ends with nothing after it, or somebody gives up on it. In a
  *   watch party a title ending is not leaving it: the player stays on its last frame for the party
  *   to move on, or for them to leave.
- * @param onNext - Told to play the next episode, and how many will then have followed on untouched.
- *   Without it nothing is offered to follow on, for a guest in a watch party, who waits for the
- *   party to move on.
+ * @param onNext - Told to play the next episode, how many will then have followed on untouched, and
+ *   the soundtrack language this one was heard in where it was sent one or a track was chosen, for
+ *   the next to be heard in too. Without it nothing is offered to follow on, for a guest in a watch
+ *   party, who waits for the party to move on.
  * @param watchParty - The watch party this television holds. Where it is watching this, the film is
  * kept in step with the room — Play/Pause, skipping and scrubbing go to the room rather than
  * straight to the player, and what the others did is said over the picture — and the party is
@@ -287,6 +288,7 @@ const Player = ({
         : undefined
       : (detail.data?.audioStreams ?? null);
   const [rememberedAudio] = useState(() => audioLanguage ?? readAudioLanguage());
+  const [heardIn, setHeardIn] = useState(audioLanguage);
   const [audio, setAudio] = useState<number | undefined>(undefined);
   const [soundtrack, setSoundtrack] = useState<SoundtrackAsked | null>(() =>
     soundtrackOnceKnown(rememberedAudio, streamsOfTheTitle, hearsLanguages),
@@ -985,10 +987,10 @@ const Player = ({
     (followedOn: boolean) => {
       if (following !== null) {
         isFollowingOn.current = followedOn;
-        onNext?.(following, followedOn ? carriedOn + 1 : 0);
+        onNext?.(following, followedOn ? carriedOn + 1 : 0, heardIn);
       }
     },
-    [following, onNext, carriedOn],
+    [following, onNext, carriedOn, heardIn],
   );
 
   const subtitleChoices = [
@@ -1044,6 +1046,7 @@ const Player = ({
 
       if (heard?.language !== undefined && heard.language !== null) {
         saveAudioLanguage(heard.language);
+        setHeardIn(heard.language);
       }
 
       setStartFrom(at.current.position);
@@ -1113,7 +1116,7 @@ const Player = ({
 
     if (stepsBy === 'episode') {
       if (before !== undefined) {
-        onNext?.(before, 0);
+        onNext?.(before, 0, heardIn);
       }
 
       return;
@@ -1207,7 +1210,7 @@ const Player = ({
     }
 
     readied.readyAhead(nextId, async () => {
-      const heard = await soundtrackToAsk(cache, nextId, readAudioLanguage());
+      const heard = await soundtrackToAsk(cache, nextId, heardIn ?? readAudioLanguage());
       const quality = qualityToBeginWith();
 
       return {
@@ -1238,7 +1241,7 @@ const Player = ({
         ),
       };
     });
-  }, [followsGapless, nextId, position, duration, cache]);
+  }, [followsGapless, nextId, position, duration, heardIn, cache]);
 
   useEffect(
     () => () => {
@@ -1588,7 +1591,7 @@ const Player = ({
               return;
             }
 
-            onNext?.(chosen, 0);
+            onNext?.(chosen, 0, heardIn);
           }}
         />
       ) : null}

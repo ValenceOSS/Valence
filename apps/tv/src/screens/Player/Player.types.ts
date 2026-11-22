@@ -10,7 +10,7 @@ type PlayerProps = {
   audioLanguage?: string;
   startedFrom?: string;
   onLeave: () => void;
-  onNext?: (episode: MediaSummary, carriedOn: number) => void;
+  onNext?: (episode: MediaSummary, carriedOn: number, audioLanguage?: string) => void;
   watchParty?: WatchPartyState;
 };
 
