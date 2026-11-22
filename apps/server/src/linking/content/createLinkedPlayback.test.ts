@@ -113,6 +113,29 @@ const playback = (
     asker,
     onAsked,
     () => Promise.resolve(directFrom),
+    (mediaId) =>
+      Promise.resolve(
+        mediaId === HERE
+          ? [
+              {
+                index: 1,
+                codec: 'aac',
+                channels: 2,
+                language: 'eng',
+                isDefault: true,
+                isAtmos: false,
+              },
+              {
+                index: 2,
+                codec: 'aac',
+                channels: 2,
+                language: 'jpn',
+                isDefault: false,
+                isAtmos: false,
+              },
+            ]
+          : [],
+      ),
   );
 
   return { linked, local, asker, onAsked };
@@ -292,9 +315,61 @@ describe('createLinkedPlayback', () => {
     expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking);
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       audioLanguage: 'ja',
+      audioStreamIndex: 2,
     });
     expect(JSON.parse(new TextDecoder().decode(asker.asked[1]?.asking.body))).toMatchObject({
       audioLanguage: 'ja',
+    });
+  });
+
+  it('asks a linked server only for the language where its title has no track in it', async () => {
+    const { linked, asker } = playback();
+
+    await linked.start(
+      HERE,
+      aDeviceProfile(),
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [],
+      'fre',
+    );
+
+    const sent = new TextDecoder().decode(asker.asked[0]?.asking.body);
+
+    expect(JSON.parse(sent)).toMatchObject({ audioLanguage: 'fre' });
+    expect(sent).not.toContain('audioStreamIndex');
+  });
+
+  it('keeps a track a viewer chose over the language when asking a linked server', async () => {
+    const { linked, asker } = playback();
+
+    await linked.start(
+      HERE,
+      aDeviceProfile(),
+      0,
+      1,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [],
+      'ja',
+    );
+
+    expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
+      audioStreamIndex: 1,
     });
   });
 

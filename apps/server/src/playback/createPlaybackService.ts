@@ -2,8 +2,8 @@ import { keptCopiesFor } from '@ValenceCore/functions/keptCopiesFor';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { isDirectPlay } from '@ValenceCore/functions/isDirectPlay';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
-import type { ChosenSource, PlayableSource } from '@ValenceCore/functions/chooseSource';
-import { readLanguage } from '@ValenceCore/functions/describeTrack';
+import type { ChosenSource } from '@ValenceCore/functions/chooseSource';
+import { audioStreamInLanguage } from '@ValenceCore/functions/audioStreamInLanguage';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import { sdrRungFor } from '@ValenceCore/functions/sdrRungFor';
 import type { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
@@ -107,30 +107,6 @@ const asDelivered = (
       },
     },
   };
-};
-
-/**
- * The language to pick a sound track in: the one a client asked to hear, where no track was chosen
- * and some copy of the title has a track in it, and otherwise the library's own.
- *
- * @param sources - Every copy of the title that could be played.
- * @param libraryLanguage - The library's own language for sound.
- * @param audioLanguage - The language the client asked to hear, if it asked.
- * @param audioStreamIndex - The track a viewer chose, which keeps the library's language for the plan.
- * @returns The language to prefer, or nothing for the file's own default.
- */
-const languageToHear = (
-  sources: readonly PlayableSource[],
-  libraryLanguage: string | null,
-  audioLanguage: string | undefined,
-  audioStreamIndex?: number,
-): string | null => {
-  const asked = audioStreamIndex === undefined ? readLanguage(audioLanguage) : null;
-  const isCarried = sources.some((source) =>
-    source.item.audioStreams.some((stream) => readLanguage(stream.language) === asked),
-  );
-
-  return asked !== null && isCarried ? asked : libraryLanguage;
 };
 
 type MediaLookup = {
@@ -251,12 +227,12 @@ const createPlaybackService = ({
         return null;
       }
 
-      const sources = sourcesOf(found);
       const chosen = chooseSource({
-        sources,
+        sources: sourcesOf(found),
         profile,
         requestedQuality: requestedQuality ?? 'original',
-        preferredAudioLanguage: languageToHear(sources, found.defaultAudioLanguage, audioLanguage),
+        preferredAudioLanguage: found.defaultAudioLanguage,
+        askedAudioLanguage: audioLanguage ?? null,
       });
 
       if (chosen === null) {
@@ -300,18 +276,15 @@ const createPlaybackService = ({
         burning === null ? (subtitleStreamIndex ?? null) : burning.streamIndex;
       const subtitleBurnIn = burning === null ? null : burning.file === null ? 'chosen' : 'file';
       const sources = sourcesOf(found);
-      const preferredAudioLanguage = languageToHear(
-        sources,
-        found.defaultAudioLanguage,
-        audioLanguage,
-        audioStreamIndex,
-      );
+      const preferredAudioLanguage = found.defaultAudioLanguage;
+      const askedAudioLanguage = audioStreamIndex === undefined ? (audioLanguage ?? null) : null;
       const isDrawingInItsOwnStream = chosenSubtitleStreamIndex !== null;
       const chosen = chooseSource({
         sources,
         profile,
         requestedQuality: requestedQuality ?? 'original',
         preferredAudioLanguage,
+        askedAudioLanguage,
         chosenSubtitleStreamIndex,
         subtitleBurnIn,
         converted: converted ?? null,
@@ -329,13 +302,21 @@ const createPlaybackService = ({
       const rungs =
         isAdaptive === true && converted === undefined && !isDrawingInItsOwnStream
           ? sources
-              .filter((candidate) => candidate.id !== chosen.source.id)
+              .filter(
+                (candidate) =>
+                  candidate.id !== chosen.source.id &&
+                  (audioStreamInLanguage(chosen.source.item.audioStreams, askedAudioLanguage) ===
+                    undefined ||
+                    audioStreamInLanguage(candidate.item.audioStreams, askedAudioLanguage) !==
+                      undefined),
+              )
               .map((candidate) =>
                 chooseSource({
                   sources: [candidate],
                   profile,
                   requestedQuality: 'original',
                   preferredAudioLanguage,
+                  askedAudioLanguage,
                   chosenSubtitleStreamIndex,
                   subtitleBurnIn,
                 }),
@@ -349,6 +330,7 @@ const createPlaybackService = ({
         isAdaptive === true && converted === undefined
           ? sdrRungFor(chosen, profile, {
               preferredAudioLanguage,
+              askedAudioLanguage,
               chosenSubtitleStreamIndex,
               subtitleBurnIn,
             })

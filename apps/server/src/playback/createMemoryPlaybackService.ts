@@ -1,5 +1,6 @@
 import { saying } from '@ValenceI18n/saying';
 import { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
+import { languageToHear } from '@ValenceCore/functions/languageToHear';
 import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
@@ -46,7 +47,12 @@ const createMemoryPlaybackService = (
     }
 
     const qualityClamp = resolveQualityStep(item, requestedQuality ?? 'original');
-    const plan = negotiatePlayback(item, profile, qualityClamp, audioLanguage);
+    const plan = negotiatePlayback(
+      item,
+      profile,
+      qualityClamp,
+      languageToHear(item.audioStreams, audioLanguage, null),
+    );
 
     return Promise.resolve({ mode: describePlaybackMode(plan), plan });
   },
@@ -85,7 +91,11 @@ const createMemoryPlaybackService = (
       item,
       profile,
       qualityClamp,
-      audioStreamIndex === undefined ? audioLanguage : undefined,
+      languageToHear(
+        item.audioStreams,
+        audioStreamIndex === undefined ? audioLanguage : undefined,
+        null,
+      ),
     );
     const sessionId =
       audioStreamIndex === undefined

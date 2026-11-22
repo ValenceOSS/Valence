@@ -1713,6 +1713,107 @@ describe('playing a copy kept alongside', () => {
     expect(started[0]?.inputPath).toBe('/media/arrival.mkv');
   });
 
+  describe('asked to hear a language only some copies carry', () => {
+    const inLanguages = (
+      languages: readonly { language: string; isDefault: boolean }[],
+    ): MediaItem['audioStreams'] =>
+      languages.map(({ language, isDefault }, place) => ({
+        index: place + 1,
+        codec: 'aac',
+        channels: 2,
+        language,
+        isDefault,
+        isAtmos: false,
+      }));
+    const frenchAndGerman = {
+      ...withACopy,
+      defaultAudioLanguage: 'en',
+      item: {
+        ...withACopy.item,
+        audioStreams: inLanguages([
+          { language: 'fre', isDefault: false },
+          { language: 'eng', isDefault: true },
+        ]),
+      },
+      renditions: withACopy.renditions.map((rendition) => ({
+        ...rendition,
+        item: {
+          ...rendition.item,
+          audioStreams: inLanguages([
+            { language: 'ger', isDefault: true },
+            { language: 'eng', isDefault: false },
+          ]),
+        },
+      })),
+    };
+    const startingWith = (language: string | undefined, isAdaptive = false) => {
+      const started: { spec: SessionSpec; variants: readonly SessionSpec[] }[] = [];
+      const { service } = build(
+        {
+          startSession: (spec, _deviceId, variants = []) => {
+            started.push({ spec, variants });
+
+            return Promise.resolve({
+              id: 'session-1',
+              manifest: 'index.m3u8',
+              encodesVideo: true,
+              encodedForKeyframes: false,
+              reuse: 'none' as const,
+            });
+          },
+        },
+        frenchAndGerman,
+      );
+
+      return {
+        started,
+        outcome: service.start(
+          MEDIA_ID,
+          profile(),
+          0,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          isAdaptive,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          language,
+        ),
+      };
+    };
+
+    it('plays the copy that carries it, never another copy’s own default', async () => {
+      const { started, outcome } = startingWith('fr');
+
+      await expect(outcome).resolves.toMatchObject({
+        session: { plan: { audio: { streamIndex: 1 } } },
+      });
+      expect(started[0]?.spec.inputPath).toBe('/media/arrival.mkv');
+      expect(started[0]?.spec).toMatchObject({ audioStreamIndex: 1 });
+    });
+
+    it('offers no copy without it beside the stream that carries it', async () => {
+      const { started, outcome } = startingWith('fr', true);
+
+      await outcome;
+
+      expect(started[0]?.variants).toEqual([]);
+    });
+
+    it('hears the library’s language in a copy where no copy carries the one asked for', async () => {
+      const { started, outcome } = startingWith('jpn');
+
+      await expect(outcome).resolves.toMatchObject({
+        session: { plan: { audio: { streamIndex: 2 } } },
+      });
+      expect(started[0]?.spec.inputPath).toBe('/media/arrival - 1080p H264.valence.mp4');
+    });
+  });
+
   it('reads the copy at the path the library holds for it', async () => {
     const readFile = vi.fn(() => Promise.resolve(null));
     const { service } = build({ readFile }, withACopy);
