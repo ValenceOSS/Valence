@@ -108,15 +108,18 @@ const anything = (): Transcoder => ({
 /**
  * Every argument a start takes, in order, so a test can name only the ones it is about.
  *
- * @param asked - The track asked for, and whether the client picks its own sound.
+ * @param asked - The track asked for, whether the client picks its own sound, and the language to
+ *   hear.
  * @returns The arguments.
  */
 const withEveryArgument = ({
   audioStreamIndex,
   picksItsOwnSound,
+  audioLanguage,
 }: {
   audioStreamIndex: number | undefined;
   picksItsOwnSound: boolean;
+  audioLanguage?: string;
 }) => ({
   all: [
     MEDIA_ID,
@@ -131,6 +134,8 @@ const withEveryArgument = ({
     undefined,
     undefined,
     picksItsOwnSound,
+    undefined,
+    audioLanguage,
   ] as const,
 });
 
@@ -687,6 +692,123 @@ describe('createPlaybackService', () => {
     const explanation = await service.explain(MEDIA_ID, capableProfile);
 
     expect(explanation?.plan.audio).toMatchObject({ streamIndex: 2 });
+  });
+
+  describe('asked for a language to hear', () => {
+    const episode: MediaItem = {
+      ...bilingual,
+      videoCodec: 'h264',
+      audioStreams: [
+        { index: 1, codec: 'aac', channels: 2, language: 'jpn', isDefault: true, isAtmos: false },
+        { index: 2, codec: 'aac', channels: 2, language: 'eng', isDefault: false, isAtmos: false },
+      ],
+    };
+
+    it('streams the library’s own language where nothing was asked, which is what forgot the choice', async () => {
+      const { service, startedSpecs } = harness('en', false, episode);
+
+      const outcome = await service.start(MEDIA_ID, capableProfile, 0);
+
+      expect(outcome).toMatchObject({ session: { delivery: { kind: 'hls' } } });
+      expect(startedSpecs).toMatchObject([{ audioStreamIndex: 2 }]);
+    });
+
+    it('hands the file over as it is where the language asked for is the track it plays by itself', async () => {
+      const { service, startedSpecs } = harness('en', false, episode);
+      const { all } = withEveryArgument({
+        audioStreamIndex: undefined,
+        picksItsOwnSound: false,
+        audioLanguage: 'jpn',
+      });
+
+      const outcome = await service.start(...all);
+
+      expect(outcome).toMatchObject({
+        kind: 'started',
+        session: { delivery: { kind: 'direct' }, plan: { audio: { streamIndex: 1 } } },
+      });
+      expect(startedSpecs).toEqual([]);
+    });
+
+    it('reads the language in any spelling', async () => {
+      const { service } = harness('en', false, episode);
+      const { all } = withEveryArgument({
+        audioStreamIndex: undefined,
+        picksItsOwnSound: false,
+        audioLanguage: 'ja',
+      });
+
+      await expect(service.start(...all)).resolves.toMatchObject({
+        session: { delivery: { kind: 'direct' }, plan: { audio: { streamIndex: 1 } } },
+      });
+    });
+
+    it('streams the track in that language where it is not the one the file plays by itself', async () => {
+      const { service, startedSpecs } = harness('de', false, { ...bilingual, videoCodec: 'h264' });
+      const { all } = withEveryArgument({
+        audioStreamIndex: undefined,
+        picksItsOwnSound: false,
+        audioLanguage: 'eng',
+      });
+
+      const outcome = await service.start(...all);
+
+      expect(outcome).toMatchObject({
+        session: { delivery: { kind: 'hls' }, plan: { audio: { streamIndex: 2 } } },
+      });
+      expect(startedSpecs).toMatchObject([{ audioStreamIndex: 2 }]);
+    });
+
+    it('has an encoding session carry the track in that language', async () => {
+      const { service, startedSpecs } = harness('de', true, bilingual);
+      const { all } = withEveryArgument({
+        audioStreamIndex: undefined,
+        picksItsOwnSound: false,
+        audioLanguage: 'en',
+      });
+
+      await service.start(...all);
+
+      expect(startedSpecs).toMatchObject([{ audioStreamIndex: 2 }]);
+    });
+
+    it('keeps a track a viewer chose over the language', async () => {
+      const { service, startedSpecs } = harness('en', false, episode);
+      const { all } = withEveryArgument({
+        audioStreamIndex: 2,
+        picksItsOwnSound: false,
+        audioLanguage: 'jpn',
+      });
+
+      const outcome = await service.start(...all);
+
+      expect(outcome).toMatchObject({ session: { delivery: { kind: 'hls' } } });
+      expect(startedSpecs).toMatchObject([{ audioStreamIndex: 2 }]);
+    });
+
+    it('keeps the library’s own language where the title has nothing in the one asked for', async () => {
+      const { service, startedSpecs } = harness('en', false, episode);
+      const { all } = withEveryArgument({
+        audioStreamIndex: undefined,
+        picksItsOwnSound: false,
+        audioLanguage: 'fre',
+      });
+
+      await service.start(...all);
+
+      expect(startedSpecs).toMatchObject([{ audioStreamIndex: 2 }]);
+    });
+
+    it('explains the plan in the language asked for', async () => {
+      const { service } = harness('en', false, episode);
+
+      const explanation = await service.explain(MEDIA_ID, capableProfile, undefined, 'jpn');
+
+      expect(explanation).toMatchObject({
+        mode: 'DirectPlay',
+        plan: { audio: { streamIndex: 1 } },
+      });
+    });
   });
 
   it('delegates a heartbeat to the media service', async () => {

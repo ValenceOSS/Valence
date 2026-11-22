@@ -163,11 +163,11 @@ const createLinkedPlayback = (
   };
 
   return {
-    explain: async (mediaId, profile, requestedQuality) => {
+    explain: async (mediaId, profile, requestedQuality, audioLanguage) => {
       const linked = await linkedTitleOf(mediaId);
 
       if (linked === null) {
-        return local.explain(mediaId, profile, requestedQuality);
+        return local.explain(mediaId, profile, requestedQuality, audioLanguage);
       }
 
       const answered = await asker.ask(
@@ -176,6 +176,7 @@ const createLinkedPlayback = (
         sendingJson({
           deviceProfile: profile,
           ...(requestedQuality === undefined ? {} : { requestedQuality }),
+          ...(audioLanguage === undefined ? {} : { audioLanguage }),
         }),
       );
       const read =
@@ -200,6 +201,7 @@ const createLinkedPlayback = (
       isCast,
       picksItsOwnSound,
       refusedOrigins = [],
+      audioLanguage,
     ) => {
       const linked = await linkedTitleOf(mediaId);
 
@@ -217,6 +219,8 @@ const createLinkedPlayback = (
           burnInSubtitleId,
           isCast,
           picksItsOwnSound,
+          refusedOrigins,
+          audioLanguage,
         );
       }
 
@@ -227,6 +231,7 @@ const createLinkedPlayback = (
           deviceProfile: profile,
           startSeconds: Math.max(0, Math.floor(startSeconds)),
           ...(audioStreamIndex === undefined ? {} : { audioStreamIndex }),
+          ...(audioLanguage === undefined ? {} : { audioLanguage }),
           ...(requestedQuality === undefined ? {} : { requestedQuality }),
           ...(subtitleStreamIndex === undefined ? {} : { subtitleStreamIndex }),
           ...(burnInSubtitleId === undefined ? {} : { burnInSubtitleId }),

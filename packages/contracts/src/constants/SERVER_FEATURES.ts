@@ -13,6 +13,7 @@ const SERVER_FEATURES = [
   'library.homeShelves',
   'library.pickedForYou',
   'library.largeArtwork',
+  'playback.audioLanguage',
 ] as const;
 
 export { SERVER_FEATURES };

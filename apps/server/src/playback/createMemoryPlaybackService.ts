@@ -38,7 +38,7 @@ const createMemoryPlaybackService = (
 ): PlaybackService & { state: MemoryPlaybackState } => ({
   state,
 
-  explain: (mediaId, profile, requestedQuality) => {
+  explain: (mediaId, profile, requestedQuality, audioLanguage) => {
     const item = state.media[mediaId];
 
     if (item === undefined) {
@@ -46,12 +46,27 @@ const createMemoryPlaybackService = (
     }
 
     const qualityClamp = resolveQualityStep(item, requestedQuality ?? 'original');
-    const plan = negotiatePlayback(item, profile, qualityClamp);
+    const plan = negotiatePlayback(item, profile, qualityClamp, audioLanguage);
 
     return Promise.resolve({ mode: describePlaybackMode(plan), plan });
   },
 
-  start: (mediaId, profile, _startSeconds, audioStreamIndex, requestedQuality) => {
+  start: (
+    mediaId,
+    profile,
+    _startSeconds,
+    audioStreamIndex,
+    requestedQuality,
+    _deviceId,
+    _subtitleStreamIndex,
+    _isAdaptive,
+    _converted,
+    _burnInSubtitleId,
+    _isCast,
+    _picksItsOwnSound,
+    _refusedOrigins,
+    audioLanguage,
+  ) => {
     const item = state.media[mediaId];
 
     if (item === undefined) {
@@ -66,7 +81,12 @@ const createMemoryPlaybackService = (
     }
 
     const qualityClamp = resolveQualityStep(item, requestedQuality ?? 'original');
-    const plan = negotiatePlayback(item, profile, qualityClamp);
+    const plan = negotiatePlayback(
+      item,
+      profile,
+      qualityClamp,
+      audioStreamIndex === undefined ? audioLanguage : undefined,
+    );
     const sessionId =
       audioStreamIndex === undefined
         ? `session-${mediaId}`

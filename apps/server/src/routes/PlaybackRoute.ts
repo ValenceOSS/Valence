@@ -30,6 +30,14 @@ const StartRequest = z
     clientId: z.string().min(1).optional(),
     startSeconds: z.number().int().nonnegative().optional(),
     audioStreamIndex: z.number().int().nonnegative().optional(),
+    audioLanguage: z
+      .string()
+      .min(1)
+      .max(40)
+      .optional()
+      .describe(
+        "The language to hear, where nothing chose a track: the track in it is taken in place of the library's own language, in whichever copy of the title is played, and the file is still handed over as it is where that track is the one it plays by itself. An explicit audioStreamIndex wins over it. Reported as the playback.audioLanguage feature.",
+      ),
     subtitleStreamIndex: z.number().int().nonnegative().optional(),
     burnInSubtitleId: z.string().min(1).optional(),
     requestedQuality: QualityStepIdSchema.optional(),

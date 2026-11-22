@@ -107,13 +107,14 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(explainRoute, async (context) => {
     const { mediaId } = context.req.valid('param');
-    const { deviceProfile, requestedQuality } = context.req.valid('json');
+    const { deviceProfile, requestedQuality, audioLanguage } = context.req.valid('json');
 
     const limit = await limitOf(context.req.raw.headers);
     const explanation = await playback.explain(
       mediaId,
       underTheCeiling(deviceProfile, limit?.maxBitrateKbps ?? null),
       requestedQuality,
+      audioLanguage,
     );
 
     if (explanation === null) {
@@ -205,6 +206,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       isReadiedAhead,
       startedBecause,
       refusedOrigins,
+      audioLanguage,
     } = context.req.valid('json');
 
     if (await mayNotPlayFromSources(mediaId, context.req.raw.headers)) {
@@ -246,6 +248,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       isCast,
       picksItsOwnSound,
       refusedOrigins,
+      audioLanguage,
     );
 
     if (outcome.kind === 'notFound') {
