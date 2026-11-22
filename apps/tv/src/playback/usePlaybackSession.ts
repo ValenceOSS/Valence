@@ -58,6 +58,8 @@ const PRESENCE_HEARTBEAT_MS = 1000;
  *   where it can say anything.
  * @param audioLanguage - The language to hear where no track was chosen, for a server that picks a
  *   track by language.
+ * @param isHeld - Whether to wait before asking, while what to hear is still being worked out, so
+ *   one session starts rather than one and then another.
  * @returns Whether the session is starting, failed and why, lost because the server forgot it, or
  *   ready with what the player opens.
  */
@@ -71,6 +73,7 @@ const usePlaybackSession = (
   attempt = 0,
   measure: () => PresenceHealth | undefined = () => undefined,
   audioLanguage?: string,
+  isHeld = false,
 ): Session => {
   const [session, setSession] = useState<Session>({ kind: 'starting' });
   const asking = useRef(isPlaying);
@@ -83,6 +86,10 @@ const usePlaybackSession = (
   });
 
   useEffect(() => {
+    if (isHeld) {
+      return undefined;
+    }
+
     const clientId = platformInUse().thisClientId();
     const letGo = holdWatching(clientId);
     let isAbandoned = false;
@@ -210,6 +217,7 @@ const usePlaybackSession = (
     requestedQuality,
     converted,
     attempt,
+    isHeld,
   ]);
 
   return session;

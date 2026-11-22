@@ -39,6 +39,7 @@ type Asked = {
   quality: string | undefined;
   converted?: string | undefined;
   heardIn?: string;
+  held?: true;
 };
 
 type Controlled = { onPause: () => void; onResume: () => void; onSeek: (seconds: number) => void };
@@ -89,6 +90,7 @@ jest.mock('@ValenceTv/playback/usePlaybackSession', () => ({
     attempt?: number,
     _measure?: () => undefined,
     heardIn?: string,
+    isHeld?: boolean,
   ) => {
     mockSession.asked.push({
       startSeconds,
@@ -97,6 +99,7 @@ jest.mock('@ValenceTv/playback/usePlaybackSession', () => ({
       converted,
       ...(attempt === undefined || attempt === 0 ? {} : { attempt }),
       ...(heardIn === undefined ? {} : { heardIn }),
+      ...(isHeld === true ? { held: true as const } : {}),
     });
 
     return mockSession.current;
@@ -341,7 +344,7 @@ type Setup = {
   show?: ShowDetail | null;
   viewer?: ViewerProfile;
   watchParty?: WatchPartyState;
-  features?: ServerFeature[];
+  features?: ServerFeature[] | 'unanswered';
   nextDetail?: typeof DETAIL;
 };
 
@@ -358,9 +361,11 @@ const draw = async (setup: Setup = {}) => {
     cache.setQueryData(libraryQueries.detail(NEXT_EPISODE.id).queryKey, setup.nextDetail);
   }
 
-  cache.setQueryData(aboutQueries.server().queryKey, {
-    features: setup.features ?? ['playback.audioLanguage'],
-  });
+  if (setup.features !== 'unanswered') {
+    cache.setQueryData(aboutQueries.server().queryKey, {
+      features: setup.features ?? ['playback.audioLanguage'],
+    });
+  }
   cache.setQueryData(playbackQueries.segments(MEDIA_ID).queryKey, setup.segments ?? []);
   cache.setQueryData(playbackQueries.chapters(MEDIA_ID).queryKey, []);
   cache.setQueryData(playbackQueries.subtitleTracks(MEDIA_ID).queryKey, setup.tracks ?? []);
@@ -407,6 +412,7 @@ const draw = async (setup: Setup = {}) => {
   const drawn = await render(screen);
 
   return {
+    cache,
     drawn,
     onLeave,
     onNext,
@@ -501,6 +507,61 @@ describe('Player', () => {
         audio: undefined,
         quality: 'original',
       });
+    });
+
+    it('starts nothing until the server says what it can do, then one session in it', async () => {
+      saveAudioLanguage('jpn');
+
+      const { cache } = await draw({ detail: IN_JAPANESE_FIRST, features: 'unanswered' });
+
+      expect(mockSession.asked.length).toBeGreaterThan(0);
+      expect(mockSession.asked.every((asked) => asked.held === true)).toBe(true);
+
+      await act(() => {
+        cache.setQueryData(aboutQueries.server().queryKey, {
+          features: ['playback.audioLanguage'],
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockSession.asked.at(-1)?.held).toBeUndefined();
+      });
+
+      const unheld = mockSession.asked.filter((asked) => asked.held !== true);
+
+      expect(unheld.every((asked) => asked.heardIn === 'ja' && asked.audio === undefined)).toBe(
+        true,
+      );
+    });
+
+    it('asks for the track itself where the server could not say what it can do', async () => {
+      saveAudioLanguage('jpn');
+      global.fetch = jest.fn((address: string | URL | Request) =>
+        (typeof address === 'string'
+          ? address
+          : 'url' in address
+            ? address.url
+            : address.href
+        ).includes('/api/about')
+          ? Promise.reject(new Error('offline'))
+          : new Promise<Response>(() => undefined),
+      );
+
+      await draw({ detail: IN_JAPANESE_FIRST, features: 'unanswered' });
+
+      await waitFor(() => {
+        expect(mockSession.asked.at(-1)?.held).toBeUndefined();
+      });
+
+      const unheld = mockSession.asked.filter((asked) => asked.held !== true);
+
+      expect(unheld.every((asked) => asked.audio === 1 && asked.heardIn === undefined)).toBe(true);
+    });
+
+    it('starts straight away where nothing was remembered, whatever the server has said', async () => {
+      await draw({ detail: IN_JAPANESE_FIRST, features: 'unanswered' });
+
+      expect(mockSession.asked.some((asked) => asked.held === true)).toBe(false);
     });
 
     it('readies the next episode to be heard in it', async () => {

@@ -32,10 +32,10 @@ import { REPORT_EVERY_MILLISECONDS } from '@ValenceClient/playback/watchProgress
 import { createProgressReporter } from '@ValenceClient/playback/createProgressReporter';
 import { useSavedPlaceToKeep } from '@ValenceClient/playback/useSavedPlaceToKeep';
 import { useSubtitleCues } from '@ValenceClient/playback/useSubtitleCues';
-import { NOTHING_ASKED, soundtrackAsked } from '@ValenceClient/playback/soundtrackAsked';
+import { soundtrackOnceKnown } from '@ValenceTv/playback/soundtrackOnceKnown';
 import { soundtrackToAsk } from '@ValenceClient/playback/soundtrackToAsk';
 import { readAudioLanguage, saveAudioLanguage } from '@ValenceClient/playback/languagePreference';
-import { useServerHas } from '@ValenceClient/about/useServerHas';
+import { aboutQueries } from '@ValenceClient/query/aboutQueries';
 import {
   QualityPreferenceSchema,
   readQualityPreference,
@@ -273,40 +273,36 @@ const Player = ({
     askAfter: watching.data?.askStillWatchingAfter ?? STILL_WATCHING_OFF,
   });
 
-  const hearsLanguages = useServerHas('playback.audioLanguage');
+  const about = useQuery(aboutQueries.server());
+  const hearsLanguages =
+    about.data === undefined
+      ? about.isError
+        ? false
+        : null
+      : about.data.features.includes('playback.audioLanguage');
+  const streamsOfTheTitle =
+    detail.data === undefined
+      ? detail.isError
+        ? null
+        : undefined
+      : (detail.data?.audioStreams ?? null);
   const [rememberedAudio] = useState(() => audioLanguage ?? readAudioLanguage());
   const [audio, setAudio] = useState<number | undefined>(undefined);
-  const [soundtrack, setSoundtrack] = useState<SoundtrackAsked>(() =>
-    rememberedAudio === null || detail.data === undefined || hearsLanguages === null
-      ? NOTHING_ASKED
-      : soundtrackAsked(rememberedAudio, detail.data?.audioStreams ?? [], hearsLanguages),
-  );
-  const hasHeardTheRememberedAudio = useRef(
-    rememberedAudio === null || (detail.data !== undefined && hearsLanguages !== null),
+  const [soundtrack, setSoundtrack] = useState<SoundtrackAsked | null>(() =>
+    soundtrackOnceKnown(rememberedAudio, streamsOfTheTitle, hearsLanguages),
   );
 
   useEffect(() => {
-    if (
-      hasHeardTheRememberedAudio.current ||
-      rememberedAudio === null ||
-      detail.data === undefined ||
-      hearsLanguages === null
-    ) {
+    if (soundtrack !== null) {
       return;
     }
 
-    hasHeardTheRememberedAudio.current = true;
+    const known = soundtrackOnceKnown(rememberedAudio, streamsOfTheTitle, hearsLanguages);
 
-    const remembered = soundtrackAsked(
-      rememberedAudio,
-      detail.data?.audioStreams ?? [],
-      hearsLanguages,
-    );
-
-    if (remembered !== NOTHING_ASKED) {
-      setSoundtrack(remembered);
+    if (known !== null) {
+      setSoundtrack(known);
     }
-  }, [detail.data, rememberedAudio, hearsLanguages]);
+  }, [soundtrack, rememberedAudio, streamsOfTheTitle, hearsLanguages]);
   const [startFrom, setStartFrom] = useState(startSeconds);
   const [converted, setConverted] = useState<Converted | undefined>(undefined);
   const [chosenSubtitles, setChosenSubtitles] = useState<string | null>(null);
@@ -362,12 +358,13 @@ const Player = ({
     mediaId,
     startFrom,
     () => at.current.isPlaying,
-    audio ?? soundtrack.audioStreamIndex,
+    audio ?? soundtrack?.audioStreamIndex,
     quality,
     converted,
     attempt,
     () => presenceHealthOfExpo(player, detail.data?.durationSeconds ?? 0),
-    audio === undefined ? soundtrack.audioLanguage : undefined,
+    audio === undefined ? soundtrack?.audioLanguage : undefined,
+    soundtrack === null,
   );
   const tryingNext = useRef({ session, converted });
 
@@ -698,7 +695,7 @@ const Player = ({
   const sentAudio = session.kind === 'ready' ? session.started.plan.audio.streamIndex : null;
   const chosenAudio =
     detail.data?.audioStreams.find(
-      (stream) => stream.index === (audio ?? soundtrack.audioStreamIndex ?? sentAudio),
+      (stream) => stream.index === (audio ?? soundtrack?.audioStreamIndex ?? sentAudio),
     ) ??
     detail.data?.audioStreams.find((stream) => stream.isDefault) ??
     detail.data?.audioStreams[0];

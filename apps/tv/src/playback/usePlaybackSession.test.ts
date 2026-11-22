@@ -142,6 +142,34 @@ describe('usePlaybackSession', () => {
     expect(beginReadiedSession).toHaveBeenCalledWith('session-1', 'client-1');
   });
 
+  it('asks for nothing while held, and once let go asks once as opening the title', async () => {
+    jest.mocked(startPlaybackSession).mockReturnValue(new Promise<StartOutcome>(() => undefined));
+
+    const { rerender } = await renderHook(
+      ({ isHeld }: { isHeld: boolean }) =>
+        usePlaybackSession(
+          MEDIA,
+          0,
+          () => true,
+          undefined,
+          'original',
+          undefined,
+          0,
+          () => undefined,
+          'ja',
+          isHeld,
+        ),
+      { initialProps: { isHeld: true } },
+    );
+
+    expect(startPlaybackSession).not.toHaveBeenCalled();
+
+    await rerender({ isHeld: false });
+
+    expect(startPlaybackSession).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(startPlaybackSession).mock.calls[0]?.[12]).toBe('opened');
+  });
+
   it('asks a new session to be heard in a language where none was made ready in it', async () => {
     jest.mocked(startPlaybackSession).mockReturnValue(new Promise<StartOutcome>(() => undefined));
 
