@@ -96,6 +96,90 @@ const smallerCopy = (
   path: `/media/Films/Azkaban (2004)/.valence/${id}.mkv`,
 });
 
+const inLanguages = (
+  source: PlayableSource,
+  languages: readonly { language: string; isDefault: boolean }[],
+): PlayableSource => ({
+  ...source,
+  item: {
+    ...source.item,
+    audioStreams: languages.map(({ language, isDefault }, place) => ({
+      index: place + 1,
+      codec: 'aac',
+      channels: 2,
+      language,
+      isDefault,
+      isAtmos: false,
+    })),
+  },
+});
+
+describe('chooseSource, asked to hear a language', () => {
+  const frenchOriginal = inLanguages(original, [
+    { language: 'fre', isDefault: false },
+    { language: 'eng', isDefault: true },
+  ]);
+  const germanCopy = inLanguages(smallerCopy('20', 1920, 1080, 8000), [
+    { language: 'ger', isDefault: true },
+    { language: 'eng', isDefault: false },
+  ]);
+
+  it('passes over a copy without the language for one with it', () => {
+    const chosen = chooseSource({
+      sources: [frenchOriginal, germanCopy],
+      profile: phone,
+      preferredAudioLanguage: 'en',
+      askedAudioLanguage: 'fr',
+    });
+
+    expect(chosen?.source.id).toBe('original');
+    expect(chosen?.plan.audio.streamIndex).toBe(1);
+  });
+
+  it('hears the library’s language, never the copy’s own, in a copy without the one asked for', () => {
+    const chosen = chooseSource({
+      sources: [frenchOriginal, germanCopy],
+      profile: phone,
+      preferredAudioLanguage: 'en',
+      askedAudioLanguage: 'fr',
+      pinnedSourceId: '20',
+    });
+
+    expect(chosen?.source.id).toBe('20');
+    expect(chosen?.plan.audio.streamIndex).toBe(2);
+  });
+
+  it('never takes a copy below the floor for the language, where nothing may shrink the picture', () => {
+    const frenchCopy = inLanguages(smallerCopy('20', 1920, 1080, 8000), [
+      { language: 'fre', isDefault: true },
+    ]);
+    const englishOriginal = inLanguages(original, [{ language: 'eng', isDefault: true }]);
+
+    const chosen = chooseSource({
+      sources: [englishOriginal, frenchCopy],
+      profile: laptop,
+      preferredAudioLanguage: 'en',
+      askedAudioLanguage: 'fr',
+      neverSmaller: true,
+    });
+
+    expect(chosen?.source.isOriginal).toBe(true);
+    expect(chosen?.plan.video.kind).toBe('transcode');
+  });
+
+  it('weighs every copy as before where none carries the language', () => {
+    const chosen = chooseSource({
+      sources: [frenchOriginal, germanCopy],
+      profile: phone,
+      preferredAudioLanguage: 'en',
+      askedAudioLanguage: 'jpn',
+    });
+
+    expect(chosen?.source.id).toBe('20');
+    expect(chosen?.plan.audio.streamIndex).toBe(2);
+  });
+});
+
 describe('chooseSource', () => {
   it('answers nothing where there are no files at all', () => {
     expect(chooseSource({ sources: [], profile: television })).toBeNull();

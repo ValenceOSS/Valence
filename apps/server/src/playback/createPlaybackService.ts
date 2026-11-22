@@ -3,6 +3,8 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { isDirectPlay } from '@ValenceCore/functions/isDirectPlay';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import type { ChosenSource } from '@ValenceCore/functions/chooseSource';
+import { audioStreamInLanguage } from '@ValenceCore/functions/audioStreamInLanguage';
+import { audioStreamMatching } from '@ValenceCore/functions/audioStreamMatching';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import { sdrRungFor } from '@ValenceCore/functions/sdrRungFor';
 import type { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
@@ -219,7 +221,7 @@ const createPlaybackService = ({
   };
 
   return {
-    explain: async (mediaId, profile, requestedQuality) => {
+    explain: async (mediaId, profile, requestedQuality, audioLanguage) => {
       const found = await media.findForPlayback(mediaId);
 
       if (found === null) {
@@ -231,6 +233,7 @@ const createPlaybackService = ({
         profile,
         requestedQuality: requestedQuality ?? 'original',
         preferredAudioLanguage: found.defaultAudioLanguage,
+        askedAudioLanguage: audioLanguage ?? null,
       });
 
       if (chosen === null) {
@@ -253,6 +256,8 @@ const createPlaybackService = ({
       burnInSubtitleId,
       isCast,
       picksItsOwnSound,
+      _refusedOrigins,
+      audioLanguage,
     ) => {
       const found = await media.findForPlayback(mediaId);
 
@@ -272,12 +277,20 @@ const createPlaybackService = ({
         burning === null ? (subtitleStreamIndex ?? null) : burning.streamIndex;
       const subtitleBurnIn = burning === null ? null : burning.file === null ? 'chosen' : 'file';
       const sources = sourcesOf(found);
+      const preferredAudioLanguage = found.defaultAudioLanguage;
+      const chosenTrack =
+        audioStreamIndex === undefined
+          ? undefined
+          : found.item.audioStreams.find((stream) => stream.index === audioStreamIndex);
+      const askedAudioLanguage =
+        audioStreamIndex === undefined ? (audioLanguage ?? null) : (chosenTrack?.language ?? null);
       const isDrawingInItsOwnStream = chosenSubtitleStreamIndex !== null;
       const chosen = chooseSource({
         sources,
         profile,
         requestedQuality: requestedQuality ?? 'original',
-        preferredAudioLanguage: found.defaultAudioLanguage,
+        preferredAudioLanguage,
+        askedAudioLanguage,
         chosenSubtitleStreamIndex,
         subtitleBurnIn,
         converted: converted ?? null,
@@ -295,13 +308,21 @@ const createPlaybackService = ({
       const rungs =
         isAdaptive === true && converted === undefined && !isDrawingInItsOwnStream
           ? sources
-              .filter((candidate) => candidate.id !== chosen.source.id)
+              .filter(
+                (candidate) =>
+                  candidate.id !== chosen.source.id &&
+                  (audioStreamInLanguage(chosen.source.item.audioStreams, askedAudioLanguage) ===
+                    undefined ||
+                    audioStreamInLanguage(candidate.item.audioStreams, askedAudioLanguage) !==
+                      undefined),
+              )
               .map((candidate) =>
                 chooseSource({
                   sources: [candidate],
                   profile,
                   requestedQuality: 'original',
-                  preferredAudioLanguage: found.defaultAudioLanguage,
+                  preferredAudioLanguage,
+                  askedAudioLanguage,
                   chosenSubtitleStreamIndex,
                   subtitleBurnIn,
                 }),
@@ -314,7 +335,8 @@ const createPlaybackService = ({
       const sdrRung =
         isAdaptive === true && converted === undefined
           ? sdrRungFor(chosen, profile, {
-              preferredAudioLanguage: found.defaultAudioLanguage,
+              preferredAudioLanguage,
+              askedAudioLanguage,
               chosenSubtitleStreamIndex,
               subtitleBurnIn,
             })
@@ -323,7 +345,9 @@ const createPlaybackService = ({
       if (
         isDirectPlay(plan, source, picksItsOwnSound === true) &&
         !(found.isSplit === true && chosen.source.isOriginal) &&
-        (audioStreamIndex === undefined || picksItsOwnSound === true) &&
+        (audioStreamIndex === undefined ||
+          picksItsOwnSound === true ||
+          (chosen.source.isOriginal && plan.audio.streamIndex === audioStreamIndex)) &&
         rungs.length === 0 &&
         isCast !== true
       ) {
@@ -355,8 +379,16 @@ const createPlaybackService = ({
       const shortSegments = await usesShortSegments();
       const accel = await forcedAccel();
       const able = await capabilities();
+      const trackIn = (weighed: ChosenSource): number | null =>
+        audioStreamIndex === undefined
+          ? weighed.plan.audio.streamIndex
+          : weighed.source.isOriginal || chosenTrack === undefined
+            ? audioStreamIndex
+            : (audioStreamMatching(chosenTrack, weighed.source.item.audioStreams)?.index ??
+              weighed.plan.audio.streamIndex);
       const specFor = (weighed: ChosenSource) => {
         const item = weighed.source.item;
+        const track = trackIn(weighed);
 
         return planToSessionSpec({
           plan: weighed.plan,
@@ -380,11 +412,7 @@ const createPlaybackService = ({
           segmentSeconds: shortSegments ? SHORT_SEGMENT_SECONDS : SEGMENT_SECONDS,
           container: segmentContainerFor(profile),
           needsIdrKeyframes: profile.needsIdrKeyframes,
-          ...(audioStreamIndex !== undefined
-            ? { audioStreamIndex }
-            : plan.audio.streamIndex === null
-              ? {}
-              : { audioStreamIndex: plan.audio.streamIndex }),
+          ...(track === null ? {} : { audioStreamIndex: track }),
         });
       };
 

@@ -32,7 +32,10 @@ import { REPORT_EVERY_MILLISECONDS } from '@ValenceClient/playback/watchProgress
 import { createProgressReporter } from '@ValenceClient/playback/createProgressReporter';
 import { useSavedPlaceToKeep } from '@ValenceClient/playback/useSavedPlaceToKeep';
 import { useSubtitleCues } from '@ValenceClient/playback/useSubtitleCues';
-import { audioStreamIn } from '@ValenceClient/playback/audioStreamIn';
+import { soundtrackOnceKnown } from '@ValenceTv/playback/soundtrackOnceKnown';
+import { soundtrackToAsk } from '@ValenceClient/playback/soundtrackToAsk';
+import { readAudioLanguage, saveAudioLanguage } from '@ValenceClient/playback/languagePreference';
+import { aboutQueries } from '@ValenceClient/query/aboutQueries';
 import {
   QualityPreferenceSchema,
   readQualityPreference,
@@ -69,6 +72,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
 import type { HWEvent } from 'react-native';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
+import type { SoundtrackAsked } from '@ValenceClient/playback/soundtrackAsked';
 import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import type { PlayerProps, StoppedBy } from './Player.types';
 import { PlaybackProblem } from '@ValenceTv/screens/Player/components/PlaybackProblem/PlaybackProblem';
@@ -201,9 +205,10 @@ const qualityLabelOf = (quality: QualityPreference): string =>
  * @param onLeave - Told when the title ends with nothing after it, or somebody gives up on it. In a
  *   watch party a title ending is not leaving it: the player stays on its last frame for the party
  *   to move on, or for them to leave.
- * @param onNext - Told to play the next episode, and how many will then have followed on untouched.
- *   Without it nothing is offered to follow on, for a guest in a watch party, who waits for the
- *   party to move on.
+ * @param onNext - Told to play the next episode, how many will then have followed on untouched, and
+ *   the soundtrack language this one was heard in where it was sent one or a track was chosen, for
+ *   the next to be heard in too. Without it nothing is offered to follow on, for a guest in a watch
+ *   party, who waits for the party to move on.
  * @param watchParty - The watch party this television holds. Where it is watching this, the film is
  * kept in step with the room — Play/Pause, skipping and scrubbing go to the room rather than
  * straight to the player, and what the others did is said over the picture — and the party is
@@ -269,31 +274,37 @@ const Player = ({
     askAfter: watching.data?.askStillWatchingAfter ?? STILL_WATCHING_OFF,
   });
 
-  const [audio, setAudio] = useState<number | undefined>(() =>
-    audioLanguage === undefined
-      ? undefined
-      : audioStreamIn(detail.data?.audioStreams ?? [], audioLanguage),
+  const about = useQuery(aboutQueries.server());
+  const hearsLanguages =
+    about.data === undefined
+      ? about.isError
+        ? false
+        : null
+      : about.data.features.includes('playback.audioLanguage');
+  const streamsOfTheTitle =
+    detail.data === undefined
+      ? detail.isError
+        ? null
+        : undefined
+      : (detail.data?.audioStreams ?? null);
+  const [rememberedAudio] = useState(() => audioLanguage ?? readAudioLanguage());
+  const [heardIn, setHeardIn] = useState(audioLanguage);
+  const [audio, setAudio] = useState<number | undefined>(undefined);
+  const [soundtrack, setSoundtrack] = useState<SoundtrackAsked | null>(() =>
+    soundtrackOnceKnown(rememberedAudio, streamsOfTheTitle, hearsLanguages),
   );
-  const hasHeardTheSentAudio = useRef(audioLanguage === undefined || detail.data !== undefined);
 
   useEffect(() => {
-    if (
-      hasHeardTheSentAudio.current ||
-      detail.data === undefined ||
-      detail.data === null ||
-      audioLanguage === undefined
-    ) {
+    if (soundtrack !== null) {
       return;
     }
 
-    hasHeardTheSentAudio.current = true;
+    const known = soundtrackOnceKnown(rememberedAudio, streamsOfTheTitle, hearsLanguages);
 
-    const sent = audioStreamIn(detail.data.audioStreams, audioLanguage);
-
-    if (sent !== undefined) {
-      setAudio(sent);
+    if (known !== null) {
+      setSoundtrack(known);
     }
-  }, [detail.data, audioLanguage]);
+  }, [soundtrack, rememberedAudio, streamsOfTheTitle, hearsLanguages]);
   const [startFrom, setStartFrom] = useState(startSeconds);
   const [converted, setConverted] = useState<Converted | undefined>(undefined);
   const [chosenSubtitles, setChosenSubtitles] = useState<string | null>(null);
@@ -349,11 +360,13 @@ const Player = ({
     mediaId,
     startFrom,
     () => at.current.isPlaying,
-    audio,
+    audio ?? soundtrack?.audioStreamIndex,
     quality,
     converted,
     attempt,
     () => presenceHealthOfExpo(player, detail.data?.durationSeconds ?? 0),
+    audio === undefined ? soundtrack?.audioLanguage : undefined,
+    soundtrack === null,
   );
   const tryingNext = useRef({ session, converted });
 
@@ -683,7 +696,9 @@ const Player = ({
   );
   const sentAudio = session.kind === 'ready' ? session.started.plan.audio.streamIndex : null;
   const chosenAudio =
-    detail.data?.audioStreams.find((stream) => stream.index === (audio ?? sentAudio)) ??
+    detail.data?.audioStreams.find(
+      (stream) => stream.index === (audio ?? soundtrack?.audioStreamIndex ?? sentAudio),
+    ) ??
     detail.data?.audioStreams.find((stream) => stream.isDefault) ??
     detail.data?.audioStreams[0];
   const sentSubtitles =
@@ -972,10 +987,10 @@ const Player = ({
     (followedOn: boolean) => {
       if (following !== null) {
         isFollowingOn.current = followedOn;
-        onNext?.(following, followedOn ? carriedOn + 1 : 0);
+        onNext?.(following, followedOn ? carriedOn + 1 : 0, heardIn);
       }
     },
-    [following, onNext, carriedOn],
+    [following, onNext, carriedOn, heardIn],
   );
 
   const subtitleChoices = [
@@ -1027,6 +1042,13 @@ const Player = ({
     const index = Number(id);
 
     if (audioChoices.some((choice) => choice.id === id) && index !== chosenAudio?.index) {
+      const heard = detail.data?.audioStreams.find((stream) => stream.index === index);
+
+      if (heard?.language !== undefined && heard.language !== null) {
+        saveAudioLanguage(heard.language);
+        setHeardIn(heard.language);
+      }
+
       setStartFrom(at.current.position);
       setAudio(index);
     }
@@ -1094,7 +1116,7 @@ const Player = ({
 
     if (stepsBy === 'episode') {
       if (before !== undefined) {
-        onNext?.(before, 0);
+        onNext?.(before, 0, heardIn);
       }
 
       return;
@@ -1188,21 +1210,15 @@ const Player = ({
     }
 
     readied.readyAhead(nextId, async () => {
-      const known =
-        audioLanguage === undefined
-          ? null
-          : await cache.ensureQueryData(libraryQueries.detail(nextId)).catch(() => null);
-      const audioStreamIndex =
-        audioLanguage === undefined
-          ? undefined
-          : audioStreamIn(known?.audioStreams ?? [], audioLanguage);
+      const heard = await soundtrackToAsk(cache, nextId, heardIn ?? readAudioLanguage());
       const quality = qualityToBeginWith();
 
       return {
         choices: {
           mediaId: nextId,
           startSeconds: 0,
-          audioStreamIndex,
+          audioStreamIndex: heard.audioStreamIndex,
+          audioLanguage: heard.audioLanguage,
           subtitleStreamIndex: undefined,
           quality,
         },
@@ -1211,7 +1227,7 @@ const Player = ({
           theTvsProfile(),
           platformInUse().thisClientId(),
           0,
-          audioStreamIndex,
+          heard.audioStreamIndex,
           quality,
           undefined,
           undefined,
@@ -1220,10 +1236,12 @@ const Player = ({
           true,
           false,
           'next',
+          [],
+          heard.audioLanguage,
         ),
       };
     });
-  }, [followsGapless, nextId, position, duration, audioLanguage, cache]);
+  }, [followsGapless, nextId, position, duration, heardIn, cache]);
 
   useEffect(
     () => () => {
@@ -1573,7 +1591,7 @@ const Player = ({
               return;
             }
 
-            onNext?.(chosen, 0);
+            onNext?.(chosen, 0, heardIn);
           }}
         />
       ) : null}

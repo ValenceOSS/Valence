@@ -40,7 +40,7 @@ import {
 import { REPORT_EVERY_MILLISECONDS } from '@ValenceClient/playback/watchProgress';
 import { createProgressReporter } from '@ValenceClient/playback/createProgressReporter';
 import { useSavedPlaceToKeep } from '@ValenceClient/playback/useSavedPlaceToKeep';
-import { audioStreamIn } from '@ValenceClient/playback/audioStreamIn';
+import { soundtrackToAsk } from '@ValenceClient/playback/soundtrackToAsk';
 import { thePhonesProfile } from '@ValenceMobile/playback/thePhonesProfile';
 import { spatialiseEvenStereo } from '@ValenceMobile/playback/spatialiseEvenStereo';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
@@ -586,21 +586,17 @@ const Watching = ({
 
     const rememberedAudio = asking.audioStreamIndex === undefined ? readAudioLanguage() : null;
 
-    void (
-      rememberedAudio === null
-        ? Promise.resolve(asking.audioStreamIndex)
-        : cache
-            .ensureQueryData(libraryQueries.detail(mediaId))
-            .then((known) => audioStreamIn(known?.audioStreams ?? [], rememberedAudio))
-            .catch(() => undefined)
-    )
-      .then((audioStreamIndex) => {
+    void soundtrackToAsk(cache, mediaId, rememberedAudio)
+      .then((remembered) => {
+        const audioStreamIndex = asking.audioStreamIndex ?? remembered.audioStreamIndex;
+        const { audioLanguage } = remembered;
         const readied =
           asking.converted === undefined && asking.burnInSubtitleId === undefined
             ? theReadiedEpisode().take({
                 mediaId,
                 startSeconds: Math.floor(asking.from),
                 audioStreamIndex,
+                audioLanguage,
                 subtitleStreamIndex: asking.subtitleStreamIndex,
                 quality: asking.requestedQuality,
               })
@@ -626,6 +622,8 @@ const Watching = ({
           undefined,
           undefined,
           asking.startedBecause ?? 'opened',
+          [],
+          audioLanguage,
         );
       })
       .then((outcome) => {
@@ -930,19 +928,18 @@ const Watching = ({
     const rememberedAudio = readAudioLanguage();
 
     readied.readyAhead(next, async () => {
-      const audioStreamIndex =
-        rememberedAudio === null
-          ? undefined
-          : await cache
-              .ensureQueryData(libraryQueries.detail(next))
-              .then((known) => audioStreamIn(known?.audioStreams ?? [], rememberedAudio))
-              .catch(() => undefined);
+      const { audioStreamIndex, audioLanguage } = await soundtrackToAsk(
+        cache,
+        next,
+        rememberedAudio,
+      );
 
       return {
         choices: {
           mediaId: next,
           startSeconds: 0,
           audioStreamIndex,
+          audioLanguage,
           subtitleStreamIndex: undefined,
           quality,
         },
@@ -960,6 +957,8 @@ const Watching = ({
           true,
           false,
           'next',
+          [],
+          audioLanguage,
         ),
       };
     });

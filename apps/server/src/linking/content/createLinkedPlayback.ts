@@ -14,6 +14,8 @@ import { z } from 'zod';
 import type { PlaybackService } from '@ValenceServer/playback/PlaybackService';
 import type { PresencePlaybackHealth } from '@ValenceServer/presence/PresenceService';
 import type { LinkedAsker } from './createLinkedAsker';
+import { audioStreamInLanguage } from '@ValenceCore/functions/audioStreamInLanguage';
+import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 
 type LinkedTitle = { serverId: string; remoteId: string };
 
@@ -102,6 +104,9 @@ const hasBody = (
  *   pause, to stop, a message — which comes back with a heartbeat, by the device it is playing on.
  * @param directFrom - Where a linked server is reached, where this server's admin chose for its
  *   streams to be fetched from there directly rather than through this server, or nothing.
+ * @param audioStreamsOf - A linked title's sound tracks as this server holds them, numbered as its
+ *   own server numbers them, so a linked server too old to read a language asked to be heard is
+ *   asked for the track in it.
  * @returns The playback.
  */
 const createLinkedPlayback = (
@@ -110,6 +115,7 @@ const createLinkedPlayback = (
   asker: LinkedAsker,
   onAsked: (deviceId: string, serverId: string, asks: readonly PeerAsk[]) => void = () => undefined,
   directFrom: (serverId: string) => Promise<string | null> = () => Promise.resolve(null),
+  audioStreamsOf: (mediaId: string) => Promise<readonly AudioStream[]> = () => Promise.resolve([]),
 ): PlaybackService => {
   const ticketFor = async (
     serverId: string,
@@ -163,11 +169,11 @@ const createLinkedPlayback = (
   };
 
   return {
-    explain: async (mediaId, profile, requestedQuality) => {
+    explain: async (mediaId, profile, requestedQuality, audioLanguage) => {
       const linked = await linkedTitleOf(mediaId);
 
       if (linked === null) {
-        return local.explain(mediaId, profile, requestedQuality);
+        return local.explain(mediaId, profile, requestedQuality, audioLanguage);
       }
 
       const answered = await asker.ask(
@@ -176,6 +182,7 @@ const createLinkedPlayback = (
         sendingJson({
           deviceProfile: profile,
           ...(requestedQuality === undefined ? {} : { requestedQuality }),
+          ...(audioLanguage === undefined ? {} : { audioLanguage }),
         }),
       );
       const read =
@@ -200,6 +207,7 @@ const createLinkedPlayback = (
       isCast,
       picksItsOwnSound,
       refusedOrigins = [],
+      audioLanguage,
     ) => {
       const linked = await linkedTitleOf(mediaId);
 
@@ -217,16 +225,24 @@ const createLinkedPlayback = (
           burnInSubtitleId,
           isCast,
           picksItsOwnSound,
+          refusedOrigins,
+          audioLanguage,
         );
       }
 
+      const heardIndex =
+        audioStreamIndex ??
+        (audioLanguage === undefined
+          ? undefined
+          : audioStreamInLanguage(await audioStreamsOf(mediaId), audioLanguage)?.index);
       const answered = await asker.ask(
         linked.serverId,
         `/api/playback/${linked.remoteId}/session`,
         sendingJson({
           deviceProfile: profile,
           startSeconds: Math.max(0, Math.floor(startSeconds)),
-          ...(audioStreamIndex === undefined ? {} : { audioStreamIndex }),
+          ...(heardIndex === undefined ? {} : { audioStreamIndex: heardIndex }),
+          ...(audioLanguage === undefined ? {} : { audioLanguage }),
           ...(requestedQuality === undefined ? {} : { requestedQuality }),
           ...(subtitleStreamIndex === undefined ? {} : { subtitleStreamIndex }),
           ...(burnInSubtitleId === undefined ? {} : { burnInSubtitleId }),

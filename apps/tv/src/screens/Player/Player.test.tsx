@@ -4,6 +4,10 @@ import { act, fireEvent, render, userEvent, waitFor } from '@testing-library/rea
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { aboutQueries } from '@ValenceClient/query/aboutQueries';
+import { startPlaybackSession } from '@ValenceClient/playback/startPlaybackSession';
+import { readAudioLanguage, saveAudioLanguage } from '@ValenceClient/playback/languagePreference';
+import { forgetTheReadiedEpisode } from '@ValenceClient/playback/theReadiedEpisode';
 import { playbackQueries } from '@ValenceClient/query/playbackQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
@@ -19,6 +23,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { ServerFeature } from '@ValenceContracts/schemas/ServerFeature';
 import type { Session } from '@ValenceTv/playback/usePlaybackSession';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
@@ -33,6 +38,8 @@ type Asked = {
   audio: number | undefined;
   quality: string | undefined;
   converted?: string | undefined;
+  heardIn?: string;
+  held?: true;
 };
 
 type Controlled = { onPause: () => void; onResume: () => void; onSeek: (seconds: number) => void };
@@ -81,6 +88,9 @@ jest.mock('@ValenceTv/playback/usePlaybackSession', () => ({
     quality: string | undefined,
     converted?: string,
     attempt?: number,
+    _measure?: () => undefined,
+    heardIn?: string,
+    isHeld?: boolean,
   ) => {
     mockSession.asked.push({
       startSeconds,
@@ -88,10 +98,17 @@ jest.mock('@ValenceTv/playback/usePlaybackSession', () => ({
       quality,
       converted,
       ...(attempt === undefined || attempt === 0 ? {} : { attempt }),
+      ...(heardIn === undefined ? {} : { heardIn }),
+      ...(isHeld === true ? { held: true as const } : {}),
     });
 
     return mockSession.current;
   },
+}));
+
+jest.mock('@ValenceClient/playback/startPlaybackSession', () => ({
+  ...jest.requireActual<object>('@ValenceClient/playback/startPlaybackSession'),
+  startPlaybackSession: jest.fn(() => new Promise(() => undefined)),
 }));
 
 jest.mock('@ValenceTv/playback/useRemoteControlled', () => ({
@@ -327,6 +344,8 @@ type Setup = {
   show?: ShowDetail | null;
   viewer?: ViewerProfile;
   watchParty?: WatchPartyState;
+  features?: ServerFeature[] | 'unanswered';
+  nextDetail?: typeof DETAIL;
 };
 
 const draw = async (setup: Setup = {}) => {
@@ -338,6 +357,15 @@ const draw = async (setup: Setup = {}) => {
   const onNext = jest.fn();
 
   cache.setQueryData(libraryQueries.detail(MEDIA_ID).queryKey, detail);
+  if (setup.nextDetail !== undefined) {
+    cache.setQueryData(libraryQueries.detail(NEXT_EPISODE.id).queryKey, setup.nextDetail);
+  }
+
+  if (setup.features !== 'unanswered') {
+    cache.setQueryData(aboutQueries.server().queryKey, {
+      features: setup.features ?? ['playback.audioLanguage'],
+    });
+  }
   cache.setQueryData(playbackQueries.segments(MEDIA_ID).queryKey, setup.segments ?? []);
   cache.setQueryData(playbackQueries.chapters(MEDIA_ID).queryKey, []);
   cache.setQueryData(playbackQueries.subtitleTracks(MEDIA_ID).queryKey, setup.tracks ?? []);
@@ -384,6 +412,7 @@ const draw = async (setup: Setup = {}) => {
   const drawn = await render(screen);
 
   return {
+    cache,
     drawn,
     onLeave,
     onNext,
@@ -421,6 +450,7 @@ const playingAt = async (position: number, duration = 3000) => {
 describe('Player', () => {
   beforeEach(() => {
     global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
+    jest.mocked(startPlaybackSession).mockClear();
     mockVideo.current = mockAFakeVideoPlayer();
     mockSession.current = READY;
     mockSession.asked = [];
@@ -433,6 +463,165 @@ describe('Player', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+    forgetTheReadiedEpisode();
+  });
+
+  describe('the soundtrack language remembered', () => {
+    const IN_JAPANESE_FIRST = MediaDetailSchema.parse({
+      ...DETAIL,
+      audioStreams: [
+        { index: 1, codec: 'aac', channels: 2, language: 'jpn', isDefault: true, isAtmos: false },
+        { index: 2, codec: 'aac', channels: 2, language: 'eng', isDefault: false, isAtmos: false },
+      ],
+    });
+
+    it('asks to hear the next episode in it, though it is the file’s own default', async () => {
+      saveAudioLanguage('jpn');
+
+      await draw({ detail: IN_JAPANESE_FIRST });
+
+      expect(mockSession.asked.at(-1)).toMatchObject({ audio: undefined, heardIn: 'ja' });
+    });
+
+    it('asks an older server for the track itself, however either side spells the language', async () => {
+      saveAudioLanguage('ja');
+
+      await draw({ detail: IN_JAPANESE_FIRST, features: [] });
+
+      expect(mockSession.asked.at(-1)?.audio).toBe(1);
+      expect(mockSession.asked.at(-1)?.heardIn).toBeUndefined();
+    });
+
+    it('hears the language the sender was hearing over the one it remembers', async () => {
+      saveAudioLanguage('jpn');
+
+      await draw({ detail: IN_JAPANESE_FIRST, audioLanguage: 'eng' });
+
+      expect(mockSession.asked.at(-1)).toMatchObject({ heardIn: 'en' });
+    });
+
+    it('asks for nothing where nothing was remembered', async () => {
+      await draw({ detail: IN_JAPANESE_FIRST });
+
+      expect(mockSession.asked.at(-1)).toEqual({
+        startSeconds: 0,
+        audio: undefined,
+        quality: 'original',
+      });
+    });
+
+    it('starts nothing until the server says what it can do, then one session in it', async () => {
+      saveAudioLanguage('jpn');
+
+      const { cache } = await draw({ detail: IN_JAPANESE_FIRST, features: 'unanswered' });
+
+      expect(mockSession.asked.length).toBeGreaterThan(0);
+      expect(mockSession.asked.every((asked) => asked.held === true)).toBe(true);
+
+      await act(() => {
+        cache.setQueryData(aboutQueries.server().queryKey, {
+          features: ['playback.audioLanguage'],
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockSession.asked.at(-1)?.held).toBeUndefined();
+      });
+
+      const unheld = mockSession.asked.filter((asked) => asked.held !== true);
+
+      expect(unheld.every((asked) => asked.heardIn === 'ja' && asked.audio === undefined)).toBe(
+        true,
+      );
+    });
+
+    it('asks for the track itself where the server could not say what it can do', async () => {
+      saveAudioLanguage('jpn');
+      global.fetch = jest.fn((address: string | URL | Request) =>
+        (typeof address === 'string'
+          ? address
+          : 'url' in address
+            ? address.url
+            : address.href
+        ).includes('/api/about')
+          ? Promise.reject(new Error('offline'))
+          : new Promise<Response>(() => undefined),
+      );
+
+      await draw({ detail: IN_JAPANESE_FIRST, features: 'unanswered' });
+
+      await waitFor(() => {
+        expect(mockSession.asked.at(-1)?.held).toBeUndefined();
+      });
+
+      const unheld = mockSession.asked.filter((asked) => asked.held !== true);
+
+      expect(unheld.every((asked) => asked.audio === 1 && asked.heardIn === undefined)).toBe(true);
+    });
+
+    it('starts straight away where nothing was remembered, whatever the server has said', async () => {
+      await draw({ detail: IN_JAPANESE_FIRST, features: 'unanswered' });
+
+      expect(mockSession.asked.some((asked) => asked.held === true)).toBe(false);
+    });
+
+    it('hands the next episode the language it was sent, or the one chosen since', async () => {
+      const { drawn, onNext } = await draw({ show: SHOW, audioLanguage: 'eng' });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Next episode' }));
+
+      expect(onNext).toHaveBeenLastCalledWith(NEXT_EPISODE, 0, 'eng');
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Audio, English · 5.1 · EAC3' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Français · Stereo · AAC' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Next episode' }));
+
+      expect(onNext).toHaveBeenLastCalledWith(NEXT_EPISODE, 0, 'fra');
+    });
+
+    it('readies the next episode in the language it was sent, over the one it remembers', async () => {
+      saveAudioLanguage('jpn');
+      mockSession.current = { ...READY, started: { ...STARTED, playsEpisodesGapless: true } };
+
+      await draw({
+        detail: IN_JAPANESE_FIRST,
+        show: SHOW,
+        nextDetail: IN_JAPANESE_FIRST,
+        audioLanguage: 'eng',
+      });
+      await playingAt(2970);
+
+      await waitFor(() => {
+        expect(
+          jest
+            .mocked(startPlaybackSession)
+            .mock.calls.find((call) => call[0] === NEXT_EPISODE.id)?.[14],
+        ).toBe('en');
+      });
+    });
+
+    it('readies the next episode to be heard in it', async () => {
+      saveAudioLanguage('jpn');
+      mockSession.current = { ...READY, started: { ...STARTED, playsEpisodesGapless: true } };
+
+      await draw({ detail: IN_JAPANESE_FIRST, show: SHOW, nextDetail: IN_JAPANESE_FIRST });
+      await playingAt(2970);
+
+      await waitFor(() => {
+        expect(
+          jest.mocked(startPlaybackSession).mock.calls.find((call) => call[0] === NEXT_EPISODE.id),
+        ).toBeDefined();
+      });
+
+      const readied = jest
+        .mocked(startPlaybackSession)
+        .mock.calls.find((call) => call[0] === NEXT_EPISODE.id);
+
+      expect(readied?.[4]).toBeUndefined();
+      expect(readied?.[12]).toBe('next');
+      expect(readied?.[14]).toBe('ja');
+    });
   });
 
   describe('starting', () => {
@@ -630,7 +819,7 @@ describe('Player', () => {
 
       await userEvent.press(drawn.getByRole('button', { name: 'Next episode' }));
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0, undefined);
     });
 
     it('offer no next episode for a film', async () => {
@@ -896,7 +1085,7 @@ describe('Player', () => {
       await userEvent.press(drawn.getByRole('button', { name: 'Episodes, S1: E2' }));
       await userEvent.press(drawn.getByRole('button', { name: 'S1: E3, In Perpetuity' }));
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0, undefined);
     });
 
     it('closes the episodes without playing anything on choosing the one playing', async () => {
@@ -1128,6 +1317,7 @@ describe('Player', () => {
       await userEvent.press(drawn.getByRole('button', { name: 'Français · Stereo · AAC' }));
 
       expect(mockSession.asked.at(-1)).toEqual({ startSeconds: 80, audio: 2, quality: 'original' });
+      expect(readAudioLanguage()).toBe('fra');
 
       await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
 
@@ -1279,16 +1469,26 @@ describe('Player', () => {
       );
     });
 
-    it('ask for the soundtrack in the language the sender was hearing', async () => {
+    it('ask to hear the language the sender was hearing', async () => {
       await draw({ audioLanguage: 'fra' });
 
-      expect(mockSession.asked.at(-1)?.audio).toBe(2);
+      expect(mockSession.asked.at(-1)).toMatchObject({ audio: undefined, heardIn: 'fr' });
     });
 
-    it('ask for no soundtrack where the sender was hearing the default one', async () => {
+    it('ask to hear the language the sender was hearing where it is the default one', async () => {
       await draw({ audioLanguage: 'eng' });
 
-      expect(mockSession.asked.at(-1)?.audio).toBeUndefined();
+      expect(mockSession.asked.at(-1)).toMatchObject({ audio: undefined, heardIn: 'en' });
+    });
+
+    it('ask an older server for the soundtrack the sender was hearing, the default one too', async () => {
+      await draw({ audioLanguage: 'fra', features: [] });
+
+      expect(mockSession.asked.at(-1)?.audio).toBe(2);
+
+      await draw({ audioLanguage: 'eng', features: [] });
+
+      expect(mockSession.asked.at(-1)?.audio).toBe(1);
     });
 
     it('start with no subtitles where the sender had them off, forced ones aside', async () => {
@@ -1379,7 +1579,7 @@ describe('Player', () => {
 
       await tell('playToEnd', {});
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 2);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 2, undefined);
     });
 
     it('starts the count of episodes followed on untouched again when Play Next is pressed', async () => {
@@ -1389,7 +1589,7 @@ describe('Player', () => {
       await tell('timeUpdate', { currentTime: 2990 });
       await userEvent.press(drawn.getByRole('button', { name: 'Play Next' }));
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0, undefined);
     });
 
     it('counts this episode finished when the next is started during its credits', async () => {
@@ -1492,7 +1692,7 @@ describe('Player', () => {
 
       await userEvent.press(drawn.getByRole('button', { name: 'Keep watching' }));
 
-      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0, undefined);
     });
 
     it('leaves once the credits have ended and somebody chose to stay', async () => {

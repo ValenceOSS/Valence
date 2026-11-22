@@ -57,7 +57,7 @@ import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
 import { theReadiedEpisode } from '@ValenceClient/playback/theReadiedEpisode';
 import { beginReadiedSession } from '@ValenceClient/playback/beginReadiedSession';
 import { isTimeToReadyAhead } from '@ValenceClient/playback/isTimeToReadyAhead';
-import { audioStreamIn } from '@ValenceClient/playback/audioStreamIn';
+import { soundtrackToAsk } from '@ValenceClient/playback/soundtrackToAsk';
 import { tapZoneOf } from '@ValenceClient/playback/tapZoneOf';
 import type { TapZone } from '@ValenceClient/playback/tapZoneOf';
 import { fadeBeforeTheEnd } from '@ValenceClient/playback/fadeBeforeTheEnd';
@@ -98,7 +98,7 @@ import {
   readPlaybackPreferences,
   writePlaybackPreferences,
 } from '@ValenceScreens/playback/playbackPreferences';
-import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
+import { describeAudioTrack, selectAudioStream } from '@ValenceCore/functions/describeTrack';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
@@ -1154,15 +1154,9 @@ const VideoPlayer = ({
         request.audioStreamIndex === undefined && keptSource === undefined
           ? readPlaybackPreferences().audioLanguage
           : null;
-      const known =
-        rememberedAudio === null
-          ? null
-          : await cache.ensureQueryData(libraryQueries.detail(request.mediaId)).catch(() => null);
-      const audioStreamIndex =
-        request.audioStreamIndex ??
-        (rememberedAudio === null
-          ? undefined
-          : audioStreamIn(known?.audioStreams ?? [], rememberedAudio));
+      const remembered = await soundtrackToAsk(cache, request.mediaId, rememberedAudio);
+      const audioStreamIndex = request.audioStreamIndex ?? remembered.audioStreamIndex;
+      const { audioLanguage } = remembered;
       const film =
         keptSource === undefined &&
         request.isCast !== true &&
@@ -1173,7 +1167,9 @@ const VideoPlayer = ({
       const engine = film === null ? null : await readEngineSupport();
       const asked =
         audioStreamIndex === undefined
-          ? null
+          ? audioLanguage === undefined || film === null
+            ? null
+            : (selectAudioStream(film.audioStreams, audioLanguage) ?? null)
           : (film?.audioStreams.find((stream) => stream.index === audioStreamIndex) ?? null);
       const pinned =
         request.requestedQuality === 'auto' || request.requestedQuality === 'original'
@@ -1220,6 +1216,7 @@ const VideoPlayer = ({
           picksSound,
           request.startedBecause,
           theRefusedOrigins().list(),
+          audioLanguage,
         );
       const readied =
         keptSource === undefined &&
@@ -1231,6 +1228,7 @@ const VideoPlayer = ({
               mediaId: request.mediaId,
               startSeconds: request.startSeconds,
               audioStreamIndex,
+              audioLanguage,
               subtitleStreamIndex: request.subtitleStreamIndex,
               quality: quality,
             })
@@ -3172,7 +3170,7 @@ const VideoPlayer = ({
 
     readied.readyAhead(next.id, async () => {
       const known =
-        rememberedAudio === null && (requestedQuality === 'auto' || requestedQuality === 'original')
+        requestedQuality === 'auto' || requestedQuality === 'original'
           ? null
           : await cache.ensureQueryData(libraryQueries.detail(next.id)).catch(() => null);
       const quality = qualityToAsk(
@@ -3180,16 +3178,18 @@ const VideoPlayer = ({
         autoRung,
         known === null ? null : (sharpestStepOf(known)?.id ?? null),
       );
-      const audioStreamIndex =
-        rememberedAudio === null
-          ? undefined
-          : audioStreamIn(known?.audioStreams ?? [], rememberedAudio);
+      const { audioStreamIndex, audioLanguage } = await soundtrackToAsk(
+        cache,
+        next.id,
+        rememberedAudio,
+      );
 
       return {
         choices: {
           mediaId: next.id,
           startSeconds: 0,
           audioStreamIndex,
+          audioLanguage,
           subtitleStreamIndex: undefined,
           quality,
         },
@@ -3208,6 +3208,7 @@ const VideoPlayer = ({
           false,
           'next',
           theRefusedOrigins().list(),
+          audioLanguage,
         ),
       };
     });

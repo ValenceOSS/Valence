@@ -153,4 +153,18 @@ describe('selectAudioStream', () => {
   it('has nothing to answer with for a file that has no audio', () => {
     expect(selectAudioStream([], 'en')).toBeUndefined();
   });
+
+  it('takes the main track over a commentary in the same language', () => {
+    const commentary = { index: 4, language: 'jpn', isDefault: false };
+    const main = { index: 5, language: 'jpn', isDefault: true };
+
+    expect(selectAudioStream([commentary, main, english], 'ja')).toBe(main);
+  });
+
+  it('takes the first in the language where none of them is the default', () => {
+    const first = { index: 4, language: 'ja', isDefault: false };
+    const second = { index: 5, language: 'jpn', isDefault: false };
+
+    expect(selectAudioStream([german, first, second], 'jpn')).toBe(first);
+  });
 });

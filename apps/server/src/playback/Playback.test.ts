@@ -115,10 +115,22 @@ const modestMedia: MediaItem = {
   subtitleStreams: [],
 };
 
+const ANIME_ID = '33333333-3333-4333-8333-333333333333';
+
+const animeEpisode: MediaItem = {
+  ...modestMedia,
+  id: ANIME_ID,
+  title: 'An Episode',
+  audioStreams: [
+    { index: 1, codec: 'aac', channels: 2, language: 'eng', isDefault: false, isAtmos: false },
+    { index: 2, codec: 'aac', channels: 2, language: 'jpn', isDefault: true, isAtmos: false },
+  ],
+};
+
 const build = (options: { unsupported?: boolean; log?: Logger } = {}) => {
   const { auth, settings, store } = createMemoryAuth();
   const playback = createMemoryPlaybackService({
-    media: { [MEDIA_ID]: hdrMedia, [MODEST_MEDIA_ID]: modestMedia },
+    media: { [MEDIA_ID]: hdrMedia, [MODEST_MEDIA_ID]: modestMedia, [ANIME_ID]: animeEpisode },
     sessions: {},
     ...(options.unsupported === true ? { unsupported: true } : {}),
   });
@@ -918,6 +930,64 @@ describe('trickplay', () => {
         'PlaybackStartRequest',
         'properties',
         'audioStreamIndex',
+      ]);
+    });
+
+    it('takes the track in a language asked to be heard', async () => {
+      const { app } = build();
+
+      const heard = async (audioLanguage: string) =>
+        StartSchema.parse(
+          await (
+            await app.request(
+              post(`/api/playback/${ANIME_ID}/session`, {
+                deviceProfile: modestProfile,
+                audioLanguage,
+              }),
+            )
+          ).json(),
+        ).plan.audio.streamIndex;
+
+      await expect(heard('en')).resolves.toBe(1);
+      await expect(heard('ja')).resolves.toBe(2);
+    });
+
+    it('refuses a language that cannot be one', async () => {
+      const { app } = build();
+
+      const response = await app.request(
+        post(`/api/playback/${ANIME_ID}/session`, {
+          deviceProfile: modestProfile,
+          audioLanguage: '',
+        }),
+      );
+
+      expect(response.status).toBe(400);
+    });
+
+    it('explains the plan in a language asked to be heard', async () => {
+      const { app } = build();
+
+      const response = await app.request(
+        post(`/api/playback/${ANIME_ID}/explain`, {
+          deviceProfile: modestProfile,
+          audioLanguage: 'eng',
+        }),
+      );
+
+      expect(ExplainSchema.parse(await response.json()).plan.audio.streamIndex).toBe(1);
+    });
+
+    it('documents the language in the specification', async () => {
+      const { app } = build();
+      const body = await (await app.request(`${BASE}/api/openapi.json`)).json();
+
+      expect(body).toHaveProperty([
+        'components',
+        'schemas',
+        'PlaybackStartRequest',
+        'properties',
+        'audioLanguage',
       ]);
     });
   });

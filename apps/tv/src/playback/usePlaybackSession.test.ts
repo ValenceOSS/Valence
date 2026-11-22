@@ -102,7 +102,92 @@ describe('usePlaybackSession', () => {
       undefined,
       undefined,
       'opened',
+      [],
+      undefined,
     );
+  });
+
+  it('asks to hear a language, and takes the next episode made ready to be heard in it', async () => {
+    theReadiedEpisode().readyAhead(MEDIA, () =>
+      Promise.resolve({
+        choices: {
+          mediaId: MEDIA,
+          startSeconds: 0,
+          audioStreamIndex: undefined,
+          audioLanguage: 'ja',
+          subtitleStreamIndex: undefined,
+          quality: 'original',
+        },
+        outcome: { kind: 'started', session: HLS },
+      }),
+    );
+    await settle();
+
+    await renderHook(() =>
+      usePlaybackSession(
+        MEDIA,
+        0,
+        () => true,
+        undefined,
+        'original',
+        undefined,
+        0,
+        () => undefined,
+        'ja',
+      ),
+    );
+    await settle();
+
+    expect(startPlaybackSession).not.toHaveBeenCalled();
+    expect(beginReadiedSession).toHaveBeenCalledWith('session-1', 'client-1');
+  });
+
+  it('asks for nothing while held, and once let go asks once as opening the title', async () => {
+    jest.mocked(startPlaybackSession).mockReturnValue(new Promise<StartOutcome>(() => undefined));
+
+    const { rerender } = await renderHook(
+      ({ isHeld }: { isHeld: boolean }) =>
+        usePlaybackSession(
+          MEDIA,
+          0,
+          () => true,
+          undefined,
+          'original',
+          undefined,
+          0,
+          () => undefined,
+          'ja',
+          isHeld,
+        ),
+      { initialProps: { isHeld: true } },
+    );
+
+    expect(startPlaybackSession).not.toHaveBeenCalled();
+
+    await rerender({ isHeld: false });
+
+    expect(startPlaybackSession).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(startPlaybackSession).mock.calls[0]?.[12]).toBe('opened');
+  });
+
+  it('asks a new session to be heard in a language where none was made ready in it', async () => {
+    jest.mocked(startPlaybackSession).mockReturnValue(new Promise<StartOutcome>(() => undefined));
+
+    await renderHook(() =>
+      usePlaybackSession(
+        MEDIA,
+        0,
+        () => true,
+        undefined,
+        'original',
+        undefined,
+        0,
+        () => undefined,
+        'ja',
+      ),
+    );
+
+    expect(jest.mocked(startPlaybackSession).mock.calls[0]?.[14]).toBe('ja');
   });
 
   it('plays the next episode on the session made ready for it, rather than asking for another', async () => {
@@ -112,6 +197,7 @@ describe('usePlaybackSession', () => {
           mediaId: MEDIA,
           startSeconds: 0,
           audioStreamIndex: undefined,
+          audioLanguage: undefined,
           subtitleStreamIndex: undefined,
           quality: 'original',
         },

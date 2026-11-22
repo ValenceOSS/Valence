@@ -5616,6 +5616,7 @@ const app = createApp({
         ? ((await linkStore.readServer(serverId))?.address ?? null)
         : null;
     },
+    async (mediaId) => (await libraryService.getMedia(mediaId))?.audioStreams ?? [],
   ),
   maintenance,
   schedules,

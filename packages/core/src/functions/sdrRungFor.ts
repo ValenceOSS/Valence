@@ -26,7 +26,7 @@ const sdrRungFor = (
   profile: DeviceProfile,
   asked: Pick<
     ChooseSourceOptions,
-    'preferredAudioLanguage' | 'chosenSubtitleStreamIndex' | 'subtitleBurnIn'
+    'preferredAudioLanguage' | 'askedAudioLanguage' | 'chosenSubtitleStreamIndex' | 'subtitleBurnIn'
   >,
 ): ChosenSource | null => {
   if (chosen.plan.video.kind !== 'passthrough' || chosen.source.item.videoRange === 'SDR') {

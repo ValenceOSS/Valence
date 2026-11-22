@@ -1,5 +1,6 @@
 import { saying } from '@ValenceI18n/saying';
 import { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
+import { languageToHear } from '@ValenceCore/functions/languageToHear';
 import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
@@ -38,7 +39,7 @@ const createMemoryPlaybackService = (
 ): PlaybackService & { state: MemoryPlaybackState } => ({
   state,
 
-  explain: (mediaId, profile, requestedQuality) => {
+  explain: (mediaId, profile, requestedQuality, audioLanguage) => {
     const item = state.media[mediaId];
 
     if (item === undefined) {
@@ -46,12 +47,32 @@ const createMemoryPlaybackService = (
     }
 
     const qualityClamp = resolveQualityStep(item, requestedQuality ?? 'original');
-    const plan = negotiatePlayback(item, profile, qualityClamp);
+    const plan = negotiatePlayback(
+      item,
+      profile,
+      qualityClamp,
+      languageToHear(item.audioStreams, audioLanguage, null),
+    );
 
     return Promise.resolve({ mode: describePlaybackMode(plan), plan });
   },
 
-  start: (mediaId, profile, _startSeconds, audioStreamIndex, requestedQuality) => {
+  start: (
+    mediaId,
+    profile,
+    _startSeconds,
+    audioStreamIndex,
+    requestedQuality,
+    _deviceId,
+    _subtitleStreamIndex,
+    _isAdaptive,
+    _converted,
+    _burnInSubtitleId,
+    _isCast,
+    _picksItsOwnSound,
+    _refusedOrigins,
+    audioLanguage,
+  ) => {
     const item = state.media[mediaId];
 
     if (item === undefined) {
@@ -66,7 +87,16 @@ const createMemoryPlaybackService = (
     }
 
     const qualityClamp = resolveQualityStep(item, requestedQuality ?? 'original');
-    const plan = negotiatePlayback(item, profile, qualityClamp);
+    const plan = negotiatePlayback(
+      item,
+      profile,
+      qualityClamp,
+      languageToHear(
+        item.audioStreams,
+        audioStreamIndex === undefined ? audioLanguage : undefined,
+        null,
+      ),
+    );
     const sessionId =
       audioStreamIndex === undefined
         ? `session-${mediaId}`

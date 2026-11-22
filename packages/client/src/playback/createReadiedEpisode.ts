@@ -1,3 +1,4 @@
+import { readLanguage } from '@ValenceCore/functions/describeTrack';
 import type { StartOutcome, StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 
 const KEPT_FOR_MS = 10 * 60 * 1000;
@@ -8,6 +9,7 @@ type ReadiedChoices = {
   mediaId: string;
   startSeconds: number;
   audioStreamIndex: number | undefined;
+  audioLanguage: string | undefined;
   subtitleStreamIndex: number | undefined;
   quality: string | undefined;
 };
@@ -48,6 +50,7 @@ const isTheSame = (one: ReadiedChoices, other: ReadiedChoices): boolean =>
   one.mediaId === other.mediaId &&
   Math.floor(one.startSeconds) === Math.floor(other.startSeconds) &&
   one.audioStreamIndex === other.audioStreamIndex &&
+  readLanguage(one.audioLanguage) === readLanguage(other.audioLanguage) &&
   one.subtitleStreamIndex === other.subtitleStreamIndex &&
   one.quality === other.quality;
 

@@ -16,9 +16,12 @@ import { fetchSubtitleTracks } from '@ValenceClient/playback/fetchSubtitles';
 import { fetchSubtitleCues } from '@ValenceClient/playback/fetchSubtitleCues';
 import { fetchPlainSubtitleCues } from '@ValenceClient/playback/fetchPlainSubtitleCues';
 import {
+  readAudioLanguage,
   readSubtitleLanguage,
+  saveAudioLanguage,
   saveSubtitleLanguage,
 } from '@ValenceClient/playback/languagePreference';
+import { fetchServerBuildInfo } from '@ValenceClient/about/fetchServerBuildInfo';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { theFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
@@ -51,6 +54,7 @@ jest.mock('@ValenceClient/playback/beginReadiedSession', () => ({
   beginReadiedSession: jest.fn(() => Promise.resolve(true)),
 }));
 jest.mock('@ValenceClient/library/fetchLibrary');
+jest.mock('@ValenceClient/about/fetchServerBuildInfo', () => ({ fetchServerBuildInfo: jest.fn() }));
 jest.mock('@ValenceClient/playback/fetchSegments', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/fetchSegments'),
   fetchSegments: jest.fn(),
@@ -168,6 +172,10 @@ beforeEach(() => {
     .mocked(fetchMediaDetail)
     .mockReset()
     .mockReturnValue(new Promise(() => undefined));
+  jest
+    .mocked(fetchServerBuildInfo)
+    .mockReset()
+    .mockResolvedValue({ features: ['playback.audioLanguage'] });
   theFakePlayer.currentTime = 420;
   theFakePlayer.duration = 6960;
 });
@@ -269,6 +277,8 @@ describe('Watching', () => {
         undefined,
         undefined,
         'opened',
+        [],
+        undefined,
       );
     });
   });
@@ -286,6 +296,7 @@ describe('Watching', () => {
           mediaId: 'a-film',
           startSeconds: 0,
           audioStreamIndex: undefined,
+          audioLanguage: undefined,
           subtitleStreamIndex: undefined,
           quality: 'auto',
         },
@@ -300,6 +311,170 @@ describe('Watching', () => {
       expect(beginReadiedSession).toHaveBeenCalledWith('a-session', expect.any(String));
     });
     expect(startPlaybackSession).not.toHaveBeenCalled();
+  });
+
+  describe('the soundtrack language remembered', () => {
+    const anEpisode = (id: string, episodeNumber: number) => ({
+      id,
+      libraryId: 'lib',
+      title: `Episode ${episodeNumber.toString()}`,
+      year: null,
+      durationSeconds: 1800,
+      width: 1920,
+      height: 1080,
+      videoCodec: 'h264',
+      videoRange: 'SDR',
+      addedAt: '2026-01-01T00:00:00.000Z',
+      hasPoster: false,
+      hasBackdrop: false,
+      hasLogo: false,
+      seriesId: 'show',
+      seriesTitle: 'A Show',
+      seasonNumber: 1,
+      episodeNumber,
+    });
+    const SEASONS = [
+      { seasonNumber: 1, episodes: [anEpisode('episode-1', 1), anEpisode('episode-2', 2)] },
+    ];
+
+    const IN_JAPANESE_FIRST = MediaDetailSchema.parse({
+      id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      libraryId: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+      title: 'An Episode',
+      year: 2020,
+      container: 'mkv',
+      durationSeconds: 1800,
+      videoCodec: 'h264',
+      videoRange: 'SDR',
+      width: 1920,
+      height: 1080,
+      bitrateKbps: 8000,
+      audioStreams: [
+        { index: 1, codec: 'aac', channels: 2, language: 'jpn', isDefault: true, isAtmos: false },
+        { index: 2, codec: 'aac', channels: 2, language: 'eng', isDefault: false, isAtmos: false },
+      ],
+      subtitleStreams: [],
+      addedAt: '2026-01-01T00:00:00.000Z',
+      metadata: { overview: null, hasPoster: false, hasBackdrop: false, hasLogo: false },
+    });
+
+    const askedFor = (mediaId: string) =>
+      jest.mocked(startPlaybackSession).mock.calls.find((call) => call[0] === mediaId);
+
+    beforeEach(() => {
+      jest.mocked(fetchMediaDetail).mockResolvedValue(IN_JAPANESE_FIRST);
+      jest
+        .mocked(startPlaybackSession)
+        .mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+    });
+
+    it('asks to hear the next episode in it, though it is the file’s own default', async () => {
+      saveAudioLanguage('jpn');
+
+      await render(around(<Watching mediaId="episode-2" onDone={jest.fn()} />));
+
+      await waitFor(() => {
+        expect(askedFor('episode-2')).toBeDefined();
+      });
+      expect(askedFor('episode-2')?.[4]).toBeUndefined();
+      expect(askedFor('episode-2')?.[14]).toBe('ja');
+    });
+
+    it('asks an older server for the track itself, though it is the file’s own default', async () => {
+      jest.mocked(fetchServerBuildInfo).mockResolvedValue({ features: [] });
+      saveAudioLanguage('ja');
+
+      await render(around(<Watching mediaId="episode-2" onDone={jest.fn()} />));
+
+      await waitFor(() => {
+        expect(askedFor('episode-2')).toBeDefined();
+      });
+      expect(askedFor('episode-2')?.[4]).toBe(1);
+      expect(askedFor('episode-2')?.[14]).toBeUndefined();
+    });
+
+    it('asks for nothing where nothing was remembered', async () => {
+      await render(around(<Watching mediaId="episode-2" onDone={jest.fn()} />));
+
+      await waitFor(() => {
+        expect(askedFor('episode-2')).toBeDefined();
+      });
+      expect(askedFor('episode-2')?.[4]).toBeUndefined();
+      expect(askedFor('episode-2')?.[14]).toBeUndefined();
+      expect(fetchServerBuildInfo).not.toHaveBeenCalled();
+    });
+
+    it('readies the next episode in it, and plays that episode on the session readied', async () => {
+      saveAudioLanguage('jpn');
+      jest.mocked(startPlaybackSession).mockResolvedValue({
+        kind: 'started',
+        session: {
+          sessionId: 'a-session',
+          delivery: { kind: 'direct', url: '/file' },
+          mode: 'Direct play',
+          plan: A_PLAN,
+          warnings: [],
+          reuse: null,
+          keptCopies: [],
+          playsEpisodesGapless: true,
+        },
+      });
+      theFakePlayer.duration = 1800;
+
+      await render(
+        around(
+          <Watching
+            mediaId="episode-1"
+            onDone={jest.fn()}
+            seasons={SEASONS}
+            onChooseEpisode={jest.fn()}
+            willCarryOn
+          />,
+        ),
+      );
+      await waitFor(() => {
+        expect(theFakePlayer.source).not.toBeNull();
+      });
+      await act(() => {
+        theFakePlayer.say('timeUpdate', {
+          currentTime: 1770,
+          bufferedPosition: 1780,
+          currentLiveTimestamp: null,
+          currentOffsetFromLive: null,
+        });
+      });
+
+      await waitFor(() => {
+        expect(askedFor('episode-2')).toBeDefined();
+      });
+      expect(askedFor('episode-2')?.[12]).toBe('next');
+      expect(askedFor('episode-2')?.[14]).toBe('ja');
+      await waitFor(() => {
+        expect(theReadiedEpisode().isReadyingFor('episode-2')).toBe(true);
+      });
+      await act(() => Promise.resolve());
+
+      expect(
+        theReadiedEpisode().take({
+          mediaId: 'episode-2',
+          startSeconds: 0,
+          audioStreamIndex: undefined,
+          audioLanguage: 'ja',
+          subtitleStreamIndex: undefined,
+          quality: 'auto',
+        }),
+      ).not.toBeNull();
+    });
+
+    it('remembers the language of the track chosen as the file names it', async () => {
+      const drawn = await render(around(<Watching mediaId="episode-2" onDone={jest.fn()} />));
+
+      await userEvent.press(await drawn.findByLabelText('Settings'));
+      await userEvent.press(await drawn.findByRole('button', { name: 'Audio' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'English · Stereo · AAC' }));
+
+      expect(readAudioLanguage()).toBe('eng');
+    });
   });
 
   it('says what is wrong, where the server would not play it', async () => {
@@ -552,6 +727,8 @@ describe('Watching', () => {
         undefined,
         undefined,
         'converting',
+        [],
+        undefined,
       );
     });
   });
@@ -647,6 +824,8 @@ describe('Watching', () => {
         undefined,
         undefined,
         'opened',
+        [],
+        undefined,
       );
     });
   });

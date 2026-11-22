@@ -370,10 +370,16 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     [],
   );
 
-  const playNext = useCallback((media: MediaSummary, carriedOn: number) => {
+  const playNext = useCallback((media: MediaSummary, carriedOn: number, audioLanguage?: string) => {
     setOpened((was) => [
       ...was.slice(0, -1),
-      { kind: 'play', mediaId: media.id, startSeconds: 0, carriedOn },
+      {
+        kind: 'play',
+        mediaId: media.id,
+        startSeconds: 0,
+        carriedOn,
+        ...(audioLanguage === undefined ? {} : { audioLanguage }),
+      },
     ]);
   }, []);
 

@@ -113,6 +113,29 @@ const playback = (
     asker,
     onAsked,
     () => Promise.resolve(directFrom),
+    (mediaId) =>
+      Promise.resolve(
+        mediaId === HERE
+          ? [
+              {
+                index: 1,
+                codec: 'aac',
+                channels: 2,
+                language: 'eng',
+                isDefault: true,
+                isAtmos: false,
+              },
+              {
+                index: 2,
+                codec: 'aac',
+                channels: 2,
+                language: 'jpn',
+                isDefault: false,
+                isAtmos: false,
+              },
+            ]
+          : [],
+      ),
   );
 
   return { linked, local, asker, onAsked };
@@ -168,6 +191,8 @@ describe('createLinkedPlayback', () => {
       undefined,
       undefined,
       undefined,
+      [],
+      undefined,
     );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       converted: 'picture',
@@ -196,6 +221,8 @@ describe('createLinkedPlayback', () => {
       ...asking,
       undefined,
       undefined,
+      [],
+      undefined,
     );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       burnInSubtitleId: 'english',
@@ -218,7 +245,15 @@ describe('createLinkedPlayback', () => {
     await linked.start('mine', aDeviceProfile(), 0, ...asking);
     await linked.start(HERE, aDeviceProfile(), 0, ...asking);
 
-    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking, undefined);
+    expect(local.start).toHaveBeenCalledWith(
+      'mine',
+      expect.anything(),
+      0,
+      ...asking,
+      undefined,
+      [],
+      undefined,
+    );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       isCast: true,
     });
@@ -241,10 +276,100 @@ describe('createLinkedPlayback', () => {
     await linked.start('mine', aDeviceProfile(), 0, ...asking);
     await linked.start(HERE, aDeviceProfile(), 0, ...asking);
 
-    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking);
+    expect(local.start).toHaveBeenCalledWith(
+      'mine',
+      expect.anything(),
+      0,
+      ...asking,
+      [],
+      undefined,
+    );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       audioStreamIndex: 1,
       picksItsOwnSound: true,
+    });
+  });
+
+  it('passes on the language to hear, to this server and to a linked one alike', async () => {
+    const { linked, local, asker } = playback((route, asking) =>
+      route.endsWith('/explain') ? Response.json({}) : films(route, asking),
+    );
+    const asking = [
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [],
+      'ja',
+    ] as const;
+
+    await linked.start('mine', aDeviceProfile(), 0, ...asking);
+    await linked.start(HERE, aDeviceProfile(), 0, ...asking);
+    await linked.explain(HERE, aDeviceProfile(), undefined, 'ja');
+
+    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking);
+    expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
+      audioLanguage: 'ja',
+      audioStreamIndex: 2,
+    });
+    expect(JSON.parse(new TextDecoder().decode(asker.asked[1]?.asking.body))).toMatchObject({
+      audioLanguage: 'ja',
+    });
+  });
+
+  it('asks a linked server only for the language where its title has no track in it', async () => {
+    const { linked, asker } = playback();
+
+    await linked.start(
+      HERE,
+      aDeviceProfile(),
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [],
+      'fre',
+    );
+
+    const sent = new TextDecoder().decode(asker.asked[0]?.asking.body);
+
+    expect(JSON.parse(sent)).toMatchObject({ audioLanguage: 'fre' });
+    expect(sent).not.toContain('audioStreamIndex');
+  });
+
+  it('keeps a track a viewer chose over the language when asking a linked server', async () => {
+    const { linked, asker } = playback();
+
+    await linked.start(
+      HERE,
+      aDeviceProfile(),
+      0,
+      1,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [],
+      'ja',
+    );
+
+    expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
+      audioStreamIndex: 1,
     });
   });
 

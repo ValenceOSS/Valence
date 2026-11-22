@@ -315,16 +315,25 @@ jest.mock('@ValenceTv/screens/Player/Player', () => ({
     mediaId,
     startSeconds,
     startedFrom,
+    audioLanguage,
     onLeave,
+    onNext,
   }: {
     mediaId: string;
     startSeconds: number;
     startedFrom?: string;
+    audioLanguage?: string;
     onLeave: () => void;
+    onNext?: (episode: { id: string }, carriedOn: number, audioLanguage?: string) => void;
   }) =>
     mockStandIn(
-      `Playing ${mediaId} from ${startSeconds.toString()}${startedFrom === undefined ? '' : `, started from ${startedFrom}`}`,
-      { 'Stop playing': onLeave },
+      `Playing ${mediaId} from ${startSeconds.toString()}${startedFrom === undefined ? '' : `, started from ${startedFrom}`}${audioLanguage === undefined ? '' : `, heard in ${audioLanguage}`}`,
+      {
+        'Stop playing': onLeave,
+        'Play the next episode': () => {
+          onNext?.({ id: 'the-next-episode' }, 0, audioLanguage);
+        },
+      },
     ),
 }));
 
@@ -558,6 +567,33 @@ describe('SignedIn', () => {
     });
 
     expect(drawn.getByText(`Playing ${mockArrival.id} from 42, started from Phone`)).toBeTruthy();
+  });
+
+  it('plays the next episode in the soundtrack language the one sent was heard in', async () => {
+    const drawn = await drawSignedIn();
+
+    await act(() => {
+      emitPresenceEvent({
+        kind: 'video',
+        command: {
+          kind: 'play',
+          mediaId: mockArrival.id,
+          startSeconds: 42,
+          subtitleLanguage: null,
+          audioLanguage: 'fra',
+        },
+        fromClientId: 'phone',
+        fromLabel: 'Phone',
+      });
+    });
+
+    expect(
+      drawn.getByText(`Playing ${mockArrival.id} from 42, started from Phone, heard in fra`),
+    ).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Play the next episode' }));
+
+    expect(await drawn.findByText('Playing the-next-episode from 0, heard in fra')).toBeTruthy();
   });
 
   it('opens a title chosen on the television’s top shelf', async () => {

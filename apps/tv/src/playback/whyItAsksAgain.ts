@@ -5,6 +5,7 @@ import type { QualityPreference } from '@ValenceClient/playback/qualityPreferenc
 type Asked = {
   mediaId: string;
   audioStreamIndex: number | undefined;
+  audioLanguage: string | undefined;
   requestedQuality: QualityPreference | undefined;
   converted: Converted | undefined;
   attempt: number;
@@ -31,7 +32,10 @@ const whyItAsksAgain = (before: Asked | null, now: Asked): PlaybackStartReason =
     return 'retried';
   }
 
-  if (before.audioStreamIndex !== now.audioStreamIndex) {
+  if (
+    before.audioStreamIndex !== now.audioStreamIndex ||
+    before.audioLanguage !== now.audioLanguage
+  ) {
     return 'audio';
   }
 

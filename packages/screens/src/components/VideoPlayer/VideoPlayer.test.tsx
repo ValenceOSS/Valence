@@ -37,6 +37,7 @@ const captureMock = vi.hoisted(() => vi.fn());
 const subtitlesMock = vi.hoisted(() => vi.fn());
 const segmentsMock = vi.hoisted(() => vi.fn());
 const detailMock = vi.hoisted(() => vi.fn());
+const aboutMock = vi.hoisted(() => vi.fn());
 const detectMock = vi.hoisted(() =>
   vi.fn<() => Partial<DeviceProfile>>(() => ({ name: 'Browser' })),
 );
@@ -146,6 +147,10 @@ vi.mock('@ValenceScreens/playback/readEngineSupport', () => ({
       toneMappingChecks: { hevc: { outcome: 'changed', grey: 97 } },
       audioCodecs: ['aac', 'ac3'],
     }),
+}));
+
+vi.mock('@ValenceClient/about/fetchServerBuildInfo', () => ({
+  fetchServerBuildInfo: aboutMock,
 }));
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
@@ -325,6 +330,8 @@ beforeEach(() => {
   segmentsMock.mockResolvedValue([]);
   detailMock.mockReset();
   detailMock.mockResolvedValue(null);
+  aboutMock.mockReset();
+  aboutMock.mockRejectedValue(new Error('This server says nothing about itself.'));
 
   startMock.mockResolvedValue({ kind: 'started', session: startedSession });
   attachMock.mockResolvedValue({ detach: teardownMock, readDelivered: () => null });
@@ -392,6 +399,7 @@ describe('VideoPlayer', () => {
         false,
         'opened',
         [],
+        undefined,
       );
     });
   });
@@ -566,6 +574,7 @@ describe('VideoPlayer', () => {
         false,
         'converting',
         [],
+        undefined,
       );
     });
   });
@@ -903,6 +912,7 @@ describe('VideoPlayer', () => {
         false,
         'converting',
         [],
+        undefined,
       );
     });
   });
@@ -2562,6 +2572,7 @@ describe('VideoPlayer', () => {
         false,
         'audio',
         [],
+        undefined,
       );
     });
   });
@@ -4541,6 +4552,50 @@ describe('VideoPlayer, as an episode ends', () => {
       expect(startMock.mock.calls.filter((call) => call[0] === 'episode-2')).toHaveLength(1);
     });
 
+    it('readies the next episode in the sound language remembered, and hands it over in it', async () => {
+      startsWithItsOwnSession();
+      writePlaybackPreferences({ audioLanguage: 'jpn' });
+      aboutMock.mockResolvedValue({ features: ['playback.audioLanguage'] });
+      detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+
+      const { rerender } = renderInAnAddress(
+        <VideoPlayer
+          media={first}
+          onClose={vi.fn()}
+          episodes={[first, second]}
+          onSelectEpisode={vi.fn()}
+          willCarryOn
+        />,
+      );
+
+      await reach(1765);
+      await waitFor(() => {
+        expect(theNextWasReadied()).toHaveLength(1);
+      });
+      await settled();
+
+      expect(theNextWasReadied()[0]?.[4]).toBeUndefined();
+      expect(theNextWasReadied()[0]?.[14]).toBe('ja');
+
+      rerender(
+        <VideoPlayer
+          media={second}
+          onClose={vi.fn()}
+          episodes={[first, second]}
+          onSelectEpisode={vi.fn()}
+          willCarryOn
+        />,
+      );
+
+      await screen.findByLabelText('Second Episode');
+
+      await waitFor(() => {
+        expect(beginReadiedMock).toHaveBeenCalledWith('session-episode-2', 'client-1');
+      });
+      expect(startMock.mock.calls.filter((call) => call[0] === 'episode-2')).toHaveLength(1);
+      writePlaybackPreferences({ audioLanguage: null });
+    });
+
     it('makes nothing ready where the server has gapless episodes turned off', async () => {
       startMock.mockResolvedValue({ kind: 'started', session: startedSession });
       renderInAnAddress(
@@ -4811,6 +4866,45 @@ describe('VideoPlayer, as an episode ends', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Play Next' })).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('VideoPlayer, with a sound language remembered', () => {
+  afterEach(() => {
+    writePlaybackPreferences({ audioLanguage: null });
+  });
+
+  it('asks to hear the next episode in it, though it is the file’s own default', async () => {
+    writePlaybackPreferences({ audioLanguage: 'jpn' });
+    aboutMock.mockResolvedValue({ features: ['playback.audioLanguage'] });
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+
+    expect(startMock.mock.calls[0]?.[4]).toBeUndefined();
+    expect(startMock.mock.calls[0]?.[14]).toBe('ja');
+  });
+
+  it('asks an older server for the track itself, though it is the file’s own default', async () => {
+    writePlaybackPreferences({ audioLanguage: 'ja' });
+    aboutMock.mockResolvedValue({ features: [] });
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+
+    expect(startMock.mock.calls[0]?.[4]).toBe(1);
+    expect(startMock.mock.calls[0]?.[14]).toBeUndefined();
+  });
+
+  it('asks for nothing where nothing was remembered', async () => {
+    aboutMock.mockResolvedValue({ features: ['playback.audioLanguage'] });
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+
+    expect(startMock.mock.calls[0]?.[4]).toBeUndefined();
+    expect(startMock.mock.calls[0]?.[14]).toBeUndefined();
+    expect(aboutMock).not.toHaveBeenCalled();
   });
 });
 

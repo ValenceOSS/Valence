@@ -60,6 +60,7 @@ type PlaybackService = {
     mediaId: string,
     profile: DeviceProfile,
     requestedQuality?: QualityStepId,
+    audioLanguage?: string,
   ) => Promise<Explanation | null>;
   start: (
     mediaId: string,
@@ -75,6 +76,7 @@ type PlaybackService = {
     isCast?: boolean,
     picksItsOwnSound?: boolean,
     refusedOrigins?: readonly string[],
+    audioLanguage?: string,
   ) => Promise<StartOutcome>;
   readSessionFile: (sessionId: string, name: string) => Promise<SessionFile | null>;
   readDirectFile: (
