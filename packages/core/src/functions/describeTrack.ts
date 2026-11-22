@@ -278,10 +278,12 @@ type SelectableAudioStream = {
 
 /**
  * Picks which of a file's audio streams to play, preferring one language where the library has been
- * told to. A file with nothing in that language is left exactly as it would have been without any
- * preference at all — its own default, or its first — so a preference that does not apply to this
- * file cannot break it. Shared by playback negotiation and the scanner's preview generation so the
- * two never disagree about the same file.
+ * told to, and among several in that language the one the file marks default, then the first, so a
+ * commentary in the same language is not taken over the main track. A file with nothing in that
+ * language is left exactly as it would have been without any preference at all — its own default,
+ * or its first — so a preference that does not apply to this file cannot break it. Shared by
+ * playback negotiation and the scanner's preview generation so the two never disagree about the
+ * same file.
  *
  * @param streams - The file's audio streams, in the order the container lists them.
  * @param preferredLanguage - The language to prefer, in any spelling, or nothing to take the file's own choice.
@@ -298,10 +300,15 @@ const selectAudioStream = <TStream extends SelectableAudioStream>(
 
   const matching =
     preferred === null
-      ? undefined
-      : streams.find((stream) => readLanguage(stream.language) === preferred);
+      ? []
+      : streams.filter((stream) => readLanguage(stream.language) === preferred);
 
-  return matching ?? streams.find((stream) => stream.isDefault === true) ?? streams[0];
+  return (
+    matching.find((stream) => stream.isDefault === true) ??
+    matching[0] ??
+    streams.find((stream) => stream.isDefault === true) ??
+    streams[0]
+  );
 };
 
 export type { AudioTrackFacts };
