@@ -1,4 +1,6 @@
-import { readLanguage, selectAudioStream } from '@ValenceCore/functions/describeTrack';
+import { audioStreamInLanguage } from '@ValenceCore/functions/audioStreamInLanguage';
+import { readLanguage } from '@ValenceCore/functions/describeTrack';
+import { NOTHING_ASKED } from '@ValenceClient/playback/NOTHING_ASKED';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 
 type SoundtrackAsked = {
@@ -6,13 +8,12 @@ type SoundtrackAsked = {
   audioLanguage: string | undefined;
 };
 
-const NOTHING_ASKED: SoundtrackAsked = { audioStreamIndex: undefined, audioLanguage: undefined };
-
 /**
- * What to ask the server for so a title plays in the soundtrack language this device remembers:
- * the language itself from a server that picks a track by it, which still hands the file over as
- * it is where that track is the one it plays by itself, and the track's own number from an older
- * one, which otherwise plays the library's language.
+ * Works out what to ask the server for so a title plays in the soundtrack language this device
+ * remembers: the language itself from a server that picks a track by it, which still hands the file
+ * over as it is where that track is the one it plays by itself, and the track's own number from an
+ * older one, even where it is the file's default, since an older server asked for nothing plays the
+ * library's language.
  *
  * @param remembered - The language this device last chose, in any spelling, or nothing.
  * @param streams - The title's soundtracks.
@@ -25,11 +26,10 @@ const soundtrackAsked = (
   streams: readonly AudioStream[],
   hearsLanguages: boolean,
 ): SoundtrackAsked => {
+  const heard = audioStreamInLanguage(streams, remembered);
   const language = readLanguage(remembered);
-  const matching = streams.filter((stream) => readLanguage(stream.language) === language);
-  const heard = language === null ? undefined : selectAudioStream(matching, language);
 
-  if (language === null || heard === undefined) {
+  if (heard === undefined || language === null) {
     return NOTHING_ASKED;
   }
 
@@ -40,4 +40,4 @@ const soundtrackAsked = (
 
 export type { SoundtrackAsked };
 
-export { NOTHING_ASKED, soundtrackAsked };
+export { soundtrackAsked };

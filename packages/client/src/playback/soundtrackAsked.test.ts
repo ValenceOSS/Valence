@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { NOTHING_ASKED, soundtrackAsked } from './soundtrackAsked';
+import { soundtrackAsked } from './soundtrackAsked';
+import { NOTHING_ASKED } from './NOTHING_ASKED';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 
 const ANIME: AudioStream[] = [

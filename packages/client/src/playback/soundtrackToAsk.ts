@@ -1,6 +1,7 @@
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { NOTHING_ASKED, soundtrackAsked } from '@ValenceClient/playback/soundtrackAsked';
+import { NOTHING_ASKED } from '@ValenceClient/playback/NOTHING_ASKED';
+import { soundtrackAsked } from '@ValenceClient/playback/soundtrackAsked';
 import type { SoundtrackAsked } from '@ValenceClient/playback/soundtrackAsked';
 import type { QueryClient } from '@tanstack/react-query';
 
