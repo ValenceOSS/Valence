@@ -1,5 +1,7 @@
 import { isDirectPlay } from '@ValenceCore/functions/isDirectPlay';
 import { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
+import { languageToHear } from '@ValenceCore/functions/languageToHear';
+import { audioStreamInLanguage } from '@ValenceCore/functions/audioStreamInLanguage';
 import type { SubtitleBurnIn } from '@ValenceCore/functions/negotiatePlayback';
 import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
 import type { QualityClamp } from '@ValenceCore/functions/resolveQualityStep';
@@ -28,6 +30,7 @@ type ChooseSourceOptions = {
   profile: DeviceProfile;
   requestedQuality?: QualityStepId | 'original';
   preferredAudioLanguage?: string | null;
+  askedAudioLanguage?: string | null;
   chosenSubtitleStreamIndex?: number | null;
   subtitleBurnIn?: SubtitleBurnIn | null;
   pinnedSourceId?: string | null;
@@ -49,6 +52,7 @@ const weigh = (
     profile,
     requestedQuality = 'original',
     preferredAudioLanguage = null,
+    askedAudioLanguage = null,
     chosenSubtitleStreamIndex = null,
     converted = null,
     subtitleBurnIn = null,
@@ -59,7 +63,7 @@ const weigh = (
     source.item,
     profile,
     qualityClamp,
-    preferredAudioLanguage,
+    languageToHear(source.item.audioStreams, askedAudioLanguage, preferredAudioLanguage),
     chosenSubtitleStreamIndex,
     converted,
     subtitleBurnIn,
@@ -132,6 +136,10 @@ const pictureAsked = (weighed: readonly ChosenSource[]): number => {
  * Where nothing avoids encoding, the original is what gets encoded. A rendition is already a
  * generation down, and encoding from it would stack one loss on another to save nothing.
  *
+ * A language asked to be heard is heard in each file that carries it, and the library's own in
+ * one that does not; where some files carry it, only those are weighed, so a copy without it is
+ * never chosen over one with it.
+ *
  * `neverSmaller` bars a rendition from standing in where it would shrink the picture the request
  * asked for. Streaming does not want that — a phone is better served a 1080p copy than a 4K encode,
  * and nobody is promised anything. A download is: somebody who chose the original and was quoted
@@ -156,8 +164,14 @@ const chooseSource = ({
     return weigh(pinned, asked);
   }
 
-  const weighed = sources.map((source) => weigh(source, asked));
-  const floor = neverSmaller ? pictureAsked(weighed) : 0;
+  const everyWeighed = sources.map((source) => weigh(source, asked));
+  const floor = neverSmaller ? pictureAsked(everyWeighed) : 0;
+  const heard = everyWeighed.filter(
+    (candidate) =>
+      audioStreamInLanguage(candidate.source.item.audioStreams, asked.askedAudioLanguage) !==
+      undefined,
+  );
+  const weighed = heard.length === 0 ? everyWeighed : heard;
   const withoutEncoding = weighed.filter(
     (candidate) =>
       candidate.plan.video.kind === 'passthrough' && candidate.source.item.height >= floor,
