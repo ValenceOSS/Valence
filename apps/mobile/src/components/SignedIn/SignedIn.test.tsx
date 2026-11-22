@@ -345,6 +345,8 @@ describe('SignedIn', () => {
         undefined,
         undefined,
         'opened',
+        [],
+        undefined,
       );
     });
   });
