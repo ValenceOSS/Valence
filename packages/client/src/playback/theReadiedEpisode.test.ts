@@ -8,6 +8,7 @@ const NEXT = {
   mediaId: 'episode-2',
   startSeconds: 0,
   audioStreamIndex: undefined,
+  audioLanguage: undefined,
   subtitleStreamIndex: undefined,
   quality: undefined,
 };

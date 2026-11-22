@@ -32,7 +32,10 @@ import { REPORT_EVERY_MILLISECONDS } from '@ValenceClient/playback/watchProgress
 import { createProgressReporter } from '@ValenceClient/playback/createProgressReporter';
 import { useSavedPlaceToKeep } from '@ValenceClient/playback/useSavedPlaceToKeep';
 import { useSubtitleCues } from '@ValenceClient/playback/useSubtitleCues';
-import { audioStreamIn } from '@ValenceClient/playback/audioStreamIn';
+import { NOTHING_ASKED, soundtrackAsked } from '@ValenceClient/playback/soundtrackAsked';
+import { soundtrackToAsk } from '@ValenceClient/playback/soundtrackToAsk';
+import { readAudioLanguage, saveAudioLanguage } from '@ValenceClient/playback/languagePreference';
+import { useServerHas } from '@ValenceClient/about/useServerHas';
 import {
   QualityPreferenceSchema,
   readQualityPreference,
@@ -69,6 +72,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
 import type { HWEvent } from 'react-native';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
+import type { SoundtrackAsked } from '@ValenceClient/playback/soundtrackAsked';
 import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import type { PlayerProps, StoppedBy } from './Player.types';
 import { PlaybackProblem } from '@ValenceTv/screens/Player/components/PlaybackProblem/PlaybackProblem';
@@ -269,31 +273,40 @@ const Player = ({
     askAfter: watching.data?.askStillWatchingAfter ?? STILL_WATCHING_OFF,
   });
 
-  const [audio, setAudio] = useState<number | undefined>(() =>
-    audioLanguage === undefined
-      ? undefined
-      : audioStreamIn(detail.data?.audioStreams ?? [], audioLanguage),
+  const hearsLanguages = useServerHas('playback.audioLanguage');
+  const [rememberedAudio] = useState(() => audioLanguage ?? readAudioLanguage());
+  const [audio, setAudio] = useState<number | undefined>(undefined);
+  const [soundtrack, setSoundtrack] = useState<SoundtrackAsked>(() =>
+    rememberedAudio === null || detail.data === undefined || hearsLanguages === null
+      ? NOTHING_ASKED
+      : soundtrackAsked(rememberedAudio, detail.data?.audioStreams ?? [], hearsLanguages),
   );
-  const hasHeardTheSentAudio = useRef(audioLanguage === undefined || detail.data !== undefined);
+  const hasHeardTheRememberedAudio = useRef(
+    rememberedAudio === null || (detail.data !== undefined && hearsLanguages !== null),
+  );
 
   useEffect(() => {
     if (
-      hasHeardTheSentAudio.current ||
+      hasHeardTheRememberedAudio.current ||
+      rememberedAudio === null ||
       detail.data === undefined ||
-      detail.data === null ||
-      audioLanguage === undefined
+      hearsLanguages === null
     ) {
       return;
     }
 
-    hasHeardTheSentAudio.current = true;
+    hasHeardTheRememberedAudio.current = true;
 
-    const sent = audioStreamIn(detail.data.audioStreams, audioLanguage);
+    const remembered = soundtrackAsked(
+      rememberedAudio,
+      detail.data?.audioStreams ?? [],
+      hearsLanguages,
+    );
 
-    if (sent !== undefined) {
-      setAudio(sent);
+    if (remembered !== NOTHING_ASKED) {
+      setSoundtrack(remembered);
     }
-  }, [detail.data, audioLanguage]);
+  }, [detail.data, rememberedAudio, hearsLanguages]);
   const [startFrom, setStartFrom] = useState(startSeconds);
   const [converted, setConverted] = useState<Converted | undefined>(undefined);
   const [chosenSubtitles, setChosenSubtitles] = useState<string | null>(null);
@@ -349,11 +362,12 @@ const Player = ({
     mediaId,
     startFrom,
     () => at.current.isPlaying,
-    audio,
+    audio ?? soundtrack.audioStreamIndex,
     quality,
     converted,
     attempt,
     () => presenceHealthOfExpo(player, detail.data?.durationSeconds ?? 0),
+    audio === undefined ? soundtrack.audioLanguage : undefined,
   );
   const tryingNext = useRef({ session, converted });
 
@@ -683,7 +697,9 @@ const Player = ({
   );
   const sentAudio = session.kind === 'ready' ? session.started.plan.audio.streamIndex : null;
   const chosenAudio =
-    detail.data?.audioStreams.find((stream) => stream.index === (audio ?? sentAudio)) ??
+    detail.data?.audioStreams.find(
+      (stream) => stream.index === (audio ?? soundtrack.audioStreamIndex ?? sentAudio),
+    ) ??
     detail.data?.audioStreams.find((stream) => stream.isDefault) ??
     detail.data?.audioStreams[0];
   const sentSubtitles =
@@ -1027,6 +1043,12 @@ const Player = ({
     const index = Number(id);
 
     if (audioChoices.some((choice) => choice.id === id) && index !== chosenAudio?.index) {
+      const heard = detail.data?.audioStreams.find((stream) => stream.index === index);
+
+      if (heard?.language !== undefined && heard.language !== null) {
+        saveAudioLanguage(heard.language);
+      }
+
       setStartFrom(at.current.position);
       setAudio(index);
     }
@@ -1188,21 +1210,15 @@ const Player = ({
     }
 
     readied.readyAhead(nextId, async () => {
-      const known =
-        audioLanguage === undefined
-          ? null
-          : await cache.ensureQueryData(libraryQueries.detail(nextId)).catch(() => null);
-      const audioStreamIndex =
-        audioLanguage === undefined
-          ? undefined
-          : audioStreamIn(known?.audioStreams ?? [], audioLanguage);
+      const heard = await soundtrackToAsk(cache, nextId, readAudioLanguage());
       const quality = qualityToBeginWith();
 
       return {
         choices: {
           mediaId: nextId,
           startSeconds: 0,
-          audioStreamIndex,
+          audioStreamIndex: heard.audioStreamIndex,
+          audioLanguage: heard.audioLanguage,
           subtitleStreamIndex: undefined,
           quality,
         },
@@ -1211,7 +1227,7 @@ const Player = ({
           theTvsProfile(),
           platformInUse().thisClientId(),
           0,
-          audioStreamIndex,
+          heard.audioStreamIndex,
           quality,
           undefined,
           undefined,
@@ -1220,10 +1236,12 @@ const Player = ({
           true,
           false,
           'next',
+          [],
+          heard.audioLanguage,
         ),
       };
     });
-  }, [followsGapless, nextId, position, duration, audioLanguage, cache]);
+  }, [followsGapless, nextId, position, duration, cache]);
 
   useEffect(
     () => () => {

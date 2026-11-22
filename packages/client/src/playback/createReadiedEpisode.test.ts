@@ -7,6 +7,7 @@ const NEXT: ReadiedChoices = {
   mediaId: 'episode-2',
   startSeconds: 0,
   audioStreamIndex: undefined,
+  audioLanguage: undefined,
   subtitleStreamIndex: undefined,
   quality: 'auto',
 };
@@ -66,6 +67,25 @@ describe('createReadiedEpisode', () => {
     await settled();
 
     expect(keeper.take({ ...NEXT, audioStreamIndex: 2 })).toBeNull();
+    expect(needs.stop).toHaveBeenCalledWith('next');
+  });
+
+  it('hands over a session made to be heard in the same language, however it was spelt', async () => {
+    const { keeper } = aKeeper();
+
+    keeper.readyAhead('episode-2', () => started('next', { ...NEXT, audioLanguage: 'ja' }));
+    await settled();
+
+    expect(keeper.take({ ...NEXT, audioLanguage: 'jpn' })?.sessionId).toBe('next');
+  });
+
+  it('stops a session made to be heard in another language', async () => {
+    const { keeper, needs } = aKeeper();
+
+    keeper.readyAhead('episode-2', () => started('next', { ...NEXT, audioLanguage: 'ja' }));
+    await settled();
+
+    expect(keeper.take(NEXT)).toBeNull();
     expect(needs.stop).toHaveBeenCalledWith('next');
   });
 

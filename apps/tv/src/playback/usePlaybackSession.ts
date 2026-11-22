@@ -56,6 +56,8 @@ const PRESENCE_HEARTBEAT_MS = 1000;
  *   number asks again.
  * @param measure - What the player can say of the stream, asked at each heartbeat to the household,
  *   where it can say anything.
+ * @param audioLanguage - The language to hear where no track was chosen, for a server that picks a
+ *   track by language.
  * @returns Whether the session is starting, failed and why, lost because the server forgot it, or
  *   ready with what the player opens.
  */
@@ -68,6 +70,7 @@ const usePlaybackSession = (
   converted?: Converted,
   attempt = 0,
   measure: () => PresenceHealth | undefined = () => undefined,
+  audioLanguage?: string,
 ): Session => {
   const [session, setSession] = useState<Session>({ kind: 'starting' });
   const asking = useRef(isPlaying);
@@ -85,7 +88,14 @@ const usePlaybackSession = (
     let isAbandoned = false;
     let sessionId: string | null = null;
     const timers: ReturnType<typeof setInterval>[] = [];
-    const askedNow = { mediaId, audioStreamIndex, requestedQuality, converted, attempt };
+    const askedNow = {
+      mediaId,
+      audioStreamIndex,
+      audioLanguage,
+      requestedQuality,
+      converted,
+      attempt,
+    };
     const startedBecause = whyItAsksAgain(askedBefore.current, askedNow);
 
     askedBefore.current = askedNow;
@@ -97,6 +107,7 @@ const usePlaybackSession = (
             mediaId,
             startSeconds: Math.floor(startSeconds),
             audioStreamIndex,
+            audioLanguage,
             subtitleStreamIndex: undefined,
             quality: requestedQuality,
           })
@@ -122,6 +133,8 @@ const usePlaybackSession = (
             undefined,
             undefined,
             startedBecause,
+            [],
+            audioLanguage,
           )
         : Promise.resolve({ kind: 'started' as const, session: readied })
     ).then((outcome) => {
@@ -189,7 +202,15 @@ const usePlaybackSession = (
 
       letGo();
     };
-  }, [mediaId, startSeconds, audioStreamIndex, requestedQuality, converted, attempt]);
+  }, [
+    mediaId,
+    startSeconds,
+    audioStreamIndex,
+    audioLanguage,
+    requestedQuality,
+    converted,
+    attempt,
+  ]);
 
   return session;
 };

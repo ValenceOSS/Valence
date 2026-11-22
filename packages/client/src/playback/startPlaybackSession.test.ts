@@ -31,6 +31,8 @@ const SentBodySchema = z.object({
   isReadiedAhead: z.boolean().optional(),
   startedBecause: z.string().optional(),
   refusedOrigins: z.array(z.string()).optional(),
+  audioStreamIndex: z.number().optional(),
+  audioLanguage: z.string().optional(),
 });
 
 const sentBody = () => SentBodySchema.parse(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
@@ -164,6 +166,35 @@ describe('startPlaybackSession', () => {
     );
 
     expect(sentBody()).toMatchObject({ refusedOrigins: ['https://films.example'] });
+  });
+
+  it('asks for the language to hear where it was given one', async () => {
+    await startPlaybackSession(
+      'media-1',
+      profile,
+      'client-1',
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      false,
+      true,
+      false,
+      'next',
+      [],
+      'ja',
+    );
+
+    expect(sentBody()).toMatchObject({ audioLanguage: 'ja' });
+    expect(sentBody()).not.toHaveProperty('audioStreamIndex');
+  });
+
+  it('asks for no language where it was given none', async () => {
+    await startPlaybackSession('media-1', profile, 'client-1');
+
+    expect(sentBody()).not.toHaveProperty('audioLanguage');
   });
 
   it('names none where every linked server could be reached', async () => {

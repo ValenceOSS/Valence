@@ -79,6 +79,8 @@ const PROBLEMS_BY_STATUS: Readonly<Record<number, PlaybackProblem>> = {
  *   title, a change somebody made, or putting playback right after something went wrong.
  * @param refusedOrigins - Linked servers' addresses this client could not stream from directly,
  *   whose titles the server then streams through itself.
+ * @param audioLanguage - The language to hear where no track was chosen, which a server that picks
+ *   a track by language plays in whichever copy of the title it sends.
  * @returns The session, or why there is not one.
  */
 const startPlaybackSession = async (
@@ -96,6 +98,7 @@ const startPlaybackSession = async (
   picksItsOwnSound?: boolean,
   startedBecause?: PlaybackStartReason,
   refusedOrigins: readonly string[] = [],
+  audioLanguage?: string,
 ): Promise<StartOutcome> => {
   const response = await fetch(`/api/playback/${mediaId}/session`, {
     method: 'POST',
@@ -105,6 +108,7 @@ const startPlaybackSession = async (
       clientId,
       startSeconds,
       ...(audioStreamIndex === undefined ? {} : { audioStreamIndex }),
+      ...(audioLanguage === undefined ? {} : { audioLanguage }),
       ...(requestedQuality === undefined ||
       requestedQuality === 'original' ||
       requestedQuality === 'auto'
