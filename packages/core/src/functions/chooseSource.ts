@@ -138,7 +138,8 @@ const pictureAsked = (weighed: readonly ChosenSource[]): number => {
  *
  * A language asked to be heard is heard in each file that carries it, and the library's own in
  * one that does not; where some files carry it, only those are weighed, so a copy without it is
- * never chosen over one with it.
+ * never chosen over one with it — among the files `neverSmaller` allows, which the language never
+ * overrules.
  *
  * `neverSmaller` bars a rendition from standing in where it would shrink the picture the request
  * asked for. Streaming does not want that — a phone is better served a 1080p copy than a 4K encode,
@@ -166,15 +167,15 @@ const chooseSource = ({
 
   const everyWeighed = sources.map((source) => weigh(source, asked));
   const floor = neverSmaller ? pictureAsked(everyWeighed) : 0;
-  const heard = everyWeighed.filter(
+  const tallEnough = everyWeighed.filter((candidate) => candidate.source.item.height >= floor);
+  const heard = tallEnough.filter(
     (candidate) =>
       audioStreamInLanguage(candidate.source.item.audioStreams, asked.askedAudioLanguage) !==
       undefined,
   );
-  const weighed = heard.length === 0 ? everyWeighed : heard;
+  const weighed = heard.length === 0 ? tallEnough : heard;
   const withoutEncoding = weighed.filter(
-    (candidate) =>
-      candidate.plan.video.kind === 'passthrough' && candidate.source.item.height >= floor,
+    (candidate) => candidate.plan.video.kind === 'passthrough',
   );
   const best = [...withoutEncoding].sort(betterFirst)[0];
 
@@ -182,7 +183,13 @@ const chooseSource = ({
     return best;
   }
 
-  return weighed.find((candidate) => candidate.source.isOriginal) ?? weighed[0] ?? null;
+  return (
+    weighed.find((candidate) => candidate.source.isOriginal) ??
+    weighed[0] ??
+    everyWeighed.find((candidate) => candidate.source.isOriginal) ??
+    everyWeighed[0] ??
+    null
+  );
 };
 
 export type { ChooseSourceOptions, ChosenSource, PlayableSource };

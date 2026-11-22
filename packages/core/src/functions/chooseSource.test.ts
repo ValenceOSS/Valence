@@ -149,6 +149,24 @@ describe('chooseSource, asked to hear a language', () => {
     expect(chosen?.plan.audio.streamIndex).toBe(2);
   });
 
+  it('never takes a copy below the floor for the language, where nothing may shrink the picture', () => {
+    const frenchCopy = inLanguages(smallerCopy('20', 1920, 1080, 8000), [
+      { language: 'fre', isDefault: true },
+    ]);
+    const englishOriginal = inLanguages(original, [{ language: 'eng', isDefault: true }]);
+
+    const chosen = chooseSource({
+      sources: [englishOriginal, frenchCopy],
+      profile: laptop,
+      preferredAudioLanguage: 'en',
+      askedAudioLanguage: 'fr',
+      neverSmaller: true,
+    });
+
+    expect(chosen?.source.isOriginal).toBe(true);
+    expect(chosen?.plan.video.kind).toBe('transcode');
+  });
+
   it('weighs every copy as before where none carries the language', () => {
     const chosen = chooseSource({
       sources: [frenchOriginal, germanCopy],
