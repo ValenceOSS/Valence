@@ -4,6 +4,7 @@ import { isDirectPlay } from '@ValenceCore/functions/isDirectPlay';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import type { ChosenSource } from '@ValenceCore/functions/chooseSource';
 import { audioStreamInLanguage } from '@ValenceCore/functions/audioStreamInLanguage';
+import { audioStreamMatching } from '@ValenceCore/functions/audioStreamMatching';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import { sdrRungFor } from '@ValenceCore/functions/sdrRungFor';
 import type { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
@@ -277,11 +278,12 @@ const createPlaybackService = ({
       const subtitleBurnIn = burning === null ? null : burning.file === null ? 'chosen' : 'file';
       const sources = sourcesOf(found);
       const preferredAudioLanguage = found.defaultAudioLanguage;
-      const askedAudioLanguage =
+      const chosenTrack =
         audioStreamIndex === undefined
-          ? (audioLanguage ?? null)
-          : (found.item.audioStreams.find((stream) => stream.index === audioStreamIndex)
-              ?.language ?? null);
+          ? undefined
+          : found.item.audioStreams.find((stream) => stream.index === audioStreamIndex);
+      const askedAudioLanguage =
+        audioStreamIndex === undefined ? (audioLanguage ?? null) : (chosenTrack?.language ?? null);
       const isDrawingInItsOwnStream = chosenSubtitleStreamIndex !== null;
       const chosen = chooseSource({
         sources,
@@ -377,8 +379,16 @@ const createPlaybackService = ({
       const shortSegments = await usesShortSegments();
       const accel = await forcedAccel();
       const able = await capabilities();
+      const trackIn = (weighed: ChosenSource): number | null =>
+        audioStreamIndex === undefined
+          ? weighed.plan.audio.streamIndex
+          : weighed.source.isOriginal || chosenTrack === undefined
+            ? audioStreamIndex
+            : (audioStreamMatching(chosenTrack, weighed.source.item.audioStreams)?.index ??
+              weighed.plan.audio.streamIndex);
       const specFor = (weighed: ChosenSource) => {
         const item = weighed.source.item;
+        const track = trackIn(weighed);
 
         return planToSessionSpec({
           plan: weighed.plan,
@@ -402,11 +412,7 @@ const createPlaybackService = ({
           segmentSeconds: shortSegments ? SHORT_SEGMENT_SECONDS : SEGMENT_SECONDS,
           container: segmentContainerFor(profile),
           needsIdrKeyframes: profile.needsIdrKeyframes,
-          ...(audioStreamIndex !== undefined
-            ? { audioStreamIndex }
-            : plan.audio.streamIndex === null
-              ? {}
-              : { audioStreamIndex: plan.audio.streamIndex }),
+          ...(track === null ? {} : { audioStreamIndex: track }),
         });
       };
 

@@ -1869,6 +1869,90 @@ describe('playing a copy kept alongside', () => {
     });
   });
 
+  describe('asked for a track the copies keep in another order', () => {
+    const SMALLER_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3398';
+    const inOrder = (
+      languages: readonly { language: string; isDefault: boolean }[],
+    ): MediaItem['audioStreams'] =>
+      languages.map(({ language, isDefault }, place) => ({
+        index: place + 1,
+        codec: 'aac',
+        channels: 2,
+        language,
+        isDefault,
+        isAtmos: false,
+      }));
+    const reordered = {
+      ...withACopy,
+      item: {
+        ...withACopy.item,
+        audioStreams: inOrder([
+          { language: 'jpn', isDefault: true },
+          { language: 'eng', isDefault: false },
+        ]),
+      },
+      renditions: [
+        ...withACopy.renditions.map((rendition) => ({
+          ...rendition,
+          item: {
+            ...rendition.item,
+            audioStreams: inOrder([
+              { language: 'eng', isDefault: false },
+              { language: 'jpn', isDefault: true },
+            ]),
+          },
+        })),
+        {
+          id: SMALLER_ID,
+          item: item({
+            id: SMALLER_ID,
+            width: 1280,
+            height: 720,
+            bitrateKbps: 1500,
+            audioStreams: inOrder([
+              { language: 'eng', isDefault: false },
+              { language: 'ger', isDefault: true },
+            ]),
+          }),
+          path: '/media/arrival - 720p H264.valence.mp4',
+        },
+      ],
+    };
+
+    it('streams the track in the same language from the copy played, and from each rung', async () => {
+      const started: { spec: SessionSpec; variants: readonly SessionSpec[] }[] = [];
+      const { service } = build(
+        {
+          startSession: (spec, _deviceId, variants = []) => {
+            started.push({ spec, variants });
+
+            return Promise.resolve({
+              id: 'session-1',
+              manifest: 'index.m3u8',
+              encodesVideo: false,
+              encodedForKeyframes: false,
+              reuse: 'none' as const,
+            });
+          },
+        },
+        reordered,
+      );
+
+      await service.start(MEDIA_ID, profile(), 0, 2, undefined, undefined, undefined, true);
+
+      expect(started[0]?.spec).toMatchObject({
+        inputPath: '/media/arrival - 1080p H264.valence.mp4',
+        audioStreamIndex: 1,
+      });
+      expect(started[0]?.variants).toEqual([
+        expect.objectContaining({
+          inputPath: '/media/arrival - 720p H264.valence.mp4',
+          audioStreamIndex: 1,
+        }),
+      ]);
+    });
+  });
+
   it('reads the copy at the path the library holds for it', async () => {
     const readFile = vi.fn(() => Promise.resolve(null));
     const { service } = build({ readFile }, withACopy);
