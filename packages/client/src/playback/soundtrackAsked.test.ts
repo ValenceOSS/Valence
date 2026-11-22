@@ -64,10 +64,20 @@ describe('soundtrackAsked', () => {
     expect(soundtrackAsked(null, ANIME, false)).toBe(NOTHING_ASKED);
   });
 
-  it('asks for nothing where the title has no soundtrack in that language', () => {
-    expect(soundtrackAsked('ger', FILM, true)).toBe(NOTHING_ASKED);
+  it('asks a server that picks by language for it though this file has no soundtrack in it', () => {
+    expect(soundtrackAsked('ger', FILM, true)).toEqual({
+      audioStreamIndex: undefined,
+      audioLanguage: 'de',
+    });
+    expect(soundtrackAsked('jpn', [], true)).toEqual({
+      audioStreamIndex: undefined,
+      audioLanguage: 'ja',
+    });
+  });
+
+  it('asks an older server for nothing where the title has no soundtrack in that language', () => {
     expect(soundtrackAsked('ger', FILM, false)).toBe(NOTHING_ASKED);
-    expect(soundtrackAsked('jpn', [], true)).toBe(NOTHING_ASKED);
+    expect(soundtrackAsked('jpn', [], false)).toBe(NOTHING_ASKED);
   });
 
   it('asks for nothing where the language remembered is no language at all', () => {

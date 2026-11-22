@@ -56,8 +56,18 @@ describe('soundtrackToAsk', () => {
     });
   });
 
-  it('asks for nothing where the title cannot be read', async () => {
+  it('still asks a server that picks by language for it where the title cannot be read', async () => {
     fetchMediaDetail.mockRejectedValue(new Error('offline'));
+
+    await expect(soundtrackToAsk(aCache(), 'episode-2', 'jpn')).resolves.toEqual({
+      audioStreamIndex: undefined,
+      audioLanguage: 'ja',
+    });
+  });
+
+  it('asks an older server for nothing where the title cannot be read', async () => {
+    fetchMediaDetail.mockRejectedValue(new Error('offline'));
+    fetchServerBuildInfo.mockResolvedValue({ features: [] });
 
     await expect(soundtrackToAsk(aCache(), 'episode-2', 'jpn')).resolves.toEqual({
       audioStreamIndex: undefined,
