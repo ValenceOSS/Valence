@@ -277,7 +277,11 @@ const createPlaybackService = ({
       const subtitleBurnIn = burning === null ? null : burning.file === null ? 'chosen' : 'file';
       const sources = sourcesOf(found);
       const preferredAudioLanguage = found.defaultAudioLanguage;
-      const askedAudioLanguage = audioStreamIndex === undefined ? (audioLanguage ?? null) : null;
+      const askedAudioLanguage =
+        audioStreamIndex === undefined
+          ? (audioLanguage ?? null)
+          : (found.item.audioStreams.find((stream) => stream.index === audioStreamIndex)
+              ?.language ?? null);
       const isDrawingInItsOwnStream = chosenSubtitleStreamIndex !== null;
       const chosen = chooseSource({
         sources,
@@ -339,7 +343,9 @@ const createPlaybackService = ({
       if (
         isDirectPlay(plan, source, picksItsOwnSound === true) &&
         !(found.isSplit === true && chosen.source.isOriginal) &&
-        (audioStreamIndex === undefined || picksItsOwnSound === true) &&
+        (audioStreamIndex === undefined ||
+          picksItsOwnSound === true ||
+          (chosen.source.isOriginal && plan.audio.streamIndex === audioStreamIndex)) &&
         rungs.length === 0 &&
         isCast !== true
       ) {
