@@ -1,6 +1,9 @@
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { Play } from '@keyline-icons/react-native';
 import { Button } from '@ValenceTv/components/Button/Button';
+import { tokens } from '@ValenceTv/theme/tokens';
+
+const RING = `"borderColor":"${tokens.colours.text}"`;
 
 describe('Button', () => {
   it('says what it does and does it when pressed', async () => {
@@ -39,7 +42,7 @@ describe('Button', () => {
 
     await fireEvent(ringed.getByRole('button', { name: 'Like' }), 'focus');
 
-    expect(JSON.stringify(ringed.toJSON())).toContain('"borderColor":"#ffffff"');
+    expect(JSON.stringify(ringed.toJSON())).toContain(RING);
 
     const bare = await render(
       <Button label="Like" icon={Play} isIconOnly isRingHidden onPress={jest.fn()} />,
@@ -47,6 +50,44 @@ describe('Button', () => {
 
     await fireEvent(bare.getByRole('button', { name: 'Like' }), 'focus');
 
-    expect(JSON.stringify(bare.toJSON())).not.toContain('"borderColor":"#ffffff"');
+    expect(JSON.stringify(bare.toJSON())).not.toContain(RING);
+  });
+
+  it('takes the height, padding and corner of the web at twice the size', async () => {
+    const drawn = await render(<Button label="Save" size="md" onPress={jest.fn()} />);
+
+    expect(drawn.getByText('Save').parent?.parent).toHaveStyle({
+      minHeight: 64,
+      paddingHorizontal: 24,
+      borderRadius: tokens.radii.lg,
+    });
+  });
+
+  it('writes on danger in the web destructive ink, not the accent', async () => {
+    const drawn = await render(<Button label="Sign out" variant="danger" onPress={jest.fn()} />);
+
+    expect(drawn.getByText('Sign out')).toHaveStyle({ color: tokens.colours.onDanger });
+  });
+
+  it('lifts a subtle button from muted to the full ink when the remote is on it', async () => {
+    const drawn = await render(<Button label="Skip" variant="subtle" onPress={jest.fn()} />);
+
+    expect(drawn.getByText('Skip')).toHaveStyle({ color: tokens.colours.muted });
+
+    await fireEvent(drawn.getByRole('button', { name: 'Skip' }), 'focus');
+
+    expect(drawn.getByText('Skip')).toHaveStyle({ color: tokens.colours.text });
+  });
+
+  it('underlines a link while the remote is on it', async () => {
+    const drawn = await render(<Button label="Learn more" variant="link" onPress={jest.fn()} />);
+
+    await fireEvent(drawn.getByRole('button', { name: 'Learn more' }), 'focus');
+
+    expect(drawn.getByText('Learn more')).toHaveStyle({ textDecorationLine: 'underline' });
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(Button.displayName).toBe('Button');
   });
 });

@@ -1,6 +1,4 @@
-import { drawnAvatarUrl } from '@ValenceContracts/functions/drawnAvatarUrl';
-import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
-import { framedPictureUrl } from '@ValenceContracts/functions/framedPictureUrl';
+import { facePictureOf } from '@ValenceClient/profiles/facePictureOf';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ThePicture } from '@ValenceMobile/components/APicture/APicture.types';
@@ -27,35 +25,9 @@ const thePictureFor = (
     return { uri: picked, isDrawn: false };
   }
 
-  switch (profile.avatar.kind) {
-    case 'initial':
-      return null;
-    case 'drawn':
-      return {
-        uri: onThisServer(
-          drawnAvatarUrl(
-            profile.avatar.style,
-            profile.avatar.seed,
-            profile.avatar.isOnColour === true ? profile.colour : null,
-          ),
-        ),
-        isDrawn: true,
-      };
-    case 'orb':
-    case 'sketch':
-      return { uri: onThisServer(profileAvatarUrl(profile)), isDrawn: false };
-    case 'photo':
-      return profile.avatar.isVideo
-        ? null
-        : {
-            uri: onThisServer(
-              profile.avatar.hasFramedPicture
-                ? framedPictureUrl(profileAvatarUrl(profile))
-                : profileAvatarUrl(profile),
-            ),
-            isDrawn: false,
-          };
-  }
+  const found = facePictureOf(profile);
+
+  return found === null ? null : { uri: onThisServer(found.path), isDrawn: found.isDrawn };
 };
 
 export { thePictureFor };

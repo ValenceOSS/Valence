@@ -10,7 +10,7 @@ import { AMovingFace } from '@ValenceMobile/components/AMovingFace/AMovingFace';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { facePaint } from '@ValenceClient/profiles/facePaint';
-import { paintStyleOf } from '@ValenceMobile/pictures/paintStyleOf';
+import { paintStyleOf } from '@ValenceNative/pictures/paintStyleOf';
 import { LETTER_INKS } from '@ValenceNative/library/LETTER_INKS';
 import { LETTER_FACES } from '@ValenceMobile/theme/LETTER_FACES';
 import type { ViewStyle } from 'react-native';

@@ -8,6 +8,7 @@ import { withPlainHttpToServers } from './plugins/withPlainHttpToServers.ts';
 import { withTelevisionSizedScreen } from './plugins/withTelevisionSizedScreen.ts';
 import { withoutTheSystemFocusHighlight } from './plugins/withoutTheSystemFocusHighlight.ts';
 import { withoutRequiringWifi } from './plugins/withoutRequiringWifi.ts';
+import { withPrimaryColourAsTint } from './plugins/withPrimaryColourAsTint.ts';
 
 const build = readTheBuild();
 
@@ -18,6 +19,7 @@ const config: ExpoConfig = {
   scheme: 'valence',
   version: build.version === 'unknown' ? '0.0.0' : build.version,
   userInterfaceStyle: 'dark',
+  primaryColor: '#ffffff',
   experiments: { baseUrl: '/tv' },
   ios: {
     bundleIdentifier: 'app.valence.ios',
@@ -78,10 +80,12 @@ const config: ExpoConfig = {
   ],
 };
 
-export default withoutRequiringWifi(
-  withoutTheSystemFocusHighlight(
-    withTelevisionSizedScreen(
-      withPlainHttpToServers(withLaunchScreen(withTopShelf(withTheSceneLifecycle(config)))),
+export default withPrimaryColourAsTint(
+  withoutRequiringWifi(
+    withoutTheSystemFocusHighlight(
+      withTelevisionSizedScreen(
+        withPlainHttpToServers(withLaunchScreen(withTopShelf(withTheSceneLifecycle(config)))),
+      ),
     ),
   ),
 );

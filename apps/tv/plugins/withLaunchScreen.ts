@@ -28,14 +28,14 @@ const MARK_ON_ITS_OWN = `<?xml version="1.0" encoding="utf-8"?>
   <item android:width="288dp" android:height="288dp">
     <shape android:shape="rectangle"><solid android:color="@android:color/transparent" /></shape>
   </item>
-  <item android:width="160dp" android:height="117dp" android:gravity="center" android:drawable="@drawable/launch_mark" />
+  <item android:width="57dp" android:height="54dp" android:gravity="center" android:drawable="@drawable/launch_mark" />
 </layer-list>
 `;
 
 const MARK_ON_THE_GROUND = `<?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
   <item android:drawable="@color/splashscreen_background" />
-  <item android:width="160dp" android:height="117dp" android:gravity="center" android:drawable="@drawable/launch_mark" />
+  <item android:width="57dp" android:height="54dp" android:gravity="center" android:drawable="@drawable/launch_mark" />
 </layer-list>
 `;
 

@@ -14,6 +14,7 @@ describe('palette', () => {
       accentContrast: '#ffffff',
       onWhite: '#000000',
       danger: '#e8503a',
+      onDanger: '#fcfcfc',
       success: '#3ac47d',
       scrim: '#000000',
       onScrim: '#ffffff',

@@ -1,6 +1,9 @@
+import { ROUNDNESS_SCALES } from '@ValenceContracts/schemas/Roundness';
 import { palette } from '@ValenceTv/theme/palette';
 
 const ACROSS_THE_ROOM = 2;
+
+const CORNER = ROUNDNESS_SCALES.default * ACROSS_THE_ROOM;
 
 const colours = {
   canvas: palette.surface,
@@ -12,11 +15,12 @@ const colours = {
   text: palette.text,
   muted: palette.textMuted,
   faint: palette.line,
-  accent: palette.accent,
-  accentHover: palette.accentHover,
-  onAccent: palette.accentContrast,
+  accent: palette.text,
+  accentHover: palette.text,
+  onAccent: palette.surface,
   onWhite: '#000000',
   danger: palette.danger,
+  onDanger: palette.onDanger,
   success: palette.success,
   scrim: palette.scrim,
   onScrim: palette.onScrim,
@@ -32,12 +36,12 @@ const space = {
 } as const;
 
 const radii = {
-  xs: 4 * ACROSS_THE_ROOM,
-  sm: 5 * ACROSS_THE_ROOM,
-  md: 6 * ACROSS_THE_ROOM,
-  lg: 8 * ACROSS_THE_ROOM,
-  xl: 10 * ACROSS_THE_ROOM,
-  xxl: 12 * ACROSS_THE_ROOM,
+  xs: Math.round(4 * CORNER),
+  sm: Math.round(5 * CORNER),
+  md: Math.round(6 * CORNER),
+  lg: Math.round(8 * CORNER),
+  xl: Math.round(10 * CORNER),
+  xxl: Math.round(12 * CORNER),
   round: 999,
 } as const;
 

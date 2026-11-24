@@ -14,6 +14,7 @@ const mockPalette = {
   'color-accent-contrast': '#ffffff',
   'color-on-white': '#000000',
   'color-danger': '#e8503a',
+  'color-destructive-foreground': '#fcfcfc',
   'color-success': '#3ac47d',
   'color-scrim': '#000000',
   'color-on-scrim': '#ffffff',

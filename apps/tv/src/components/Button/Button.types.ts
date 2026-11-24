@@ -7,11 +7,14 @@ type ButtonVariant =
   | 'secondary'
   | 'glossy'
   | 'confirm'
+  | 'raised'
   | 'overlay'
   | 'glass'
   | 'soft'
   | 'ghost'
-  | 'danger';
+  | 'danger'
+  | 'subtle'
+  | 'link';
 
 type ButtonSize = 'md' | 'lg' | 'xl' | 'play';
 
