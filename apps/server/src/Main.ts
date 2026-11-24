@@ -3740,6 +3740,7 @@ const jobs = createJobQueue({
             env.BETTER_AUTH_URL,
             BrandSettingsSchema.catch(NO_BRAND).parse((await settings.read()).brand),
             await brandLogo.address(),
+            SERVER_VERSION,
           ),
         });
 
