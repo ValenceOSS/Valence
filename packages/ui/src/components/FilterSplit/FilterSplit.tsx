@@ -61,7 +61,7 @@ const FilterSplit = ({ label, scope, groups, selected, onChange, className }: Fi
             <>
               <span className="whitespace-nowrap">{group.name}</span>
               {chosen.length === 0 ? null : (
-                <Badge tone="bright" size="sm">
+                <Badge tone="bright" size="tally">
                   {chosen.length}
                 </Badge>
               )}

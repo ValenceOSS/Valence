@@ -15,7 +15,7 @@ type BadgeTone =
   | 'danger'
   | 'outline';
 
-type BadgeSize = 'sm' | 'md' | 'count';
+type BadgeSize = 'sm' | 'md' | 'count' | 'tally';
 
 type BadgeProps = {
   children: ReactNode;

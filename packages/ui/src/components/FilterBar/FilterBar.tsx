@@ -76,7 +76,7 @@ const FilterBar = ({ label, groups, selected, onChange, className }: FilterBarPr
                 <Icon of={ListFilterIcon} size={16} />
                 <span className="whitespace-nowrap">{say('common.filters')}</span>
                 {selected.size === 0 ? null : (
-                  <Badge tone="bright" size="sm">
+                  <Badge tone="bright" size="tally">
                     {selected.size}
                   </Badge>
                 )}
