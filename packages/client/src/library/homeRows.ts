@@ -8,7 +8,8 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { BecauseYouWatchedRow } from '@ValenceContracts/schemas/Likeness';
 import type { Season } from '@ValenceContracts/constants/SEASONS';
 import { SEASON_ROW_TITLES } from '@ValenceClient/library/SEASON_ROW_TITLES';
-import type { Rail } from '@ValenceClient/library/groupIntoRails';
+import type { Rail, RailOpens } from '@ValenceClient/library/groupIntoRails';
+import { railOpensOf } from '@ValenceClient/library/railOpensOf';
 import { RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { say } from '@ValenceI18n/say';
 
@@ -21,7 +22,7 @@ type HomeRowsInput = {
   acclaimed: MediaSummary[];
   genres: { genre: string; items: MediaSummary[] }[];
   decades: { decade: number; items: MediaSummary[] }[];
-  more: { id: string; title: string; items: MediaSummary[] }[];
+  more: { id: string; title: string; items: MediaSummary[]; opens?: RailOpens | null }[];
   fromPlugins?: { id: string; title: string; items: MediaSummary[] }[];
   again?: number;
   shelves?: readonly HomeShelf[];
@@ -64,22 +65,39 @@ const row = (
 };
 
 /**
+ * Rows that lead somewhere when their title is pressed, to the fuller page of what they were drawn
+ * from.
+ *
+ * @param rails - The rows.
+ * @param opens - Where they lead, or null where nowhere.
+ * @returns The rows, leading there.
+ */
+const leadingTo = (rails: Rail[], opens: RailOpens | null): Rail[] =>
+  opens === null ? rails : rails.map((rail) => ({ ...rail, opens }));
+
+/**
  * Rows by category — genres, then decades, then the further angles on them — in which each title
  * stands once, in the first row that has it. A film that is both action and adventure is offered
  * under action and left out of adventure, rather than the same posters filling row after row. A row
  * left with too little once its repeats are gone is not drawn, and its titles stay free for the next.
  *
- * @param candidates - Each row's id, title and items, best first, in the order the rows appear.
+ * @param candidates - Each row's id, title and items, best first, in the order the rows appear, and
+ *   where its title leads.
  * @returns The rows to draw.
  */
 const categoryRows = (
-  candidates: readonly { id: string; title: string; items: readonly MediaSummary[] }[],
+  candidates: readonly {
+    id: string;
+    title: string;
+    items: readonly MediaSummary[];
+    opens?: RailOpens | null;
+  }[],
 ): Rail[] => {
   const placed = new Set<string>();
 
-  return candidates.flatMap(({ id, title, items }) => {
+  return candidates.flatMap(({ id, title, items, opens = null }) => {
     const fresh = collapseToShows(unique(items)).filter((media) => !placed.has(titleKeyOf(media)));
-    const drawn = row(id, title, fresh);
+    const drawn = leadingTo(row(id, title, fresh), opens);
 
     for (const media of drawn.flatMap((one) => one.items)) {
       placed.add(titleKeyOf(media));
@@ -147,11 +165,17 @@ const homeRows = ({
   shelves = [],
 }: HomeRowsInput): Rail[] => {
   const categories = categoryRows([
-    ...genres.map(({ genre, items }) => ({ id: `genre:${genre}`, title: genre, items })),
+    ...genres.map(({ genre, items }) => ({
+      id: `genre:${genre}`,
+      title: genre,
+      items,
+      opens: railOpensOf({ genre, decade: null }),
+    })),
     ...decades.map(({ decade, items }) => ({
       id: `decade:${decade.toString()}`,
       title: shelfTitle({ genre: null, order: null, decade, page: 0 }),
       items,
+      opens: railOpensOf({ genre: null, decade }),
     })),
     ...more,
   ]);
@@ -161,10 +185,13 @@ const homeRows = ({
     ...row('recent', say('common.recentlyAdded'), recent, true, 1),
     ...(seasonal === null
       ? []
-      : row(
-          `seasonal:${seasonal.season}`,
-          say(SEASON_ROW_TITLES[seasonal.season]),
-          seasonal.items,
+      : leadingTo(
+          row(
+            `seasonal:${seasonal.season}`,
+            say(SEASON_ROW_TITLES[seasonal.season]),
+            seasonal.items,
+          ),
+          { section: 'films', filters: `occasion:${seasonal.season}` },
         )),
     ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
     ...because.flatMap(({ watched, items }) =>
@@ -178,12 +205,12 @@ const homeRows = ({
     ...fromPlugins.flatMap(({ id, title, items }) => row(id, title, items, true, 1)),
     ...categories,
     ...comeRoundAgain(categories, again),
-    ...shelves.map(({ id, items, ...drawnFrom }) => ({
-      id,
-      title: shelfTitle(drawnFrom),
-      items,
-      standsForShows: true,
-    })),
+    ...shelves.flatMap(({ id, items, ...drawnFrom }) =>
+      leadingTo(
+        [{ id, title: shelfTitle(drawnFrom), items, standsForShows: true }],
+        railOpensOf(drawnFrom),
+      ),
+    ),
   ];
 };
 

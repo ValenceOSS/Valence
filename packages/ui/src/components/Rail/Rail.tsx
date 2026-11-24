@@ -151,8 +151,19 @@ const Rail = ({
           {onOpenTitle === undefined ? (
             title
           ) : (
-            <Button variant="link" size="none" onClick={onOpenTitle} className="text-start">
+            <Button
+              variant="link"
+              size="none"
+              onClick={onOpenTitle}
+              className="group/title inline-flex items-center gap-1 text-start"
+            >
               {title}
+              <Icon
+                of={ChevronRightIcon}
+                size={20}
+                tone="muted"
+                className="transition-transform group-hover/title:translate-x-0.5"
+              />
             </Button>
           )}
 

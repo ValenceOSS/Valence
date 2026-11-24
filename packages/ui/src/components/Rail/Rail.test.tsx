@@ -179,6 +179,20 @@ describe('Rail', () => {
     expect(onOpenTitle).toHaveBeenCalledOnce();
   });
 
+  it('draws an arrow after a heading that opens something, and none after one that does not', () => {
+    const { container, rerender } = render(
+      <Rail title="Drama" onOpenTitle={vi.fn()}>
+        {items}
+      </Rail>,
+    );
+
+    expect(container.querySelector('h2 button [aria-hidden="true"]')).not.toBeNull();
+
+    rerender(<Rail title="Drama">{items}</Rail>);
+
+    expect(container.querySelector('h2 [aria-hidden="true"]')).toBeNull();
+  });
+
   it('keeps the heading a heading, so the row is still found by its name', () => {
     render(
       <Rail title="A Sign of Affection · Season 1" onOpenTitle={vi.fn()}>

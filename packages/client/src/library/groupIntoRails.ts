@@ -6,10 +6,13 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { say } from '@ValenceI18n/say';
 
+type RailOpens = { section: 'films' | 'search'; filters: string };
+
 type Rail = {
   id: string;
   title: string;
   items: MediaSummary[];
+  opens?: RailOpens;
   showOf?: MediaSummary;
   standsForShows?: boolean;
 };
@@ -139,6 +142,6 @@ const groupIntoRails = (
   return rails;
 };
 
-export type { Rail };
+export type { Rail, RailOpens };
 
 export { groupIntoRails, inBroadcastOrder, RESUMING };

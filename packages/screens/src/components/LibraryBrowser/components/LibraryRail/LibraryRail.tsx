@@ -22,6 +22,7 @@ const EAGER_CARDS = 8;
  * @param props.onPlayShow - Plays the programme a card stands for.
  * @param props.onInspect - Opens a title's page.
  * @param props.onOpenShow - Opens a programme's page.
+ * @param props.onOpenRail - Opens the fuller page a row was drawn from, such as a genre's.
  * @param props.isKept - Whether a title is kept.
  * @param props.onToggleKept - Keeps a title, or lets it go.
  * @param props.onHide - Hides a title.
@@ -36,12 +37,23 @@ const LibraryRailFace = ({
   onPlayShow,
   onInspect,
   onOpenShow,
+  onOpenRail,
   isKept,
   onToggleKept,
   onHide,
   onDismiss,
 }: LibraryRailProps) => {
-  const { showOf, standsForShows = false } = rail;
+  const { showOf, opens, standsForShows = false } = rail;
+  const openTitle =
+    showOf !== undefined && onOpenShow !== undefined
+      ? () => {
+          onOpenShow(showOf);
+        }
+      : opens !== undefined && onOpenRail !== undefined
+        ? () => {
+            onOpenRail(opens);
+          }
+        : undefined;
 
   return (
     <DrawnWhenNear>
@@ -50,13 +62,7 @@ const LibraryRailFace = ({
           title={rail.title}
           sizesCards
           className="-mx-4 sm:-mx-6"
-          {...(showOf === undefined || onOpenShow === undefined
-            ? {}
-            : {
-                onOpenTitle: () => {
-                  onOpenShow(showOf);
-                },
-              })}
+          {...(openTitle === undefined ? {} : { onOpenTitle: openTitle })}
         >
           {rail.items.map((media, at) => {
             const isShow = isHome && standsForShows && showIdOf(media) !== null;
@@ -105,6 +111,8 @@ const drawsTheSame = (before: LibraryRailProps, now: LibraryRailProps): boolean 
   before.rail.id === now.rail.id &&
   before.rail.title === now.rail.title &&
   before.rail.showOf === now.rail.showOf &&
+  before.rail.opens?.section === now.rail.opens?.section &&
+  before.rail.opens?.filters === now.rail.opens?.filters &&
   before.rail.standsForShows === now.rail.standsForShows &&
   before.isHome === now.isHome &&
   before.progress === now.progress &&
@@ -112,6 +120,7 @@ const drawsTheSame = (before: LibraryRailProps, now: LibraryRailProps): boolean 
   before.onPlayShow === now.onPlayShow &&
   before.onInspect === now.onInspect &&
   before.onOpenShow === now.onOpenShow &&
+  before.onOpenRail === now.onOpenRail &&
   before.onToggleKept === now.onToggleKept &&
   before.onHide === now.onHide &&
   before.onDismiss === now.onDismiss &&

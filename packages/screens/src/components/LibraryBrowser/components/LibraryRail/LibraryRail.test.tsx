@@ -67,6 +67,31 @@ describe('LibraryRail', () => {
     expect(onOpenShow).toHaveBeenCalledWith(show);
   });
 
+  it('opens the page a row was drawn from from its title, where it leads somewhere', async () => {
+    const opens = { section: 'search', filters: 'genre:Drama' } as const;
+    const { onOpenRail } = draw({
+      rail: { id: 'genre:Drama', title: 'Drama', items: [ARRIVAL, ALIEN], opens },
+      onOpenRail: vi.fn(),
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Drama' }));
+
+    expect(onOpenRail).toHaveBeenCalledWith(opens);
+  });
+
+  it('keeps the title plain where the page does not open rows', () => {
+    draw({
+      rail: {
+        id: 'genre:Drama',
+        title: 'Drama',
+        items: [ARRIVAL, ALIEN],
+        opens: { section: 'search', filters: 'genre:Drama' },
+      },
+    });
+
+    expect(screen.queryByRole('button', { name: 'Drama' })).toBeNull();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(LibraryRail.displayName).toBe('LibraryRail');
   });
