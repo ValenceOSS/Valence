@@ -20,6 +20,7 @@ import {
 import { Heart, Pause, Play, SkipBack, SkipForward } from '@keyline-icons/react-native/fill';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { describeAudioQuality } from '@ValenceClient/music/describeAudioQuality';
+import { howTheFileSounds } from '@ValenceClient/music/howTheFileSounds';
 import { upcomingIn } from '@ValenceClient/music/playQueue';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
@@ -42,6 +43,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { DevicesPanel } from './components/DevicesPanel/DevicesPanel';
 import { LyricLines } from './components/LyricLines/LyricLines';
+import { Marquee } from './components/Marquee/Marquee';
 import { Scrubber } from '@ValenceTv/components/Scrubber/Scrubber';
 import { QueuePanel } from './components/QueuePanel/QueuePanel';
 import { SoundPanel } from './components/SoundPanel/SoundPanel';
@@ -83,9 +85,10 @@ const HEART = 72;
  * What is playing, filling the screen as the television's own music app fills it: the whole screen
  * lit by the song's cover, the cover itself with the song's name and who sings it, how far through
  * it is, and the controls — shuffle, back, play, on, repeat, and beneath them the words, what plays
- * next and the devices to play on. Beside the name is a heart for liking it, which stays as the
- * controls fade though its ring goes with them, and beneath it how the song is being heard —
- * lossless, and how finely, or the encode it has been sent as.
+ * next, the devices to play on and the quality to stream at. Beside the name is a heart for liking
+ * it, which stays as the controls fade though its ring goes with them, and beneath it how the song
+ * is being heard, in solid badges — lossless or hi-res, and how finely, or the encode it has been
+ * sent as. A name, or who sings it, too long for its room slides along to show the rest of itself.
  *
  * Where the song has words they fill the right of the screen, timed to the song where they can be;
  * without them, or with them turned off, the cover sits in the middle on its own. Left alone a few
@@ -261,13 +264,15 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
   const columnWidth = isBesideWords ? BESIDE_WORDS : ALONE;
   const coverSize = Math.max(Math.min(columnWidth, room), SMALLEST_COVER);
   const playingFile = state.remote === null ? state.current : null;
+  const isSentWhole = (state.playingQuality ?? state.quality) === 'lossless';
   const quality =
     playingFile === null
       ? []
       : [
-          describeAudioQuality(state.playingQuality ?? state.quality, playingFile).label,
+          howTheFileSounds(playingFile, isSentWhole) ??
+            describeAudioQuality(state.playingQuality ?? state.quality, playingFile).label,
           ...(playingFile.isLossless &&
-          (state.playingQuality ?? state.quality) === 'lossless' &&
+          isSentWhole &&
           playingFile.bitDepth !== null &&
           playingFile.sampleRate !== null
             ? [
@@ -275,6 +280,8 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
               ]
             : []),
         ];
+  const sungBy = shown.artists.map((artist) => artist.name).join(', ');
+  const whoAndWhere = shown.albumTitle === null ? sungBy : `${sungBy} — ${shown.albumTitle}`;
   const settles = (controlsHeight + tokens.space.lg) / 2;
   const controls = listenerControls(listening, shown, player);
   const { isFollowing } = controls;
@@ -341,9 +348,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
             >
               <View style={styles.titled}>
                 <View style={styles.titleWords}>
-                  <Text numberOfLines={1} style={styles.title}>
-                    {shown.title}
-                  </Text>
+                  <Marquee text={shown.title} style={styles.title} />
                 </View>
                 <View style={styles.heart}>
                   <Button
@@ -366,13 +371,10 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
                   />
                 </View>
               </View>
-              <Text numberOfLines={1} style={styles.artists}>
-                {shown.artists.map((artist) => artist.name).join(', ')}
-                {shown.albumTitle === null ? '' : ` — ${shown.albumTitle}`}
-              </Text>
+              <Marquee text={whoAndWhere} style={styles.artists} />
               {quality.length === 0 ? null : (
                 <View style={styles.badges}>
-                  <Badges badges={quality} />
+                  <Badges badges={quality} isSolid />
                 </View>
               )}
               {state.remote === null ? null : (
@@ -496,7 +498,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={say('common.audio')}
+                label={say('common.quality')}
                 icon={SlidersHorizontal}
                 variant="ghost"
                 size="md"

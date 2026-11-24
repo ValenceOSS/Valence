@@ -41321,9 +41321,19 @@
     "context": "The detail in the music of the television app (from `albumItem`). {name} is filled in by the app."
   },
   {
+    "handler": "tv.music.albumsYouMightLike",
+    "text": "Albums you might like",
+    "context": "The heading over a shelf on the front of the music section of the television app, of albums in the library by the artists and in the genres the viewer plays, that they have not played yet."
+  },
+  {
     "handler": "tv.music.playlistItem.playlistName",
     "text": "Soittolista • {name}",
     "context": "Shown in the music of the television app (from `playlistItem`). {name} is filled in by the app."
+  },
+  {
+    "handler": "tv.music.yourTopArtists",
+    "text": "Your top artists",
+    "context": "The heading over a shelf on the front of the music section of the television app, of the artists the viewer plays most, then the ones they follow."
   },
   {
     "handler": "tv.musicCollection.useCollection.songsValueHrValue2Min",
@@ -41499,6 +41509,11 @@
     "handler": "tv.player.startedFromLabel",
     "text": "Aloitettu laitteelta {label}",
     "context": "Said for a moment at the top of the television's player when a phone or another device started the film on it. {label} is that device's own name, such as Dan's iPhone."
+  },
+  {
+    "handler": "tv.player.streamStats.bitrateOverTime",
+    "text": "Bitrate over the last minute",
+    "context": "Stats for nerds in the player of the television app: read out to anybody who cannot see the chart of the stream's bitrate."
   },
   {
     "handler": "tv.player.streamStats.bufferedAhead",
@@ -41699,6 +41714,41 @@
     "handler": "tv.trackRow.smartShuffle",
     "text": "Älysekoitus · ",
     "context": "Shown in the track row of the television app."
+  },
+  {
+    "handler": "tv.watchHistory.clearYourWatchHistory",
+    "text": "Clear your watch history?",
+    "context": "The question the TV asks before clearing everything on the watch history page."
+  },
+  {
+    "handler": "tv.watchHistory.everythingYouHaveWatchedIsRemoved",
+    "text": "Everything you’ve watched is removed from your history. Where you got to in each film and series is kept.",
+    "context": "Explains, under the question before clearing the TV's watch history, what clearing it does and does not remove."
+  },
+  {
+    "handler": "tv.watchHistory.historyChoices.goToTheFilm",
+    "text": "Go to the film",
+    "context": "A choice in the TV's watch history: opens the page of the film that was watched."
+  },
+  {
+    "handler": "tv.watchHistory.historyChoices.goToTheShow",
+    "text": "Go to the show",
+    "context": "A choice in the TV's watch history: opens the page of the series that was watched."
+  },
+  {
+    "handler": "tv.watchHistory.historyChoices.playTheNextEpisode",
+    "text": "Play the next episode",
+    "context": "A choice in the TV's watch history, on a series whose last watched episode was finished: plays the episode after it."
+  },
+  {
+    "handler": "tv.watchHistory.historyChoices.removeFromHistory",
+    "text": "Remove from history",
+    "context": "A choice in the TV's watch history: removes this film or series from the viewer's watch history."
+  },
+  {
+    "handler": "tv.watchHistory.whatYouWatchShowsUpHere",
+    "text": "What you watch shows up here, so you can pick up where you left off.",
+    "context": "What the TV's watch history page says when nothing has been watched yet."
   },
   {
     "handler": "tv.whoIsWatching.copyrightAddress",

@@ -152,6 +152,31 @@ describe('useFreshFromTheSocket', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['profiles'] });
   });
 
+  it('reads again what the profile keeps and its liked songs when it changes on another screen', () => {
+    const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
+    const socket = aSocket();
+
+    listening(socket);
+    socket.say('profile', { ...ANYTHING, topic: 'profile', payload: { event: 'favourites' } });
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['viewing', 'favourites'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['viewing', 'keptBooks'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: musicQueries.liked().queryKey });
+    expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['session'] });
+    expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['profiles'] });
+  });
+
+  it('reads the session again for any other news of the profile', () => {
+    const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
+    const socket = aSocket();
+
+    listening(socket);
+    socket.say('profile', { ...ANYTHING, topic: 'profile', payload: { changed: true } });
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['session'] });
+    expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['viewing', 'favourites'] });
+  });
+
   it('asks again who is signed in when an administrator stops this tab, and not for anything else', () => {
     const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
     const socket = aSocket();

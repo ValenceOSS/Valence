@@ -75,7 +75,7 @@ Topics are split into viewer feeds, which any signed in account may hear, and ad
 | --------------- | ------ | ----------------- | ---------------------------------------------------------------------------------------------- |
 | `media`         | Viewer | None              | Library changes, such as `{"added": 4}` or `{"event":"changed","mediaId":"..."}`               |
 | `notifications` | Viewer | None              | A notification arrived for this account, such as `{"event":"media.added"}`                     |
-| `profile`       | Viewer | None              | This account's profile or settings changed                                                     |
+| `profile`       | Viewer | None              | Profiles or settings changed, or `{"event":"favourites"}`: what this profile keeps changed     |
 | `presence`      | Viewer | None              | Control events aimed at a tab, such as stopped, paused, resumed, a message or a music command  |
 | `playback`      | Viewer | None              | Playback related changes, such as music devices changing                                       |
 | `party`         | Viewer | None              | Watch and listening party state and commands                                                   |
@@ -165,7 +165,7 @@ export { useWhenMediaChanges };
 
 The client counts listeners per topic. The first listener sends `subscribe`, and removing the last one sends `unsubscribe`, so a feed nobody is watching costs nothing on the server.
 
-In practice you rarely subscribe by hand. `useFreshFromTheSocket` in `packages/client/src/query` turns socket events into TanStack Query invalidations: `media` invalidates library and music queries, `notifications` the notification queries, `profile` the session queries, `requests` the request queries, `sessions` the admin queries, and a `presence` event that stops the tab re-reads who is signed in. The socket replaces polling intervals. Being told beats guessing.
+In practice you rarely subscribe by hand. `useFreshFromTheSocket` in `packages/client/src/query` turns socket events into TanStack Query invalidations: `media` invalidates library and music queries, `notifications` the notification queries, `profile` the session queries (or, for `{"event":"favourites"}`, what the profile keeps and its liked songs), `requests` the request queries, `sessions` the admin queries, and a `presence` event that stops the tab re-reads who is signed in. The socket replaces polling intervals. Being told beats guessing.
 
 ### Identity
 

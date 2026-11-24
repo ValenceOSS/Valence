@@ -9,6 +9,9 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { announcementQueries } from '@ValenceClient/query/announcementQueries';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { ProfileNewsSchema } from '@ValenceClient/query/ProfileNewsSchema';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import { PresenceEventSchema } from '@ValenceClient/presence/PresenceEventSchema';
 import { gatherMediaNews } from '@ValenceClient/query/gatherMediaNews';
@@ -25,9 +28,10 @@ const MEDIA_WAITS_AT_MOST_MS = 12_000;
  * Throws away what the server has just said is out of date, gathering a run of media events into
  * one refresh once they settle and refreshing only what they name.
  *
- * Each topic throws away only what it says something about. A reconnection asks again for whatever
- * is on screen and already stale, since it missed whatever happened while it was gone; what is
- * fresh, or already being asked for, is left alone.
+ * Each topic throws away only what it says something about, so a profile's favourites changing on
+ * another screen reads again what it keeps and its liked songs rather than the session. A
+ * reconnection asks again for whatever is on screen and already stale, since it missed whatever
+ * happened while it was gone; what is fresh, or already being asked for, is left alone.
  *
  * @param client - Whatever says what changed, which is the shared socket, or `null` where there is
  *   nobody signed in yet to hear about a change, which listens for nothing.
@@ -79,7 +83,15 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
         }
       }),
 
-      client.subscribe('profile', () => {
+      client.subscribe('profile', (event) => {
+        if (ProfileNewsSchema.safeParse(event.payload).success) {
+          void cache.invalidateQueries({ queryKey: [...viewingQueries.key, 'favourites'] });
+          void cache.invalidateQueries({ queryKey: [...viewingQueries.key, 'keptBooks'] });
+          void cache.invalidateQueries({ queryKey: musicQueries.liked().queryKey });
+
+          return;
+        }
+
         void cache.invalidateQueries({ queryKey: sessionQueries.key });
         void cache.invalidateQueries({ queryKey: profileQueries.key });
       }),

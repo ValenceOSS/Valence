@@ -233,4 +233,33 @@ describe('useCollection', () => {
       showsAlbum: true,
     });
   });
+
+  it('reads a mix Valence made as its songs, saying what it is made of, played as a list of songs', async () => {
+    const tracks = [aTrack(1, { durationSeconds: 200 }), aTrack(2, { durationSeconds: 250 })];
+    const collection = await read({ kind: 'mix', id: 'daily-1' }, (cache) => {
+      cache.setQueryData(musicQueries.mix('daily-1').queryKey, {
+        id: 'daily-1',
+        kind: 'daily',
+        title: 'Daily Mix 1',
+        detail: 'Sleep Token and more',
+        trackCount: 2,
+        coverAlbumIds: [ALBUM_ID],
+        faces: [],
+        tracks,
+      });
+    });
+
+    expect(collection?.item).toEqual(
+      expect.objectContaining({ kind: 'mix', id: 'daily-1', title: 'Daily Mix 1' }),
+    );
+    expect(collection).toMatchObject({
+      by: null,
+      facts: 'Sleep Token and more · 2 songs, 8 min',
+      tracks,
+      albums: [],
+      source: { kind: 'tracks', id: 'daily-1', name: 'Daily Mix 1' },
+      isOrdered: false,
+      showsAlbum: true,
+    });
+  });
 });

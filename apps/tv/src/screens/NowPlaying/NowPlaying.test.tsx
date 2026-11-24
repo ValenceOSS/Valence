@@ -10,6 +10,7 @@ import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
 import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
 import { aFakeMusicPlayer } from '@ValenceTv/testing/aFakeMusicPlayer';
+import { tokens } from '@ValenceTv/theme/tokens';
 import type { MusicPlayer, MusicPlayerState } from '@ValenceClient/music/createMusicPlayer';
 import type { PlayQueue } from '@ValenceClient/music/playQueue';
 import type { Lyrics } from '@ValenceContracts/schemas/Music';
@@ -189,6 +190,35 @@ describe('NowPlaying', () => {
     expect(drawn.getByText('Sleep Token — Even In Arcadia')).toBeTruthy();
     expect(drawn.getByText('Lossless')).toBeTruthy();
     expect(drawn.getByText('24-bit · 44.1 kHz')).toBeTruthy();
+  });
+
+  it('marks how the song is heard with solid badges', async () => {
+    aPlayer({ current: SONG, queue: QUEUE });
+
+    const drawn = await draw();
+
+    expect(drawn.getByText('Lossless')).toHaveStyle({ color: tokens.colours.canvas });
+    expect(drawn.getByText('24-bit · 44.1 kHz')).toHaveStyle({ color: tokens.colours.canvas });
+  });
+
+  it('calls a file finer than 48 kHz hi-res, as the phone does', async () => {
+    const fine = { ...SONG, sampleRate: 96_000 };
+
+    aPlayer({ current: fine, queue: { ...QUEUE, tracks: [fine] } });
+
+    const drawn = await draw();
+
+    expect(drawn.getByText('Hi-Res Lossless')).toBeTruthy();
+  });
+
+  it('opens the streaming quality to choose another', async () => {
+    const { player } = aPlayer({ current: SONG, queue: QUEUE });
+    const drawn = await draw();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Quality' }));
+    await userEvent.press(drawn.getByText('Data saver'));
+
+    expect(player.setQuality).toHaveBeenCalledWith('low');
   });
 
   it('names the encode rather than the file when a smaller quality is being sent', async () => {
