@@ -136,13 +136,23 @@ describe('GET /api/account/permissions', () => {
   });
 
   it('names what a viewer was granted, without calling them an administrator', async () => {
-    const answer = await askWhatIMayDo(['library.create', 'server.logs']);
+    const answer = await askWhatIMayDo(['library.edit', 'server.monitor']);
 
     expect(answer.status).toBe(200);
     expect(answer.body?.isAdministrator).toBe(false);
     expect(answer.body?.permissions).toStrictEqual(
-      expect.arrayContaining(['library.create', 'server.logs']),
+      expect.arrayContaining(['library.edit', 'server.monitor']),
     );
+  });
+
+  it('names a held permission by every name it once had, so an older app still sees it', async () => {
+    const answer = await askWhatIMayDo(['media.override', 'server.monitor']);
+
+    expect(answer.body?.permissions).toStrictEqual(
+      expect.arrayContaining(['media.rescan', 'media.artwork', 'media.hide', 'server.logs']),
+    );
+    expect(answer.body?.permissions).not.toContain('jobs.schedule');
+    expect(answer.body?.permissions).not.toContain('account.ban');
   });
 
   it('says an administrator is one, which is what the admin menu is gated on', async () => {

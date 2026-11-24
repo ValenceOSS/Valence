@@ -12,7 +12,7 @@ type HandOverTo = {
  * Notes in the log that a password reset was asked for, emails the link, and gives the link itself
  * to whoever runs the server only where it was not emailed, on the console alone.
  *
- * The log is read in the admin area by anybody holding `server.logs`, which a Manager does, and a
+ * The log is read in the admin area by anybody holding `server.monitor`, which a Manager does, and a
  * reset can be asked for on anybody's behalf: a link written there would let a Manager reset the
  * administrator's password. The console is only read by whoever runs the machine. An email that
  * fails by throwing rather than by saying so still leaves the link on the console.

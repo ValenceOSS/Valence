@@ -28,6 +28,6 @@ describe('nodesHeldBy', () => {
       'sync',
       'import',
     ]);
-    expect(nodesHeldBy(MANIFEST, new Set<GrantedPermission>(['library.create']))).toEqual([]);
+    expect(nodesHeldBy(MANIFEST, new Set<GrantedPermission>(['library.edit']))).toEqual([]);
   });
 });

@@ -14,8 +14,20 @@ import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemo
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 
 const RoleListSchema = z.object({
-  roles: z.array(z.object({ id: z.string(), name: z.string(), position: z.number() })),
+  roles: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      position: z.number(),
+      permissions: z.array(z.string()),
+    }),
+  ),
+  outOfReach: z.array(z.string()),
 });
+
+const RoleSchema = z.object({ id: z.string(), permissions: z.array(z.string()) });
+
+const RefusalSchema = z.object({ code: z.string().nullable() });
 
 const AccountSchema = z.object({
   roles: z.array(z.object({ name: z.string() })),
@@ -116,14 +128,151 @@ describe('managing roles over HTTP', () => {
     expect(body.permissions).toContain('administrator');
   });
 
+  describe('what the list says is out of reach', () => {
+    it('is nothing for the owner', async () => {
+      const context = await signedInWith(['administrator']);
+      const body = RoleListSchema.parse(await (await context.request('/api/admin/roles')).json());
+
+      expect(body.outOfReach).toEqual([]);
+    });
+
+    it('is every role at or above the asker’s highest, for anybody else', async () => {
+      const context = await signedInWith(['account.roles'], 150);
+      const body = RoleListSchema.parse(await (await context.request('/api/admin/roles')).json());
+
+      expect(body.outOfReach).toEqual([
+        await idOf(context, 'Administrator'),
+        await idOf(context, 'Manager'),
+        await idOf(context, 'Purpose-made'),
+      ]);
+    });
+  });
+
+  describe('putting them in order', () => {
+    const namesIn = async (response: Response) =>
+      RoleListSchema.parse(await response.json()).roles.map((role) => role.name);
+
+    it('lets the owner put every role where they like', async () => {
+      const context = await signedInWith(['administrator']);
+      const ids = await Promise.all(
+        ['Administrator', 'Member', 'Manager', 'Restricted'].map((name) => idOf(context, name)),
+      );
+
+      const response = await context.request('/api/admin/roles/order', 'PUT', { ids });
+
+      expect(response.status).toBe(200);
+      expect(await namesIn(response)).toEqual(['Administrator', 'Member', 'Manager', 'Restricted']);
+    });
+
+    it('lets anybody else reorder the roles below their own, keeping the rest where they were', async () => {
+      const context = await signedInWith(['account.roles'], 150);
+      const ids = await Promise.all(
+        ['Administrator', 'Manager', 'Purpose-made', 'Restricted', 'Member'].map((name) =>
+          idOf(context, name),
+        ),
+      );
+
+      const response = await context.request('/api/admin/roles/order', 'PUT', { ids });
+
+      expect(response.status).toBe(200);
+      expect(await namesIn(response)).toEqual([
+        'Administrator',
+        'Manager',
+        'Purpose-made',
+        'Restricted',
+        'Member',
+      ]);
+      expect((await context.permissions.listRoles()).map((role) => role.position)).toEqual([
+        300, 200, 150, 1, 0,
+      ]);
+    });
+
+    it('refuses an order that is not every role there is now', async () => {
+      const context = await signedInWith(['administrator']);
+      const ids = await Promise.all(
+        ['Administrator', 'Manager', 'Member'].map((name) => idOf(context, name)),
+      );
+
+      const response = await context.request('/api/admin/roles/order', 'PUT', { ids });
+
+      expect(response.status).toBe(409);
+      expect(RefusalSchema.parse(await response.json()).code).toBe(
+        'error.role.theRolesChangedWhileYouWere',
+      );
+    });
+
+    it('refuses to move a role at or above the asker’s own', async () => {
+      const context = await signedInWith(['account.roles'], 150);
+      const ids = await Promise.all(
+        ['Administrator', 'Purpose-made', 'Manager', 'Member', 'Restricted'].map((name) =>
+          idOf(context, name),
+        ),
+      );
+
+      const response = await context.request('/api/admin/roles/order', 'PUT', { ids });
+
+      expect(response.status).toBe(403);
+      expect((await context.permissions.listRoles()).map((role) => role.name)).toEqual([
+        'Administrator',
+        'Manager',
+        'Purpose-made',
+        'Member',
+        'Restricted',
+      ]);
+    });
+
+    it('refuses somebody without account.roles', async () => {
+      const context = await signedInWith(['jobs.run']);
+      const ids = (await context.permissions.listRoles()).map((role) => role.id);
+
+      expect((await context.request('/api/admin/roles/order', 'PUT', { ids })).status).toBe(403);
+    });
+  });
+
   describe('creating one', () => {
+    it('puts a role made without a place at the bottom', async () => {
+      const context = await signedInWith(['administrator']);
+      const response = await context.request('/api/admin/roles', 'POST', {
+        name: 'Guest',
+        color: null,
+        permissions: [],
+      });
+
+      expect(response.status).toBe(201);
+      expect(
+        (await context.permissions.listRoles()).map((role) => [role.name, role.position]),
+      ).toEqual([
+        ['Administrator', 301],
+        ['Manager', 201],
+        ['Member', 101],
+        ['Restricted', 1],
+        ['Guest', 0],
+      ]);
+    });
+
+    it('takes a permission by a name since retired, as the one it became', async () => {
+      const context = await signedInWith(['administrator']);
+      const response = await context.request('/api/admin/roles', 'POST', {
+        name: 'Housemate',
+        position: 120,
+        color: null,
+        permissions: ['media.hide', 'server.logs'],
+      });
+
+      expect(response.status).toBe(201);
+      expect(RoleSchema.parse(await response.json()).permissions).toEqual([
+        'media.override',
+        'server.monitor',
+      ]);
+    });
+
     it('creates a role and grants it', async () => {
       const context = await signedInWith(['administrator']);
       const response = await context.request('/api/admin/roles', 'POST', {
         name: 'Housemate',
         position: 120,
         color: null,
-        permissions: ['media.rescan'],
+        permissions: ['media.override'],
       });
 
       expect(response.status).toBe(201);
@@ -176,7 +325,7 @@ describe('managing roles over HTTP', () => {
       const response = await context.request(
         `/api/admin/roles/${await idOf(context, 'Member')}`,
         'PATCH',
-        { permissions: ['media.hide'] },
+        { permissions: ['media.override'] },
       );
 
       expect(response.status).toBe(200);
@@ -191,6 +340,42 @@ describe('managing roles over HTTP', () => {
       );
 
       expect(response.status).toBe(404);
+    });
+
+    it('lets a role keep a permission the actor lacks while its others change', async () => {
+      const context = await signedInWith(['account.roles', 'jobs.run'], 150);
+      const helper = await context.permissions.createRole({
+        name: 'Helper',
+        position: 10,
+        color: null,
+        permissions: ['server.settings'],
+      });
+
+      const response = await context.request(`/api/admin/roles/${helper.id}`, 'PATCH', {
+        permissions: ['server.settings', 'jobs.run'],
+      });
+
+      expect(response.status).toBe(200);
+      expect(RoleSchema.parse(await response.json()).permissions).toEqual([
+        'server.settings',
+        'jobs.run',
+      ]);
+    });
+
+    it('still refuses to add a permission the actor lacks to a role', async () => {
+      const context = await signedInWith(['account.roles', 'jobs.run'], 150);
+      const helper = await context.permissions.createRole({
+        name: 'Helper',
+        position: 10,
+        color: null,
+        permissions: ['server.settings'],
+      });
+
+      const response = await context.request(`/api/admin/roles/${helper.id}`, 'PATCH', {
+        permissions: ['server.settings', 'server.backup'],
+      });
+
+      expect(response.status).toBe(403);
     });
 
     it('refuses to let somebody lift a role above themselves', async () => {
@@ -323,12 +508,25 @@ describe('managing roles over HTTP', () => {
     it('records an override', async () => {
       const context = await signedInWith(['administrator']);
       const response = await context.request(`/api/admin/accounts/usr_other/overrides`, 'PUT', {
+        permission: 'server.monitor',
+        effect: 'allow',
+      });
+
+      expect(response.status).toBe(204);
+      expect((await context.permissions.resolve('usr_other')).has('server.monitor')).toBe(true);
+    });
+
+    it('records an override given under a name since retired, as the one it became', async () => {
+      const context = await signedInWith(['administrator']);
+      const response = await context.request(`/api/admin/accounts/usr_other/overrides`, 'PUT', {
         permission: 'server.logs',
         effect: 'allow',
       });
 
       expect(response.status).toBe(204);
-      expect((await context.permissions.resolve('usr_other')).has('server.logs')).toBe(true);
+      expect(await context.permissions.overridesFor('usr_other')).toEqual([
+        { permission: 'server.monitor', effect: 'allow' },
+      ]);
     });
 
     it('refuses an allow for something the actor does not hold', async () => {
@@ -357,7 +555,7 @@ describe('managing roles over HTTP', () => {
       const context = await signedInWith(['administrator']);
 
       await context.request(`/api/admin/accounts/usr_other/overrides`, 'PUT', {
-        permission: 'server.logs',
+        permission: 'server.monitor',
         effect: 'allow',
       });
 
@@ -367,7 +565,7 @@ describe('managing roles over HTTP', () => {
       );
 
       expect(response.status).toBe(204);
-      expect((await context.permissions.resolve('usr_other')).has('server.logs')).toBe(false);
+      expect((await context.permissions.resolve('usr_other')).has('server.monitor')).toBe(false);
     });
 
     it('says nothing was there rather than failing, since the end state is what was asked for', async () => {
@@ -403,7 +601,7 @@ describe('managing roles over HTTP', () => {
 
       await context.permissions.assignRole('usr_other', senior.id);
       await context.permissions.setOverride('usr_other', {
-        permission: 'server.logs',
+        permission: 'server.monitor',
         effect: 'deny',
       });
 

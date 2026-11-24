@@ -537,7 +537,7 @@ describe('createRealtimeHandler', () => {
   });
 
   it('lets an entitled connection take the admin feed', async () => {
-    const world = createWorld(['server.logs']);
+    const world = createWorld(['server.monitor']);
     const session = world.handler.open({ accountId: 'admin', profileId: null }, world.socket);
 
     await session.receive(JSON.stringify({ kind: 'subscribe', topics: ['logs'] }));

@@ -20,10 +20,13 @@ vi.mock('@ValenceClient/requests/fetchProfiles', () => ({
 vi.mock('@ValenceClient/admin/fetchRoles', async (actual) => ({
   ...(await actual<object>()),
   fetchRoles: () =>
-    Promise.resolve([
-      { id: 'trusted', name: 'Trusted', position: 200, permissions: [], color: null },
-      { id: 'household', name: 'Household', position: 100, permissions: [], color: null },
-    ]),
+    Promise.resolve({
+      roles: [
+        { id: 'trusted', name: 'Trusted', position: 200, permissions: [], color: null },
+        { id: 'household', name: 'Household', position: 100, permissions: [], color: null },
+      ],
+      outOfReach: [],
+    }),
 }));
 
 vi.mock('@ValenceClient/admin/fetchAccounts', () => ({

@@ -1,8 +1,10 @@
 import { checkRoleChange } from '@ValenceServer/auth/checkRoleChange';
+import { placeRoles } from '@ValenceServer/auth/placeRoles';
 import { PERMISSIONS } from '@ValenceContracts/schemas/Permission';
 import {
   listPermissionsRoute,
   listRolesRoute,
+  orderRolesRoute,
   createRoleRoute,
   updateRoleRoute,
   deleteRoleRoute,
@@ -55,12 +57,64 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     );
   });
 
+  /**
+   * Every role, highest first, with those at or above the actor's own highest role named.
+   *
+   * @param actor - Who is asking, and how senior they are.
+   * @returns The roles and which of them are out of the actor's reach.
+   */
+  const rolesAsSeenBy = async (actor: { id: string; highestPosition: number | null }) => {
+    const roles = await permissions.listRoles();
+    const isOwner = actor.id === (await theOwner());
+
+    return {
+      roles,
+      outOfReach: isOwner
+        ? []
+        : roles
+            .filter(
+              (role) => actor.highestPosition === null || role.position >= actor.highestPosition,
+            )
+            .map((role) => role.id),
+    };
+  };
+
   app.openapi(listRolesRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'account.roles'))) {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.roles')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    return context.json({ roles: await permissions.listRoles() }, 200);
+    return context.json(await rolesAsSeenBy(actor), 200);
+  });
+
+  app.openapi(orderRolesRoute, async (context) => {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.roles')) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const placed = placeRoles({
+      roles: await permissions.listRoles(),
+      ids: context.req.valid('json').ids,
+      isOwner: actor.id === (await theOwner()),
+      actorHighestPosition: actor.highestPosition,
+    });
+
+    if (placed === 'stale') {
+      return context.json(refuse('error.role.theRolesChangedWhileYouWere'), 409);
+    }
+
+    if (placed === 'outranked') {
+      return context.json(describeRefusal('outranked'), 403);
+    }
+
+    await permissions.rankRoles(placed);
+    await recordAudit(context, 'role.changed', null, { change: 'order' });
+
+    return context.json(await rolesAsSeenBy(actor), 200);
   });
 
   app.openapi(createRoleRoute, async (context) => {
@@ -76,7 +130,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
       ownerId: await theOwner(),
       actorHighestPosition: actor.highestPosition,
       actorPermissions: actor.permissions,
-      targetPosition: body.position,
+      targetPosition: body.position ?? 0,
       granting: body.permissions,
     });
 
@@ -84,7 +138,17 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(describeRefusal(refusal), 403);
     }
 
-    const created = await permissions.createRole({ ...body, color: body.color ?? null });
+    if (body.position === undefined) {
+      const existing = await permissions.listRoles();
+
+      await permissions.rankRoles(new Map(existing.map((role) => [role.id, role.position + 1])));
+    }
+
+    const created = await permissions.createRole({
+      ...body,
+      position: body.position ?? 0,
+      color: body.color ?? null,
+    });
 
     await recordAudit(context, 'role.created', created.name);
 
@@ -112,7 +176,9 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
       actorHighestPosition: actor.highestPosition,
       actorPermissions: actor.permissions,
       targetPosition: Math.max(existing.position, body.position ?? existing.position),
-      granting: body.permissions ?? [],
+      granting: (body.permissions ?? []).filter(
+        (permission) => !existing.permissions.includes(permission),
+      ),
     });
 
     if (refusal !== null) {

@@ -1,5 +1,5 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signUpForTest, signedInApp } from '@ValenceServer/auth/signUpForTest';
@@ -19,6 +19,8 @@ import { z } from 'zod';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { Logger } from '@ValenceServer/logging/Logger';
+import type { PlaybackService } from './PlaybackService';
+import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 
 const ExplainSchema = z.object({ mode: z.string(), plan: PlaybackPlanSchema });
 
@@ -1557,5 +1559,139 @@ describe('telling presence what is being watched', () => {
       error: 'ffmpeg would not start',
       problem: 'unknown',
     });
+  });
+});
+
+/**
+ * An administrator held to a quality, over playback that notes what it was asked.
+ *
+ * @param maxQuality - The highest quality they may stream.
+ * @param fits - Whether a file served directly fits their limit.
+ * @returns The signed-in application and the playback behind it.
+ */
+const heldToAQuality = async (maxQuality: QualityStepId, fits = true) => {
+  const { auth, settings, store } = createMemoryAuth();
+  const permissions = createMemoryPermissionService();
+  const memory = createMemoryPlaybackService({
+    media: { [MEDIA_ID]: hdrMedia, [MODEST_MEDIA_ID]: modestMedia },
+    sessions: {},
+  });
+  const playback = {
+    ...memory,
+    explain: vi.fn<PlaybackService['explain']>(memory.explain),
+    start: vi.fn<PlaybackService['start']>(memory.start),
+    fitsLimit: vi.fn<PlaybackService['fitsLimit']>(() => Promise.resolve(fits)),
+  };
+
+  const app = signedInApp(
+    createApp({
+      auth,
+      settings,
+      permissions,
+      countUsers: () => Promise.resolve(1),
+      promoteToAdmin: () => Promise.resolve(null),
+      library: createMemoryLibraryService(),
+      subtitles: createMemorySubtitleService(),
+      segments: createMemorySegmentService(),
+      progress: createMemoryWatchProgressService(),
+      favourites: createMemoryFavouriteService(),
+      ratings: createMemoryRatingService(),
+      playback,
+    }),
+    { auth, store, permissions, isAdministrator: true },
+  );
+
+  await app.request(`${BASE}/api/account/stream-limit`);
+  await settings.write({
+    streamLimits: {
+      accounts: {
+        [store.user[0]?.id ?? '']: {
+          maxBitrateKbps: null,
+          maxStreams: null,
+          maxQuality,
+          limitsDownloads: false,
+        },
+      },
+      roles: {},
+    },
+  });
+
+  return { app, playback };
+};
+
+describe('somebody held to a quality', () => {
+  it('has a quality asked above it explained at the limit instead', async () => {
+    const { app, playback } = await heldToAQuality('720p');
+
+    await app.request(
+      post(`/api/playback/${MEDIA_ID}/explain`, {
+        deviceProfile: capableProfile,
+        requestedQuality: '2160p',
+      }),
+    );
+
+    expect(playback.explain).toHaveBeenCalledWith(MEDIA_ID, expect.anything(), '720p', undefined);
+  });
+
+  it('keeps a quality asked within it', async () => {
+    const { app, playback } = await heldToAQuality('720p');
+
+    await app.request(
+      post(`/api/playback/${MEDIA_ID}/explain`, {
+        deviceProfile: capableProfile,
+        requestedQuality: '480p',
+      }),
+    );
+
+    expect(playback.explain).toHaveBeenCalledWith(MEDIA_ID, expect.anything(), '480p', undefined);
+  });
+
+  it('starts at the limit, and tells playback the ceiling so no rung is offered above it', async () => {
+    const { app, playback } = await heldToAQuality('720p');
+
+    const response = await app.request(
+      post(`/api/playback/${MEDIA_ID}/session`, {
+        deviceProfile: capableProfile,
+        requestedQuality: '1080p',
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(playback.start.mock.calls[0]?.[4]).toBe('720p');
+    expect(playback.start.mock.calls[0]?.[14]).toBe('720p');
+  });
+
+  it('starts at the limit where no quality was asked for', async () => {
+    const { app, playback } = await heldToAQuality('1080p');
+
+    await app.request(post(`/api/playback/${MEDIA_ID}/session`, { deviceProfile: capableProfile }));
+
+    expect(playback.start.mock.calls[0]?.[4]).toBe('1080p');
+    expect(playback.start.mock.calls[0]?.[14]).toBe('1080p');
+  });
+
+  it('is refused a file served directly that is above it', async () => {
+    const { app, playback } = await heldToAQuality('720p', false);
+
+    const response = await app.request(`${BASE}/api/playback/${MEDIA_ID}/file`);
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      code: 'error.playback.thatIsAboveTheQualityYou',
+    });
+    expect(playback.fitsLimit).toHaveBeenCalledWith(
+      MEDIA_ID,
+      null,
+      expect.objectContaining({ maxQuality: '720p', maxBitrateKbps: null }),
+    );
+  });
+
+  it('is served a file directly that is within it', async () => {
+    const { app } = await heldToAQuality('2160p', true);
+
+    const response = await app.request(`${BASE}/api/playback/${MEDIA_ID}/file`);
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('film');
   });
 });

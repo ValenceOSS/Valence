@@ -1,3 +1,4 @@
+import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
 import { keptCopiesFor } from '@ValenceCore/functions/keptCopiesFor';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { isDirectPlay } from '@ValenceCore/functions/isDirectPlay';
@@ -258,6 +259,7 @@ const createPlaybackService = ({
       picksItsOwnSound,
       _refusedOrigins,
       audioLanguage,
+      qualityCeiling,
     ) => {
       const found = await media.findForPlayback(mediaId);
 
@@ -320,7 +322,7 @@ const createPlaybackService = ({
                 chooseSource({
                   sources: [candidate],
                   profile,
-                  requestedQuality: 'original',
+                  requestedQuality: qualityCeiling ?? 'original',
                   preferredAudioLanguage,
                   askedAudioLanguage,
                   chosenSubtitleStreamIndex,
@@ -527,6 +529,23 @@ const createPlaybackService = ({
       }
 
       return (await readFromDisk?.(path, range)) ?? transcoder.readFile(path, range);
+    },
+
+    fitsLimit: async (mediaId, renditionId, limit) => {
+      const found = await media.findForPlayback(mediaId);
+      const item =
+        renditionId === null
+          ? found?.item
+          : found?.renditions?.find((one) => one.id === renditionId)?.item;
+
+      if (item === undefined) {
+        return true;
+      }
+
+      return (
+        (limit.maxQuality === null || resolveQualityStep(item, limit.maxQuality) === null) &&
+        (limit.maxBitrateKbps === null || item.bitrateKbps <= limit.maxBitrateKbps)
+      );
     },
 
     trickplay: async (mediaId) => {

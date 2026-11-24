@@ -6,13 +6,13 @@ const held = (...permissions: Permission[]): ReadonlySet<Permission> => new Set(
 
 describe('narrowToKey', () => {
   it('gives an unrestricted key exactly what its account has', () => {
-    expect(narrowToKey(held('library.create', 'jobs.run'), null)).toEqual(
-      held('library.create', 'jobs.run'),
+    expect(narrowToKey(held('library.edit', 'jobs.run'), null)).toEqual(
+      held('library.edit', 'jobs.run'),
     );
   });
 
   it('gives a restricted key only what it names', () => {
-    expect(narrowToKey(held('library.create', 'jobs.run'), held('jobs.run'))).toEqual(
+    expect(narrowToKey(held('library.edit', 'jobs.run'), held('jobs.run'))).toEqual(
       held('jobs.run'),
     );
   });
@@ -51,7 +51,7 @@ describe('narrowToKey', () => {
 
     const everything: Permission[] = [
       'administrator',
-      'library.create',
+      'library.edit',
       'library.delete',
       'jobs.run',
       'jobs.runDestructive',

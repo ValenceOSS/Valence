@@ -61,6 +61,8 @@ import { StreamStats } from '@ValenceTv/screens/Player/components/StreamStats/St
 import { TrackMenu } from '@ValenceTv/screens/Player/components/TrackMenu/TrackMenu';
 import { SubtitleSearch } from '@ValenceTv/screens/Player/components/SubtitleSearch/SubtitleSearch';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
+import { useQualityLimit } from '@ValenceClient/streams/useQualityLimit';
+import { isAboveQuality } from '@ValenceContracts/functions/isAboveQuality';
 import { UpNext } from '@ValenceTv/screens/Player/components/UpNext/UpNext';
 import { PartyPanel } from '@ValenceTv/components/PartyPanel/PartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
@@ -228,6 +230,7 @@ const Player = ({
 }: PlayerProps) => {
   const cache = useQueryClient();
   const mayFindSubtitles = useWhatIMayDo().may('media.override');
+  const { maxQuality: qualityLimit } = useQualityLimit();
   const detail = useQuery(libraryQueries.detail(mediaId));
   const watching = useQuery(profileQueries.watching());
   const segments = useQuery(playbackQueries.segments(mediaId));
@@ -1011,18 +1014,24 @@ const Player = ({
           ? say('common.original')
           : originalLabel(detail.data),
       ...(sharpest === null ? {} : { short: sharpest.label }),
+      ...(sharpest !== null && isAboveQuality(sharpest.id, qualityLimit)
+        ? { detail: say('common.aboveYourLimit'), isDisabled: true }
+        : {}),
     },
     ...QUALITY_STEPS.filter(
       (step) => step.maxHeight <= (detail.data?.height ?? Number.MAX_SAFE_INTEGER),
     ).map((step) => {
       const isNoSmaller = stepsSavingNothing.includes(step.id);
-      const said = qualityStepDetail({ cost: stepCosts[step.id], isNoSmaller });
+      const isAbove = isAboveQuality(step.id, qualityLimit);
+      const said = isAbove
+        ? say('common.aboveYourLimit')
+        : qualityStepDetail({ cost: stepCosts[step.id], isNoSmaller });
 
       return {
         id: step.id,
         label: step.label,
         ...(said === undefined ? {} : { detail: said }),
-        ...(isNoSmaller ? { isDisabled: true } : {}),
+        ...(isNoSmaller || isAbove ? { isDisabled: true } : {}),
       };
     }),
   ];

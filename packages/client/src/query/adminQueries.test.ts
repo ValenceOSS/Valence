@@ -103,7 +103,7 @@ beforeEach(() => {
   fetchJobRun.mockResolvedValue(null);
 
   Object.assign(roles, {
-    fetchRoles: answered([]),
+    fetchRoles: answered({ roles: [], outOfReach: [] }),
     fetchPermissionCatalogue: answered([]),
     fetchAccountPermissions: answered({ roles: [] }),
   });
@@ -132,7 +132,10 @@ describe('adminQueries', () => {
     await expect(cache.fetchQuery(adminQueries.jobs())).resolves.toEqual([]);
     await expect(cache.fetchQuery(adminQueries.schedules())).resolves.toEqual([]);
     await expect(cache.fetchQuery(adminQueries.accounts())).resolves.toEqual([]);
-    await expect(cache.fetchQuery(adminQueries.roles())).resolves.toEqual([]);
+    await expect(cache.fetchQuery(adminQueries.roles())).resolves.toEqual({
+      roles: [],
+      outOfReach: [],
+    });
     await expect(cache.fetchQuery(adminQueries.permissions())).resolves.toEqual([]);
     await expect(cache.fetchQuery(adminQueries.webhooks())).resolves.toEqual([]);
     await expect(cache.fetchQuery(adminQueries.shares())).resolves.toEqual([]);

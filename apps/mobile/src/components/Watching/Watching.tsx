@@ -1,3 +1,4 @@
+import { useQualityLimit } from '@ValenceClient/streams/useQualityLimit';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, StyleSheet, View } from 'react-native';
 import { useBackCloses } from '@ValenceMobile/hooks/useBackCloses';
@@ -411,6 +412,7 @@ const Watching = ({
   const [notice, setNotice] = useState<string | null>(null);
   const isKept = kept !== undefined;
   const mayFindSubtitles = useWhatIMayDo().may('media.override') && !isKept;
+  const { maxQuality: qualityLimit } = useQualityLimit();
   const frames = useQuery({
     queryKey: ['playback', 'trickplay', mediaId],
     queryFn: () => fetchTrickplay(mediaId),
@@ -1429,6 +1431,7 @@ const Watching = ({
         profile: thePhonesProfile(),
         chosenAudio: asking.audioStreamIndex ?? sentAudio,
         chosenQuality: asking.requestedQuality ?? 'auto',
+        qualityLimit,
         onAudio: (audioStreamIndex) => {
           const heard = title.data?.audioStreams.find(
             (stream) => stream.index === audioStreamIndex,
@@ -1456,6 +1459,7 @@ const Watching = ({
       asking.audioStreamIndex,
       sentAudio,
       asking.requestedQuality,
+      qualityLimit,
       askAgain,
       captions.style,
       captions.change,

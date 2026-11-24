@@ -21,135 +21,94 @@ const ENGLISH = {
   'client.admin.describeEncodeProgress.speedLessThanAMinuteLeft':
     '{speed}× real time · less than a minute left',
   'client.admin.describeJobKind.onItsSchedule': '{kind} (scheduled)',
-  'client.admin.describePermission.approveOrTurnDownRequests': 'Approve or decline requests',
-  'client.admin.describePermission.backTheServerUp': 'Back up the server',
-  'client.admin.describePermission.banAnAccount': 'Ban an account',
-  'client.admin.describePermission.changeALibrarysSettings': 'Change a library’s settings',
-  'client.admin.describePermission.changeArtwork': 'Change artwork',
+  'client.admin.describePermission.approveRequests': 'Approve requests',
+  'client.admin.describePermission.backUpAndRestore': 'Back up and restore',
   'client.admin.describePermission.changeServerSettings': 'Change server settings',
-  'client.admin.describePermission.changeWhenJobsRun': 'Change when jobs run',
-  'client.admin.describePermission.correctMetadata': 'Correct metadata',
+  'client.admin.describePermission.controlOtherPeoplesStreams': 'Control other people’s streams',
   'client.admin.describePermission.createShareLinks': 'Create share links',
-  'client.admin.describePermission.deleteALibrary': 'Delete a library',
-  'client.admin.describePermission.deleteMediaFromDisk': 'Delete media from disk',
+  'client.admin.describePermission.deleteFiles': 'Delete files',
+  'client.admin.describePermission.deleteLibraries': 'Delete libraries',
   'client.admin.describePermission.downloadMedia': 'Download media',
-  'client.admin.describePermission.everythingIncludingAnythingAddedLater':
-    'Everything, including anything added later',
-  'client.admin.describePermission.findSubtitles': 'Find subtitles while watching',
-  'client.admin.describePermission.haveRequestsGoStraightThrough': 'Auto-approve requests',
-  'client.admin.describePermission.haveTheServerCallOutWhen': 'Manage webhooks',
-  'client.admin.describePermission.hideAnItemFromEverybody': 'Hide an item from everyone',
+  'client.admin.describePermission.editTitles': 'Edit titles',
   'client.admin.describePermission.holdAPIKeysForUseOutside': 'Create API keys',
-  'client.admin.describePermission.installAndManagePlugins': 'Install and manage plugins',
-  'client.admin.describePermission.linkThisServerWithOthers':
-    'Link this server with other Valence servers',
+  'client.admin.describePermission.linkServers': 'Link servers',
   'client.admin.describePermission.manageAccounts': 'Manage accounts',
-  'client.admin.describePermission.manageOtherPeoplesProfiles': 'Manage other people’s profiles',
+  'client.admin.describePermission.manageLibraries': 'Manage libraries',
+  'client.admin.describePermission.managePlugins': 'Manage plugins',
   'client.admin.describePermission.manageRoles': 'Manage roles',
-  'client.admin.describePermission.pauseSomebodysStream': 'Pause someone’s stream',
-  'client.admin.describePermission.playFilmsFromSources': 'Play films from sources',
+  'client.admin.describePermission.manageShareLinks': 'Manage share links',
   'client.admin.describePermission.requestFilmsAndSeries': 'Request films and series',
   'client.admin.describePermission.requestMusic': 'Request music',
-  'client.admin.describePermission.rescanOneItem': 'Rescan one item',
-  'client.admin.describePermission.resetPasswordsAndSignAccountsOut':
-    'Reset passwords and sign accounts out',
-  'client.admin.describePermission.runAJob': 'Run a job',
-  'client.admin.describePermission.runResetAndRebuild': 'Run reset and rebuild',
-  'client.admin.describePermission.seeAndWithdrawAnybodysShareLinks':
-    'View and revoke anyone’s share links',
-  'client.admin.describePermission.seeEverybodysRequests': 'View everyone’s requests',
-  'client.admin.describePermission.seeWhatTheServerIsDoing': 'View server status',
+  'client.admin.describePermission.runAndScheduleJobs': 'Run and schedule jobs',
+  'client.admin.describePermission.seeEveryonesRequests': 'See everyone’s requests',
+  'client.admin.describePermission.seeServerStatusAndLogs': 'See server status and logs',
   'client.admin.describePermission.seeWhoIsWatching': 'See who’s watching',
-  'client.admin.describePermission.sendSomebodyAMessage': 'Send someone a message',
-  'client.admin.describePermission.setUpIndexersDownloadClientsAnd':
-    'Set up indexers, download clients and profiles',
+  'client.admin.describePermission.setUpRequests': 'Set up requests',
+  'client.admin.describePermission.skipApproval': 'Skip approval',
   'client.admin.describePermission.startWatchParties': 'Start watch parties',
-  'client.admin.describePermission.stopSomebodysStream': 'Stop someone’s stream',
-  'client.admin.describePermissionDetail.addRenameOrRemoveAnotherAccounts':
-    'Add, rename or remove another account’s profiles on their behalf.',
+  'client.admin.describePermission.watchFilmsNotOnTheServer': 'Watch films not on the server',
+  'client.admin.describePermissionDetail.addLibrariesAndChangeTheirSettings':
+    'Add libraries and change their settings, such as names, languages and scan options.',
   'client.admin.describePermissionDetail.approveOrTurnDownWhatOther':
     'Approve or decline other people’s requests.',
   'client.admin.describePermissionDetail.askForAFilmOrSeries':
     'Request a film or series that isn’t on the server yet.',
   'client.admin.describePermissionDetail.askForAnArtistOrAlbum':
     'Request an artist or album that isn’t on the server yet.',
-  'client.admin.describePermissionDetail.askValenceToReadOneItem':
-    'Rescan a single item to pick up file or metadata changes.',
-  'client.admin.describePermissionDetail.banAnAccountEndingItsSessions':
-    'Ban an account, signing it out on every device and blocking it from signing in again.',
-  'client.admin.describePermissionDetail.changeALibrarysSettingsItsName':
-    'Change a library’s settings, such as its name, preferred languages and scan options.',
-  'client.admin.describePermissionDetail.changeServerWideSettingsSuchAs':
-    'Change server-wide settings, such as hardware acceleration and quality.',
-  'client.admin.describePermissionDetail.changeWhenARecurringJobRuns':
-    'Change when a recurring job runs, or turn off its schedule.',
-  'client.admin.describePermissionDetail.correctAnItemsMetadataByHand':
-    'Edit an item’s metadata by hand when it was matched incorrectly.',
-  'client.admin.describePermissionDetail.createALinkThatLetsSomebody':
-    'Create a share link that lets someone outside the household watch one title.',
+  'client.admin.describePermissionDetail.changeServerWideSettingsSuchAsHardware':
+    'Change server-wide settings, such as hardware acceleration, quality and webhooks.',
+  'client.admin.describePermissionDetail.createAPIKeysForScriptsAnd':
+    'Create API keys for scripts and devices outside the app.',
   'client.admin.describePermissionDetail.createRolesAndChooseWhichPermissions':
     'Create roles and choose which permissions each one grants.',
-  'client.admin.describePermissionDetail.deleteAMediaFileFromDisk':
-    'Delete a media file from disk, not just from the library.',
-  'client.admin.describePermissionDetail.endSomebodyElsesStream': 'Stop someone else’s stream.',
-  'client.admin.describePermissionDetail.grantsEveryPermissionThereIsIncluding':
-    'Grants every permission, including any added in later releases. No other permission needs to be granted with it.',
-  'client.admin.describePermissionDetail.haveTheServerCallOutTo':
-    'Create webhooks that notify another URL when something happens.',
-  'client.admin.describePermissionDetail.haveWhatTheyAskForSearched':
-    'Their requests are searched for and downloaded automatically, without waiting for approval.',
-  'client.admin.describePermissionDetail.hideAnItemFromEveryProfile':
-    'Hide an item from every profile, not only their own.',
-  'client.admin.describePermissionDetail.holdAnAPIKeyForReaching':
-    'Create API keys to access Valence from scripts or devices outside the browser.',
-  'client.admin.describePermissionDetail.installPluginsFromTheCatalogueOr':
-    'Install plugins from the catalogue or a file, choose their permissions, change their settings and remove them.',
-  'client.admin.describePermissionDetail.inviteSomebodyNewToSignIn':
-    'Invite someone new to create an account.',
-  'client.admin.describePermissionDetail.linkThisServerWithOthers':
-    'Create and accept invites to link this server with another Valence server, approve or decline link requests, and unlink servers. Linking alone doesn’t share anything.',
-  'client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere':
-    'Pause someone else’s stream remotely.',
-  'client.admin.describePermissionDetail.playsFilmsThatAreNotIn':
-    'Plays films that aren’t in the library, straight from a source a plugin offers. Nothing is added to the library. Needs Request films and series too.',
-  'client.admin.describePermissionDetail.pointValenceAtANewFolder':
-    'Add a folder of media as a new library.',
-  'client.admin.describePermissionDetail.readTheServersLogIncludingEntries':
-    'View the server log, including entries from before this account signed in.',
-  'client.admin.describePermissionDetail.reEncodeMediaAtAChosen':
-    'Re-encode media at a chosen quality, either replacing the original file or saving the new file next to it. Replacing deletes the original once the result is reviewed, and quality lost to lossy encoding can’t be recovered.',
-  'client.admin.describePermissionDetail.removeALibraryAndForgetEverything':
-    'Delete a library and remove everything scanned from it.',
-  'client.admin.describePermissionDetail.renameSuspendOrRemoveAnExisting':
-    'Rename, suspend or remove an existing account.',
-  'client.admin.describePermissionDetail.replaceAnItemsPosterOrBackdrop':
-    'Replace an item’s poster or backdrop with a different picture.',
-  'client.admin.describePermissionDetail.resetAnotherAccountsPasswordSignIt':
-    'Reset another account’s password, sign it out on every device, and see where it’s signed in.',
+  'client.admin.describePermissionDetail.deleteALibraryAndEverythingScanned':
+    'Delete a library and everything scanned from it.',
+  'client.admin.describePermissionDetail.deleteMediaFilesFromDiskNot':
+    'Delete media files from disk, not just from the library.',
+  'client.admin.describePermissionDetail.everyPermissionIncludingOnesAddedIn':
+    'Every permission, including ones added in future updates.',
+  'client.admin.describePermissionDetail.fixWrongMatchesEditMetadataChoose':
+    'Fix wrong matches, edit metadata, choose artwork and rescan titles.',
+  'client.admin.describePermissionDetail.installSetUpAndRemovePlugins':
+    'Install, set up and remove plugins.',
+  'client.admin.describePermissionDetail.inviteSomeoneNewToMakeAn':
+    'Invite someone new to make an account.',
+  'client.admin.describePermissionDetail.letSomeoneOutsideTheServerWatch':
+    'Let someone outside the server watch one title through a link.',
+  'client.admin.describePermissionDetail.linkThisServerWithOtherValence':
+    'Link this server with other Valence servers. Linking alone doesn’t share anything.',
+  'client.admin.describePermissionDetail.pauseOrStopSomeoneElsesStream':
+    'Pause or stop someone else’s stream, or send a message over it.',
+  'client.admin.describePermissionDetail.playAFilmStraightAwayFromAPlugin':
+    'Play a film straight away from a plugin, without requesting or downloading it.',
+  'client.admin.describePermissionDetail.playOneStreamToEveryoneWho':
+    'Play one stream to everyone who joins.',
+  'client.admin.describePermissionDetail.reEncodeMediaAtAChosenQuality':
+    'Re-encode media at a chosen quality, replacing the original or saving a copy beside it.',
+  'client.admin.describePermissionDetail.renameSuspendBanOrRemoveAccounts':
+    'Rename, suspend, ban or remove accounts, reset passwords, sign people out and manage their profiles.',
   'client.admin.describePermissionDetail.runAResetOrAFull':
     'Run a reset or a full rebuild, which deletes stored data and starts again.',
   'client.admin.describePermissionDetail.saveACopyOfMediaTo':
     'Download media to a device to watch offline.',
-  'client.admin.describePermissionDetail.searchForSubtitlesAndFetchOne':
-    'Search for subtitles while watching and fetch one, without being able to change anything else about the item.',
-  'client.admin.describePermissionDetail.seeEveryShareLinkAnybodyHas':
-    'See every share link anyone has created, and revoke any of them.',
-  'client.admin.describePermissionDetail.seeWhatEverybodyHasAskedFor':
-    'See everyone’s requests and the progress of each download.',
-  'client.admin.describePermissionDetail.seeWhatTheServerIsDoing':
-    'See the server’s CPU load, memory use and active transcodes.',
+  'client.admin.describePermissionDetail.searchForAndDownloadSubtitlesWhile':
+    'Search for and download subtitles while watching.',
+  'client.admin.describePermissionDetail.seeAndRevokeAnyonesShareLinks':
+    'See and revoke anyone’s share links.',
+  'client.admin.describePermissionDetail.seeCPUMemoryAndTranscodesAnd':
+    'See CPU, memory and transcodes, and read the server log.',
+  'client.admin.describePermissionDetail.seeEveryonesRequestsAndHowEach':
+    'See everyone’s requests and how each download is going.',
   'client.admin.describePermissionDetail.seeWhoIsWatchingRightNow':
     'See who’s watching right now, and what.',
-  'client.admin.describePermissionDetail.sendAMessageThatAppearsOver':
-    'Send a message that appears over someone else’s stream.',
-  'client.admin.describePermissionDetail.setUpTheIndexersDownloadClients':
-    'Set up the indexers, download clients and quality profiles used for requests, and view the VPN status.',
+  'client.admin.describePermissionDetail.setUpIndexersDownloadClientsAnd':
+    'Set up indexers, download clients and quality profiles, and see the VPN status.',
   'client.admin.describePermissionDetail.startABackupOfTheServer':
     'Back up the server, or restore a backup.',
-  'client.admin.describePermissionDetail.startAJobSuchAsA':
-    'Run a job, such as a scan, manually instead of waiting for its schedule.',
-  'client.admin.describePermissionDetail.startAWatchPartyPlayingOne':
-    'Start a watch party that plays one stream to everyone who joins.',
+  'client.admin.describePermissionDetail.startJobsSuchAsScansBy':
+    'Start jobs such as scans by hand, and change when they run.',
+  'client.admin.describePermissionDetail.theirRequestsDownloadStraightAwayWithout':
+    'Their requests download straight away, without waiting for approval.',
   'client.admin.describeReencodeState.checkingWhatCameOut': 'Checking the result',
   'client.admin.describeReencodeState.rejectedOriginalRestored': 'Rejected, original restored',
   'client.admin.describeScanResult.changed.one': '{count} changed',
@@ -176,6 +135,7 @@ const ENGLISH = {
     'Where these files came from could not be read.',
   'client.admin.groupPermissions.sharing': 'Sharing',
   'client.admin.groupPermissions.streaming': 'Streaming',
+  'client.admin.groupPermissions.theirOwnAccount': 'Their own account',
   'client.admin.logRanges.last15Minutes': 'Last 15 minutes',
   'client.admin.logRanges.last24Hours': 'Last 24 hours',
   'client.admin.logRanges.last6Hours': 'Last 6 hours',
@@ -636,6 +596,7 @@ const ENGLISH = {
   'common.aboutName': 'About {name}',
   'common.aboutTheSameSizeAsThe': 'about the same size as the original',
   'common.aboutTitle': 'About {title}',
+  'common.aboveYourLimit': 'Above your limit',
   'common.access': 'Access',
   'common.account': 'Account',
   'common.accounts': 'Accounts',
@@ -1058,6 +1019,7 @@ const ENGLISH = {
   'common.goToArtist': 'Go to artist',
   'common.green': 'Green',
   'common.grey': 'Grey',
+  'common.handleAndNote': '{handle} · {note}',
   'common.heavy': 'Heavy',
   'common.help': 'Help',
   'common.here': 'Here',
@@ -2464,6 +2426,8 @@ const ENGLISH = {
   'error.playback.noSuchSession': 'No such session.',
   'error.playback.noSuchSessionOrSegment': 'No such session or segment.',
   'error.playback.noSuchThumbnails': 'No thumbnails found.',
+  'error.playback.thatIsAboveTheQualityYou':
+    'That’s above the quality you’re allowed to play. Start it from the player instead, which sends it at a quality you can watch.',
   'error.playback.thatSessionBelongsToSomebodyElse': 'That session belongs to someone else.',
   'error.playback.theThumbnailsCouldNotBeRendered': 'Couldn’t create the thumbnails.',
   'error.playback.thisAccountIsAlreadyStreaming':
@@ -2547,6 +2511,8 @@ const ENGLISH = {
   'error.role.aRoleGrantingAdministratorCannotBe':
     'A role with administrator permission can’t be deleted. Change its permissions, or move its members to another role first.',
   'error.role.noSuchRole': 'No such role.',
+  'error.role.theRolesChangedWhileYouWere':
+    'The roles changed while you were moving them. Have another go with the list as it is now.',
   'error.samples.thatIsForSomebodyWhoMay': 'Only people allowed to request music can do that.',
   'error.segments.thoseMarkersCouldNotBeRead':
     'Those skip markers couldn’t be read: each ends after it starts, and a file has at most 16.',
@@ -3820,7 +3786,7 @@ const ENGLISH = {
   'screens.adminArea.accountStreamLimits.highestBitrateDetail':
     'Everything this account plays is sent at or below this. Leave it empty for no limit.',
   'screens.adminArea.accountStreamLimits.notALimit':
-    'Enter a number above nothing, or leave it empty.',
+    'Enter a number greater than 0, or leave it empty.',
   'screens.adminArea.accountStreamLimits.rolesHoldTheBitrate': 'Its roles hold it to {mbps} Mbps.',
   'screens.adminArea.accountStreamLimits.rolesHoldTheStreams':
     'Its roles hold it to {count} at once.',
@@ -6317,36 +6283,41 @@ const ENGLISH = {
   'screens.adminArea.restoreBackupDialog.theDatabaseCannotBeReplaced':
     'The database can’t be replaced while the server is using it.',
   'screens.adminArea.resumedThatStream': 'Resumed that stream.',
-  'screens.adminArea.rolesPanel.aboutRank': 'About rank',
-  'screens.adminArea.rolesPanel.aHigherRankManagesALower':
-    'A higher rank can manage lower ranks. No one can change a role at or above their own rank.',
-  'screens.adminArea.rolesPanel.aRoleIsANameAnd':
-    'A role is a name and a set of permissions. Rank decides who can manage whom.',
+  'screens.adminArea.rolesPanel.aboveYourRole': 'Above your role',
   'screens.adminArea.rolesPanel.createARole': 'Create a role',
   'screens.adminArea.rolesPanel.createdTheNewRoleNameRole': 'Created the {newRoleName} role.',
   'screens.adminArea.rolesPanel.createRole': 'Create role',
   'screens.adminArea.rolesPanel.deletedTheNameRole': 'Deleted the {name} role.',
   'screens.adminArea.rolesPanel.deleteRole': 'Delete role',
   'screens.adminArea.rolesPanel.deleteThisRole': 'Delete this role?',
-  'screens.adminArea.rolesPanel.editRole': 'Edit role',
+  'screens.adminArea.rolesPanel.discard': 'Discard',
+  'screens.adminArea.rolesPanel.discardChanges': 'Discard changes?',
   'screens.adminArea.rolesPanel.giveTheRoleAName': 'Give the role a name.',
-  'screens.adminArea.rolesPanel.housemate': 'Housemate',
-  'screens.adminArea.rolesPanel.manageMembersMemberCount': 'Manage members ({memberCount})',
+  'screens.adminArea.rolesPanel.highestFirstDragToReorder': 'Highest first · drag to reorder',
+  'screens.adminArea.rolesPanel.memberCount.one': '{count} member',
+  'screens.adminArea.rolesPanel.memberCount.other': '{count} members',
+  'screens.adminArea.rolesPanel.membersMemberCount': 'Members ({memberCount})',
   'screens.adminArea.rolesPanel.nameWillBeRemovedAndAnybody':
     '{name} will be deleted, and anyone with this role loses its permissions. This can’t be undone.',
+  'screens.adminArea.rolesPanel.newRole': 'New role',
   'screens.adminArea.rolesPanel.noRolesYet': 'No roles yet.',
   'screens.adminArea.rolesPanel.permissions': 'Permissions',
-  'screens.adminArea.rolesPanel.rank': 'Rank',
-  'screens.adminArea.rolesPanel.rankAbout':
-    'People can only change accounts whose highest role ranks below their own.',
-  'screens.adminArea.rolesPanel.rankIsAWholeNumber': 'A rank is a whole number from 0 up.',
+  'screens.adminArea.rolesPanel.rolesAboveYours': 'Roles above yours',
   'screens.adminArea.rolesPanel.roleSaved': 'Role saved.',
-  'screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole':
-    'Shown next to the name of anyone with this role.',
+  'screens.adminArea.rolesPanel.rolesHighestFirst': 'Roles, highest first',
+  'screens.adminArea.rolesPanel.rolesPutInOrder': 'Role order saved',
+  'screens.adminArea.rolesPanel.rolesWithEveryPermissionCannotBeDeleted':
+    'Roles with every permission can’t be deleted',
   'screens.adminArea.rolesPanel.theRolesCouldNotBeRead': 'Couldn’t load the roles.',
+  'screens.adminArea.rolesPanel.thisRoleIsAtOrAboveYours':
+    'This role is at or above yours, so you can’t change it.',
+  'screens.adminArea.rolesPanel.thisRoleIsNotSavedYet': 'This role isn’t saved yet',
   'screens.adminArea.rolesPanel.whatToChangeAboutThisRole': 'What to change about this role',
+  'screens.adminArea.rolesPanel.youHaveUnsavedChanges': 'You have unsaved changes',
+  'screens.adminArea.rolesPanel.yourChangesToNameHaveNotBeenSaved':
+    'Your changes to {name} haven’t been saved.',
   'screens.adminArea.roleStreamLimits.everybodyHoldingIt':
-    "Everybody holding this role streams under these limits. An account's own limit can make them stricter, never looser.",
+    'These limits apply to everyone whose highest role is this one. An account’s own limit can only make them stricter.',
   'screens.adminArea.runLibraryJobDialog.actionOnCountLibraries.one': '{action} on {count} library',
   'screens.adminArea.runLibraryJobDialog.actionOnCountLibraries.other':
     '{action} on {count} libraries',
@@ -6735,6 +6706,18 @@ const ENGLISH = {
   'screens.adminArea.storagePanel.theBucketsCouldNotBeRead': 'The buckets couldn’t be read.',
   'screens.adminArea.storagePanel.thisServerCannotMountBuckets':
     'This server can’t mount buckets. It needs rclone and FUSE: in Docker, add the buckets compose file, which gives the container /dev/fuse.',
+  'screens.adminArea.streamLimitCard.anythingAboveThisIsSentAt':
+    'Anything above this is sent at this quality instead.',
+  'screens.adminArea.streamLimitCard.downloadsAreSavedAtThisQuality':
+    'Downloads are saved at this quality or lower.',
+  'screens.adminArea.streamLimitCard.everythingPlayedIsSentAtOr':
+    'Everything played is sent at or below this. Useful for a slow upload.',
+  'screens.adminArea.streamLimitCard.highestBitrate': 'Highest bitrate',
+  'screens.adminArea.streamLimitCard.howManyThingsCanPlayAt':
+    'How many things can play at once, across every device and profile.',
+  'screens.adminArea.streamLimitCard.limitDownloadsToo': 'Limit downloads too',
+  'screens.adminArea.streamLimitCard.lowerLimitsMeanMoreOfWhat':
+    'Lower limits mean more of what’s played has to be transcoded, which puts more load on the server’s CPU or GPU.',
   'screens.adminArea.subtitlesCard.aLargerModelHearsBetter':
     'A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB and 1.6 GB.',
   'screens.adminArea.subtitlesCard.askedToo':
@@ -9102,14 +9085,21 @@ const ENGLISH = {
   'screens.resetPasswordPage.typeItAgain': 'Confirm password',
   'screens.resetPasswordPage.yourPasswordIsChanged':
     'Your password has been changed. Sign in with it now.',
-  'screens.rolesPanel.colorSwatchPicker.noColour': 'No colour',
+  'screens.rolesPanel.permissionEditor.adminPermissions': 'Admin permissions',
+  'screens.rolesPanel.permissionEditor.everythingIsOnSoEveryPermission':
+    'Everything is on, so every permission below is included.',
   'screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf':
     'Lets someone use this part of {pluginName}.',
+  'screens.rolesPanel.permissionEditor.needsRequestFilmsAndSeriesToo':
+    'Needs Request films and series too.',
   'screens.rolesPanel.permissionEditor.noLibraryTakesRequests':
     'No film, series or book library takes requests, so there’s nothing to ask for yet. Add one, or turn on Accept requests for one, on the Libraries page.',
   'screens.rolesPanel.permissionEditor.noMusicLibraryTakesRequests':
     'No music library takes requests, so there’s nothing to ask for yet. Add one, or turn on Accept requests for one, on the Libraries page.',
   'screens.rolesPanel.permissionEditor.searchPermissions': 'Search permissions',
+  'screens.rolesPanel.permissionEditor.youDoNotHaveThisSoYou':
+    'You don’t have this permission, so you can’t give it.',
+  'screens.rolesPanel.roleMembers.everyoneElse': 'Everyone else',
   'screens.rolesPanel.roleMembers.whetherNameHoldsThisRole': '{name} has this role',
   'screens.scrollingPages.theEnd': 'The end',
   'screens.searchArea.discoverPointer.cantFindIt': 'Can’t find what you’re looking for?',

@@ -27,6 +27,13 @@ const AccountPermissionsSchema = z.object({
 
 type AccountPermissions = z.infer<typeof AccountPermissionsSchema>;
 
+const RoleListSchema = z.object({
+  roles: z.array(RoleSchema),
+  outOfReach: z.array(z.string()).default([]),
+});
+
+type RoleList = z.infer<typeof RoleListSchema>;
+
 /**
  * Reads every permission this server knows how to grant, which is what a role editor offers rather
  * than a list written down in the page.
@@ -43,23 +50,42 @@ const fetchPermissionCatalogue = async (): Promise<Permission[]> => {
 };
 
 /**
- * Reads the roles on this server and what each grants. Roles are how a household gives somebody a
- * set of permissions without choosing them one by one.
+ * Reads the roles on this server, highest first, and which of them rank at or above the reader.
  *
- * @returns The roles, or none where the request failed.
+ * @returns The roles, and those out of the reader's reach.
  */
-const fetchRoles = async (): Promise<Role[]> => {
-  return (await readFromServer('/api/admin/roles', z.object({ roles: z.array(RoleSchema) }))).roles;
+const fetchRoles = async (): Promise<RoleList> =>
+  readFromServer('/api/admin/roles', RoleListSchema);
+
+/**
+ * Puts the roles in a new order, highest first, which is what decides who may manage whom.
+ *
+ * @param ids - Every role, highest first.
+ * @returns Any refusal from the server.
+ */
+const orderRoles = async (ids: readonly string[]): Promise<Refusal> => {
+  const response = await fetch('/api/admin/roles/order', {
+    method: 'PUT',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  }).catch(() => null);
+
+  return response === null
+    ? { message: say('common.theServerCouldNotBeReached') }
+    : readRefusal(response);
 };
 
 /**
- * Adds a role: what it is called and what it grants. Granting it to anybody is a separate step, so a
- * role can be got right before it applies to a single person.
+ * Adds a role beneath every other one: what it is called and what it grants. Granting it to anybody
+ * is a separate step, so a role can be got right before it applies to a single person.
  *
  * @param role - The role to add.
- * @returns Any refusal from the server.
+ * @returns The role as it was made, or why it was not.
  */
-const createRole = async (role: Omit<Role, 'id'>): Promise<Refusal> => {
+const createRole = async (
+  role: Omit<Role, 'id' | 'position'>,
+): Promise<{ role: Role | null; refusal: Refusal }> => {
   const response = await fetch('/api/admin/roles', {
     method: 'POST',
     credentials: 'same-origin',
@@ -67,9 +93,19 @@ const createRole = async (role: Omit<Role, 'id'>): Promise<Refusal> => {
     body: JSON.stringify(role),
   }).catch(() => null);
 
-  return response === null
-    ? { message: say('common.theServerCouldNotBeReached') }
-    : readRefusal(response);
+  if (response === null) {
+    return { role: null, refusal: { message: say('common.theServerCouldNotBeReached') } };
+  }
+
+  if (!response.ok) {
+    return { role: null, refusal: await readRefusal(response) };
+  }
+
+  const made = RoleSchema.safeParse(await response.json().catch(() => null));
+
+  return made.success
+    ? { role: made.data, refusal: null }
+    : { role: null, refusal: { message: say('client.admin.readRefusal.thatCouldNotBeDoneTry') } };
 };
 
 /**
@@ -202,6 +238,7 @@ const clearOverride = async (userId: string, permission: Permission): Promise<Re
 export {
   fetchPermissionCatalogue,
   fetchRoles,
+  orderRoles,
   createRole,
   updateRole,
   deleteRole,
@@ -212,4 +249,4 @@ export {
   clearOverride,
 };
 
-export type { AccountPermissions, Refusal };
+export type { AccountPermissions, Refusal, RoleList };

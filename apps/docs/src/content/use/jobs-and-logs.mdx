@@ -28,7 +28,7 @@ Below sit four tabs.
 
 Which tab is open, and every filter on it, is kept in the address, so a link shares exactly what you are looking at. More on that [below](#filters-are-kept-in-the-address).
 
-Running and scheduling jobs needs `jobs.run` and `jobs.schedule`. Reading the log needs `server.logs`. See [Accounts and roles](/use/accounts-and-roles).
+Running and scheduling jobs needs `jobs.run`. Reading the log needs `server.monitor`. See [Accounts and roles](/use/accounts-and-roles).
 
 ## Job kinds
 
@@ -251,7 +251,7 @@ The **Prune old log records** job runs daily and forgets records past the age th
 
 **Audit log**, under **Activity**, lists every sign-in, and every change made to accounts, profiles, roles, settings, libraries, titles, files, requests, links, plugins, webhooks and backups, newest first. Each row says **When**, the **Person** who did it, the **Action** with an icon for its kind, the **Item** it was done to with any detail beneath, and the **Device** and address it came from. A change made with an API key names the key ("API key · …"), a tool such as `curl` is named as itself, and an address on the server's own machine says "same machine". Somebody whose account has since gone is shown by their initial and name, and a failed sign-in by nobody.
 
-**Search by person, title or address** searches the log; the menu beside it chooses a **Time range**, and **Filter the audit log** narrows it to one **Type** of change or one **Person**. Sorting by **When** turns it oldest first. The log is read a page at a time: the foot of the table says which rows are shown, such as "1–25", and the next page reads further back, so no total is given. Sign-ins are kept for 90 days, and everything else as described under the **Prune old audit entries** job above. Reading it needs the `server.logs` permission.
+**Search by person, title or address** searches the log; the menu beside it chooses a **Time range**, and **Filter the audit log** narrows it to one **Type** of change or one **Person**. Sorting by **When** turns it oldest first. The log is read a page at a time: the foot of the table says which rows are shown, such as "1–25", and the next page reads further back, so no total is given. Sign-ins are kept for 90 days, and everything else as described under the **Prune old audit entries** job above. Reading it needs the `server.monitor` permission.
 
 ## Filters are kept in the address
 

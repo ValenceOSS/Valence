@@ -53,10 +53,10 @@ const PERMISSION_BY_TOPIC: Readonly<Record<RealtimeTopic, Permission | null>> = 
   announcement: null,
   monitor: 'server.monitor',
   sessions: 'streaming.view',
-  logs: 'server.logs',
+  logs: 'server.monitor',
   jobs: 'jobs.run',
   downloads: 'requests.manage',
-  audit: 'server.logs',
+  audit: 'server.monitor',
   linking: 'server.links',
 };
 

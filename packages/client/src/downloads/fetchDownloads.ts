@@ -21,6 +21,7 @@ const DownloadOptionSchema = z.object({
   comparison: z.string().nullable(),
   wouldTranscode: z.boolean(),
   savesSpace: z.boolean().default(true),
+  isAboveLimit: z.boolean().default(false),
 });
 
 const DownloadOfferSchema = z.object({

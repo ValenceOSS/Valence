@@ -62,16 +62,16 @@ The Settings page can choose whether profiles are shown before sign-in.
 
 Access is controlled by **roles**, and each role is a set of **permissions**. An account can hold roles, and a role can be edited freely. Valence creates four roles the first time it starts:
 
-| Role          | Intended for                                           | Highlights                                                                                    |
-| ------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| Administrator | Whoever runs the server                                | Everything, including anything added later.                                                   |
-| Manager       | Someone who looks after libraries but not the server   | Library creation and editing, jobs, rescans, sharing, requests approval, logs and monitoring. |
-| Member        | What everybody in the house gets. This is the default. | Sharing links and parties, downloads, and asking for films, series and music.                 |
-| Restricted    | An account somebody wants kept narrow                  | Watches, and nothing else.                                                                    |
+| Role          | Intended for                                           | Highlights                                                                                           |
+| ------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Administrator | Whoever runs the server                                | Everything, including anything added later.                                                          |
+| Manager       | Someone who looks after libraries but not the server   | Library creation and editing, jobs, editing titles, sharing, requests approval, logs and monitoring. |
+| Member        | What everybody in the house gets. This is the default. | Sharing links and parties, downloads, and asking for films, series and music.                        |
+| Restricted    | An account somebody wants kept narrow                  | Watches, and nothing else.                                                                           |
 
 If you delete one of these roles, it is not recreated on the next restart. The first account, created by the wizard, is the administrator.
 
-Permissions are named for what they allow. Examples are `library.create`, `jobs.run`, `media.rescan`, `media.delete`, `media.reencode` (kept separate from deleting media on purpose), `sharing.link`, `download.media`, `requests.ask`, `requests.approve`, `server.settings` and `server.webhooks`. The complete list is in the API reference. See [Accounts and roles](/use/accounts-and-roles).
+Permissions are named for what they allow. Examples are `library.edit`, `jobs.run`, `media.override`, `media.delete`, `media.reencode` (kept separate from deleting media on purpose), `sharing.link`, `download.media`, `requests.ask`, `requests.approve` and `server.settings`. The complete list is in the API reference. See [Accounts and roles](/use/accounts-and-roles).
 
 ## Jobs
 

@@ -1,6 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
-import { PERMISSIONS } from '@ValenceContracts/schemas/Permission';
+import { PERMISSIONS, PermissionOrRetiredSchema } from '@ValenceContracts/schemas/Permission';
 
 const ApiKeyError = RefusalSchema.openapi('ApiKeyError');
 
@@ -29,7 +29,11 @@ const CreateApiKeyRequest = z
   .object({
     name: z.string().min(1).max(100),
     expiresInDays: z.number().int().positive().max(3650).nullable().default(null),
-    permissions: z.array(Permission).nullable().default(null),
+    permissions: z
+      .array(PermissionOrRetiredSchema)
+      .nullable()
+      .default(null)
+      .transform((asked) => (asked === null ? null : [...new Set(asked)])),
     rateLimit: z
       .object({
         max: z.number().int().positive().max(100_000),

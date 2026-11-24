@@ -3,58 +3,47 @@ import { z } from 'zod';
 const PERMISSIONS = [
   'administrator',
 
-  'library.create',
+  'download.media',
+  'media.subtitles',
+  'sources.play',
+
+  'sharing.link',
+  'sharing.party',
+
+  'requests.ask',
+  'requests.askMusic',
+  'requests.viewAll',
+  'requests.autoApprove',
+
+  'account.keys',
+
+  'requests.approve',
+  'requests.manage',
+
+  'sharing.manage',
+
+  'streaming.view',
+  'streaming.control',
+
+  'media.override',
+  'media.reencode',
+  'media.delete',
+
   'library.edit',
   'library.delete',
 
   'jobs.run',
-  'jobs.schedule',
   'jobs.runDestructive',
-
-  'media.rescan',
-  'media.delete',
-  'media.reencode',
-  'media.override',
-  'media.artwork',
-  'media.hide',
-  'media.subtitles',
-
-  'sharing.link',
-  'sharing.party',
-  'sharing.manage',
-
-  'streaming.view',
-  'streaming.stop',
-  'streaming.pause',
-  'streaming.message',
-
-  'download.media',
-
-  'requests.ask',
-  'requests.askMusic',
-  'requests.autoApprove',
-  'requests.viewAll',
-  'requests.approve',
-  'requests.manage',
-
-  'sources.play',
-
-  'account.keys',
 
   'account.invite',
   'account.manage',
-  'account.ban',
   'account.roles',
-  'account.profiles',
-  'account.security',
 
-  'server.settings',
-  'server.backup',
-  'server.logs',
   'server.monitor',
-  'server.webhooks',
+  'server.settings',
   'server.plugins',
   'server.links',
+  'server.backup',
 ] as const;
 
 const PermissionSchema = z.enum(PERMISSIONS);
@@ -69,6 +58,52 @@ const PluginNodeSchema = z.templateLiteral([
 ]);
 
 const GrantedPermissionSchema = z.union([PermissionSchema, PluginNodeSchema]);
+
+const RETIRED_PERMISSION_NAMES = [
+  'library.create',
+  'jobs.schedule',
+  'media.rescan',
+  'media.artwork',
+  'media.hide',
+  'streaming.stop',
+  'streaming.pause',
+  'streaming.message',
+  'account.ban',
+  'account.security',
+  'account.profiles',
+  'server.logs',
+  'server.webhooks',
+] as const;
+
+const RETIRED_PERMISSIONS: Readonly<
+  Record<(typeof RETIRED_PERMISSION_NAMES)[number], (typeof PERMISSIONS)[number]>
+> = {
+  'library.create': 'library.edit',
+  'jobs.schedule': 'jobs.run',
+  'media.rescan': 'media.override',
+  'media.artwork': 'media.override',
+  'media.hide': 'media.override',
+  'streaming.stop': 'streaming.control',
+  'streaming.pause': 'streaming.control',
+  'streaming.message': 'streaming.control',
+  'account.ban': 'account.manage',
+  'account.security': 'account.manage',
+  'account.profiles': 'account.manage',
+  'server.logs': 'server.monitor',
+  'server.webhooks': 'server.settings',
+};
+
+const RetiredPermissionSchema = z
+  .enum(RETIRED_PERMISSION_NAMES)
+  .transform((retired) => RETIRED_PERMISSIONS[retired]);
+
+const PermissionOrRetiredSchema = z.union([PermissionSchema, RetiredPermissionSchema]);
+
+const GrantedPermissionOrRetiredSchema = z.union([
+  PermissionSchema,
+  RetiredPermissionSchema,
+  PluginNodeSchema,
+]);
 
 const PermissionGrantSchema = z.object({
   permission: PermissionSchema,
@@ -87,7 +122,7 @@ const RoleSchema = z.object({
 });
 
 const MyPermissionsSchema = z.object({
-  permissions: z.array(GrantedPermissionSchema),
+  permissions: z.array(z.union([GrantedPermissionSchema, z.enum(RETIRED_PERMISSION_NAMES)])),
   newerPermissions: z.array(GrantedPermissionSchema).default([]),
   isAdministrator: z.boolean(),
   isDemo: z.boolean().optional(),
@@ -102,11 +137,15 @@ const MyPermissionsReadSchema = z
   })
   .transform(({ permissions, newerPermissions, ...rest }) => ({
     ...rest,
-    permissions: [...permissions, ...newerPermissions].flatMap((named) => {
-      const known = GrantedPermissionSchema.safeParse(named);
+    permissions: [
+      ...new Set(
+        [...permissions, ...newerPermissions].flatMap((named) => {
+          const known = GrantedPermissionOrRetiredSchema.safeParse(named);
 
-      return known.success ? [known.data] : [];
-    }),
+          return known.success ? [known.data] : [];
+        }),
+      ),
+    ],
   }));
 
 type Permission = (typeof PERMISSIONS)[number];
@@ -124,6 +163,10 @@ type MyPermissions = z.output<typeof MyPermissionsReadSchema>;
 
 export {
   PERMISSIONS,
+  RETIRED_PERMISSIONS,
+  RETIRED_PERMISSION_NAMES,
+  PermissionOrRetiredSchema,
+  GrantedPermissionOrRetiredSchema,
   PermissionSchema,
   PermissionGrantSchema,
   PluginNodeSchema,

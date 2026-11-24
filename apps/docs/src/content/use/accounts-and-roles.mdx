@@ -71,15 +71,22 @@ Choose a name in the list, or the actions menu on a row and then **Edit account*
 | Devices    | See every device the account is signed in on, what each reaches Valence through, its address and when it was last used. |
 | Roles      | Switch each role on or off for this account.                                                                            |
 | Libraries  | Choose which libraries the account may see, and how old the content in each may be.                                     |
+| Streaming  | Set the account's own streaming limits.                                                                                 |
 
 ### Streaming limits
 
-The **Streaming** tab of an account sets two ceilings, either of which can be left empty for none:
+The **Streaming** tab of an account sets its own limits, and the **Streaming** tab of a role sets the same limits for everyone who holds it. Each can be left with no limit.
 
-- **Highest bitrate (Mbps)**: everything the account plays is sent at or below this. A film that would otherwise play directly at a higher bitrate is converted down to fit.
-- **Streams at once**: how many things the account may play at the same time, across every device it is signed in on. Starting one more is refused with a message saying how many it may have, and asking for one of the others to be stopped. Changing what plays on a device that is already streaming does not count twice.
+- **Highest quality**: **No limit**, **4K**, **1440p**, **1080p**, **720p**, **480p** or **360p**. Anything above it is sent at that quality instead.
+- **Limit downloads too**, shown once a quality is chosen: downloads are saved at that quality or lower as well.
+- **Highest bitrate**, in Mbps: everything played is sent at or below it. This is useful when the server's upload is slow.
+- **Streams at once**: how many things may play at the same time, counting every stream on the account, across all its profiles and devices. Starting one more is refused with a message saying how many it may have, and asking for one of the others to be stopped. Changing what plays on a device that is already streaming does not count twice.
 
-The tab also shows how many streams the account has running now. A role can carry the same two limits, on the **Streaming** tab of the role editor (or with `PUT /api/admin/roles/{roleId}/stream-limit`), and an account streams under the strictest of its own and its roles'; where a role holds it to less than its own limit, the tab says so. An account's limits are also read and set at `/api/admin/accounts/{userId}/stream-limit`. Both need the permission to manage accounts. On the **Sessions** page, each session of a limited account says how many of its streams are running out of how many, and the bitrate it is held to.
+Lower limits mean more of what is played has to be transcoded, which puts more load on the server's CPU or GPU.
+
+An account streams under the limits of its highest role, and its own limits can only make them stricter. Where its highest role holds it to less than its own limit, the account's tab says so; the tab also shows how many streams the account has running now. Players grey out the qualities above the limit, with a lock, and asking for the file directly is refused when it is above the limit. On the **Sessions** page, each session of a limited account says how many of its streams are running out of how many, and the bitrate it is held to.
+
+An account's limits are read and set at `/api/admin/accounts/{userId}/stream-limit`, and a role's at `/api/admin/roles/{roleId}/stream-limit`. Both need `account.manage`. `GET /api/account/stream-limit` returns the limits the signed-in account streams under.
 
 ### Setting a password and ending sessions
 
@@ -91,7 +98,7 @@ Whichever way sign-ins end (one device, a new password, **Sign out everywhere**,
 
 Hovering a device's name on the **Devices** tab or the **Sessions** page shows the raw user agent it sent, for when the name Valence worked out from it is not enough.
 
-All of these need the `account.security` permission. Valence asks you to confirm each before it acts.
+All of these need the `account.manage` permission. Valence asks you to confirm each before it acts.
 
 ### Banning and deleting
 
@@ -100,14 +107,14 @@ The actions menu offers **Ban** and **Delete account**.
 - **Ban** asks what to tell the person, then signs them out and refuses them entry until you choose **Unban**. The reason shows under **Banned** in the list. Nothing they own is touched, which makes it the right tool for a pause.
 - **Delete account** removes the account, every profile on it and everything those profiles were watching. The person's API keys and share links are revoked at once, so anything using one stops working. Playlists they shared with the household stay, marked as belonging to a removed profile. Their own smart collections go with them, shared or not. Nothing leaves your libraries. This cannot be undone.
 
-Banning needs `account.ban`. Deleting and editing need `account.manage`. Adding an account needs `account.invite`, and making a setup link for one needs `account.invite` or `account.security`.
+Banning, deleting and editing need `account.manage`. Adding an account needs `account.invite`, and making a setup link for one needs `account.invite` or `account.manage`.
 
 ### Who may act on whom
 
 Valence protects itself from one administrator acting against another. The rules are the same everywhere in the admin area.
 
 - Nobody can ban, delete or reset themselves. Doing so would remove their own last way in.
-- Every role has a **rank**, a number. You cannot act on an account whose highest role is at or above your own, and you cannot change a role at or above yours. This applies to administrators too.
+- Roles are a hierarchy, ordered highest first on the **Roles** page. You cannot act on an account whose highest role is at or above your own, and you cannot change, move or hand out a role at or above yours. This applies to administrators too.
 - You cannot grant a permission you do not hold yourself.
 - The **owner** sits outside these rules. Nobody can act on the owner, and the owner can act on anybody. On a server that predates the idea of an owner, the oldest administrator is recorded as the owner the first time it starts, which on every install is the account made during setup.
 
@@ -117,78 +124,80 @@ The practical result is that giving somebody the Administrator role lets them he
 
 ### The default roles
 
-A fresh server is given four roles the first time it starts. Their ranks are 300, 200, 100 and 0. Valence records that it has seeded them, so if you delete a role it does not come back on the next restart. Accounts that already exist when the roles are first created are assigned one: administrators get Administrator, everyone else gets Member.
+A fresh server is given four roles the first time it starts, highest first: Administrator, Manager, Member and Restricted. Valence records that it has seeded them, so if you delete a role it does not come back on the next restart. Accounts that already exist when the roles are first created are assigned one: administrators get Administrator, everyone else gets Member.
 
-| Role          | Rank | What it grants                                                                                                                                                                                                                                                                                                                                                                 |
-| ------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Administrator | 300  | Everything, including permissions added by later releases.                                                                                                                                                                                                                                                                                                                     |
-| Manager       | 200  | Looks after libraries and what is in them, but not the server itself: creating and editing libraries, running and scheduling jobs, rescanning, correcting metadata and artwork, hiding items, seeing and stopping streams, share management, all the request permissions except setting up requesting, playing films from sources, API keys, and reading the logs and monitor. |
-| Member        | 100  | Sharing links, starting watch parties, downloading media, asking for films, series and music, seeing everybody's requests and how their downloads are going, and playing films from sources.                                                                                                                                                                                   |
-| Restricted    | 0    | Watching, and nothing else.                                                                                                                                                                                                                                                                                                                                                    |
+| Role          | What it grants                                                                                                                                                                                                                                                                                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Administrator | Everything, including permissions added by later releases.                                                                                                                                                                                                                                                                                                       |
+| Manager       | Looks after libraries and what is in them, but not the server itself: creating and editing libraries, running and scheduling jobs, editing titles, finding subtitles, seeing and controlling streams, share management, all the request permissions except setting up requesting, playing films from sources, API keys, and seeing the server's status and logs. |
+| Member        | Sharing links, starting watch parties, downloading media, finding subtitles, asking for films, series and music, seeing everybody's requests and how their downloads are going, and playing films from sources.                                                                                                                                                  |
+| Restricted    | Watching, and nothing else.                                                                                                                                                                                                                                                                                                                                      |
 
 Everyone can watch what their libraries allow. Roles only add abilities on top of that.
 
 ### Creating and editing a role
 
-1. Open **Roles** and choose **Create a role**.
-2. Give it a **Name**, a **Rank** and a **Colour**. The colour is shown wherever someone holding the role appears.
-3. Create it, then open **Edit role** to choose permissions.
+Open **Roles**. The roles are listed down the left, highest first, with how many members each has, and the role you choose opens beside them. Its **Name** and **Colour** sit at the top, and below them are three tabs: **Permissions**, **Members** and **Streaming**. The colour is shown wherever someone holding the role appears.
 
-The role editor has four tabs: **Display**, **Permissions**, **Manage members** and **Streaming**. A new role starts from **Create role**. Each permission is described in a sentence, so you can read what you are granting before you switch it on. A higher rank manages a lower one, and nobody may touch a role at or above their own.
+Changes are not saved as you make them. Once something changes, a bar appears with **Save changes**, which saves everything together, and **Reset**, which puts it back. Leaving a role with changes unsaved asks whether to discard them.
+
+**Create role** starts a new one, called **New role** until you name it. Choose its permissions, members and limits, then save it with **Create role** in the same bar. A new role starts at the bottom of the list.
 
 ![The role editor open on the Permissions tab, showing the grouped permission list with a description beside each.](/screenshots/admin-role-permissions.png)
 
-Deleting a role removes what it granted from everyone who held it. Creating roles needs `account.roles`.
+Deleting a role removes what it granted from everyone who held it. A role with every permission can't be deleted. Creating, changing and ordering roles needs `account.roles`.
+
+### Ordering roles
+
+Roles have no numbers. Their order is what counts: whoever holds a higher role can manage the roles below it. Drag a role up or down the list to move it, or use **Move up** and **Move down** in its **⋯** menu. Roles at or above your own show a lock: you can't change or move them, or move another role above them.
+
+Somebody with `account.roles` who is not an administrator can still only hand out what they have themselves:
+
+- the switches for permissions they do not hold are greyed out, so they cannot give them;
+- they cannot change a role at or above their own, or give it to anybody.
 
 ### The permission catalogue
 
-Permissions are the only thing a role contains. These are all of them.
+Permissions are the only thing a role contains. Each is described in a sentence in the role editor, so you can read what you are granting before you switch it on. The everyday permissions are shown first, and the ones about running the server follow under **Admin permissions**. The permissions about requests appear only once requesting is set up.
 
-| Permission             | What it lets somebody do                                                                                                                                     |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `administrator`        | Everything, including anything added later.                                                                                                                  |
-| `library.create`       | Add a library.                                                                                                                                               |
-| `library.edit`         | Change a library's settings.                                                                                                                                 |
-| `library.delete`       | Remove a library and forget everything scanned from it.                                                                                                      |
-| `jobs.run`             | Start a job by hand, stop one, and change how many run at once.                                                                                              |
-| `jobs.schedule`        | Change when a recurring job runs.                                                                                                                            |
-| `jobs.runDestructive`  | Run reset and rebuild, the jobs that throw away what is stored.                                                                                              |
-| `media.rescan`         | Ask Valence to read one item again.                                                                                                                          |
-| `media.delete`         | Delete a media file from disk.                                                                                                                               |
-| `media.reencode`       | Re-encode media at a chosen quality.                                                                                                                         |
-| `media.override`       | Correct an item's metadata by hand.                                                                                                                          |
-| `media.artwork`        | Replace an item's poster or backdrop.                                                                                                                        |
-| `media.hide`           | Hide an item from every profile.                                                                                                                             |
-| `media.subtitles`      | Search for subtitles while watching and fetch one.                                                                                                           |
-| `sharing.link`         | Create share links.                                                                                                                                          |
-| `sharing.party`        | Start watch parties.                                                                                                                                         |
-| `sharing.manage`       | See every share link and withdraw any of them.                                                                                                               |
-| `streaming.view`       | See who is watching and what.                                                                                                                                |
-| `streaming.stop`       | End somebody else's stream.                                                                                                                                  |
-| `streaming.pause`      | Pause somebody else's stream.                                                                                                                                |
-| `streaming.message`    | Send a message that appears over somebody else's stream.                                                                                                     |
-| `download.media`       | Save media to a device for offline viewing.                                                                                                                  |
-| `requests.ask`         | Request films and series.                                                                                                                                    |
-| `requests.askMusic`    | Request artists and albums.                                                                                                                                  |
-| `requests.autoApprove` | Have requests go straight through without approval.                                                                                                          |
-| `requests.viewAll`     | See everybody's requests.                                                                                                                                    |
-| `requests.approve`     | Approve or refuse other people's requests.                                                                                                                   |
-| `requests.manage`      | Set up indexers, download clients and quality profiles.                                                                                                      |
-| `sources.play`         | Play a film from the catalogue straight from a source a plugin offers, without asking for it to be downloaded first. Needs `requests.ask` too.               |
-| `account.invite`       | Add a new account and hand out its setup link.                                                                                                               |
-| `account.manage`       | List, rename and remove accounts.                                                                                                                            |
-| `account.ban`          | Ban and unban accounts.                                                                                                                                      |
-| `account.roles`        | Create roles and choose what they grant.                                                                                                                     |
-| `account.profiles`     | Add, rename or remove another account's profiles.                                                                                                            |
-| `account.security`     | Set passwords, send setup links as resets, end sessions and see where an account is signed in.                                                               |
-| `account.keys`         | Hold API keys.                                                                                                                                               |
-| `server.settings`      | Change server-wide settings.                                                                                                                                 |
-| `server.backup`        | Start a backup or restore one.                                                                                                                               |
-| `server.logs`          | Read the server's log.                                                                                                                                       |
-| `server.monitor`       | See what the server is doing: load, memory and encoding.                                                                                                     |
-| `server.plugins`       | Install plugins from the catalogue or a file, choose what they may do, change their settings and remove them.                                                |
-| `server.links`         | Make and accept invites to link this server with another Valence server, approve or decline link requests, and unlink servers. Linking alone shares nothing. |
-| `server.webhooks`      | Have the server call out to another address when something happens.                                                                                          |
+| Permission             | Shown as                          | What it lets somebody do                                                                                                                          |
+| ---------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `administrator`        | **Everything**                    | Every permission, including ones added in future updates.                                                                                         |
+| `download.media`       | **Download media**                | Download media to a device to watch offline.                                                                                                      |
+| `media.subtitles`      | **Find subtitles**                | Search for and download subtitles while watching.                                                                                                 |
+| `sources.play`         | **Watch films not on the server** | Play a film straight away from a plugin, without requesting or downloading it. Only shown when a plugin offers sources; needs `requests.ask` too. |
+| `sharing.link`         | **Create share links**            | Let someone outside the server watch one title through a link.                                                                                    |
+| `sharing.party`        | **Start watch parties**           | Play one stream to everyone who joins.                                                                                                            |
+| `requests.ask`         | **Request films and series**      | Ask for films and series.                                                                                                                         |
+| `requests.askMusic`    | **Request music**                 | Ask for artists and albums.                                                                                                                       |
+| `requests.viewAll`     | **See everyone’s requests**       | See everyone's requests and how each download is going.                                                                                           |
+| `requests.autoApprove` | **Skip approval**                 | Their requests download straight away, without waiting for approval.                                                                              |
+| `account.keys`         | **Create API keys**               | Create API keys for scripts and devices outside the app.                                                                                          |
+
+Under **Admin permissions**:
+
+| Permission            | Shown as                           | What it lets somebody do                                                                                                                                     |
+| --------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `requests.approve`    | **Approve requests**               | Approve or refuse other people's requests.                                                                                                                   |
+| `requests.manage`     | **Set up requests**                | Set up indexers, download clients and quality profiles, and see the VPN status.                                                                              |
+| `sharing.manage`      | **Manage share links**             | See and revoke anyone's share links.                                                                                                                         |
+| `streaming.view`      | **See who’s watching**             | See who is watching and what.                                                                                                                                |
+| `streaming.control`   | **Control other people’s streams** | Pause or stop someone else's stream, or send a message over it.                                                                                              |
+| `media.override`      | **Edit titles**                    | Fix wrong matches, edit metadata, choose artwork and rescan titles.                                                                                          |
+| `media.reencode`      | **Re-encode media**                | Re-encode media at a chosen quality.                                                                                                                         |
+| `media.delete`        | **Delete files**                   | Delete media files from disk, not just from the library.                                                                                                     |
+| `library.edit`        | **Manage libraries**               | Add libraries and change their settings, such as names, languages and scan options.                                                                          |
+| `library.delete`      | **Delete libraries**               | Remove a library and forget everything scanned from it.                                                                                                      |
+| `jobs.run`            | **Run and schedule jobs**          | Start jobs such as scans by hand, and change when they run.                                                                                                  |
+| `jobs.runDestructive` | **Reset and rebuild**              | Run reset and rebuild, the jobs that throw away what is stored.                                                                                              |
+| `account.invite`      | **Invite people**                  | Add a new account and hand out its setup link.                                                                                                               |
+| `account.manage`      | **Manage accounts**                | Rename, suspend, ban or remove accounts, reset passwords, sign people out and manage their profiles.                                                         |
+| `account.roles`       | **Manage roles**                   | Create roles, put them in order and choose what they grant.                                                                                                  |
+| `server.monitor`      | **See server status and logs**     | See CPU, memory and transcodes, and read the server log.                                                                                                     |
+| `server.settings`     | **Change server settings**         | Change server-wide settings, such as hardware acceleration, quality and webhooks.                                                                            |
+| `server.plugins`      | **Manage plugins**                 | Install plugins from the catalogue or a file, choose what they may do, change their settings and remove them.                                                |
+| `server.links`        | **Link servers**                   | Make and accept invites to link this server with another Valence server, approve or decline link requests, and unlink servers. Linking alone shares nothing. |
+| `server.backup`       | **Back up and restore**            | Start a backup or restore one.                                                                                                                               |
 
 Installed plugins can add permissions of their own, such as `plugin.anilist.sync`. They appear in the role editor in a group named after each plugin, described by the plugin, and are granted like any other. The Administrator role holds every one of them. They go when the plugin is removed. See [plugins](/use/plugins#permissions-a-plugin-adds).
 
@@ -240,7 +249,7 @@ The owner can narrow what each other profile may watch from **Profiles → Libra
 
 ### Managing other people's profiles
 
-Administrators with `account.profiles` manage any account's profiles from the **Profiles** tab of the account editor, with the same rules about rank as everything else there. From it they can add, rename and remove profiles, clear a forgotten PIN, hand ownership to another profile and narrow what a profile may watch.
+Administrators with `account.manage` manage any account's profiles from the **Profiles** tab of the account editor, with the same rules about who may act on whom as everything else there. From it they can add, rename and remove profiles, clear a forgotten PIN, hand ownership to another profile and narrow what a profile may watch.
 
 **Give a profile an account of its own** (an administrator's action, needing `account.manage`) moves a profile to a new account. It cannot move the owner's profile.
 

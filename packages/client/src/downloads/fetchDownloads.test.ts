@@ -110,6 +110,7 @@ describe('fetchDownloadOffer', () => {
             comparison: null,
             wouldTranscode: true,
             savesSpace: true,
+            isAboveLimit: false,
           },
         ],
       }),

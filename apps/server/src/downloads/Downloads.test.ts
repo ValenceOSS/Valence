@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -14,6 +14,9 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 import { createMemoryDownloadService } from '@ValenceServer/downloads/createMemoryDownloadService';
 import { DownloadListSchema, DownloadSchema } from '@ValenceContracts/schemas/Download';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
+import type { PlaybackService } from '@ValenceServer/playback/PlaybackService';
+import type { StreamLimit } from '@ValenceContracts/schemas/StreamLimit';
+import { z } from 'zod';
 
 const BASE = 'http://localhost:8420';
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
@@ -49,10 +52,14 @@ const CREDENTIALS = {
   password: 'a-long-enough-password',
 };
 
-const build = () => {
+const build = (isOriginalWithinLimits = true) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const downloads = createMemoryDownloadService();
+  const playback = {
+    ...createMemoryPlaybackService(),
+    fitsLimit: vi.fn<PlaybackService['fitsLimit']>(() => Promise.resolve(isOriginalWithinLimits)),
+  };
   const library = createMemoryLibraryService({
     libraries: [
       {
@@ -81,7 +88,7 @@ const build = () => {
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
     library,
-    playback: createMemoryPlaybackService(),
+    playback,
     segments: createMemorySegmentService(),
     subtitles: createMemorySubtitleService({}),
     profiles: createMemoryProfileService(),
@@ -109,7 +116,29 @@ const build = () => {
     return cookie;
   };
 
-  return { app, auth, downloads, library, permissions, store, signUp };
+  /**
+   * Holds the account signed up last to a stream limit of its own.
+   *
+   * @param limit - The parts of the limit that are set.
+   */
+  const limitTheLast = async (limit: Partial<StreamLimit>) => {
+    await settings.write({
+      streamLimits: {
+        accounts: {
+          [store.user.at(-1)?.id ?? '']: {
+            maxBitrateKbps: null,
+            maxStreams: null,
+            maxQuality: null,
+            limitsDownloads: false,
+            ...limit,
+          },
+        },
+        roles: {},
+      },
+    });
+  };
+
+  return { app, auth, downloads, library, permissions, playback, store, signUp, limitTheLast };
 };
 
 /**
@@ -474,5 +503,173 @@ describe('downloads over HTTP', () => {
     expect(theirs).not.toBe(mine);
     expect(letGo.status).toBe(204);
     expect(Object.values(downloads.state.holdings).flat()).toHaveLength(1);
+  });
+});
+
+describe('downloads held to a quality', () => {
+  const DEVICE_PROFILE = {
+    schemaVersion: 1,
+    name: 'Browser',
+    maxWidth: 3840,
+    maxHeight: 2160,
+    maxBitrateKbps: 40000,
+    maxAudioChannels: 2,
+    supportedVideoRanges: ['SDR'],
+    tenBitVideoCodecs: [],
+    maxVideoLevels: {},
+    canPlayInterlaced: true,
+    canPlayAnamorphic: true,
+    canRotate: true,
+    unsupportedAudioProfiles: [],
+    supportedSubtitleFormats: ['webvtt'],
+    directPlayProfiles: [{ container: 'mp4', videoCodecs: ['h264'], audioCodecs: ['aac'] }],
+    transcodingProfiles: [
+      { container: 'ts', videoCodec: 'h264', audioCodec: 'aac', protocol: 'hls' },
+    ],
+  };
+
+  const OfferSchema = z.object({
+    options: z.array(z.object({ quality: z.string(), isAboveLimit: z.boolean() })),
+  });
+
+  const anOption = (quality: 'original' | '2160p' | '1080p' | '720p') => ({
+    quality,
+    label: quality,
+    meaning: quality,
+    bytes: null,
+    comparison: null,
+    wouldTranscode: quality !== 'original',
+    savesSpace: quality !== 'original',
+  });
+
+  /**
+   * Asks what could be downloaded of the film.
+   *
+   * @param app - The application.
+   * @param cookie - Who is asking.
+   * @returns Each size on offer and whether it is above their limit.
+   */
+  const offered = async (app: ReturnType<typeof build>['app'], cookie: string) =>
+    OfferSchema.parse(
+      await (
+        await app.request(`${BASE}/api/media/${MEDIA_ID}/downloads/offer`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', cookie, origin: BASE },
+          body: JSON.stringify({ deviceProfile: DEVICE_PROFILE }),
+        })
+      ).json(),
+    ).options.map((option) => [option.quality, option.isAboveLimit]);
+
+  it('saves a copy no higher than the quality the account’s downloads are held to', async () => {
+    const { app, signUp, limitTheLast } = build(false);
+    const cookie = await signUp();
+
+    await limitTheLast({ maxQuality: '720p', limitsDownloads: true });
+
+    expect(DownloadSchema.parse(await (await ask(app, cookie, '1080p')).json()).quality).toBe(
+      '720p',
+    );
+    expect(DownloadSchema.parse(await (await ask(app, cookie, 'original')).json()).quality).toBe(
+      '720p',
+    );
+    expect(DownloadSchema.parse(await (await ask(app, cookie, '480p')).json()).quality).toBe(
+      '480p',
+    );
+  });
+
+  it('keeps the file as it is where it is already within the limit', async () => {
+    const { app, signUp, limitTheLast } = build(true);
+    const cookie = await signUp();
+
+    await limitTheLast({ maxQuality: '1080p', limitsDownloads: true });
+
+    expect(DownloadSchema.parse(await (await ask(app, cookie, 'original')).json()).quality).toBe(
+      'original',
+    );
+  });
+
+  it('saves the quality asked for where the limit does not reach downloads', async () => {
+    const { app, signUp, limitTheLast } = build();
+    const cookie = await signUp();
+
+    await limitTheLast({ maxQuality: '720p', limitsDownloads: false });
+
+    expect(DownloadSchema.parse(await (await ask(app, cookie, '1080p')).json()).quality).toBe(
+      '1080p',
+    );
+  });
+
+  it('saves a copy that holds downloads back without a quality as asked', async () => {
+    const { app, signUp, limitTheLast } = build();
+    const cookie = await signUp();
+
+    await limitTheLast({ maxBitrateKbps: 4000, limitsDownloads: true });
+
+    expect(DownloadSchema.parse(await (await ask(app, cookie, '1080p')).json()).quality).toBe(
+      '1080p',
+    );
+  });
+
+  it('saves every episode of a programme no higher than the limit', async () => {
+    const { app, signUp, downloads, limitTheLast } = build();
+    const cookie = await signUp();
+
+    downloads.state.episodes[SERIES_ID] = [MEDIA_ID, OTHER_MEDIA_ID];
+    await limitTheLast({ maxQuality: '720p', limitsDownloads: true });
+
+    const queued = DownloadListSchema.parse(
+      await (
+        await app.request(`${BASE}/api/series/${SERIES_ID}/downloads`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', cookie, origin: BASE },
+          body: JSON.stringify({ quality: '2160p' }),
+        })
+      ).json(),
+    );
+
+    expect(queued.downloads.map((one) => one.quality)).toEqual(['720p', '720p']);
+  });
+
+  it('marks each size above the limit, asking playback whether the original fits it', async () => {
+    const { app, signUp, downloads, playback, limitTheLast } = build(false);
+    const cookie = await signUp();
+
+    downloads.state.offers[MEDIA_ID] = {
+      mediaId: MEDIA_ID,
+      title: 'Arrival',
+      episodes: 1,
+      options: [anOption('original'), anOption('2160p'), anOption('1080p'), anOption('720p')],
+    };
+    await limitTheLast({ maxQuality: '1080p', limitsDownloads: true });
+
+    expect(await offered(app, cookie)).toEqual([
+      ['original', true],
+      ['2160p', true],
+      ['1080p', false],
+      ['720p', false],
+    ]);
+    expect(playback.fitsLimit).toHaveBeenCalledWith(MEDIA_ID, null, {
+      maxQuality: '1080p',
+      maxBitrateKbps: null,
+    });
+  });
+
+  it('marks nothing where the limit does not reach downloads', async () => {
+    const { app, signUp, downloads, playback, limitTheLast } = build(false);
+    const cookie = await signUp();
+
+    downloads.state.offers[MEDIA_ID] = {
+      mediaId: MEDIA_ID,
+      title: 'Arrival',
+      episodes: 1,
+      options: [anOption('original'), anOption('1080p')],
+    };
+    await limitTheLast({ maxQuality: '720p', limitsDownloads: false });
+
+    expect(await offered(app, cookie)).toEqual([
+      ['original', false],
+      ['1080p', false],
+    ]);
+    expect(playback.fitsLimit).not.toHaveBeenCalled();
   });
 });

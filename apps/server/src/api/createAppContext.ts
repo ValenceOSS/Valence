@@ -1,3 +1,4 @@
+import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
 import { endWhatSignInsHeld } from '@ValenceServer/presence/endWhatSignInsHeld';
 import type { EndedSignIns } from '@ValenceServer/realtime/createSignedInSockets';
 import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
@@ -980,6 +981,25 @@ const createAppContext = (options: CreateAppOptions) => {
   const readAccount = async (headers: Headers) =>
     (await readSessionOnce(auth, headers))?.user ?? null;
 
+  /**
+   * The limit whoever is asking streams under, from their own and their roles', or null where
+   * nobody is signed in.
+   */
+  const streamLimitOf = async (headers: Headers) => {
+    const account = await readAccount(headers);
+
+    if (account === null) {
+      return null;
+    }
+
+    const roles = await permissions.rolesFor(account.id);
+
+    return {
+      accountId: account.id,
+      ...readStreamLimit((await settings.read()).streamLimits, account.id, roles),
+    };
+  };
+
   const statistics = givenStatistics ?? createMemoryStatisticsService(history);
 
   const updates =
@@ -1142,7 +1162,7 @@ const createAppContext = (options: CreateAppOptions) => {
       return 'anonymous';
     }
 
-    return (await requires(headers, 'server.webhooks')) ? 'allowed' : 'forbidden';
+    return (await requires(headers, 'server.settings')) ? 'allowed' : 'forbidden';
   };
 
   const refuseWebhookKeeper = (keeper: 'anonymous' | 'forbidden') =>
@@ -2250,6 +2270,7 @@ const createAppContext = (options: CreateAppOptions) => {
     announceProfiles,
     theOwner,
     readAccount,
+    streamLimitOf,
     isTheSessionOfWhoeverIsAsking,
     isTheDeviceOfWhoeverIsAsking,
     readKeyHolder,

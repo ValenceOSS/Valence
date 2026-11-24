@@ -3,8 +3,13 @@ import { readGrantedPermission } from './readGrantedPermission';
 
 describe('readGrantedPermission', () => {
   it('reads Valence’s own permissions and plugin nodes', () => {
-    expect(readGrantedPermission('library.create')).toBe('library.create');
+    expect(readGrantedPermission('library.edit')).toBe('library.edit');
     expect(readGrantedPermission('plugin.anilist.sync')).toBe('plugin.anilist.sync');
+  });
+
+  it('reads a permission since folded into another as the one it became', () => {
+    expect(readGrantedPermission('account.ban')).toBe('account.manage');
+    expect(readGrantedPermission('streaming.pause')).toBe('streaming.control');
   });
 
   it.each([

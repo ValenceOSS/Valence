@@ -523,6 +523,40 @@ describe('PlayerControls', () => {
     expect(props.onQualityChange).toHaveBeenCalledWith('720p');
   });
 
+  it('locks every step above the viewer’s limit, the original among them', async () => {
+    const user = userEvent.setup();
+    const props = draw({
+      availableQualitySteps: ['2160p', '1080p', '720p', '480p'],
+      originalStep: '2160p',
+      qualityLimit: '720p',
+      selectedQuality: 'auto',
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    await user.click(await screen.findByRole('button', { name: /^Quality/ }));
+
+    expect(await screen.findByRole('menuitemradio', { name: '4K' })).toBeDisabled();
+    expect(screen.getByRole('menuitemradio', { name: /1080p/ })).toBeDisabled();
+    expect(screen.getByRole('menuitemradio', { name: /720p/ })).toBeEnabled();
+    expect(screen.getByRole('menuitemradio', { name: /480p/ })).toBeEnabled();
+    expect(screen.getByRole('menuitemradio', { name: /^Auto/ })).toBeEnabled();
+
+    await user.click(screen.getByRole('menuitemradio', { name: /1080p/ }));
+
+    expect(props.onQualityChange).not.toHaveBeenCalled();
+  });
+
+  it('locks nothing where the viewer has no limit', async () => {
+    const user = userEvent.setup();
+    draw({ availableQualitySteps: ['2160p', '1080p'], originalStep: '2160p', qualityLimit: null });
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    await user.click(await screen.findByRole('button', { name: /^Quality/ }));
+
+    expect(await screen.findByRole('menuitemradio', { name: '4K' })).toBeEnabled();
+    expect(screen.getByRole('menuitemradio', { name: /1080p/ })).toBeEnabled();
+  });
+
   it('can be switched back to Original', async () => {
     const user = userEvent.setup();
     const props = draw({ availableQualitySteps: ['720p'], selectedQuality: '720p' });

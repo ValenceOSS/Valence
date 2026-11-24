@@ -66,7 +66,7 @@ const serveSetupLinks = (app: OpenAPIHono, context: AppContext): void => {
 
     if (
       actor === null ||
-      !(actor.permissions.has('account.invite') || actor.permissions.has('account.security'))
+      !(actor.permissions.has('account.invite') || actor.permissions.has('account.manage'))
     ) {
       return { refusal: refuse('common.thatIsForAdministrators') };
     }
@@ -87,7 +87,7 @@ const serveSetupLinks = (app: OpenAPIHono, context: AppContext): void => {
       }
     }
 
-    if (!actor.permissions.has('account.security') && !(await isWaitingToBeSetUp(userId))) {
+    if (!actor.permissions.has('account.manage') && !(await isWaitingToBeSetUp(userId))) {
       return { refusal: refuse('common.thatIsForAdministrators') };
     }
 

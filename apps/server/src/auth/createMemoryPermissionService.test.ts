@@ -76,9 +76,9 @@ describe('createMemoryPermissionService', () => {
     it('grants something no role gave', async () => {
       const service = createMemoryPermissionService();
 
-      await service.setOverride('usr_1', { permission: 'server.logs', effect: 'allow' });
+      await service.setOverride('usr_1', { permission: 'server.monitor', effect: 'allow' });
 
-      expect((await service.resolve('usr_1')).has('server.logs')).toBe(true);
+      expect((await service.resolve('usr_1')).has('server.monitor')).toBe(true);
     });
 
     it('denies something a role gave', async () => {
@@ -120,12 +120,12 @@ describe('createMemoryPermissionService', () => {
         name: 'Housemate',
         position: 150,
         color: null,
-        permissions: ['media.rescan'],
+        permissions: ['media.override'],
       });
 
       await service.assignRole('usr_1', created.id);
 
-      expect((await service.resolve('usr_1')).has('media.rescan')).toBe(true);
+      expect((await service.resolve('usr_1')).has('media.override')).toBe(true);
     });
 
     it('changes what one grants, and every holder feels it', async () => {
@@ -133,11 +133,11 @@ describe('createMemoryPermissionService', () => {
       const member = named(service, 'Member').id;
 
       await service.assignRole('usr_1', member);
-      await service.updateRole(member, { permissions: ['media.hide'] });
+      await service.updateRole(member, { permissions: ['media.override'] });
 
       const resolved = await service.resolve('usr_1');
 
-      expect(resolved.has('media.hide')).toBe(true);
+      expect(resolved.has('media.override')).toBe(true);
       expect(resolved.has('download.media')).toBe(false);
     });
 
@@ -165,6 +165,42 @@ describe('createMemoryPermissionService', () => {
       const positions = (await service.listRoles()).map((role) => role.position);
 
       expect(positions).toEqual([...positions].sort((a, b) => b - a));
+    });
+  });
+
+  describe('ranking roles', () => {
+    it('moves the roles it is given and leaves the rest where they were', async () => {
+      const service = createMemoryPermissionService();
+      const member = named(service, 'Member');
+      const restricted = named(service, 'Restricted');
+      const manager = named(service, 'Manager');
+
+      await service.rankRoles(
+        new Map([
+          [member.id, restricted.position],
+          [restricted.id, member.position],
+        ]),
+      );
+
+      expect((await service.listRoles()).map((role) => role.name)).toEqual([
+        'Administrator',
+        'Manager',
+        'Restricted',
+        'Member',
+      ]);
+      expect(named(service, 'Manager').position).toBe(manager.position);
+    });
+
+    it('lists roles sharing a place by name', async () => {
+      const service = createMemoryPermissionService();
+
+      for (const name of ['Zebra', 'Aardvark', 'Mongoose']) {
+        await service.createRole({ name, position: 7, color: null, permissions: [] });
+      }
+
+      expect(
+        (await service.listRoles()).filter((role) => role.position === 7).map((role) => role.name),
+      ).toEqual(['Aardvark', 'Mongoose', 'Zebra']);
     });
   });
 

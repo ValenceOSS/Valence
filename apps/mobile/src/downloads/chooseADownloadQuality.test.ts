@@ -9,6 +9,7 @@ const ORIGINAL = {
   comparison: null,
   wouldTranscode: false,
   savesSpace: true,
+  isAboveLimit: false,
 };
 
 const AT_720P = {
@@ -19,6 +20,7 @@ const AT_720P = {
   comparison: null,
   wouldTranscode: true,
   savesSpace: true,
+  isAboveLimit: false,
 };
 
 const OFFER = {
@@ -55,6 +57,7 @@ describe('chooseADownloadQuality', () => {
           bytes: 5_000_000_000,
           comparison: 'bigger than the original',
           savesSpace: false,
+          isAboveLimit: false,
         },
       ],
     };
@@ -62,6 +65,47 @@ describe('chooseADownloadQuality', () => {
     await chooseADownloadQuality(bigger, 'Download Arrival');
 
     expect(asking.mock.lastCall?.[0].options[1]).toMatch(/bigger than the original$/u);
+    expect(asking.mock.lastCall?.[0].disabledButtonIndices).toEqual([1]);
+  });
+
+  it('says a quality is above the account’s limit, and greys it out', async () => {
+    const asking = jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, picked) => {
+      picked(2);
+    });
+    const limited = { ...OFFER, options: [{ ...ORIGINAL, isAboveLimit: true }, AT_720P] };
+
+    await chooseADownloadQuality(limited, 'Download Arrival');
+
+    expect(asking.mock.lastCall?.[0].options).toEqual([
+      expect.stringMatching(/^Original · \d.* · Above your limit$/u),
+      '720p',
+      'Cancel',
+    ]);
+    expect(asking.mock.lastCall?.[0].disabledButtonIndices).toEqual([0]);
+  });
+
+  it('says above the limit rather than how big it is, where a quality is both', async () => {
+    const asking = jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, picked) => {
+      picked(2);
+    });
+    const both = {
+      ...OFFER,
+      options: [
+        ORIGINAL,
+        {
+          ...AT_720P,
+          bytes: 5_000_000_000,
+          comparison: 'bigger than the original',
+          savesSpace: false,
+          isAboveLimit: true,
+        },
+      ],
+    };
+
+    await chooseADownloadQuality(both, 'Download Arrival');
+
+    expect(asking.mock.lastCall?.[0].options[1]).toMatch(/Above your limit$/u);
+    expect(asking.mock.lastCall?.[0].options[1]).not.toContain('bigger than the original');
     expect(asking.mock.lastCall?.[0].disabledButtonIndices).toEqual([1]);
   });
 

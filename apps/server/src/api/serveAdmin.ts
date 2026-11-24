@@ -141,7 +141,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminLogsRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'server.logs'))) {
+    if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -153,7 +153,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminLogHistogramRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'server.logs'))) {
+    if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -172,7 +172,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminLogFacetsRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'server.logs'))) {
+    if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -569,7 +569,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         readStreamLimit(
           (await settings.read()).streamLimits,
           accountId,
-          (await permissions.rolesFor(accountId)).map((role) => role.id),
+          await permissions.rolesFor(accountId),
         ))();
 
       limits.set(accountId, reading);
@@ -635,7 +635,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminStopSessionRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'streaming.stop'))) {
+    if (!(await requires(context.req.raw.headers, 'streaming.control'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -676,7 +676,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminPauseSessionRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'streaming.pause'))) {
+    if (!(await requires(context.req.raw.headers, 'streaming.control'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -699,7 +699,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminMessageSessionRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'streaming.message'))) {
+    if (!(await requires(context.req.raw.headers, 'streaming.control'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -713,7 +713,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminResumeSessionRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'streaming.pause'))) {
+    if (!(await requires(context.req.raw.headers, 'streaming.control'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -989,7 +989,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminJobSchedulesRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'jobs.schedule'))) {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -1000,7 +1000,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminAddJobTriggerRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'jobs.schedule'))) {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -1016,7 +1016,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(adminRemoveJobTriggerRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'jobs.schedule'))) {
+    if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 

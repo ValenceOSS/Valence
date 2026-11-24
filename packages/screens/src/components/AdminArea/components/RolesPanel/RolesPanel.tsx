@@ -1,100 +1,44 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus as PlusFilledIcon } from '@keyline-icons/react/fill';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { Spinner } from '@ValenceUI/Spinner';
-import { rowActionsColumn } from '@ValenceUI/DataTable/rowActionsColumn';
+import { useRoomBelow } from '@ValenceUI/useRoomBelow';
+import { deleteRole, orderRoles } from '@ValenceClient/admin/fetchRoles';
+import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
-import { Icon } from '@ValenceUI/Icon';
-import {
-  Bin as BinFilledIcon,
-  PenLine as PenLineFilledIcon,
-  Plus as PlusFilledIcon,
-  TriangleAlert as TriangleAlertIcon,
-} from '@keyline-icons/react/fill';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
-import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
-import { DialogCompanion } from '@ValenceUI/DialogCompanion';
-import { DialogContent } from '@ValenceUI/DialogContent';
-import { DialogFooter } from '@ValenceUI/DialogFooter';
-import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { DataTable } from '@ValenceUI/DataTable';
-import { FormField } from '@ValenceUI/FormField';
-import { Form } from '@ValenceUI/Form';
-import { useZodForm } from '@ValenceClient/forms/useZodForm';
-import { RoleFormSchema } from './RoleFormSchema';
-import { A_NEW_ROLE } from './A_NEW_ROLE';
-import { TabPanel } from '@ValenceUI/TabPanel';
-import { TabRow } from '@ValenceUI/TabRow';
-import { Tabs } from '@ValenceUI/Tabs';
-import { TextField } from '@ValenceUI/TextField';
-import { useTravelDirection } from '@ValenceUI/useTravelDirection';
-import { PermissionEditor } from './components/PermissionEditor/PermissionEditor';
-import { ColorSwatchPicker } from './components/ColorSwatchPicker/ColorSwatchPicker';
-import { RoleMembers } from './components/RoleMembers/RoleMembers';
-import { RoleStreamLimits } from './components/RoleStreamLimits/RoleStreamLimits';
-import {
-  assignRole,
-  createRole,
-  deleteRole,
-  removeRole,
-  updateRole,
-} from '@ValenceClient/admin/fetchRoles';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { adminQueries } from '@ValenceClient/query/adminQueries';
-import type { DataTableColumn } from '@ValenceUI/DataTable.types';
-import type { Account } from '@ValenceClient/admin/fetchAccounts';
-import type { Refusal } from '@ValenceClient/admin/fetchRoles';
-import { pluginQueries } from '@ValenceClient/query/pluginQueries';
-import type { GrantedPermission, Permission, Role } from '@ValenceContracts/schemas/Permission';
-import { PanelCard } from '@ValenceUI/PanelCard';
-import { say } from '@ValenceI18n/say';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
-import { sayCount } from '@ValenceI18n/sayCount';
+import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
+import { RoleEditor } from './components/RoleEditor/RoleEditor';
+import { RoleList } from './components/RoleList/RoleList';
+import { say } from '@ValenceI18n/say';
+
+const NEW_ROLE = 'new';
 
 const NO_ROLES: Role[] = [];
 
+const NO_IDS: string[] = [];
+
 const NO_PERMISSIONS: Permission[] = [];
 
-const NO_ACCOUNTS: Account[] = [];
-
-type OpenedRole = Pick<Role, 'id' | 'name' | 'position' | 'color' | 'permissions'>;
-
-type OpenedMembers = { id: string; ids: ReadonlySet<string> };
-
-const EDIT_TABS = ['display', 'permissions', 'members', 'streaming'] as const;
-
-type EditTab = (typeof EDIT_TABS)[number];
-
 /**
- * Whether a string the tab row handed back actually names one of the edit dialog's tabs.
- *
- * @param value - What was chosen.
- * @returns Whether it names a tab.
- */
-const isEditTab = (value: string): value is EditTab => EDIT_TABS.some((tab) => tab === value);
-
-/**
- * The roles on this server, what each grants and who holds them, with the making and changing of
- * them. Permissions are offered grouped by what they are about rather than as one long list, since
- * choosing from a hundred flat checkboxes is how a role ends up granting something nobody meant.
+ * The roles on this server as Discord lays them out: every role down the side in the order that
+ * decides who may manage whom, dragged to rank them, and the chosen one open beside them, where what
+ * it is, what it grants, who holds it and its streaming limit are changed and saved together. A role
+ * is made the same way, opened at the foot of the list before it is saved.
  */
 const RolesPanel = () => {
-  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
-  const [editTab, setEditTab] = useState<EditTab>('display');
+  const [chosenId, setChosenId] = useState<string | null>(null);
+  const [draft, setDraft] = useState({ name: '', isChanged: false });
+  const [switchingTo, setSwitchingTo] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Role | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-
-  useAdminCommand('createRole', () => {
-    setIsCreating(true);
-  });
-  const [refusal, setRefusal] = useState<Refusal>(null);
-  const [draftMemberIds, setDraftMemberIds] = useState<ReadonlySet<string>>(new Set());
-  const [draftFor, setDraftFor] = useState<string | null>(null);
-  const [draftMembersFor, setDraftMembersFor] = useState<string | null>(null);
-  const [opened, setOpened] = useState<OpenedRole | null>(null);
-  const [openedMembers, setOpenedMembers] = useState<OpenedMembers | null>(null);
-
+  const box = useRef<HTMLDivElement | null>(null);
+  const room = useRoomBelow(box, true);
   const cache = useQueryClient();
 
   const askedRoles = useQuery(adminQueries.roles());
@@ -102,431 +46,180 @@ const RolesPanel = () => {
   const askedAccounts = useQuery(adminQueries.accounts());
   const askedPlugins = useQuery(pluginQueries.contributions());
 
-  const roles = askedRoles.data ?? NO_ROLES;
-  const catalogue = askedCatalogue.data ?? NO_PERMISSIONS;
+  const roles = askedRoles.data?.roles ?? NO_ROLES;
+  const outOfReach = useMemo(
+    () => new Set(askedRoles.data?.outOfReach ?? NO_IDS),
+    [askedRoles.data?.outOfReach],
+  );
+  const accounts = askedAccounts.data;
   const pluginNodes = askedPlugins.data?.nodes;
-  const accounts = askedAccounts.data ?? NO_ACCOUNTS;
   const couldNotRead = askedRoles.isError || askedCatalogue.isError;
 
-  const reload = useCallback(
-    async () =>
-      Promise.all([
-        cache.invalidateQueries({ queryKey: adminQueries.roles().queryKey }),
-        cache.invalidateQueries({ queryKey: adminQueries.accounts().queryKey }),
-      ]),
-    [cache],
+  const memberCounts = useMemo(
+    () =>
+      new Map(
+        roles.map((role) => [
+          role.id,
+          (accounts ?? []).filter((account) => account.roles.includes(role.name)).length,
+        ]),
+      ),
+    [roles, accounts],
   );
 
-  const selected = roles.find((role) => role.id === selectedRoleId) ?? null;
+  const isMaking = chosenId === NEW_ROLE;
+  const chosen = isMaking
+    ? null
+    : (roles.find((role) => role.id === chosenId) ??
+      roles.find((role) => !outOfReach.has(role.id)) ??
+      roles[0] ??
+      null);
+  const openId = isMaking ? NEW_ROLE : (chosen?.id ?? null);
 
-  const creating = useZodForm(RoleFormSchema, A_NEW_ROLE, async (answers, { reset }) => {
-    const refused = await createRole(answers);
+  const onChange = useCallback((next: { name: string; isChanged: boolean }) => {
+    setDraft(next);
+  }, []);
 
-    if (refused !== null) {
-      return refused.message;
-    }
-
-    tellOutcome(
-      say('screens.adminArea.rolesPanel.createdTheNewRoleNameRole', { newRoleName: answers.name }),
-      null,
-    );
-    await reload();
-    reset(A_NEW_ROLE);
-    setIsCreating(false);
-
-    return null;
-  });
-
-  const editing = useZodForm(RoleFormSchema, A_NEW_ROLE, async (answers) => {
-    if (selected === null) {
-      return null;
-    }
-
-    const before = opened?.id === selected.id ? opened : selected;
-    const membersBefore = openedMembers?.id === selected.id ? openedMembers.ids : null;
-
-    const firstRefusal = async (): Promise<string | null> => {
-      const patch: Partial<Omit<Role, 'id'>> = {};
-
-      if (answers.name !== before.name) {
-        patch.name = answers.name;
-      }
-
-      if (answers.position !== before.position) {
-        patch.position = answers.position;
-      }
-
-      if (answers.color !== before.color) {
-        patch.color = answers.color;
-      }
-
-      if (
-        answers.permissions.length !== before.permissions.length ||
-        answers.permissions.some((permission) => !before.permissions.includes(permission))
-      ) {
-        patch.permissions = answers.permissions;
-      }
-
-      if (Object.keys(patch).length > 0) {
-        const outcome = await updateRole(selected.id, patch);
-
-        if (outcome !== null) {
-          return outcome.message;
-        }
-      }
-
-      const heldIds = new Set(
-        accounts
-          .filter((account) => account.roles.includes(selected.name))
-          .map((account) => account.id),
-      );
-
-      for (const accountId of draftMemberIds) {
-        if (membersBefore !== null && !membersBefore.has(accountId) && !heldIds.has(accountId)) {
-          const outcome = await assignRole(accountId, selected.id);
-
-          if (outcome !== null) {
-            return outcome.message;
-          }
-        }
-      }
-
-      for (const accountId of membersBefore ?? []) {
-        if (!draftMemberIds.has(accountId) && heldIds.has(accountId)) {
-          const outcome = await removeRole(accountId, selected.id);
-
-          if (outcome !== null) {
-            return outcome.message;
-          }
-        }
-      }
-
-      return null;
-    };
-
-    const refused = await firstRefusal();
-
-    await reload();
-
-    if (refused !== null) {
-      return refused;
-    }
-
-    tellOutcome(say('screens.adminArea.rolesPanel.roleSaved'), null);
-    setOpened(null);
-    setOpenedMembers(null);
-    setDraftFor(null);
-    setDraftMembersFor(null);
-
-    return null;
-  });
-
-  const resetEditing = editing.reset;
-
-  const hasAccounts = askedAccounts.data !== undefined;
-
-  useEffect(() => {
-    const picked = roles.find((candidate) => candidate.id === selectedRoleId) ?? null;
-
-    if (picked === null) {
+  const choose = (id: string) => {
+    if (id === openId) {
       return;
     }
 
-    if (opened?.id !== picked.id) {
-      setOpened(picked);
+    if (draft.isChanged) {
+      setSwitchingTo(id);
 
-      if (draftFor !== picked.id) {
-        setDraftFor(picked.id);
-        resetEditing({
-          name: picked.name,
-          position: picked.position.toString(),
-          color: picked.color,
-          permissions: picked.permissions,
-        });
-      }
+      return;
     }
 
-    if (hasAccounts && openedMembers?.id !== picked.id) {
-      const ids = new Set(
-        accounts
-          .filter((account) => account.roles.includes(picked.name))
-          .map((account) => account.id),
-      );
-
-      setOpenedMembers({ id: picked.id, ids });
-
-      if (draftMembersFor !== picked.id) {
-        setDraftMembersFor(picked.id);
-        setDraftMemberIds(ids);
-      }
-    }
-  }, [
-    selectedRoleId,
-    roles,
-    accounts,
-    hasAccounts,
-    opened,
-    openedMembers,
-    draftFor,
-    draftMembersFor,
-    resetEditing,
-  ]);
-
-  const act = useCallback(
-    async (run: () => Promise<Refusal>, done: string) => {
-      const outcome = await run();
-
-      setRefusal(outcome);
-      tellOutcome(done, failureOfRefusal(outcome));
-
-      if (outcome === null) {
-        await reload();
-      }
-
-      return outcome;
-    },
-    [reload],
-  );
-
-  const travel = useTravelDirection([...EDIT_TABS], editTab);
-  const memberCount = draftMemberIds.size;
-
-  const draft = editing.values;
-  const before = selected !== null && opened?.id === selected.id ? opened : selected;
-  const membersBefore =
-    selected !== null && openedMembers?.id === selected.id ? openedMembers.ids : null;
-  const hasUnsavedChanges =
-    before !== null &&
-    (draft.name !== before.name ||
-      draft.position !== before.position.toString() ||
-      draft.color !== before.color ||
-      draft.permissions.length !== before.permissions.length ||
-      draft.permissions.some((permission) => !before.permissions.includes(permission)) ||
-      (membersBefore !== null &&
-        (membersBefore.size !== draftMemberIds.size ||
-          [...draftMemberIds].some((id) => !membersBefore.has(id)))));
-
-  const togglePermission = (form: typeof creating) => (permission: GrantedPermission) => {
-    const held = form.values.permissions;
-
-    form.set(
-      'permissions',
-      held.includes(permission)
-        ? held.filter((candidate) => candidate !== permission)
-        : [...held, permission],
-    );
+    setChosenId(id);
   };
 
-  const live = useRef({
-    onEdit: (id: string) => {
-      setSelectedRoleId(id);
-      setDraftFor(null);
-      setDraftMembersFor(null);
-      setOpened(null);
-      setOpenedMembers(null);
-      setEditTab('display');
-      setRefusal(null);
-    },
-    onAskDelete: (role: Role) => {
-      setDeleting(role);
-    },
+  useAdminCommand('createRole', () => {
+    choose(NEW_ROLE);
   });
 
-  const columns = useMemo<DataTableColumn<Role>[]>(
-    () => [
-      {
-        id: 'name',
-        header: say('common.role'),
-        accessorFn: (role) => role.name,
-        cell: ({ row }) => (
-          <span className="flex min-w-0 items-center gap-2.5">
-            <span
-              aria-hidden
-              className="size-2.5 shrink-0 rounded-full ring-1 ring-inset ring-[var(--surface-divider)]"
-              style={row.original.color === null ? {} : { backgroundColor: row.original.color }}
-            />
+  const putInOrder = async (ids: string[]) => {
+    const byId = new Map(roles.map((role) => [role.id, role]));
 
-            <span className="flex min-w-0 flex-col">
-              <span className="truncate font-medium text-text">{row.original.name}</span>
-              <span className="truncate text-xs text-text-muted">
-                {row.original.permissions.includes('administrator')
-                  ? say('common.everything')
-                  : sayCount('common.count.permissions', row.original.permissions.length)}
-              </span>
-            </span>
-          </span>
-        ),
-      },
-      {
-        id: 'position',
-        header: say('screens.adminArea.rolesPanel.rank'),
-        meta: {
-          info: (
-            <PanelCardInfo
-              label={say('screens.adminArea.rolesPanel.aboutRank')}
-              align="start"
-              detail={say('screens.adminArea.rolesPanel.rankAbout')}
-            />
-          ),
-        },
-        accessorFn: (role) => role.position,
-        cell: ({ row }) => (
-          <span className="tabular-nums text-text-muted">{row.original.position.toString()}</span>
-        ),
-      },
-      rowActionsColumn(
-        (item) => item.name,
-        (item) => [
-          {
-            items: [
-              {
-                id: 'edit',
-                label: say('screens.adminArea.rolesPanel.editRole'),
-                icon: <Icon of={PenLineFilledIcon} size={15} />,
-                onChoose: () => {
-                  live.current.onEdit(item.id);
-                },
-              },
-            ],
-          },
-          {
-            items: [
-              {
-                id: 'delete',
-                label: say('screens.adminArea.rolesPanel.deleteRole'),
-                icon: <Icon of={BinFilledIcon} size={15} />,
-                isDestructive: true,
-                onChoose: () => {
-                  live.current.onAskDelete(item);
-                },
-              },
-            ],
-          },
-        ],
-      ),
-    ],
-    [],
-  );
+    cache.setQueryData(adminQueries.roles().queryKey, {
+      roles: ids.flatMap((id) => {
+        const role = byId.get(id);
+
+        return role === undefined ? [] : [role];
+      }),
+      outOfReach: [...outOfReach],
+    });
+
+    const refusal = await orderRoles(ids);
+
+    tellOutcome(say('screens.adminArea.rolesPanel.rolesPutInOrder'), failureOfRefusal(refusal));
+    await cache.invalidateQueries({ queryKey: adminQueries.roles().queryKey });
+  };
 
   return (
-    <div className="flex flex-col gap-4">
-      {refusal === null || selected !== null ? null : (
-        <p
-          role="alert"
-          className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-text"
+    <PanelCard
+      title={say('common.roles')}
+      isFlush
+      actions={
+        <PanelCardAction
+          icon={PlusFilledIcon}
+          onClick={() => {
+            choose(NEW_ROLE);
+          }}
         >
-          <Icon of={TriangleAlertIcon} size={18} tone="danger" className="mt-0.5 shrink-0" />
-          {refusal.message}
-        </p>
+          {say('screens.adminArea.rolesPanel.createRole')}
+        </PanelCardAction>
+      }
+    >
+      {couldNotRead ? (
+        <CouldNotRead
+          said={say('screens.adminArea.rolesPanel.theRolesCouldNotBeRead')}
+          isTryingAgain={askedRoles.isFetching || askedCatalogue.isFetching}
+          onTryAgain={() => {
+            void askedRoles.refetch();
+            void askedCatalogue.refetch();
+          }}
+        />
+      ) : (
+        <div
+          ref={box}
+          style={room === null ? {} : { height: room }}
+          className="flex min-h-0 max-md:flex-col"
+        >
+          {askedRoles.isPending ? (
+            <Spinner isCentered size="sm" label={say('common.loading')} />
+          ) : (
+            <>
+              <div className="flex shrink-0 flex-col overflow-y-auto border-[var(--surface-line)] max-md:max-h-56 max-md:border-b md:w-72 md:border-e">
+                <p className="px-4 pt-4 pb-1 text-xs text-text-muted">
+                  {say('screens.adminArea.rolesPanel.highestFirstDragToReorder')}
+                </p>
+
+                <RoleList
+                  roles={roles}
+                  outOfReach={outOfReach}
+                  memberCounts={memberCounts}
+                  chosenId={openId}
+                  newRoleName={
+                    isMaking
+                      ? draft.name.trim() === ''
+                        ? say('screens.adminArea.rolesPanel.newRole')
+                        : draft.name
+                      : null
+                  }
+                  onChoose={choose}
+                  onReorder={(ids) => {
+                    void putInOrder(ids);
+                  }}
+                  onDelete={setDeleting}
+                />
+              </div>
+
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                {isMaking || chosen !== null ? (
+                  <RoleEditor
+                    key={openId}
+                    role={chosen}
+                    roles={roles}
+                    outOfReach={outOfReach}
+                    isOutOfReach={chosen !== null && outOfReach.has(chosen.id)}
+                    catalogue={askedCatalogue.data ?? NO_PERMISSIONS}
+                    {...(pluginNodes === undefined ? {} : { pluginNodes })}
+                    accounts={accounts}
+                    onChange={onChange}
+                    onSaved={(id) => {
+                      setChosenId(id);
+                    }}
+                    onCancel={() => {
+                      setChosenId(null);
+                    }}
+                  />
+                ) : (
+                  <p className="m-auto text-sm text-text-muted">
+                    {say('screens.adminArea.rolesPanel.noRolesYet')}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       )}
 
-      <PanelCard
-        title={say('common.roles')}
-        isFlush
-        actions={
-          <PanelCardAction
-            icon={PlusFilledIcon}
-            onClick={() => {
-              setIsCreating(true);
-            }}
-          >
-            {say('screens.adminArea.rolesPanel.createRole')}
-          </PanelCardAction>
-        }
-      >
-        {couldNotRead ? (
-          <CouldNotRead
-            said={say('screens.adminArea.rolesPanel.theRolesCouldNotBeRead')}
-            isTryingAgain={askedRoles.isFetching || askedCatalogue.isFetching}
-            onTryAgain={() => {
-              void askedRoles.refetch();
-              void askedCatalogue.refetch();
-            }}
-          />
-        ) : askedRoles.isPending ? (
-          <Spinner isCentered size="sm" label={say('common.loading')} />
-        ) : (
-          <DataTable
-            label={say('common.roles')}
-            columns={columns}
-            rows={roles}
-            height="fills"
-            emptyMessage={say('screens.adminArea.rolesPanel.noRolesYet')}
-          />
-        )}
-      </PanelCard>
-
-      <DialogCompanion
-        label={say('screens.adminArea.rolesPanel.createARole')}
-        isOpen={isCreating}
+      <ConfirmDialog
+        title={say('screens.adminArea.rolesPanel.discardChanges')}
+        detail={say('screens.adminArea.rolesPanel.yourChangesToNameHaveNotBeenSaved', {
+          name: draft.name.trim() === '' ? say('screens.adminArea.rolesPanel.newRole') : draft.name,
+        })}
+        confirmLabel={say('screens.adminArea.rolesPanel.discard')}
+        isDestructive
+        isOpen={switchingTo !== null}
         onClose={() => {
-          setIsCreating(false);
+          setSwitchingTo(null);
         }}
-      >
-        <DialogTitle
-          size="compact"
-          title={say('screens.adminArea.rolesPanel.createARole')}
-          detail={say('screens.adminArea.rolesPanel.aRoleIsANameAnd')}
-        />
-
-        <Form
-          label={say('screens.adminArea.rolesPanel.createARole')}
-          onSubmit={creating.submit}
-          isDialog
-        >
-          <DialogContent className="flex flex-col gap-5">
-            <div className="flex flex-wrap items-start gap-3">
-              <TextField
-                label={say('common.name')}
-                {...creating.text('name')}
-                placeholder={say('screens.adminArea.rolesPanel.housemate')}
-                className="min-w-48 flex-1"
-              />
-
-              <TextField
-                label={say('screens.adminArea.rolesPanel.rank')}
-                type="number"
-                min={0}
-                {...creating.text('position')}
-                className="w-24 shrink-0"
-              />
-            </div>
-
-            <FormField
-              label={say('common.colour')}
-              description={say('screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole')}
-            >
-              <ColorSwatchPicker
-                value={creating.values.color}
-                onChange={(next) => {
-                  creating.set('color', next);
-                }}
-              />
-            </FormField>
-
-            <PermissionEditor
-              catalogue={catalogue}
-              {...(pluginNodes === undefined ? {} : { pluginNodes })}
-              selected={creating.values.permissions}
-              onToggle={togglePermission(creating)}
-            />
-          </DialogContent>
-
-          <DialogFooter
-            note={creating.problem}
-            dismiss={{
-              onChoose: () => {
-                setIsCreating(false);
-              },
-            }}
-            confirm={{
-              label: say('screens.adminArea.rolesPanel.createRole'),
-              isSubmit: true,
-              isLoading: creating.isSubmitting,
-            }}
-          />
-        </Form>
-      </DialogCompanion>
+        onConfirm={() => {
+          setChosenId(switchingTo);
+          setSwitchingTo(null);
+        }}
+      />
 
       <ConfirmDialog
         title={say('screens.adminArea.rolesPanel.deleteThisRole')}
@@ -548,173 +241,23 @@ const RolesPanel = () => {
 
           setDeleting(null);
 
-          if (role !== null) {
-            void act(
-              () => deleteRole(role.id),
-              say('screens.adminArea.rolesPanel.deletedTheNameRole', { name: role.name }),
-            );
+          if (role === null) {
+            return;
           }
+
+          void deleteRole(role.id).then(async (refusal) => {
+            tellOutcome(
+              say('screens.adminArea.rolesPanel.deletedTheNameRole', { name: role.name }),
+              failureOfRefusal(refusal),
+            );
+            await Promise.all([
+              cache.invalidateQueries({ queryKey: adminQueries.roles().queryKey }),
+              cache.invalidateQueries({ queryKey: adminQueries.accounts().queryKey }),
+            ]);
+          });
         }}
       />
-
-      <DialogCompanion
-        label={
-          selected === null
-            ? say('screens.adminArea.rolesPanel.editRole')
-            : say('common.editName', { name: selected.name })
-        }
-        isOpen={selected !== null}
-        onClose={() => {
-          setSelectedRoleId(null);
-        }}
-      >
-        {selected === null ? null : (
-          <Tabs
-            value={editTab}
-            onValueChange={(next) => {
-              if (isEditTab(next)) {
-                setEditTab(next);
-              }
-            }}
-          >
-            <DialogTitle
-              size="compact"
-              title={say('common.editName', { name: selected.name })}
-              detail={say('screens.adminArea.rolesPanel.aHigherRankManagesALower')}
-              below={
-                <TabRow
-                  label={say('screens.adminArea.rolesPanel.whatToChangeAboutThisRole')}
-                  tone="underlined"
-                  size="sm"
-                  value={editTab}
-                  groups={[
-                    {
-                      items: [
-                        { id: 'display', label: say('common.display') },
-                        {
-                          id: 'permissions',
-                          label: say('screens.adminArea.rolesPanel.permissions'),
-                        },
-                        {
-                          id: 'members',
-                          label: say('screens.adminArea.rolesPanel.manageMembersMemberCount', {
-                            memberCount: memberCount.toString(),
-                          }),
-                        },
-                        {
-                          id: 'streaming',
-                          label: say('client.admin.groupPermissions.streaming'),
-                        },
-                      ],
-                    },
-                  ]}
-                />
-              }
-            />
-
-            <Form
-              label={say('screens.adminArea.rolesPanel.editRole')}
-              onSubmit={(event) => {
-                if (
-                  editing.errorOf('name') !== undefined ||
-                  editing.errorOf('position') !== undefined
-                ) {
-                  setEditTab('display');
-                }
-
-                editing.submit(event);
-              }}
-              isDialog
-            >
-              <DialogContent className="flex min-h-[28rem] max-h-[32rem] flex-col gap-5">
-                <TabPanel value="display" travel={travel}>
-                  <div className="flex flex-col gap-5">
-                    <div className="flex flex-wrap items-start gap-3">
-                      <TextField
-                        label={say('common.name')}
-                        {...editing.text('name')}
-                        className="min-w-48 flex-1"
-                      />
-
-                      <TextField
-                        label={say('screens.adminArea.rolesPanel.rank')}
-                        type="number"
-                        min={0}
-                        {...editing.text('position')}
-                        className="w-24 shrink-0"
-                      />
-                    </div>
-
-                    <FormField
-                      label={say('common.colour')}
-                      description={say(
-                        'screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole',
-                      )}
-                    >
-                      <ColorSwatchPicker
-                        value={draft.color}
-                        onChange={(next) => {
-                          editing.set('color', next);
-                        }}
-                      />
-                    </FormField>
-                  </div>
-                </TabPanel>
-
-                <TabPanel value="permissions" travel={travel}>
-                  <PermissionEditor
-                    catalogue={catalogue}
-                    {...(pluginNodes === undefined ? {} : { pluginNodes })}
-                    selected={draft.permissions}
-                    onToggle={togglePermission(editing)}
-                  />
-                </TabPanel>
-
-                <TabPanel value="streaming" travel={travel}>
-                  <RoleStreamLimits roleId={selected.id} />
-                </TabPanel>
-
-                <TabPanel value="members" travel={travel}>
-                  <RoleMembers
-                    accounts={accounts}
-                    heldIds={draftMemberIds}
-                    onToggle={(accountId) => {
-                      setDraftMemberIds((held) => {
-                        const next = new Set(held);
-
-                        if (next.has(accountId)) {
-                          next.delete(accountId);
-                        } else {
-                          next.add(accountId);
-                        }
-
-                        return next;
-                      });
-                    }}
-                  />
-                </TabPanel>
-              </DialogContent>
-
-              <DialogFooter
-                note={editing.problem}
-                dismiss={{
-                  label: say('common.close'),
-                  onChoose: () => {
-                    setSelectedRoleId(null);
-                  },
-                }}
-                confirm={{
-                  label: say('common.saveChanges'),
-                  isSubmit: true,
-                  isLoading: editing.isSubmitting,
-                  isDisabled: !hasUnsavedChanges,
-                }}
-              />
-            </Form>
-          </Tabs>
-        )}
-      </DialogCompanion>
-    </div>
+    </PanelCard>
   );
 };
 

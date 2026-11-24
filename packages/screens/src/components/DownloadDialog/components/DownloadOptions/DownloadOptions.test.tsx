@@ -13,6 +13,7 @@ const OPTIONS: DownloadOffer['options'] = [
     comparison: null,
     wouldTranscode: false,
     savesSpace: true,
+    isAboveLimit: false,
   },
   {
     quality: '1080p',
@@ -22,6 +23,7 @@ const OPTIONS: DownloadOffer['options'] = [
     comparison: 'about a 15th of the original',
     wouldTranscode: true,
     savesSpace: true,
+    isAboveLimit: false,
   },
   {
     quality: '720p',
@@ -31,6 +33,7 @@ const OPTIONS: DownloadOffer['options'] = [
     comparison: null,
     wouldTranscode: true,
     savesSpace: false,
+    isAboveLimit: false,
   },
 ];
 
@@ -108,6 +111,63 @@ describe('DownloadOptions', () => {
     );
 
     expect(screen.getAllByText(/^about /u).length).toBeGreaterThan(0);
+  });
+
+  it('shuts a size above the viewer’s limit and says why', () => {
+    render(
+      <DownloadOptions
+        options={OPTIONS.map((option) =>
+          option.quality === 'original' ? { ...option, isAboveLimit: true } : option,
+        )}
+        chosen={null}
+        onChoose={vi.fn()}
+        isOfASeries={false}
+        freeBytes={null}
+      />,
+    );
+
+    const original = screen.getByRole('radio', { name: /Original/ });
+
+    expect(original).toBeDisabled();
+    expect(original).toHaveTextContent('Above your limit');
+    expect(original).not.toHaveTextContent('Converted');
+    expect(screen.getByRole('radio', { name: /1080p/ })).toBeEnabled();
+  });
+
+  it('picks the first size within the limit where nothing was chosen', () => {
+    render(
+      <DownloadOptions
+        options={OPTIONS.map((option) =>
+          option.quality === 'original' ? { ...option, isAboveLimit: true } : option,
+        )}
+        chosen={null}
+        onChoose={vi.fn()}
+        isOfASeries={false}
+        freeBytes={null}
+      />,
+    );
+
+    expect(screen.getByRole('radio', { name: /1080p/ })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: /Original/ })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+  });
+
+  it('picks nothing where every size is above the limit', () => {
+    render(
+      <DownloadOptions
+        options={OPTIONS.map((option) => ({ ...option, isAboveLimit: true }))}
+        chosen={null}
+        onChoose={vi.fn()}
+        isOfASeries={false}
+        freeBytes={500_000_000_000}
+      />,
+    );
+
+    for (const option of screen.getAllByRole('radio')) {
+      expect(option).toHaveAttribute('aria-checked', 'false');
+    }
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -9,9 +9,12 @@ import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
  * @param ceiling - The highest quality allowed.
  * @returns The quality to play at.
  */
-const ceilingOf = (asked: QualityStepId | undefined, ceiling: QualityStepId): QualityStepId =>
+const qualityUnderCeiling = (
+  asked: QualityStepId | undefined,
+  ceiling: QualityStepId,
+): QualityStepId =>
   asked !== undefined && QUALITY_STEP_IDS.indexOf(asked) >= QUALITY_STEP_IDS.indexOf(ceiling)
     ? asked
     : ceiling;
 
-export { ceilingOf };
+export { qualityUnderCeiling };

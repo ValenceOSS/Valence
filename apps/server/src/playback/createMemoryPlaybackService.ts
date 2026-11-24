@@ -182,6 +182,8 @@ const createMemoryPlaybackService = (
         : null,
     ),
 
+  fitsLimit: () => Promise.resolve(true),
+
   readDirectFile: (mediaId, range) =>
     Promise.resolve(
       state.media[mediaId] === undefined

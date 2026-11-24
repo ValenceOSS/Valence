@@ -127,7 +127,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(banAccountRoute, async (context) => {
     const actor = await readActor(context.req.raw.headers);
 
-    if (actor === null || !actor.permissions.has('account.ban')) {
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -178,7 +178,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(unbanAccountRoute, async (context) => {
     const actor = await readActor(context.req.raw.headers);
 
-    if (actor === null || !actor.permissions.has('account.ban')) {
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -390,7 +390,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(resetAccountPasswordRoute, async (context) => {
     const actor = await readActor(context.req.raw.headers);
 
-    if (actor === null || !actor.permissions.has('account.security')) {
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -431,7 +431,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(listAccountSessionsRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'account.security'))) {
+    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -451,7 +451,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(endAccountSessionsRoute, async (context) => {
     const actor = await readActor(context.req.raw.headers);
 
-    if (actor === null || !actor.permissions.has('account.security')) {
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -501,7 +501,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   ): Promise<{ status: 403 | 409; body: RefusalBody } | null> => {
     const actor = await readActor(context.req.raw.headers);
 
-    if (actor === null || !actor.permissions.has('account.security')) {
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return { status: 403, body: refuse('common.thatIsForAdministrators') };
     }
 
@@ -560,7 +560,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const { clientId } = context.req.valid('param');
     const actor = await readActor(context.req.raw.headers);
 
-    if (actor === null || !actor.permissions.has('account.security')) {
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -582,7 +582,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(setAccountAvatarRoute, async (context) => {
     const actor = await readActor(context.req.raw.headers);
 
-    if (actor === null || !actor.permissions.has('account.profiles')) {
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -621,7 +621,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.put('/api/admin/accounts/:userId/photo', tooBigToRead(), async (context) => {
-    if (!(await requires(context.req.raw.headers, 'account.profiles'))) {
+    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 

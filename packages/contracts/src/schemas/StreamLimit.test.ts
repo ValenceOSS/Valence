@@ -6,6 +6,8 @@ describe('StreamLimitSchema', () => {
     expect(StreamLimitSchema.parse({ maxBitrateKbps: 8000 })).toEqual({
       maxBitrateKbps: 8000,
       maxStreams: null,
+      maxQuality: null,
+      limitsDownloads: false,
     });
     expect(StreamLimitSchema.parse({})).toEqual(NO_STREAM_LIMIT);
   });
@@ -13,6 +15,19 @@ describe('StreamLimitSchema', () => {
   it('refuses a ceiling nothing could be played under', () => {
     expect(StreamLimitSchema.safeParse({ maxBitrateKbps: 10 }).success).toBe(false);
     expect(StreamLimitSchema.safeParse({ maxStreams: 0 }).success).toBe(false);
+  });
+
+  it('reads a quality ceiling that holds downloads to it too', () => {
+    expect(StreamLimitSchema.parse({ maxQuality: '720p', limitsDownloads: true })).toEqual({
+      maxBitrateKbps: null,
+      maxStreams: null,
+      maxQuality: '720p',
+      limitsDownloads: true,
+    });
+  });
+
+  it('refuses a quality that is not a step', () => {
+    expect(StreamLimitSchema.safeParse({ maxQuality: '900p' }).success).toBe(false);
   });
 });
 

@@ -98,7 +98,7 @@ describe('createRealtimeRegistry', () => {
   });
 
   it('carries both feeds on one connection where the permission is held', async () => {
-    const world = createWorld(new Map([['admin', ['server.logs']]]));
+    const world = createWorld(new Map([['admin', ['server.monitor']]]));
     const tab = createTab('tab', 'admin');
 
     world.registry.open(tab.connection);
@@ -117,7 +117,7 @@ describe('createRealtimeRegistry', () => {
   });
 
   it('stops delivering an admin topic the moment the permission is taken away', async () => {
-    const granted = new Map<string, Permission[]>([['admin', ['server.logs']]]);
+    const granted = new Map<string, Permission[]>([['admin', ['server.monitor']]]);
     const world = createWorld(granted);
     const tab = createTab('tab', 'admin');
 
@@ -135,7 +135,7 @@ describe('createRealtimeRegistry', () => {
   });
 
   it('drops a lost topic on a role change without waiting for the next event', async () => {
-    const granted = new Map<string, Permission[]>([['admin', ['server.logs']]]);
+    const granted = new Map<string, Permission[]>([['admin', ['server.monitor']]]);
     const world = createWorld(granted);
     const tab = createTab('tab', 'admin');
 
@@ -150,7 +150,7 @@ describe('createRealtimeRegistry', () => {
   });
 
   it('leaves a topic alone on a role change that did not touch it', async () => {
-    const world = createWorld(new Map([['admin', ['server.logs']]]));
+    const world = createWorld(new Map([['admin', ['server.monitor']]]));
     const tab = createTab('tab', 'admin');
 
     world.registry.open(tab.connection);

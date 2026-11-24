@@ -168,7 +168,7 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
       });
     }
   }
-  const mayClearAbandoned = playlist.owner === null && may('account.profiles');
+  const mayClearAbandoned = playlist.owner === null && may('account.manage');
   const mayChangeEntries = playlist.isMine && !playlist.isSmart;
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const options = { source, isOrdered: playlist.isOrdered };

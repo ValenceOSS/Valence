@@ -1,15 +1,15 @@
-import { PermissionSchema } from '@ValenceContracts/schemas/Permission';
+import { PermissionOrRetiredSchema } from '@ValenceContracts/schemas/Permission';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 
 /**
  * Reads a permission back out of a text column, through a schema rather than by casting. Rows outlive
  * the code that wrote them, so a permission this version has never heard of reads as nothing rather
- * than as itself.
+ * than as itself, and one since folded into another reads as the one it became.
  *
  * @param name Whatever the column held.
  */
 const readPermission = (name: string): Permission | null => {
-  const parsed = PermissionSchema.safeParse(name);
+  const parsed = PermissionOrRetiredSchema.safeParse(name);
 
   return parsed.success ? parsed.data : null;
 };

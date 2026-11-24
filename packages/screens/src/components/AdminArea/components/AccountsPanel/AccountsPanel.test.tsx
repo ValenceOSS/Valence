@@ -213,7 +213,7 @@ describe('AccountsPanel', () => {
     accountMocks.editAccount.mockResolvedValue(null);
 
     mocks.fetchPermissionCatalogue.mockResolvedValue(['jobs.run', 'jobs.runDestructive']);
-    mocks.fetchRoles.mockResolvedValue([ADMINISTRATOR, MEMBER]);
+    mocks.fetchRoles.mockResolvedValue({ roles: [ADMINISTRATOR, MEMBER], outOfReach: [] });
     mocks.fetchAccountPermissions.mockResolvedValue({
       roles: [MEMBER],
       overrides: [],
@@ -279,10 +279,13 @@ describe('AccountsPanel', () => {
   });
 
   it('marks each role with the colour that role was given, not by whether it is the administrator', async () => {
-    mocks.fetchRoles.mockResolvedValue([
-      { ...ADMINISTRATOR, color: '#E74C3C' },
-      { ...MEMBER, color: '#206694' },
-    ]);
+    mocks.fetchRoles.mockResolvedValue({
+      roles: [
+        { ...ADMINISTRATOR, color: '#E74C3C' },
+        { ...MEMBER, color: '#206694' },
+      ],
+      outOfReach: [],
+    });
     accountMocks.fetchAccounts.mockResolvedValue([
       account({ isAdministrator: true, roles: ['Administrator', 'Member', 'Manager'] }),
     ]);
@@ -718,7 +721,7 @@ describe('AccountsPanel', () => {
   });
 
   it('offers no ban to somebody who may not ban', async () => {
-    granted.withheld.add('account.ban');
+    granted.withheld.add('account.manage');
 
     const user = userEvent.setup();
     renderInAnAddress(<AccountsPanel />);
@@ -864,7 +867,7 @@ describe('which libraries an account may see', () => {
     accountMocks.fetchAccounts.mockResolvedValue(ACCOUNTS);
 
     mocks.fetchPermissionCatalogue.mockResolvedValue([]);
-    mocks.fetchRoles.mockResolvedValue([ADMINISTRATOR, MEMBER]);
+    mocks.fetchRoles.mockResolvedValue({ roles: [ADMINISTRATOR, MEMBER], outOfReach: [] });
     mocks.fetchAccountPermissions.mockResolvedValue({
       roles: [MEMBER],
       overrides: [],
@@ -985,7 +988,7 @@ describe('the age an account is limited to', () => {
 
     accountMocks.fetchAccounts.mockResolvedValue(ACCOUNTS);
     mocks.fetchPermissionCatalogue.mockResolvedValue([]);
-    mocks.fetchRoles.mockResolvedValue([ADMINISTRATOR, MEMBER]);
+    mocks.fetchRoles.mockResolvedValue({ roles: [ADMINISTRATOR, MEMBER], outOfReach: [] });
     mocks.fetchAccountPermissions.mockResolvedValue({
       roles: [MEMBER],
       overrides: [],

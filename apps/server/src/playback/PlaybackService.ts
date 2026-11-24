@@ -77,6 +77,7 @@ type PlaybackService = {
     picksItsOwnSound?: boolean,
     refusedOrigins?: readonly string[],
     audioLanguage?: string,
+    qualityCeiling?: QualityStepId,
   ) => Promise<StartOutcome>;
   readSessionFile: (sessionId: string, name: string) => Promise<SessionFile | null>;
   readDirectFile: (
@@ -84,6 +85,11 @@ type PlaybackService = {
     range: string | null,
     renditionId?: string | null,
   ) => Promise<RangedFile | null>;
+  fitsLimit: (
+    mediaId: string,
+    renditionId: string | null,
+    limit: { maxQuality: QualityStepId | null; maxBitrateKbps: number | null },
+  ) => Promise<boolean>;
   trickplay: (mediaId: string) => Promise<Trickplay | null>;
   readFrame: (mediaId: string, seconds: number, width: number) => Promise<ArrayBuffer | null>;
   readPreview: (mediaId: string, range: string | null) => Promise<PreviewRead>;

@@ -19,6 +19,25 @@ const forbidden = {
   content: { 'application/json': { schema: StreamLimitError } },
 };
 
+const readMyStreamLimitRoute = createRoute({
+  method: 'get',
+  path: '/api/account/stream-limit',
+  tags: ['Account'],
+  summary: 'Read the limit the account signed in streams under',
+  description:
+    'Its own limit and its roles’, the strictest of each, so a player can show what is out of reach before somebody picks it.',
+  responses: {
+    200: {
+      description: 'The limit it streams under',
+      content: { 'application/json': { schema: StreamLimit } },
+    },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: StreamLimitError } },
+    },
+  },
+});
+
 const readAccountStreamLimitRoute = createRoute({
   method: 'get',
   path: '/api/admin/accounts/{userId}/stream-limit',
@@ -94,6 +113,7 @@ const setRoleStreamLimitRoute = createRoute({
 });
 
 export {
+  readMyStreamLimitRoute,
   readAccountStreamLimitRoute,
   readRoleStreamLimitRoute,
   setAccountStreamLimitRoute,

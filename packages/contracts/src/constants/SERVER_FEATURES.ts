@@ -14,6 +14,7 @@ const SERVER_FEATURES = [
   'library.pickedForYou',
   'library.largeArtwork',
   'playback.audioLanguage',
+  'streams.qualityLimit',
 ] as const;
 
 export { SERVER_FEATURES };

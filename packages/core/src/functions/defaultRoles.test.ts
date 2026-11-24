@@ -89,7 +89,7 @@ describe('DEFAULT_ROLES', () => {
     it('gives a Member nothing that reshapes the library', () => {
       const resolved = resolvePermissions({ roles: [roleNamed('Member')] });
 
-      expect(resolved.has('library.create')).toBe(false);
+      expect(resolved.has('library.edit')).toBe(false);
       expect(resolved.has('media.delete')).toBe(false);
       expect(resolved.has('jobs.run')).toBe(false);
     });
@@ -143,22 +143,18 @@ describe('DEFAULT_ROLES', () => {
     );
 
     expect(unreachable).toEqual([
+      'requests.manage',
+      'media.reencode',
+      'media.delete',
       'library.delete',
       'jobs.runDestructive',
-      'media.delete',
-      'media.reencode',
-      'requests.manage',
       'account.invite',
       'account.manage',
-      'account.ban',
       'account.roles',
-      'account.profiles',
-      'account.security',
       'server.settings',
-      'server.backup',
-      'server.webhooks',
       'server.plugins',
       'server.links',
+      'server.backup',
     ]);
   });
 });

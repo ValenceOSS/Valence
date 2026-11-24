@@ -30,10 +30,10 @@ describe('fetchMyPermissions', () => {
   });
 
   it('reads what is held, and whether it amounts to administering the server', async () => {
-    answerWith({ permissions: ['administrator', 'library.create'], isAdministrator: true });
+    answerWith({ permissions: ['administrator', 'library.edit'], isAdministrator: true });
 
     await expect(fetchMyPermissions()).resolves.toStrictEqual({
-      permissions: ['administrator', 'library.create'],
+      permissions: ['administrator', 'library.edit'],
       isAdministrator: true,
     });
   });

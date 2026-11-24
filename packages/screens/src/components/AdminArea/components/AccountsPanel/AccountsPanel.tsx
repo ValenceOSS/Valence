@@ -247,10 +247,8 @@ const AccountsPanel = () => {
   const [confirmingSignOutEverywhere, setConfirmingSignOutEverywhere] = useState(false);
 
   const { may } = useWhatIMayDo();
-  const maySecureAccounts = may('account.security');
+  const mayManageAccounts = may('account.manage');
   const mayGiveRoles = may('account.roles');
-  const mayBan = may('account.ban');
-  const mayChangeFaces = may('account.profiles');
   const [openedProfile, setOpenedProfile] = useState<OpenedProfile | null>(null);
   const [openedRoles, setOpenedRoles] = useState<OpenedRoles | null>(null);
   const [openedShelves, setOpenedShelves] = useState<OpenedShelves | null>(null);
@@ -262,7 +260,7 @@ const AccountsPanel = () => {
 
   const accounts = askedAccounts.data?.accounts ?? NO_ACCOUNTS;
   const canEmailSetupLinks = askedAccounts.data?.canEmailSetupLinks ?? false;
-  const roles = askedRoles.data ?? NO_ROLES;
+  const roles = askedRoles.data?.roles ?? NO_ROLES;
   const askedHeldPermissions = useQuery({
     ...adminQueries.accountPermissions(accountId),
     enabled: accountId !== null && mayGiveRoles,
@@ -852,7 +850,7 @@ const AccountsPanel = () => {
                   },
                   {
                     items: [
-                      ...(!mayBan
+                      ...(!mayManageAccounts
                         ? []
                         : [
                             {
@@ -896,7 +894,7 @@ const AccountsPanel = () => {
     [
       act,
       everyonesRoles,
-      mayBan,
+      mayManageAccounts,
       roleColours,
       held,
       now,
@@ -1134,7 +1132,7 @@ const AccountsPanel = () => {
                         { id: 'profile', label: say('common.profile') },
                         { id: 'profiles', label: say('common.profiles') },
                         { id: 'signIn', label: say('screens.adminArea.settingsPanel.signingIn') },
-                        ...(maySecureAccounts
+                        ...(mayManageAccounts
                           ? [{ id: 'devices', label: say('common.devices') }]
                           : []),
                         {
@@ -1207,7 +1205,7 @@ const AccountsPanel = () => {
                       : { error: say('screens.adminArea.accountsPanel.discordIdIsDigits') })}
                   />
 
-                  {!mayChangeFaces ? null : (
+                  {!mayManageAccounts ? null : (
                     <AccountAvatarPicker
                       accountId={accountId}
                       face={picked.face}
@@ -1232,7 +1230,7 @@ const AccountsPanel = () => {
                     onChanged={reload}
                   />
 
-                  {!maySecureAccounts ? (
+                  {!mayManageAccounts ? (
                     <p className="text-sm text-text-muted">
                       {say('screens.adminArea.accountsPanel.youDoNotHoldThePermission')}
                     </p>
@@ -1288,7 +1286,7 @@ const AccountsPanel = () => {
                     </>
                   )}
 
-                  {!mayBan ? null : (
+                  {!mayManageAccounts ? null : (
                     <FormField
                       label={say('screens.adminArea.accountsPanel.ban')}
                       description={
@@ -1329,7 +1327,7 @@ const AccountsPanel = () => {
                 <HouseholdProfiles accountId={accountId} />
               </TabPanel>
 
-              {!maySecureAccounts ? null : (
+              {!mayManageAccounts ? null : (
                 <TabPanel value="devices" travel={travel}>
                   <AccountDevices accountId={accountId} />
                 </TabPanel>

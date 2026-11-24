@@ -13,7 +13,7 @@ const serveAudit = (app: OpenAPIHono, context: AppContext): void => {
   const { requires, audit } = context;
 
   app.openapi(listAuditRoute, async (asked) => {
-    if (!(await requires(asked.req.raw.headers, 'server.logs'))) {
+    if (!(await requires(asked.req.raw.headers, 'server.monitor'))) {
       return asked.json(refuse('common.thatIsForAdministrators'), 403);
     }
 

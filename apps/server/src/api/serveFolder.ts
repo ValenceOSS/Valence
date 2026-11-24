@@ -20,7 +20,7 @@ const serveFolder = (app: OpenAPIHono, context: AppContext): void => {
   const { folderDisk, requires } = context;
 
   app.openapi(searchFoldersRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'library.create'))) {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -33,7 +33,7 @@ const serveFolder = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(listFoldersRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'library.create'))) {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -52,7 +52,7 @@ const serveFolder = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(createFolderRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'library.create'))) {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 

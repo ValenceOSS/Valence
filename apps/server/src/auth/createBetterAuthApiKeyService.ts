@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PermissionSchema } from '@ValenceContracts/schemas/Permission';
+import { PermissionOrRetiredSchema } from '@ValenceContracts/schemas/Permission';
 import type { ApiKeyService } from './ApiKeyService';
 import type { ValenceAuth } from './Auth';
 import type { ApiKey } from '@ValenceContracts/schemas/ApiKey';
@@ -60,11 +60,15 @@ const readPermissions = (raw: Record<string, string[]> | null | undefined): Perm
     return null;
   }
 
-  return named.flatMap((one) => {
-    const parsed = PermissionSchema.safeParse(one);
+  return [
+    ...new Set(
+      named.flatMap((one) => {
+        const parsed = PermissionOrRetiredSchema.safeParse(one);
 
-    return parsed.success ? [parsed.data] : [];
-  });
+        return parsed.success ? [parsed.data] : [];
+      }),
+    ),
+  ];
 };
 
 /**

@@ -93,7 +93,10 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
   const offer = asked.data ?? null;
   const episodes = offer?.episodes ?? series?.episodes ?? 1;
   const options = offer?.options ?? [];
-  const picked = options.find((one) => one.quality === chosen) ?? options[0] ?? null;
+  const picked =
+    options.find((one) => one.quality === chosen) ??
+    options.find((one) => !one.isAboveLimit) ??
+    null;
   const verdict = judgeFreeSpace({ bytes: picked?.bytes ?? null, freeBytes });
 
   return (

@@ -43,6 +43,7 @@ import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
+import { isAboveQuality } from '@ValenceContracts/functions/isAboveQuality';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import { CaptionSettings } from '@ValenceScreens/components/VideoPlayer/components/CaptionSettings/CaptionSettings';
 import { ChapterMenu } from '@ValenceScreens/components/VideoPlayer/components/ChapterMenu/ChapterMenu';
@@ -108,6 +109,7 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param audioTracks - The audio tracks available.
  * @param selectedAudioIndex - The audio track in use, if the player has settled on one.
  * @param availableQualitySteps - The rungs of the ladder this session offers.
+ * @param qualityLimit - The highest rung the viewer may play, above which rungs show a lock.
  * @param originalLabel - What the file as it is on the server is called, with its resolution.
  * @param originalStep - The rung the file as it is on the server matches, for its tier icon.
  * @param qualityStepsSavingNothing - Smaller qualities that would cost about what the original does,
@@ -180,6 +182,7 @@ const PlayerControls = ({
   audioTracks,
   selectedAudioIndex,
   availableQualitySteps,
+  qualityLimit = null,
   originalLabel = say('common.original'),
   originalStep = null,
   qualityStepsSavingNothing = [],
@@ -749,6 +752,9 @@ const PlayerControls = ({
                           ...(qualityStepCosts.original === undefined
                             ? {}
                             : { detail: qualityStepCosts.original }),
+                          ...(originalStep !== null && isAboveQuality(originalStep, qualityLimit)
+                            ? { isLocked: true }
+                            : {}),
                         },
                         ...qualityRungs.map((id) => {
                           const isNoSmaller = qualityStepsSavingNothing.includes(id);
@@ -763,6 +769,7 @@ const PlayerControls = ({
                             ...tierOf(id),
                             ...(detail === undefined ? {} : { detail }),
                             ...(isNoSmaller ? { isDisabled: true } : {}),
+                            ...(isAboveQuality(id, qualityLimit) ? { isLocked: true } : {}),
                           };
                         }),
                       ],

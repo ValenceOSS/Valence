@@ -1,3 +1,4 @@
+import { useQualityLimit } from '@ValenceClient/streams/useQualityLimit';
 import { manifestToLoad } from '@ValenceScreens/playback/manifestToLoad';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { Icon } from '@ValenceUI/Icon';
@@ -467,6 +468,7 @@ const VideoPlayer = ({
   const [subtitleTracks, setSubtitleTracks] = useState<SubtitleTrack[]>([]);
   const [isFindingSubtitles, setIsFindingSubtitles] = useState(false);
   const { may, mayAdminister } = useWhatIMayDo();
+  const { maxQuality: qualityLimit } = useQualityLimit();
   const mayFindSubtitles = mayAdminister || may('media.subtitles') || may('media.override');
   const [selectedSubtitleId, setSelectedSubtitleId] = useState(SUBTITLES_OFF);
   const defaultedForRef = useRef<string | null>(null);
@@ -3656,6 +3658,7 @@ const VideoPlayer = ({
             audioTracks={audioTracks}
             selectedAudioIndex={selectedAudioIndex}
             availableQualitySteps={availableQualitySteps}
+            qualityLimit={qualityLimit}
             originalLabel={detail === null ? say('common.original') : originalLabel(detail)}
             originalStep={detail === null ? null : (sharpestStepOf(detail)?.id ?? null)}
             qualityStepsSavingNothing={qualityStepsSavingNothing}

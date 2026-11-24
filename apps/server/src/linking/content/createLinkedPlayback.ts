@@ -208,6 +208,7 @@ const createLinkedPlayback = (
       picksItsOwnSound,
       refusedOrigins = [],
       audioLanguage,
+      qualityCeiling,
     ) => {
       const linked = await linkedTitleOf(mediaId);
 
@@ -227,6 +228,7 @@ const createLinkedPlayback = (
           picksItsOwnSound,
           refusedOrigins,
           audioLanguage,
+          qualityCeiling,
         );
       }
 
@@ -342,6 +344,11 @@ const createLinkedPlayback = (
 
       return hasBody(answered) ? streamedOf(answered) : null;
     },
+
+    fitsLimit: async (mediaId, renditionId, limit) =>
+      (await linkedTitleOf(mediaId)) === null
+        ? local.fitsLimit(mediaId, renditionId, limit)
+        : limit.maxQuality === null && limit.maxBitrateKbps === null,
 
     readDirectFile: async (mediaId, range, renditionId) => {
       const linked = await linkedTitleOf(mediaId);

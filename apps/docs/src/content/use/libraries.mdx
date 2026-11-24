@@ -377,18 +377,13 @@ Anyone can hide something from their own browsing. **Hide this** in a title's me
 
 Hiding is a preference, not a restriction. It cannot be used to reach something an account is not allowed to see, and nobody can hide what they were never allowed to see in the first place.
 
-### Administrator hiding
-
-The **media.hide** permission lets a role hide an item from every profile, rather than only its holder's own. See [Accounts and roles](/use/accounts-and-roles) for the permission catalogue.
-
 ## Permissions used on this page
 
-| Permission       | Allows                                                                                 |
-| ---------------- | -------------------------------------------------------------------------------------- |
-| `library.create` | Adding libraries and using the folder browser, including creating folders.             |
-| `library.edit`   | Changing library settings, uploading media, and leaving files and folders out.         |
-| `library.delete` | Deleting a library.                                                                    |
-| `jobs.run`       | Scanning, reading files again, generating missing previews and watching scan progress. |
-| `media.override` | Correcting matches, rebuilding a title's previews and choosing preview moments.        |
+| Permission       | Allows                                                                                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `library.edit`   | Adding libraries, changing their settings, using the folder browser (including creating folders), uploading media, and leaving files and folders out. |
+| `library.delete` | Deleting a library.                                                                                                                                   |
+| `jobs.run`       | Scanning, reading files again, generating missing previews and watching scan progress.                                                                |
+| `media.override` | Correcting matches and metadata, choosing artwork, rescanning titles, rebuilding a title's previews and choosing preview moments.                     |
 
-The default Manager role holds the first two, `jobs.run` and `media.override`. Only administrators can delete libraries by default. The full list of roles is in [Accounts and roles](/use/accounts-and-roles).
+The default Manager role holds `library.edit`, `jobs.run` and `media.override`. Only administrators can delete libraries by default. The full list of roles is in [Accounts and roles](/use/accounts-and-roles).

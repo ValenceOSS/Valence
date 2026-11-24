@@ -7,7 +7,7 @@ afterEach(() => {
 
 describe('saveAccountStreamLimit', () => {
   it('sends the limit and reads back where it now stands', async () => {
-    const limit = { maxBitrateKbps: 8000, maxStreams: 2 };
+    const limit = { maxBitrateKbps: 8000, maxStreams: 2, maxQuality: null, limitsDownloads: false };
     const answer = { own: limit, effective: limit, streamsNow: 0 };
     const fetch = vi.fn((_address: string, _init: RequestInit) =>
       Promise.resolve(new Response(JSON.stringify(answer))),
@@ -27,7 +27,12 @@ describe('saveAccountStreamLimit', () => {
     );
 
     await expect(
-      saveAccountStreamLimit('ada', { maxBitrateKbps: null, maxStreams: null }),
+      saveAccountStreamLimit('ada', {
+        maxBitrateKbps: null,
+        maxStreams: null,
+        maxQuality: null,
+        limitsDownloads: false,
+      }),
     ).resolves.toBeNull();
   });
 });
