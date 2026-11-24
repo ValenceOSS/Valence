@@ -2,6 +2,8 @@ import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
 import type { ListItemsOptions } from '@ValenceServer/library/LibraryService';
 import type { ItemsQuery } from '@ValenceServer/routes/LibraryRoute';
 import type { z } from '@hono/zod-openapi';
+import { OCCASIONS } from '@ValenceContracts/constants/OCCASIONS';
+import type { Occasion } from '@ValenceContracts/constants/OCCASIONS';
 
 /**
  * Splits a comma-separated list asked for in a query, leaving out empty entries.
@@ -11,6 +13,15 @@ import type { z } from '@hono/zod-openapi';
  */
 const listed = (value: string | undefined): string[] =>
   value === undefined ? [] : value.split(',').filter((one) => one.trim() !== '');
+
+/**
+ * Reads the occasions asked for, leaving out any this server does not know.
+ *
+ * @param value - The comma-separated list as asked for, if it was.
+ * @returns The occasions.
+ */
+const occasionsIn = (value: string | undefined): Occasion[] =>
+  listed(value).flatMap((asked) => OCCASIONS.filter((known) => known === asked));
 
 /**
  * Turns what a request for library items asked for into what the library service reads.
@@ -24,7 +35,7 @@ const itemsOptionsOf = (
   profileId: string | null,
 ): ListItemsOptions => {
   const { search, kind, genre, yearFrom, yearTo, minRating, ids, order, limit, offset } = query;
-  const { minYourStars, versions, shows, genres, decades } = query;
+  const { minYourStars, versions, shows, genres, decades, occasions } = query;
   const { audioLanguages, audioCodecs, audioChannels } = query;
 
   return {
@@ -39,6 +50,7 @@ const itemsOptionsOf = (
             .map(Number)
             .filter((decade) => Number.isInteger(decade)),
         }),
+    ...(occasionsIn(occasions).length === 0 ? {} : { occasions: occasionsIn(occasions) }),
     ...(listed(audioLanguages).length === 0 &&
     listed(audioCodecs).length === 0 &&
     listed(audioChannels).length === 0

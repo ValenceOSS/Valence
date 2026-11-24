@@ -6,7 +6,7 @@ import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { indexLikeness } from './indexLikeness';
 import type { Likeness, TitleKind } from './Likeness';
 import { readSeasonalFilms } from './readSeasonalFilms';
-import { SEASON_KEYWORDS } from './SEASON_KEYWORDS';
+import { OCCASION_KEYWORDS } from '@ValenceServer/library/OCCASION_KEYWORDS';
 
 const STARTING_POSTGRES_MS = 60_000;
 
@@ -39,11 +39,11 @@ const known = (kind: TitleKind, catalogueId: string, likeness: Likeness) => ({
 });
 
 const INDEX = indexLikeness([
-  known('film', '100', keyedBy(SEASON_KEYWORDS.christmas.christmas)),
-  known('film', '101', keyedBy(SEASON_KEYWORDS.christmas.santaClaus, 42)),
-  known('film', '102', keyedBy(SEASON_KEYWORDS.halloween.halloween)),
+  known('film', '100', keyedBy(OCCASION_KEYWORDS.christmas.christmas)),
+  known('film', '101', keyedBy(OCCASION_KEYWORDS.christmas.santaClaus, 42)),
+  known('film', '102', keyedBy(OCCASION_KEYWORDS.halloween.halloween)),
   known('film', '103', keyedBy(42)),
-  known('series', '104', keyedBy(SEASON_KEYWORDS.christmas.christmas)),
+  known('series', '104', keyedBy(OCCASION_KEYWORDS.christmas.christmas)),
 ]);
 
 /**

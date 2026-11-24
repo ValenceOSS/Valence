@@ -168,10 +168,21 @@ const SearchArea = ({
     [found.data, kind],
   );
 
+  const isFilteredByLibrary =
+    settled.genres !== undefined ||
+    settled.decades !== undefined ||
+    settled.occasions !== undefined ||
+    settled.audioLanguages !== undefined ||
+    settled.audioCodecs !== undefined ||
+    settled.audioChannels !== undefined ||
+    settled.minRating !== undefined ||
+    settled.minYourStars !== undefined;
+
   const wantsMusic =
     (kind === 'everything' || kind === 'music') &&
     settled.search !== undefined &&
-    settled.search !== '';
+    settled.search !== '' &&
+    !isFilteredByLibrary;
 
   const foundMusic = useQuery({
     ...musicQueries.search(settled.search ?? ''),
@@ -185,13 +196,7 @@ const SearchArea = ({
   const wantsBooks =
     (kind === 'everything' || kind === 'books') &&
     settled.search !== undefined &&
-    settled.genres === undefined &&
-    settled.decades === undefined &&
-    settled.audioLanguages === undefined &&
-    settled.audioCodecs === undefined &&
-    settled.audioChannels === undefined &&
-    settled.minRating === undefined &&
-    settled.minYourStars === undefined;
+    !isFilteredByLibrary;
 
   const foundBooks = useQuery({
     ...bookQueries.find({ search: settled.search ?? '' }),

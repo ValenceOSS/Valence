@@ -14,6 +14,7 @@ import { pickForYou } from '@ValenceClient/library/pickForYou';
 import { tasteOf } from '@ValenceClient/library/tasteOf';
 import { carryingOn } from '@ValenceClient/library/carryingOn';
 import { seasonOn } from '@ValenceClient/library/seasonOn';
+import { railOpensOf } from '@ValenceClient/library/railOpensOf';
 import { isOnContinueWatching } from '@ValenceContracts/schemas/WatchProgress';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import type { MediaPage, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -665,6 +666,7 @@ const useHomeRows = (
         id: `more:${at.toString()}`,
         title: shelfTitle({ genre, order, decade, page }),
         items: [...(byEncore[index]?.data ?? NOTHING)],
+        opens: railOpensOf({ genre, decade }),
       })),
       fromPlugins: (fromPlugins.data?.rows ?? []).map((one) => ({
         id: `plugin:${one.pluginId}:${one.rowId}`,

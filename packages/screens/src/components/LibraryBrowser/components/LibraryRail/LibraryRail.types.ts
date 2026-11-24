@@ -1,5 +1,5 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { Rail } from '@ValenceClient/library/groupIntoRails';
+import type { Rail, RailOpens } from '@ValenceClient/library/groupIntoRails';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
 type LibraryRailProps = {
@@ -11,6 +11,7 @@ type LibraryRailProps = {
   onPlayShow: (media: MediaSummary) => void;
   onInspect: (media: MediaSummary) => void;
   onOpenShow?: (media: MediaSummary) => void;
+  onOpenRail?: (opens: RailOpens) => void;
   isKept?: (mediaId: string) => boolean;
   onToggleKept?: (media: MediaSummary) => void;
   onHide?: (media: MediaSummary) => void;

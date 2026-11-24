@@ -6,6 +6,14 @@ import type * as MotionReact from 'motion/react';
 
 const motion = vi.hoisted(() => ({ isReduced: false }));
 
+/**
+ * Finds the box the name opens out in, around the name itself.
+ *
+ * @param name - The name shown.
+ * @returns The box.
+ */
+const nameBox = (name: string) => screen.getByText(name).parentElement;
+
 vi.mock('motion/react', async () => ({
   ...(await vi.importActual<typeof MotionReact>('motion/react')),
   useReducedMotion: () => motion.isReduced,
@@ -71,9 +79,7 @@ describe('SplashScreen', () => {
   it('keeps a long name on one line inside the screen, a size smaller', () => {
     render(<SplashScreen name="The Morgan Family Home Cinema" />);
 
-    const name = screen.getByText('The Morgan Family Home Cinema');
-
-    expect(name).toHaveClass(
+    expect(nameBox('The Morgan Family Home Cinema')).toHaveClass(
       'overflow-hidden',
       'whitespace-nowrap',
       'max-w-[calc(100vw-7.5rem)]',
@@ -84,7 +90,7 @@ describe('SplashScreen', () => {
   it('clips the name without an ellipsis while it is still opening', () => {
     render(<SplashScreen name="Valence" />);
 
-    expect(screen.getByText('Valence')).not.toHaveClass('text-ellipsis');
+    expect(nameBox('Valence')).not.toHaveClass('text-ellipsis');
   });
 
   it('ends a name too long for the screen in an ellipsis once it is open', async () => {
@@ -93,14 +99,21 @@ describe('SplashScreen', () => {
     render(<SplashScreen name="The Morgan Family Home Cinema" isReady />);
 
     await waitFor(() => {
-      expect(screen.getByText('The Morgan Family Home Cinema')).toHaveClass('text-ellipsis');
+      expect(nameBox('The Morgan Family Home Cinema')).toHaveClass('text-ellipsis');
     });
   });
 
   it('draws a short name at the wordmark’s own size', () => {
     render(<SplashScreen name="Valence" />);
 
-    expect(screen.getByText('Valence')).toHaveClass('text-6xl');
+    expect(nameBox('Valence')).toHaveClass('text-6xl');
+  });
+
+  it('keeps the space before the name inside the box that opens, so a closed name takes no room', () => {
+    render(<SplashScreen name="Valence" />);
+
+    expect(nameBox('Valence')).not.toHaveClass('ps-5');
+    expect(screen.getByText('Valence')).toHaveClass('ps-5');
   });
 
   it('holds up the mark it is given in place of Valence’s', () => {

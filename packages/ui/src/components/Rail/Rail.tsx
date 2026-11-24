@@ -18,6 +18,7 @@ import { snapRowContext } from '@ValenceUI/snapRowContext';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
+import { Link } from '@ValenceUI/Link';
 import type { RailProps } from './Rail.types';
 import { say } from '@ValenceI18n/say';
 
@@ -75,6 +76,8 @@ const LEAD_SCREENS = 2;
  *   rather than left to be counted.
  * @param action - A control for the right of the title bar, such as a way to see everything.
  * @param onOpenTitle - Told when the title was pressed, where the row leads somewhere fuller.
+ * @param titleHref - The address the title leads to, which makes it a link that can also be opened in
+ *   a tab of its own; told to `onOpenTitle` when it is simply clicked.
  * @param hasArrows - Whether the row is laid out in step with the page's gutters. A row inside a dialog
  *   sits within the dialog's own padding, and holding a page's gutter open there reads as a stray margin.
  * @param look - Whether the row is headed as a title of its own, or as one section of a panel, in the
@@ -96,6 +99,7 @@ const Rail = ({
   count,
   action,
   onOpenTitle,
+  titleHref,
   sizesCards = false,
   cards = 'wide',
   hasArrows = true,
@@ -103,6 +107,14 @@ const Rail = ({
   className,
 }: RailProps) => {
   const every = Children.toArray(children);
+  const leadsOn = (
+    <Icon
+      of={ChevronRightIcon}
+      size={20}
+      tone="muted"
+      className="transition-transform group-hover/title:translate-x-0.5"
+    />
+  );
   const [drawn, setDrawn] = useState(BATCH);
   const shown = every.length > drawn ? every.slice(0, drawn) : every;
   const { trackRef, pages, isAtStart, isAtEnd, measure, scrollTo } =
@@ -150,10 +162,26 @@ const Rail = ({
         >
           {onOpenTitle === undefined ? (
             title
-          ) : (
-            <Button variant="link" size="none" onClick={onOpenTitle} className="text-start">
+          ) : titleHref === undefined ? (
+            <Button
+              variant="heading"
+              size="none"
+              onClick={onOpenTitle}
+              className="group/title inline-flex items-center gap-1 text-start"
+            >
               {title}
+              {leadsOn}
             </Button>
+          ) : (
+            <Link
+              href={titleHref}
+              look="bare"
+              onNavigate={onOpenTitle}
+              className="group/title inline-flex items-center gap-1 rounded-sm text-start"
+            >
+              {title}
+              {leadsOn}
+            </Link>
           )}
 
           {count === undefined ? null : (

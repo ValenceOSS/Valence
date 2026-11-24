@@ -20,7 +20,8 @@ const LOOKS = {
  * held it while the app was getting ready; only once it has landed does the name write itself in, the
  * space for it springing open from the mark and each letter rising into place after the one before.
  * Where the mark had nowhere to fly from, the name follows as soon as the bar is up. Once written it
- * stays, and for somebody who asked for less motion it is simply there.
+ * stays, and for somebody who asked for less motion it is simply there. Once landed the mark leaves
+ * the place it travels under, so moving between pages never sends it flying again.
  *
  * @param hasMark - Whether the bar draws the mark itself, rather than leaving room for one still on
  *   its way from a screen held over the app.
@@ -65,7 +66,7 @@ const BrandMark = ({ hasMark, marksPlace, size = 'md' }: BrandMarkProps) => {
     <>
       {hasMark ? (
         <motion.span
-          layoutId={marksPlace}
+          {...(hasLanded ? {} : { layoutId: marksPlace })}
           transition={{ layout: isStill ? stillTransition : liquidSpring }}
           onLayoutAnimationStart={() => {
             isFlyingRef.current = true;

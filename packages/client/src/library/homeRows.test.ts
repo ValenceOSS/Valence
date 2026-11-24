@@ -100,6 +100,24 @@ describe('homeRows', () => {
     ]);
   });
 
+  it('leads the films of the season to the films page, and each category row to its own', () => {
+    const rows = homeRows(
+      input({
+        seasonal: { season: 'christmas', items: many('festive', 4) },
+        genres: [{ genre: 'Drama', items: many('drama', 4) }],
+        decades: [{ decade: 1990, items: many('nineties', 4) }],
+        recent: many('recent', 4),
+      }),
+    );
+
+    expect(rows.map((row) => [row.id, row.opens])).toEqual([
+      ['recent', undefined],
+      ['seasonal:christmas', { section: 'films', filters: 'occasion:christmas' }],
+      ['genre:Drama', { section: 'search', filters: 'genre:Drama' }],
+      ['decade:1990', { section: 'search', filters: 'decade:1990' }],
+    ]);
+  });
+
   it('names a Halloween row for Halloween, and draws no seasonal row with too little in it', () => {
     expect(
       homeRows(input({ seasonal: { season: 'halloween', items: many('spooky', 4) } })).map(
@@ -437,6 +455,14 @@ describe('the rows that come round again', () => {
       ],
     });
 
-    expect(rows).toEqual([{ id: 'again:1:0', title: 'Drama', items: [], standsForShows: true }]);
+    expect(rows).toEqual([
+      {
+        id: 'again:1:0',
+        title: 'Drama',
+        items: [],
+        standsForShows: true,
+        opens: { section: 'search', filters: 'genre:Drama' },
+      },
+    ]);
   });
 });

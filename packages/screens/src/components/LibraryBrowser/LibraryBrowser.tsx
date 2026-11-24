@@ -1,3 +1,4 @@
+import type { RailOpens } from '@ValenceClient/library/groupIntoRails';
 import { cardArtworkOf } from '@ValenceClient/library/cardArtworkOf';
 import { useArtworkWarming } from '@ValenceScreens/library/useArtworkWarming';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -304,6 +305,13 @@ const LibraryBrowser = ({
     told.current.onOpenShow?.(media);
   }, []);
 
+  const openRail = useCallback(
+    (opens: RailOpens) => {
+      go({ section: opens.section, filters: opens.filters });
+    },
+    [go],
+  );
+
   const toggleKept = useCallback((media: MediaSummary) => {
     told.current.onToggleKept?.(media);
   }, []);
@@ -523,6 +531,7 @@ const LibraryBrowser = ({
                           onPlayShow={playShowCard}
                           onInspect={inspect}
                           {...(onOpenShow === undefined ? {} : { onOpenShow: openShow })}
+                          {...(isHome ? { onOpenRail: openRail } : {})}
                           {...(isKept === undefined ? {} : { isKept })}
                           {...(onToggleKept === undefined ? {} : { onToggleKept: toggleKept })}
                           {...(onHide === undefined ? {} : { onHide: hide })}

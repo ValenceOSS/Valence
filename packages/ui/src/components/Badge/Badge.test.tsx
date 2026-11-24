@@ -235,4 +235,14 @@ describe('Badge', () => {
     expect(badgeOf('Stopped')).toHaveClass('text-text-muted');
     expect(badgeOf('Stopped').lastElementChild?.tagName.toLowerCase()).toBe('svg');
   });
+
+  it('draws a count beside a label round, as wide as it is tall', () => {
+    render(
+      <Badge tone="bright" size="tally">
+        1
+      </Badge>,
+    );
+
+    expect(screen.getByText('1').closest('.rounded-full')).toHaveClass('h-5', 'min-w-5');
+  });
 });

@@ -380,6 +380,14 @@ describe('Button', () => {
         'underline-offset-4',
       );
     });
+
+    it('offers a heading that leads somewhere without underlining it', () => {
+      render(<Button variant="heading">Christmas films</Button>);
+
+      expect(screen.getByRole('button', { name: 'Christmas films' })).not.toHaveClass(
+        'hover:underline',
+      );
+    });
   });
 
   describe('painted by its caller', () => {

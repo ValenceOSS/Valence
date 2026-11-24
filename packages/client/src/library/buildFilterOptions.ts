@@ -7,6 +7,8 @@ import {
 } from '@ValenceCore/functions/describeTrack';
 import { describeAudioCodec } from '@ValenceClient/library/describeAudioCodec';
 import { say } from '@ValenceI18n/say';
+import { OCCASIONS } from '@ValenceContracts/constants/OCCASIONS';
+import { OCCASION_NAMES } from '@ValenceClient/library/OCCASION_NAMES';
 
 const RATING_FLOORS = [6, 7, 8, 9];
 
@@ -49,7 +51,8 @@ const spellingsByLanguage = (spellings: readonly string[]): FilterOption[] => {
  * get tells them more plainly than a missing chip would.
  *
  * Audio languages are offered once each however many ways the files spell them, so English tagged
- * `en` in one file and `eng` in another is one chip asking for either.
+ * `en` in one file and `eng` in another is one chip asking for either. Occasions are offered in the
+ * order of the year, and any this version does not know the name of is left out.
  *
  * @param facets - What the server says there is to filter by.
  * @returns The chips for each row.
@@ -59,6 +62,7 @@ const buildFilterOptions = (
 ): {
   genres: FilterOption[];
   decades: FilterOption[];
+  occasions: FilterOption[];
   ratings: FilterOption[];
   yourStars: FilterOption[];
   audioLanguages: FilterOption[];
@@ -70,6 +74,9 @@ const buildFilterOptions = (
     value: decade.toString(),
     label: say('client.library.buildFilterOptions.decadeS', { decade: decade.toString() }),
   })),
+  occasions: OCCASIONS.filter((occasion) => facets.occasions.includes(occasion)).map(
+    (occasion) => ({ value: occasion, label: say(OCCASION_NAMES[occasion]) }),
+  ),
   ratings: RATING_FLOORS.filter((floor) => facets.maxRating >= floor).map((floor) => ({
     value: floor.toString(),
     label: `${floor.toString()}+`,

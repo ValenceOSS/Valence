@@ -1,3 +1,4 @@
+import type { Occasion } from '@ValenceContracts/constants/OCCASIONS';
 import { artworkAddresses } from '@ValenceClient/library/artworkAddresses';
 import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
 import type { TitleField } from '@ValenceContracts/schemas/TitleEdit';
@@ -50,6 +51,7 @@ type ListItemsOptions = {
   genre?: string;
   genres?: readonly string[];
   decades?: readonly number[];
+  occasions?: readonly Occasion[];
   audioLanguages?: readonly string[];
   audioCodecs?: readonly string[];
   audioChannels?: readonly number[];
@@ -168,6 +170,7 @@ const itemsQueryOf = ({
   genre,
   genres,
   decades,
+  occasions,
   audioLanguages,
   audioCodecs,
   audioChannels,
@@ -202,6 +205,10 @@ const itemsQueryOf = ({
 
   if (decades !== undefined && decades.length > 0) {
     query.set('decades', decades.join(','));
+  }
+
+  if (occasions !== undefined && occasions.length > 0) {
+    query.set('occasions', occasions.join(','));
   }
 
   if (audioLanguages !== undefined && audioLanguages.length > 0) {

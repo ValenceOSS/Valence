@@ -11,7 +11,7 @@ import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { LikenessIndex } from './indexLikeness';
-import { SEASON_KEYWORDS } from './SEASON_KEYWORDS';
+import { OCCASION_KEYWORDS } from '@ValenceServer/library/OCCASION_KEYWORDS';
 
 type ReadSeasonalFilmsOptions = {
   db: AnyValenceDatabase;
@@ -60,7 +60,7 @@ const readSeasonalFilms = async ({
   limit,
   artworkAddressOf,
 }: ReadSeasonalFilmsOptions): Promise<MediaSummary[]> => {
-  const keywords = new Set<number>(Object.values(SEASON_KEYWORDS[season]));
+  const keywords = new Set<number>(Object.values(OCCASION_KEYWORDS[season]));
   const filmIds = [...index.titles.values()].flatMap((title) =>
     title.kind === 'film' && [...title.keywords].some((keyword) => keywords.has(keyword))
       ? [title.catalogueId]

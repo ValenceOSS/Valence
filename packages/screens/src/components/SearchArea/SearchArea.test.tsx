@@ -57,6 +57,15 @@ const findPeople = vi.hoisted(() =>
 
 vi.mock('@ValenceClient/library/findPeople', () => ({ findPeople }));
 
+const searchMusic = vi.hoisted(() =>
+  vi.fn(() => Promise.resolve({ tracks: [], albums: [], artists: [], playlists: [] })),
+);
+
+vi.mock('@ValenceClient/music/fetchMusic', async () => ({
+  ...(await vi.importActual<object>('@ValenceClient/music/fetchMusic')),
+  searchMusic,
+}));
+
 const facets: LibraryFacets = {
   genres: ['Science fiction'],
   decades: [2010, 1990],
@@ -64,6 +73,7 @@ const facets: LibraryFacets = {
   audioLanguages: [],
   audioCodecs: [],
   audioChannels: [],
+  occasions: [],
 };
 
 const item = (id: string, title: string, genres?: string[]): MediaSummary => ({
@@ -85,6 +95,7 @@ const item = (id: string, title: string, genres?: string[]): MediaSummary => ({
 });
 
 beforeEach(() => {
+  searchMusic.mockClear();
   fetchLibraries.mockReset().mockResolvedValue([{ id: 'library-1' }]);
   fetchLibraryItems
     .mockReset()
@@ -435,6 +446,7 @@ describe('SearchArea', () => {
       audioLanguages: [],
       audioCodecs: [],
       audioChannels: [],
+      occasions: [],
     });
 
     renderInAnAddress(
@@ -472,6 +484,32 @@ describe('SearchArea', () => {
     await screen.findByText('Arrival');
 
     expect(findBooks).not.toHaveBeenCalled();
+  });
+
+  it('looks for music and books only while nothing narrows the search they cannot honour', async () => {
+    renderInAnAddress(
+      <HeldSearchArea
+        search="austen"
+        startingFilters={new Set(['occasion:christmas'])}
+        onSearchChange={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+        onOpenBook={vi.fn()}
+      />,
+    );
+
+    await screen.findByText('Arrival');
+
+    expect(searchMusic).not.toHaveBeenCalled();
+    expect(findBooks).not.toHaveBeenCalled();
+  });
+
+  it('looks for music by what was typed where nothing narrows the search', async () => {
+    searchFor('austen');
+
+    await waitFor(() => {
+      expect(searchMusic).toHaveBeenCalledWith('austen');
+    });
   });
 
   it('searches only books when only books are wanted', async () => {

@@ -1,3 +1,4 @@
+import type { Occasion } from '@ValenceContracts/constants/OCCASIONS';
 import type { PhotoFrame } from '@ValenceContracts/schemas/ViewerProfile';
 import type { WordRule } from '@ValenceContracts/schemas/WordRule';
 import type { EpisodeOrders } from '@ValenceContracts/schemas/EpisodeOrder';
@@ -55,6 +56,7 @@ type ListItemsOptions = {
   genre?: string;
   genres?: string[];
   decades?: number[];
+  occasions?: Occasion[];
   audio?: { languages: string[]; codecs: string[]; channels: number[] };
   yearFrom?: number;
   yearTo?: number;

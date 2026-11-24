@@ -10,7 +10,10 @@ import type { NarrowedHere } from '@ValenceClient/library/narrowAsTheServerDoes'
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 type Asked = NarrowedHere &
-  Pick<ListItemsOptions, 'audioLanguages' | 'audioCodecs' | 'audioChannels' | 'minYourStars'>;
+  Pick<
+    ListItemsOptions,
+    'occasions' | 'audioLanguages' | 'audioCodecs' | 'audioChannels' | 'minYourStars'
+  >;
 
 type Browsing = {
   libraryIds: readonly string[];
@@ -50,8 +53,8 @@ const useEverythingToBrowse = ({
   isFinished,
   isWanted,
 }: Browsing): Browsed => {
-  const { genres, decades, minRating, audioLanguages, audioCodecs, audioChannels, minYourStars } =
-    asked;
+  const { genres, decades, minRating, minYourStars } = asked;
+  const { occasions, audioLanguages, audioCodecs, audioChannels } = asked;
   const here = useMemo(
     (): NarrowedHere => ({
       ...(genres === undefined ? {} : { genres }),
@@ -64,12 +67,13 @@ const useEverythingToBrowse = ({
     (): Omit<ListItemsOptions, 'limit' | 'offset'> => ({
       kind,
       order: 'newest',
+      ...(occasions === undefined ? {} : { occasions }),
       ...(audioLanguages === undefined ? {} : { audioLanguages }),
       ...(audioCodecs === undefined ? {} : { audioCodecs }),
       ...(audioChannels === undefined ? {} : { audioChannels }),
       ...(minYourStars === undefined ? {} : { minYourStars }),
     }),
-    [kind, audioLanguages, audioCodecs, audioChannels, minYourStars],
+    [kind, occasions, audioLanguages, audioCodecs, audioChannels, minYourStars],
   );
   const read = useQuery({
     queryKey: [

@@ -458,6 +458,7 @@ describe('library routes', () => {
       audioLanguages: [],
       audioCodecs: ['atmos', 'truehd'],
       audioChannels: [8],
+      occasions: [],
     });
   });
 
