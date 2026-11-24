@@ -187,6 +187,7 @@ const SearchArea = ({
     settled.search !== undefined &&
     settled.genres === undefined &&
     settled.decades === undefined &&
+    settled.occasions === undefined &&
     settled.audioLanguages === undefined &&
     settled.audioCodecs === undefined &&
     settled.audioChannels === undefined &&

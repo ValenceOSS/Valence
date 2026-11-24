@@ -302,7 +302,8 @@ const holdsAudioWanted = (item: MediaDetail, options: ListItemsOptions): boolean
  * Decides whether an item survives the narrowing filters, in step with the database version for the
  * same reason the search is. An item with no year or no rating fails a filter asking about one
  * rather than passing it: asking for at least seven is not asking to also be shown everything
- * nobody has scored.
+ * nobody has scored. No item here carries the catalogue's keywords, so asking for an occasion keeps
+ * nothing.
  *
  * @param item - The item being tested.
  * @param options - The filters asked for.
@@ -319,6 +320,7 @@ const matchesFilters = (item: MediaDetail, options: ListItemsOptions): boolean =
     (options.decades === undefined ||
       options.decades.length === 0 ||
       (year !== null && options.decades.some((decade) => year >= decade && year < decade + 10))) &&
+    (options.occasions === undefined || options.occasions.length === 0) &&
     holdsAudioWanted(item, options) &&
     (options.yearFrom === undefined || (year !== null && year >= options.yearFrom)) &&
     (options.yearTo === undefined || (year !== null && year <= options.yearTo)) &&
@@ -569,6 +571,7 @@ const createMemoryLibraryService = (
           })),
         ),
       ),
+      occasions: [],
     });
   },
 

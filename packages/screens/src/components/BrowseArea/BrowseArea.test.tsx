@@ -125,6 +125,7 @@ beforeEach(() => {
     audioLanguages: [],
     audioCodecs: [],
     audioChannels: [],
+    occasions: [],
   });
   fetchLibraries.mockReset().mockResolvedValue([{ id: 'library-1', kind: 'movies' }]);
   fetchLibraryItems.mockReset().mockResolvedValue({ items: [item('a', 'Arrival')], total: 1 });

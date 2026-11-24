@@ -194,6 +194,18 @@ describe('fetchItemsAcross', () => {
     expect(asked.searchParams.has('counted')).toBe(false);
   });
 
+  it('asks for any of several occasions as one list', async () => {
+    fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
+
+    await fetchItemsAcross(['films'], { occasions: ['christmas', 'easter'] });
+
+    expect(
+      new URL(fetchMock.mock.calls[0]?.[0] ?? '', 'http://valence.local').searchParams.get(
+        'occasions',
+      ),
+    ).toBe('christmas,easter');
+  });
+
   it('asks the server not to count where nothing needs the count', async () => {
     fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
 

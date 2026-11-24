@@ -9,6 +9,7 @@ const facets = (overrides: Partial<LibraryFacets> = {}): LibraryFacets => ({
   audioLanguages: [],
   audioCodecs: [],
   audioChannels: [],
+  occasions: [],
   ...overrides,
 });
 
@@ -16,6 +17,16 @@ describe('buildFilterOptions', () => {
   it('offers the genres as they are filed', () => {
     expect(buildFilterOptions(facets({ genres: ['Drama'] })).genres).toStrictEqual([
       { value: 'Drama', label: 'Drama' },
+    ]);
+  });
+
+  it('offers the occasions held in the order of the year, named, and none it cannot name', () => {
+    expect(
+      buildFilterOptions(facets({ occasions: ['christmas', 'birthday', 'valentinesDay'] }))
+        .occasions,
+    ).toStrictEqual([
+      { value: 'valentinesDay', label: 'Valentine’s Day' },
+      { value: 'christmas', label: 'Christmas' },
     ]);
   });
 

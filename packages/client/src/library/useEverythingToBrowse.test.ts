@@ -131,6 +131,15 @@ describe('useEverythingToBrowse', () => {
         expect.objectContaining({ audioLanguages: ['fr'] }),
       );
     });
+
+    browsed.rerender({ occasions: ['christmas'] });
+
+    await waitFor(() => {
+      expect(fetchItemsAcross).toHaveBeenLastCalledWith(
+        ['films'],
+        expect.objectContaining({ occasions: ['christmas'] }),
+      );
+    });
   });
 
   it('hands back nothing for a page that is not showing', () => {

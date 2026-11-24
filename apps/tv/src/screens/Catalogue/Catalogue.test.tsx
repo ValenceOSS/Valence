@@ -305,6 +305,7 @@ describe('Catalogue', () => {
           audioLanguages: [],
           audioCodecs: [],
           audioChannels: [],
+          occasions: [],
         });
         cache.setQueryData(
           libraryQueries.everything([LIBRARY], { kind: 'films', genres: ['Drama'] }).queryKey,

@@ -49,6 +49,8 @@ import { countAffected } from '@ValenceDatabase/countAffected';
 import { floorDivided } from '@ValenceDatabase/floorDivided';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { jsonContains } from '@ValenceDatabase/jsonContains';
+import { isForAnOccasion } from '@ValenceServer/library/isForAnOccasion';
+import { OCCASIONS } from '@ValenceContracts/constants/OCCASIONS';
 import { adviceFor } from '@ValenceServer/library/adviceFor';
 import { audioTracksWanted } from '@ValenceServer/library/audioTracksWanted';
 import { audioFacetsOf } from '@ValenceServer/library/audioFacetsOf';
@@ -1178,6 +1180,9 @@ const createDatabaseLibraryService = ({
       ...(tracksWanted.length === 0
         ? []
         : [or(...tracksWanted.map((one) => jsonContains(mediaItem.audioStreams, [one])))]),
+      ...(options.occasions === undefined || options.occasions.length === 0
+        ? []
+        : [isForAnOccasion(db, options.occasions)]),
       ...(options.yearFrom === undefined ? [] : [gte(mediaItem.year, options.yearFrom)]),
       ...(options.yearTo === undefined ? [] : [lte(mediaItem.year, options.yearTo)]),
       ...(options.minRating === undefined ? [] : [gte(mediaItem.rating, options.minRating)]),
@@ -1919,11 +1924,32 @@ const createDatabaseLibraryService = ({
           track.field('isAtmos'),
         );
 
+      const occasions = await Promise.all(
+        OCCASIONS.map(async (occasion) => {
+          const [held] = await db
+            .select({ id: mediaItem.id })
+            .from(mediaItem)
+            .where(
+              and(
+                isNull(mediaItem.extraKind),
+                isNull(mediaItem.parentId),
+                isNotATrack(db),
+                visibleToViewer(db, viewer),
+                isForAnOccasion(db, [occasion]),
+              ),
+            )
+            .limit(1);
+
+          return held === undefined ? [] : [occasion];
+        }),
+      );
+
       return {
         genres: genreRows.map((row) => row.value),
         decades: decadeRows.map((row) => row.value),
         maxRating: best?.rating ?? 0,
         ...audioFacetsOf(trackRows),
+        occasions: occasions.flat(),
       };
     },
 

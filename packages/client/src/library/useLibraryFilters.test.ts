@@ -18,6 +18,7 @@ beforeEach(() => {
     audioLanguages: [],
     audioCodecs: [],
     audioChannels: [],
+    occasions: [],
   });
 });
 
@@ -82,6 +83,7 @@ describe('useLibraryFilters', () => {
       audioLanguages: ['en', 'eng', 'jpn'],
       audioCodecs: ['atmos', 'aac'],
       audioChannels: [6, 2],
+      occasions: [],
     });
 
     const { result } = renderHookInACache(() => useLibraryFilters());
@@ -104,6 +106,38 @@ describe('useLibraryFilters', () => {
       audioCodecs: ['atmos'],
       audioChannels: [6],
     });
+  });
+
+  it('offers the occasions held after the genres, and asks for any of several', async () => {
+    fetchFacets.mockResolvedValue({
+      genres: ['Drama'],
+      decades: [],
+      maxRating: 0,
+      audioLanguages: [],
+      audioCodecs: [],
+      audioChannels: [],
+      occasions: ['halloween', 'christmas'],
+    });
+    const { result } = renderHookInACache(() => useLibraryFilters());
+
+    await waitFor(() => {
+      expect(result.current.groups.map((group) => group.name)).toEqual([
+        'Genre',
+        'Occasion',
+        'Your rating',
+      ]);
+    });
+
+    expect(result.current.groups[1]?.options).toEqual([
+      { id: 'occasion:halloween', label: 'Halloween' },
+      { id: 'occasion:christmas', label: 'Christmas' },
+    ]);
+
+    act(() => {
+      result.current.change(new Set(['occasion:christmas', 'occasion:halloween', 'occasion:x']));
+    });
+
+    expect(result.current.asked).toEqual({ occasions: ['christmas', 'halloween'] });
   });
 
   it('takes every filter off at once', () => {

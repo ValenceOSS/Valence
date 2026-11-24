@@ -14,6 +14,7 @@ import {
   rating,
   seasonSource,
   series,
+  titleLikeness,
   user,
   viewerProfile,
   watchProgress,
@@ -885,6 +886,71 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
       audioLanguages: [],
       audioCodecs: [],
       audioChannels: [],
+      occasions: [],
+    });
+  });
+
+  describe('by occasion', () => {
+    /**
+     * The library, with the catalogue tying Arrival to Christmas and Brazil to Halloween, and a
+     * programme it also ties to Christmas.
+     *
+     * @returns The service.
+     */
+    const withOccasions = async () => {
+      const made = await aLibrary();
+      const likeness = (kind: string, catalogueId: string, keywordIds: number[]) => ({
+        kind,
+        catalogueId,
+        genreIds: [],
+        keywordIds,
+        castIds: [],
+        crewIds: [],
+        recommendedIds: [],
+      });
+
+      await made.db.update(mediaItem).set({ externalId: '100' }).where(eq(mediaItem.id, 'arrival'));
+      await made.db.update(mediaItem).set({ externalId: '101' }).where(eq(mediaItem.id, 'brazil'));
+      await made.db
+        .insert(titleLikeness)
+        .values([
+          likeness('film', '100', [42, 207317]),
+          likeness('film', '101', [3335]),
+          likeness('series', '102', [207317]),
+        ]);
+
+      return made;
+    };
+
+    it('lists the films tied to any of the occasions asked for', async () => {
+      const { service } = await withOccasions();
+
+      const christmas = await service.listItems(SERVER, FILMS_ID, {
+        occasions: ['christmas'],
+        limit: 10,
+        offset: 0,
+      });
+      const either = await service.listItems(SERVER, FILMS_ID, {
+        occasions: ['christmas', 'halloween'],
+        order: 'title',
+        limit: 10,
+        offset: 0,
+      });
+      const easter = await service.listItems(SERVER, FILMS_ID, {
+        occasions: ['easter'],
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(titlesIn(christmas)).toEqual(['Arrival']);
+      expect(titlesIn(either)).toEqual(['Arrival', 'Brazil']);
+      expect(easter?.total).toBe(0);
+    });
+
+    it('offers the occasions the films held are tied to, in the order of the year', async () => {
+      const { service } = await withOccasions();
+
+      expect((await service.listFacets(SERVER)).occasions).toEqual(['halloween', 'christmas']);
     });
   });
 

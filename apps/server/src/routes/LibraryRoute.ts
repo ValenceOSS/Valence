@@ -147,6 +147,7 @@ const ItemsQuery = z.object({
   genre: z.string().optional(),
   genres: z.string().optional(),
   decades: z.string().optional(),
+  occasions: z.string().optional(),
   audioLanguages: z.string().optional(),
   audioCodecs: z.string().optional(),
   audioChannels: z.string().optional(),

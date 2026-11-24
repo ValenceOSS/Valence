@@ -17,6 +17,7 @@ const facets = {
   audioLanguages: ['eng'],
   audioCodecs: ['atmos', 'truehd'],
   audioChannels: [8],
+  occasions: ['christmas'],
 };
 
 afterEach(() => {
@@ -24,7 +25,7 @@ afterEach(() => {
 });
 
 describe('fetchFacets', () => {
-  it('reads no audio from a server too old to say any', async () => {
+  it('reads no audio and no occasions from a server too old to say any', async () => {
     vi.stubGlobal('fetch', answering({ genres: [], decades: [], maxRating: 0 }));
 
     expect(await fetchFacets()).toStrictEqual({
@@ -32,6 +33,7 @@ describe('fetchFacets', () => {
       audioLanguages: [],
       audioCodecs: [],
       audioChannels: [],
+      occasions: [],
     });
   });
 

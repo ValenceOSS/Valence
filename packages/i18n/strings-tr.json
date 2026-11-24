@@ -850,6 +850,36 @@
     "context": "Shown in the library (from `howToFillIt`)."
   },
   {
+    "handler": "client.library.occasionNames.christmas",
+    "text": "Christmas",
+    "context": "An option of the Occasion filter on the films page: films tied to Christmas."
+  },
+  {
+    "handler": "client.library.occasionNames.easter",
+    "text": "Easter",
+    "context": "An option of the Occasion filter on the films page: films tied to Easter."
+  },
+  {
+    "handler": "client.library.occasionNames.halloween",
+    "text": "Halloween",
+    "context": "An option of the Occasion filter on the films page: films tied to Halloween."
+  },
+  {
+    "handler": "client.library.occasionNames.newYearsEve",
+    "text": "New Year’s Eve",
+    "context": "An option of the Occasion filter on the films page: films tied to New Year’s Eve."
+  },
+  {
+    "handler": "client.library.occasionNames.thanksgiving",
+    "text": "Thanksgiving",
+    "context": "An option of the Occasion filter on the films page: films tied to Thanksgiving."
+  },
+  {
+    "handler": "client.library.occasionNames.valentinesDay",
+    "text": "Valentine’s Day",
+    "context": "An option of the Occasion filter on the films page: films tied to Valentine’s Day."
+  },
+  {
     "handler": "client.library.qualityBadges.dolbyAtmos",
     "text": "Dolby Atmos",
     "context": "Shown in the library (from `qualityBadges`)."
@@ -968,6 +998,11 @@
     "handler": "client.library.useLibraryFilters.channelLayout",
     "text": "Kanal düzeni",
     "context": "The name of the filter that narrows a library by how many speakers a soundtrack is mixed for, such as stereo or 5.1 (from `useLibraryFilters`)."
+  },
+  {
+    "handler": "client.library.useLibraryFilters.occasion",
+    "text": "Occasion",
+    "context": "The name of a filter on the films page: films the film catalogue ties to an occasion, such as Christmas or Halloween."
   },
   {
     "handler": "client.library.whereItFalls.sSeasonNumberEEpisodeNumber",

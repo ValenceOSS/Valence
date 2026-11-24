@@ -49,6 +49,14 @@ describe('itemsOptionsOf', () => {
     ).toMatchObject({ ids: ['a', 'b'], genres: ['Drama', 'Comedy'], decades: [1990, 2000] });
   });
 
+  it('asks for the occasions this server knows, and none where none was asked for', () => {
+    expect(itemsOptionsOf({}, null)).not.toHaveProperty('occasions');
+    expect(itemsOptionsOf({ occasions: 'christmas,,easter,birthday' }, null).occasions).toEqual([
+      'christmas',
+      'easter',
+    ]);
+  });
+
   it('asks for the sound only where any of it was asked for, keeping only whole channel counts', () => {
     expect(itemsOptionsOf({}, null)).not.toHaveProperty('audio');
     expect(

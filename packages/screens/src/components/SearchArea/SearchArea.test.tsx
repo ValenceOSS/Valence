@@ -64,6 +64,7 @@ const facets: LibraryFacets = {
   audioLanguages: [],
   audioCodecs: [],
   audioChannels: [],
+  occasions: [],
 };
 
 const item = (id: string, title: string, genres?: string[]): MediaSummary => ({
@@ -435,6 +436,7 @@ describe('SearchArea', () => {
       audioLanguages: [],
       audioCodecs: [],
       audioChannels: [],
+      occasions: [],
     });
 
     renderInAnAddress(
