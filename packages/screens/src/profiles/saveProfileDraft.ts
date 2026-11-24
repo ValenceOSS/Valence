@@ -35,6 +35,7 @@ const saveProfileDraft = async (
     draft.prefersBestCopy,
     draft.discordPresence,
     draft.language,
+    draft.showsSeasonalRows,
   );
 
   if (!saved) {

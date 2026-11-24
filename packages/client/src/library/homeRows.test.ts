@@ -61,20 +61,54 @@ describe('homeRows', () => {
 
     expect(rows.map((row) => row.title)).toEqual([
       'Continue watching',
-      'Picked for you',
       'Recently added',
+      'Picked for you',
       'Critically acclaimed',
       'Drama',
       'Comedy',
     ]);
     expect(rows.map((row) => row.id)).toEqual([
       'resume',
-      'picked',
       'recent',
+      'picked',
       'acclaimed',
       'genre:Drama',
       'genre:Comedy',
     ]);
+  });
+
+  it('puts the films of the season after what is new and before what is picked for the profile', () => {
+    const rows = homeRows(
+      input({
+        recent: many('recent', 4),
+        picked: many('picked', 4),
+        seasonal: { season: 'christmas', items: many('festive', 4) },
+        because: [
+          {
+            watched: { title: 'A Film', mediaId: 'film', seriesId: null },
+            items: many('like-film', 4),
+          },
+        ],
+      }),
+    );
+
+    expect(rows.map((row) => [row.id, row.title])).toEqual([
+      ['recent', 'Recently added'],
+      ['seasonal:christmas', 'Christmas films'],
+      ['picked', 'Picked for you'],
+      ['because:film', 'Because you watched A Film'],
+    ]);
+  });
+
+  it('names a Halloween row for Halloween, and draws no seasonal row with too little in it', () => {
+    expect(
+      homeRows(input({ seasonal: { season: 'halloween', items: many('spooky', 4) } })).map(
+        (row) => row.title,
+      ),
+    ).toEqual(['Halloween films']);
+    expect(
+      homeRows(input({ seasonal: { season: 'christmas', items: many('festive', 3) } })),
+    ).toEqual([]);
   });
 
   it('puts the rows plugins add after what is well thought of and before the genres, even with one title', () => {

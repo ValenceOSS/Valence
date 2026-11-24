@@ -2,6 +2,7 @@ import {
   becauseYouWatchedRoute,
   likeThisRoute,
   pickedForYouRoute,
+  seasonalFilmsRoute,
 } from '@ValenceServer/routes/LikenessRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -61,6 +62,21 @@ const serveLikeness = (app: OpenAPIHono, context: AppContext): void => {
     const { limit } = context.req.valid('query');
 
     return context.json({ items: (await likeness?.pickedForYou(viewer, limit)) ?? [] }, 200);
+  });
+
+  app.openapi(seasonalFilmsRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const { season, limit } = context.req.valid('query');
+
+    return context.json(
+      { items: (await likeness?.seasonalFilms(viewer, season, limit)) ?? [] },
+      200,
+    );
   });
 };
 

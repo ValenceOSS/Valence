@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
 import { ImagePlus } from '@keyline-icons/react-native';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { saveProfile } from '@ValenceClient/profiles/fetchProfiles';
 import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
@@ -44,6 +45,7 @@ const TheProfile = () => {
   const [avatar, setAvatar] = useState<Avatar | null>(null);
   const [askAfter, setAskAfter] = useState<number | null>(null);
   const [prefersBest, setPrefersBest] = useState<boolean | null>(null);
+  const [showsSeasonal, setShowsSeasonal] = useState<boolean | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -64,6 +66,7 @@ const TheProfile = () => {
     avatar: avatar ?? profile.avatar,
     askStillWatchingAfter: askAfter ?? profile.askStillWatchingAfter,
     prefersBestCopy: prefersBest ?? profile.prefersBestCopy,
+    showsSeasonalRows: showsSeasonal ?? profile.showsSeasonalRows,
   };
   const isChanged =
     picked !== null ||
@@ -71,6 +74,7 @@ const TheProfile = () => {
     draft.colour !== profile.colour ||
     draft.askStillWatchingAfter !== profile.askStillWatchingAfter ||
     draft.prefersBestCopy !== profile.prefersBestCopy ||
+    draft.showsSeasonalRows !== profile.showsSeasonalRows ||
     JSON.stringify(draft.avatar) !== JSON.stringify(profile.avatar);
 
   const save = async () => {
@@ -95,6 +99,9 @@ const TheProfile = () => {
       draft.askStillWatchingAfter,
       undefined,
       draft.prefersBestCopy,
+      undefined,
+      undefined,
+      draft.showsSeasonalRows,
     );
 
     setIsSaving(false);
@@ -110,9 +117,11 @@ const TheProfile = () => {
     setAvatar(null);
     setAskAfter(null);
     setPrefersBest(null);
+    setShowsSeasonal(null);
     setPicked(null);
     await cache.invalidateQueries({ queryKey: profileQueries.key });
     await cache.invalidateQueries({ queryKey: sessionQueries.key });
+    await cache.invalidateQueries({ queryKey: libraryQueries.seasonalFilmsKey });
   };
 
   return (
@@ -177,6 +186,20 @@ const TheProfile = () => {
             label={say('screens.accountArea.profileSettings.preferTheBestCopy')}
             isOn={draft.prefersBestCopy}
             onToggle={setPrefersBest}
+          />
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.asks}>
+            <Words>{say('screens.accountArea.profileSettings.seasonalRows')}</Words>
+            <Words size="small" tone="muted">
+              {say('screens.accountArea.profileSettings.showsChristmasFilmsOnTheHomePage')}
+            </Words>
+          </View>
+          <Toggle
+            label={say('screens.accountArea.profileSettings.seasonalRows')}
+            isOn={draft.showsSeasonalRows}
+            onToggle={setShowsSeasonal}
           />
         </View>
       </AGroup>

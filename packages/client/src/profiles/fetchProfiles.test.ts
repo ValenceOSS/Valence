@@ -27,6 +27,7 @@ const PROFILE: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  showsSeasonalRows: true,
   language: null,
   isOwner: false,
   hasPin: false,
@@ -156,6 +157,23 @@ describe('saveProfile', () => {
     );
 
     expect(sentBody()).toEqual({ name: 'Sam', colour: '#3ac47d', discordPresence });
+  });
+
+  it('sends whether the home page shows the films of the season, where it was given', async () => {
+    await saveProfile(
+      'abc',
+      'Sam',
+      '#3ac47d',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      false,
+    );
+
+    expect(sentBody()).toEqual({ name: 'Sam', colour: '#3ac47d', showsSeasonalRows: false });
   });
 });
 

@@ -15,6 +15,7 @@ const SERVER_FEATURES = [
   'library.largeArtwork',
   'playback.audioLanguage',
   'streams.qualityLimit',
+  'library.seasonalFilms',
 ] as const;
 
 export { SERVER_FEATURES };

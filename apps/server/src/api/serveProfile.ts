@@ -144,6 +144,7 @@ const serveProfile = (app: OpenAPIHono, context: AppContext): void => {
       showsWhatIamWatching,
       discordPresence,
       prefersBestCopy,
+      showsSeasonalRows,
       language,
     } = context.req.valid('json');
 
@@ -158,6 +159,7 @@ const serveProfile = (app: OpenAPIHono, context: AppContext): void => {
         ...(showsWhatIamWatching === undefined ? {} : { showsWhatIamWatching }),
         ...(discordPresence === undefined ? {} : { discordPresence }),
         ...(prefersBestCopy === undefined ? {} : { prefersBestCopy }),
+        ...(showsSeasonalRows === undefined ? {} : { showsSeasonalRows }),
         ...(language === undefined ? {} : { language }),
       },
     );

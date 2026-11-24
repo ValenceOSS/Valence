@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
@@ -16,6 +16,7 @@ jest.mock('@ValenceClient/profiles/fetchProfiles', () => ({
 }));
 
 beforeEach(() => {
+  jest.mocked(saveProfile).mockClear();
   installPlatform(aFakePlatform());
   jest.mocked(fetchProfiles).mockResolvedValue([aProfile()]);
   jest
@@ -41,6 +42,30 @@ describe('TheProfile', () => {
       aProfile().askStillWatchingAfter,
       undefined,
       aProfile().prefersBestCopy,
+      undefined,
+      undefined,
+      aProfile().showsSeasonalRows,
+    );
+  });
+
+  it('saves turning the seasonal rows off once somebody presses Save', async () => {
+    jest.mocked(saveProfile).mockResolvedValue(true);
+    const drawn = await render(<TheProfile />, { wrapper: CacheScope });
+
+    await fireEvent(await drawn.findByLabelText('Seasonal rows'), 'valueChange', false);
+    await userEvent.press(drawn.getByText('Save'));
+
+    expect(saveProfile).toHaveBeenCalledWith(
+      aProfile().id,
+      aProfile().name,
+      aProfile().colour,
+      aProfile().avatar,
+      aProfile().askStillWatchingAfter,
+      undefined,
+      aProfile().prefersBestCopy,
+      undefined,
+      undefined,
+      false,
     );
   });
 });

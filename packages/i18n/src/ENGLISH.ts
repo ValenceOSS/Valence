@@ -218,8 +218,10 @@ const ENGLISH = {
   'client.library.describeTitleDetails.rottenTomatoes': 'Rotten Tomatoes',
   'client.library.freshFlags.newEpisode': 'New episode',
   'client.library.homeRows.becauseYouWatchedTitle': 'Because you watched {title}',
+  'client.library.homeRows.christmasFilms': 'Christmas films',
   'client.library.homeRows.criticallyAcclaimed': 'Critically acclaimed',
   'client.library.homeRows.fromTheDecadeS': 'From the {decade}s',
+  'client.library.homeRows.halloweenFilms': 'Halloween films',
   'client.library.homeRows.pickedForYou': 'Picked for you',
   'client.library.howToFillIt.askTheServerAdminToScan':
     'Ask the server admin to scan your libraries.',
@@ -3446,8 +3448,11 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.preferTheBestCopy': 'Prefer the best version',
   'screens.accountArea.profileSettings.sameAsTheServer': 'Same as the server ({language})',
   'screens.accountArea.profileSettings.sameAsThisDevice': 'Same as this device',
+  'screens.accountArea.profileSettings.seasonalRows': 'Seasonal rows',
   'screens.accountArea.profileSettings.showsANoticeOnThisComputer':
     'Shows a notice on this computer when something new arrives in your inbox. Saved on this device.',
+  'screens.accountArea.profileSettings.showsChristmasFilmsOnTheHomePage':
+    'Shows Christmas films on the home page from November to Boxing Day, and Halloween films through October.',
   'screens.accountArea.profileSettings.showWhatIAmPlayingOn': 'Show what I’m playing on Discord',
   'screens.accountArea.profileSettings.streamingFormat': 'Streaming format',
   'screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd':

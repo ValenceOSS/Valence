@@ -13,6 +13,7 @@ import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { notify } from '@ValenceUI/notify';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { AccountArea } from '@ValenceScreens/components/AccountArea/AccountArea';
 import { BuildInfoFooter } from '@ValenceScreens/components/AccountDialog/components/BuildInfoFooter/BuildInfoFooter';
@@ -85,6 +86,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
       draft.askStillWatchingAfter !== profile.askStillWatchingAfter ||
       draft.showsWhatIamWatching !== profile.showsWhatIamWatching ||
       draft.prefersBestCopy !== profile.prefersBestCopy ||
+      draft.showsSeasonalRows !== profile.showsSeasonalRows ||
       draft.language !== profile.language ||
       areDeviceChoicesChanged(draft) ||
       JSON.stringify(draft.discordPresence) !== JSON.stringify(profile.discordPresence) ||
@@ -109,6 +111,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
 
     await cache.invalidateQueries({ queryKey: profileQueries.key });
     await cache.invalidateQueries({ queryKey: sessionQueries.key });
+    await cache.invalidateQueries({ queryKey: libraryQueries.seasonalFilmsKey });
     await refresh();
   };
 

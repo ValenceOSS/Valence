@@ -26,6 +26,7 @@ const PROFILE: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  showsSeasonalRows: true,
   language: null,
   isOwner: true,
   hasPin: false,
@@ -42,6 +43,7 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: true,
+  showsSeasonalRows: true,
   language: null,
   theme: 'system',
   motion: 'system',
@@ -86,6 +88,7 @@ describe('saveProfileDraft', () => {
       true,
       DRAFT.discordPresence,
       null,
+      true,
     );
   });
 
@@ -102,6 +105,24 @@ describe('saveProfileDraft', () => {
       true,
       DRAFT.discordPresence,
       null,
+      true,
+    );
+  });
+
+  it('writes a profile turning its seasonal rows off', async () => {
+    await saveProfileDraft(PROFILE, { ...DRAFT, showsSeasonalRows: false });
+
+    expect(saveProfile).toHaveBeenCalledWith(
+      PROFILE.id,
+      'Dan',
+      '#3ac47d',
+      { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+      2,
+      true,
+      true,
+      DRAFT.discordPresence,
+      null,
+      false,
     );
   });
 
@@ -170,6 +191,7 @@ describe('saveProfileDraft', () => {
       true,
       DRAFT.discordPresence,
       'de',
+      true,
     );
     expect(chosenLanguageHere()).toBeNull();
   });
