@@ -123,7 +123,7 @@ describe('useLibraryFilters', () => {
     await waitFor(() => {
       expect(result.current.groups.map((group) => group.name)).toEqual([
         'Genre',
-        'Occasion',
+        'Holiday',
         'Your rating',
       ]);
     });

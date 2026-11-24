@@ -23,7 +23,7 @@ const NOTHING_CHOSEN: ReadonlySet<string> = new Set();
 const GROUPS = [
   { name: say('common.genre'), prefix: 'genre:', isSingle: false },
   {
-    name: say('client.library.useLibraryFilters.occasion'),
+    name: say('client.library.useLibraryFilters.holiday'),
     prefix: 'occasion:',
     isSingle: false,
   },

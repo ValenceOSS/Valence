@@ -259,7 +259,7 @@ const ENGLISH = {
   'client.library.useHomeRows.titleFromPluginName': '{title}, from {pluginName}',
   'client.library.useLibraryFilters.audioLanguage': 'Audio language',
   'client.library.useLibraryFilters.channelLayout': 'Channel layout',
-  'client.library.useLibraryFilters.occasion': 'Occasion',
+  'client.library.useLibraryFilters.holiday': 'Holiday',
   'client.library.whereItFalls.sSeasonNumberEEpisodeNumber': 'S{seasonNumber} · E{episodeNumber}  ',
   'client.music.crossfadeChoices.crossfade': 'Crossfade',
   'client.music.crossfadeChoices.eachSongStartsAsTheLast': 'Each song starts as the last one ends',
