@@ -15,7 +15,7 @@ import { ValenceRoot } from '@ValenceScreens/components/ValenceRoot/ValenceRoot'
 import { SignedIn } from '@ValenceScreens/components/SignedIn/SignedIn';
 import { ValenceShell } from '@ValenceScreens/components/ValenceShell/ValenceShell';
 import { HomePage } from '@ValenceScreens/components/HomePage/HomePage';
-import { scrollKeyOf } from '@ValenceScreens/routes/scrollKeyOf';
+import { scrollKeysByVisit } from '@ValenceScreens/routes/scrollKeysByVisit';
 import { restoresScrollBetweenPages } from '@ValenceScreens/routes/restoresScrollBetweenPages';
 import { PageProblem } from '@ValenceScreens/components/PageProblem/PageProblem';
 import { PageNotFound } from '@ValenceScreens/components/PageNotFound/PageNotFound';
@@ -279,6 +279,8 @@ const buildRouter = (title = say('common.valence')) => {
     createRoute({ getParentRoute: () => shell, path: '/$', component: PageNotFound, ...carries }),
   ];
 
+  const scrollKeyOfVisit = scrollKeysByVisit();
+
   return createRouter({
     routeTree: root.addChildren([
       share,
@@ -297,8 +299,8 @@ const buildRouter = (title = say('common.valence')) => {
     ]),
     defaultErrorComponent: PageProblem,
     defaultNotFoundComponent: PageNotFound,
-    scrollRestoration: restoresScrollBetweenPages(),
-    getScrollRestorationKey: scrollKeyOf,
+    scrollRestoration: restoresScrollBetweenPages(scrollKeyOfVisit),
+    getScrollRestorationKey: scrollKeyOfVisit,
   });
 };
 
