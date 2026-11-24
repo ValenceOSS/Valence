@@ -103,6 +103,7 @@ describe('StreamStats', () => {
         sessionStartSeconds={75}
         quality="1080p"
         reading={READING}
+        history={[]}
       />,
     );
 
@@ -123,13 +124,14 @@ describe('StreamStats', () => {
         sessionStartSeconds={75}
         quality="1080p"
         reading={READING}
+        history={[]}
       />,
     );
 
     expect(valuesOf(drawn, 'Title')).toEqual(['Arrival']);
     expect(valuesOf(drawn, 'Media id')).toEqual(['media-1']);
     expect(drawn.getByText('session-7')).toBeTruthy();
-    expect(valuesOf(drawn, 'Mode')).toEqual(['transcode']);
+    expect(valuesOf(drawn, 'Mode')).toEqual(['transcode', 'transcode']);
     expect(valuesOf(drawn, 'Reused')).toEqual(['Yes — the whole transcode was already done']);
     expect(valuesOf(drawn, 'Starts at')).toEqual(['1:15']);
     expect(valuesOf(drawn, 'Requested quality')).toEqual(['1080p']);
@@ -146,6 +148,7 @@ describe('StreamStats', () => {
         sessionStartSeconds={0}
         quality="Original"
         reading={READING}
+        history={[]}
       />,
     );
 
@@ -164,16 +167,17 @@ describe('StreamStats', () => {
         sessionStartSeconds={0}
         quality="Original"
         reading={READING}
+        history={[]}
       />,
     );
 
     expect(valuesOf(drawn, 'Size')).toEqual(['1920x1080']);
     expect(valuesOf(drawn, 'Range')).toEqual(['SDR']);
     expect(valuesOf(drawn, 'Container')).toContain('application/x-mpegURL');
-    expect(valuesOf(drawn, 'Bitrate')).toEqual(['7654kbps']);
+    expect(valuesOf(drawn, 'Bitrate')).toEqual(['7.7 Mbps', '—', '7654kbps']);
     expect(valuesOf(drawn, 'Frame rate')).toEqual(['23.976fps']);
     expect(valuesOf(drawn, 'Position')).toEqual(['1:30']);
-    expect(valuesOf(drawn, 'Buffered ahead')).toEqual(['12.3s']);
+    expect(valuesOf(drawn, 'Buffered ahead')).toEqual(['12.3s', '12.3s']);
   });
 
   it('says what the server decided for each part of the file', async () => {
@@ -186,6 +190,7 @@ describe('StreamStats', () => {
         sessionStartSeconds={0}
         quality="Original"
         reading={READING}
+        history={[]}
       />,
     );
 
@@ -206,23 +211,68 @@ describe('StreamStats', () => {
         sessionStartSeconds={0}
         quality="Original"
         reading={NOTHING_READ}
+        history={[]}
       />,
     );
 
     expect(valuesOf(drawn, 'Session')).toContain('not started');
-    expect(valuesOf(drawn, 'Mode')).toEqual(['deciding']);
+    expect(valuesOf(drawn, 'Mode')).toEqual(['—', 'deciding']);
     expect(valuesOf(drawn, 'Reused')).toEqual(['deciding']);
     expect(valuesOf(drawn, 'Delivery')).toEqual(['none']);
-    expect(valuesOf(drawn, 'Video')).toEqual(['unknown', 'deciding']);
-    expect(valuesOf(drawn, 'Audio')).toEqual(['none', 'deciding']);
+    expect(valuesOf(drawn, 'Video')).toEqual(['—', 'unknown', 'deciding']);
+    expect(valuesOf(drawn, 'Audio')).toEqual(['—', 'none', 'deciding']);
     expect(valuesOf(drawn, 'Subtitles')).toEqual(['none', 'deciding']);
     expect(valuesOf(drawn, 'Size')).toEqual(['not reported']);
     expect(valuesOf(drawn, 'Range')).toEqual(['not reported']);
     expect(valuesOf(drawn, 'Container')).toEqual(['not reported', 'deciding']);
-    expect(valuesOf(drawn, 'Bitrate')).toEqual(['not reported']);
+    expect(valuesOf(drawn, 'Bitrate')).toEqual(['—', '—', 'not reported']);
     expect(valuesOf(drawn, 'Frame rate')).toEqual(['not reported']);
-    expect(valuesOf(drawn, 'Buffered ahead')).toEqual(['0.0s']);
+    expect(valuesOf(drawn, 'Buffered ahead')).toEqual(['0.0s', '0.0s']);
     expect(drawn.queryByText('Warnings')).toBeNull();
+  });
+
+  it('leads with the figures that matter most, large enough to read across the room', async () => {
+    const drawn = await render(
+      <StreamStats
+        title="Arrival"
+        mediaId="media-1"
+        detail={DETAIL}
+        session={SESSION}
+        sessionStartSeconds={0}
+        quality="Original"
+        reading={READING}
+        history={[]}
+      />,
+    );
+
+    expect(valuesOf(drawn, 'Picture')).toEqual(['1920x1080']);
+    expect(valuesOf(drawn, 'Video')[0]).toBe('h264');
+    expect(valuesOf(drawn, 'Audio')[0]).toBe('eac3 6ch');
+    expect(drawn.getByText('7.7 Mbps')).toHaveStyle({ fontSize: 28 });
+  });
+
+  it('charts the bitrate and the buffer over the last minute', async () => {
+    const drawn = await render(
+      <StreamStats
+        title="Arrival"
+        mediaId="media-1"
+        detail={DETAIL}
+        session={SESSION}
+        sessionStartSeconds={0}
+        quality="Original"
+        reading={READING}
+        history={[
+          { ...READING, bitrate: 4_000_000, positionSeconds: 10, bufferedSeconds: 14 },
+          { ...READING, bitrate: 7_654_321, positionSeconds: 11, bufferedSeconds: 31 },
+        ]}
+      />,
+    );
+
+    expect(drawn.getByLabelText('Bitrate over the last minute')).toBeTruthy();
+    expect(drawn.getByLabelText('Seconds buffered ahead over the last minute')).toBeTruthy();
+    expect(drawn.getByText('10 Mbps')).toBeTruthy();
+    expect(drawn.getByText('20.0s')).toBeTruthy();
+    expect(drawn.getByText('20s')).toBeTruthy();
   });
 
   it('calls a session sent whole direct, and a picture with no width not reported', async () => {
@@ -241,6 +291,7 @@ describe('StreamStats', () => {
         sessionStartSeconds={0}
         quality="Original"
         reading={{ ...READING, width: 0 }}
+        history={[]}
       />,
     );
 

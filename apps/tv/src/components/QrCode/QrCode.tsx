@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { PixelRatio, StyleSheet, View } from 'react-native';
 import { encode } from 'uqr';
 import type { QrCodeProps } from './QrCode.types';
@@ -10,13 +11,15 @@ const QUIET_MODULES = 2;
  * Drawn from plain views rather than an image or a vector, because the matrix is small and a view
  * per square is all a camera needs: black on a white field with the quiet border readers expect.
  * Each square is a whole number of the screen's pixels, so neighbouring squares meet without a
- * light seam between them, and the code sits in the middle of the field.
+ * light seam between them, and the code sits in the middle of the field. A code is thousands of
+ * views, so it is drawn again only when what it says or how big it is changes, not each time the
+ * screen around it is — a player redrawn twice a second would otherwise hold up the remote.
  *
  * @param value - What the code says, usually an address.
  * @param size - How wide it is drawn.
  * @param label - What it is, for VoiceOver.
  */
-const QrCode = ({ value, size, label }: QrCodeProps) => {
+const QrCodeSquares = ({ value, size, label }: QrCodeProps) => {
   const { data } = encode(value, { ecc: 'M', border: QUIET_MODULES });
   const across = data.length || 1;
   const module = Math.floor(PixelRatio.getPixelSizeForLayoutSize(size) / across) / PixelRatio.get();
@@ -40,6 +43,8 @@ const QrCode = ({ value, size, label }: QrCodeProps) => {
     </View>
   );
 };
+
+const QrCode = memo(QrCodeSquares);
 
 QrCode.displayName = 'QrCode';
 
