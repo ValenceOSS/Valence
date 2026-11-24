@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { turnTheVideoTo } from '@ValenceTv/playback/turnTheVideoTo';
 
 const SHOWN_FOR_MS = 2_500;
 
@@ -42,7 +43,7 @@ const useRemoteVolume = (player: { volume: number }): RemoteVolume => {
   }, []);
 
   useEffect(() => {
-    player.volume = level;
+    turnTheVideoTo(player, level);
   }, [player, level]);
 
   useEffect(() => {

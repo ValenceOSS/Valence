@@ -408,16 +408,14 @@ describe('ATitle', () => {
 
   it('plays it on the television, from where they left, and brings up its remote', async () => {
     jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
-    jest
-      .mocked(useVideoDevices)
-      .mockReturnValue([
-        {
-          clientId: 'living-room',
-          label: 'Valence on Living Room TV',
-          kind: 'tv',
-          nowWatching: null,
-        },
-      ]);
+    jest.mocked(useVideoDevices).mockReturnValue([
+      {
+        clientId: 'living-room',
+        label: 'Valence on Living Room TV',
+        kind: 'tv',
+        nowWatching: null,
+      },
+    ]);
     partWayThrough(4200);
 
     const onToTheRemote = jest.fn();

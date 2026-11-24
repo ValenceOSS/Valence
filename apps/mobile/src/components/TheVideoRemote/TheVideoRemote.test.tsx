@@ -184,7 +184,7 @@ describe('TheVideoRemote', () => {
     controlling({ ...WATCHING, volume: 0.5 });
     const { drawn } = await draw();
 
-    fireEvent(drawn.getByRole('adjustable', { name: 'Volume' }), 'accessibilityAction', {
+    await fireEvent(drawn.getByRole('adjustable', { name: 'Volume' }), 'accessibilityAction', {
       nativeEvent: { actionName: 'decrement' },
     });
 

@@ -57,7 +57,7 @@ describe('TheTelevisionsVolume', () => {
     const drawn = await render(<TheTelevisionsVolume level={0.5} onTurn={onTurn} />);
 
     await act(async () => {
-      fireEvent(drawn.getByRole('adjustable', { name: 'Volume' }), 'accessibilityAction', {
+      await fireEvent(drawn.getByRole('adjustable', { name: 'Volume' }), 'accessibilityAction', {
         nativeEvent: { actionName: 'decrement' },
       });
       await Promise.resolve();
@@ -70,7 +70,7 @@ describe('TheTelevisionsVolume', () => {
     const drawn = await render(<TheTelevisionsVolume level={1} onTurn={jest.fn()} />);
 
     await act(async () => {
-      fireEvent(drawn.getByRole('adjustable', { name: 'Volume' }), 'accessibilityAction', {
+      await fireEvent(drawn.getByRole('adjustable', { name: 'Volume' }), 'accessibilityAction', {
         nativeEvent: { actionName: 'decrement' },
       });
       await Promise.resolve();
