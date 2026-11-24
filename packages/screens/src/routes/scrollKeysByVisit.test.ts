@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { scrollKeysByVisit } from './scrollKeysByVisit';
 
 /**
@@ -17,6 +17,10 @@ const at = (entry: string, index: number, pathname: string, searchStr = '') => (
 });
 
 describe('scrollKeysByVisit', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+  });
+
   it('gives a page arrived at again by a link a key of its own, so it starts at the top', () => {
     const keyOf = scrollKeysByVisit();
     const first = keyOf(at('a', 0, '/films'));
@@ -44,16 +48,29 @@ describe('scrollKeysByVisit', () => {
     expect(keyOf(at('c', 2, '/'))).toBe(page);
   });
 
-  it('keeps a page put in place of another of the same page in its visit', () => {
+  it('starts a fresh visit to a page gone back from, rather than taking up the old visit', () => {
     const keyOf = scrollKeysByVisit();
-    const page = keyOf(at('a', 0, '/', '?item=episode-1'));
 
-    expect(keyOf(at('b', 0, '/'))).toBe(page);
+    keyOf(at('a', 0, '/'));
+    const films = keyOf(at('b', 1, '/films'));
+
+    keyOf(at('a', 0, '/'));
+
+    expect(keyOf(at('c', 1, '/films'))).not.toBe(films);
   });
 
   it('keeps the key of the page a reload lands on, so its place survives the reload', () => {
     const before = scrollKeysByVisit()(at('a', 3, '/films'));
 
     expect(scrollKeysByVisit()(at('a', 3, '/films'))).toBe(before);
+  });
+
+  it('keeps a dialog in its page’s visit across a reload', () => {
+    const keyOf = scrollKeysByVisit();
+    const page = keyOf(at('a', 0, '/'));
+
+    keyOf(at('b', 1, '/', '?item=episode-1'));
+
+    expect(scrollKeysByVisit()(at('b', 1, '/', '?item=episode-1'))).toBe(page);
   });
 });

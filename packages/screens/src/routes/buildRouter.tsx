@@ -279,6 +279,8 @@ const buildRouter = (title = say('common.valence')) => {
     createRoute({ getParentRoute: () => shell, path: '/$', component: PageNotFound, ...carries }),
   ];
 
+  const scrollKeyOfVisit = scrollKeysByVisit();
+
   return createRouter({
     routeTree: root.addChildren([
       share,
@@ -297,8 +299,8 @@ const buildRouter = (title = say('common.valence')) => {
     ]),
     defaultErrorComponent: PageProblem,
     defaultNotFoundComponent: PageNotFound,
-    scrollRestoration: restoresScrollBetweenPages(),
-    getScrollRestorationKey: scrollKeysByVisit(),
+    scrollRestoration: restoresScrollBetweenPages(scrollKeyOfVisit),
+    getScrollRestorationKey: scrollKeyOfVisit,
   });
 };
 
