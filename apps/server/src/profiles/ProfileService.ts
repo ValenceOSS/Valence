@@ -11,6 +11,7 @@ type ProfileRequest = {
   showsWhatIamWatching?: boolean;
   discordPresence?: DiscordPresence;
   prefersBestCopy?: boolean;
+  showsSeasonalRows?: boolean;
   language?: Language | null;
 };
 

@@ -15,6 +15,8 @@ import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPer
 import { findPeople } from '@ValenceClient/library/findPeople';
 import { fetchLikeThis } from '@ValenceClient/library/fetchLikeThis';
 import { fetchPickedForYou } from '@ValenceClient/library/fetchPickedForYou';
+import { fetchSeasonalFilms } from '@ValenceClient/library/fetchSeasonalFilms';
+import type { Season } from '@ValenceContracts/constants/SEASONS';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { readEachLibrary } from '@ValenceClient/query/readEachLibrary';
@@ -23,6 +25,8 @@ import { MOST_IDS_IN_AN_ADDRESS } from '@ValenceClient/query/MOST_IDS_IN_AN_ADDR
 const FIRST_PAGE = 120;
 
 const LIBRARY = ['library'] as const;
+
+const SEASONAL_FILMS = [...LIBRARY, 'seasonal-films'] as const;
 
 /**
  * The libraries this server holds.
@@ -97,6 +101,21 @@ const pickedForYou = (limit: number, isWanted: boolean) =>
     queryKey: [...LIBRARY, 'picked-for-you', limit],
     queryFn: () => fetchPickedForYou(limit),
     enabled: isWanted,
+  });
+
+/**
+ * The films in the libraries the server ties to a season, best rated first.
+ *
+ * @param season - Which season, or null outside every season.
+ * @param limit - How many to ask for.
+ * @param isWanted - Whether to ask, which waits on the server saying it can answer.
+ * @returns The query.
+ */
+const seasonalFilms = (season: Season | null, limit: number, isWanted: boolean) =>
+  queryOptions({
+    queryKey: [...SEASONAL_FILMS, season, limit],
+    queryFn: () => (season === null ? Promise.resolve([]) : fetchSeasonalFilms(season, limit)),
+    enabled: season !== null && isWanted,
   });
 
 /**
@@ -329,6 +348,7 @@ const libraryQueries = {
   detail,
   likeThis,
   pickedForYou,
+  seasonalFilms,
   shows,
   show,
   everything,
@@ -342,6 +362,7 @@ const libraryQueries = {
   acrossCounted,
   leftOut,
   key: LIBRARY,
+  seasonalFilmsKey: SEASONAL_FILMS,
 };
 
 export { libraryQueries };

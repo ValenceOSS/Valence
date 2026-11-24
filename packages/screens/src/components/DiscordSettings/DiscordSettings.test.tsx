@@ -28,6 +28,7 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  showsSeasonalRows: true,
   language: null,
   theme: 'system',
   motion: 'system',

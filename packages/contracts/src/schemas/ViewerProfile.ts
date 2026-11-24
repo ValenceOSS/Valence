@@ -107,6 +107,7 @@ const ViewerProfileSchema = z.object({
   showsWhatIamWatching: z.boolean().default(false),
   discordPresence: DiscordPresenceSchema.default(DEFAULT_DISCORD_PRESENCE),
   prefersBestCopy: z.boolean().default(false),
+  showsSeasonalRows: z.boolean().default(true),
   language: SpokenLanguageSchema.nullable().default(null),
   isOwner: z.boolean().default(false),
   hasPin: z.boolean().default(false),
@@ -123,6 +124,7 @@ const ViewerProfileRequestSchema = z.object({
   showsWhatIamWatching: z.boolean().optional(),
   discordPresence: DiscordPresenceSchema.optional(),
   prefersBestCopy: z.boolean().optional(),
+  showsSeasonalRows: z.boolean().optional(),
   language: SpokenLanguageSchema.nullable().optional(),
 });
 

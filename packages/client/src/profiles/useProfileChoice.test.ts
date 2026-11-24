@@ -39,6 +39,7 @@ const aProfile = (id: string, hasPin = false): ViewerProfile => ({
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  showsSeasonalRows: true,
   language: null,
   isOwner: id === 'dan',
   hasPin,

@@ -49,6 +49,7 @@ type ProfileRow = {
   showsWhatIamWatching: boolean;
   discordPresence: DiscordPresence | null;
   prefersBestCopy: boolean;
+  showsSeasonalRows: boolean;
   language: string | null;
   isOwner: boolean;
   pinHash: string | null;
@@ -134,6 +135,7 @@ const toProfile = (row: ProfileRow): ViewerProfile => ({
     row.discordPresence ?? {},
   ),
   prefersBestCopy: row.prefersBestCopy,
+  showsSeasonalRows: row.showsSeasonalRows,
   language: SpokenLanguageSchema.nullable().catch(null).parse(row.language),
   isOwner: row.isOwner,
   hasPin: row.pinHash !== null,
@@ -194,6 +196,7 @@ const COLUMNS = {
   showsWhatIamWatching: viewerProfile.showsWhatIamWatching,
   discordPresence: viewerProfile.discordPresence,
   prefersBestCopy: viewerProfile.prefersBestCopy,
+  showsSeasonalRows: viewerProfile.showsSeasonalRows,
   language: viewerProfile.language,
   isOwner: viewerProfile.isOwner,
   pinHash: viewerProfile.pinHash,
@@ -294,6 +297,7 @@ const createDatabaseProfileService = (
         showsWhatIamWatching: false,
         discordPresence: DEFAULT_DISCORD_PRESENCE,
         prefersBestCopy: false,
+        showsSeasonalRows: true,
         language: null,
         isOwner: created.isOwner,
         hasPin: false,
@@ -322,6 +326,9 @@ const createDatabaseProfileService = (
             ...(request.prefersBestCopy === undefined
               ? {}
               : { prefersBestCopy: request.prefersBestCopy }),
+            ...(request.showsSeasonalRows === undefined
+              ? {}
+              : { showsSeasonalRows: request.showsSeasonalRows }),
             ...(request.language === undefined ? {} : { language: request.language }),
             name: request.name,
             colour: request.colour,

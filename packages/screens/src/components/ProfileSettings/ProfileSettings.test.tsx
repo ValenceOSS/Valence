@@ -23,6 +23,7 @@ const PROFILE: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  showsSeasonalRows: true,
   language: null,
   isOwner: true,
   hasPin: false,
@@ -39,6 +40,7 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: PROFILE.showsWhatIamWatching,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  showsSeasonalRows: true,
   language: null,
   theme: 'system',
   motion: 'system',
@@ -248,5 +250,19 @@ describe('ProfileSettings', () => {
     await userEvent.click(screen.getByRole('switch', { name: 'Prefer the best version' }));
 
     expect(onDraft).toHaveBeenCalledWith({ prefersBestCopy: true });
+  });
+
+  it('writes turning the seasonal rows off into the draft', async () => {
+    const onDraft = vi.fn();
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
+
+    const seasonal = screen.getByRole('switch', { name: 'Seasonal rows' });
+
+    expect(seasonal).toBeChecked();
+
+    await userEvent.click(seasonal);
+
+    expect(onDraft).toHaveBeenCalledWith({ showsSeasonalRows: false });
   });
 });

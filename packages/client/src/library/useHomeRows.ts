@@ -13,6 +13,7 @@ import { homeRows, MIN_ROW, ROW_LIMIT } from '@ValenceClient/library/homeRows';
 import { pickForYou } from '@ValenceClient/library/pickForYou';
 import { tasteOf } from '@ValenceClient/library/tasteOf';
 import { carryingOn } from '@ValenceClient/library/carryingOn';
+import { seasonOn } from '@ValenceClient/library/seasonOn';
 import { isOnContinueWatching } from '@ValenceContracts/schemas/WatchProgress';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import type { MediaPage, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -342,6 +343,10 @@ const useHomeRows = (
   const hasPicking = useServerHas('library.pickedForYou') === true;
   const picking = useQuery(libraryQueries.pickedForYou(ROW_LIMIT, canAsk && hasPicking));
 
+  const [season] = useState(() => seasonOn(new Date()));
+  const hasSeasons = useServerHas('library.seasonalFilms') === true;
+  const festive = useQuery(libraryQueries.seasonalFilms(season, ROW_LIMIT, canAsk && hasSeasons));
+
   const liked = useQuery({
     ...libraryQueries.across(viewable, { ids: likedIds, limit: LIKED_READ }),
     enabled: canAsk && isTasteKnown && keptTaste === null && likedIds.length > 0,
@@ -634,6 +639,15 @@ const useHomeRows = (
           )
         : pickForYou(candidates, taste, new Set(likedIds), ROW_LIMIT),
       recent: [...(recent.data ?? NOTHING)].sort(byNewest),
+      seasonal:
+        season === null || !hasSeasons
+          ? null
+          : {
+              season,
+              items: (festive.data ?? NOTHING).filter((media) =>
+                watchable.includes(media.libraryId),
+              ),
+            },
       because: (because.data ?? []).map((one) => ({
         ...one,
         items: one.items.filter((media) => watchable.includes(media.libraryId)),
@@ -667,6 +681,9 @@ const useHomeRows = (
     againLimit,
     hasPicking,
     picking.data,
+    season,
+    hasSeasons,
+    festive.data,
     hasShelves,
     shelves,
     fromPlugins.data,
@@ -702,6 +719,7 @@ const useHomeRows = (
     (keptTaste === null ||
       facets.isLoading ||
       recent.isLoading ||
+      festive.isLoading ||
       acclaimed.isLoading ||
       resuming.isLoading ||
       upNext.isLoading ||

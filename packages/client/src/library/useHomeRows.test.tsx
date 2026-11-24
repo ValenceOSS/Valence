@@ -16,9 +16,13 @@ const {
   becauseMock,
   serverHasMock,
   pickedMock,
+  seasonalMock,
+  seasonMock,
   streamedLibraryMock,
   pluginRowsMock,
 } = vi.hoisted(() => ({
+  seasonalMock: vi.fn<(season: string, limit: number) => Promise<MediaSummary[]>>(),
+  seasonMock: vi.fn<() => 'christmas' | 'halloween' | null>(),
   pluginRowsMock: vi.fn(),
   shelvesMock: vi.fn(),
   streamedLibraryMock: vi.fn<() => Promise<string>>(),
@@ -54,6 +58,8 @@ vi.mock('@ValenceClient/plugins/fetchPluginHomeRows', () => ({
   fetchPluginHomeRows: pluginRowsMock,
 }));
 vi.mock('@ValenceClient/library/fetchPickedForYou', () => ({ fetchPickedForYou: pickedMock }));
+vi.mock('@ValenceClient/library/fetchSeasonalFilms', () => ({ fetchSeasonalFilms: seasonalMock }));
+vi.mock('@ValenceClient/library/seasonOn', () => ({ seasonOn: seasonMock }));
 vi.mock('@ValenceClient/library/fetchBecauseYouWatched', () => ({
   fetchBecauseYouWatched: becauseMock,
 }));
@@ -164,6 +170,10 @@ beforeEach(() => {
   );
   pickedMock.mockReset();
   pickedMock.mockResolvedValue([]);
+  seasonalMock.mockReset();
+  seasonalMock.mockResolvedValue([]);
+  seasonMock.mockReset();
+  seasonMock.mockReturnValue(null);
   streamedLibraryMock.mockReset();
   streamedLibraryMock.mockResolvedValue('streamed-library');
   pluginRowsMock.mockReset();
@@ -189,7 +199,7 @@ describe('useHomeRows', () => {
     expect(result.current.rails).toEqual([]);
   });
 
-  it('lays the rows out as carrying on, suggested, new, acclaimed, and then genres', async () => {
+  it('lays the rows out as carrying on, new, suggested, acclaimed, and then genres', async () => {
     const watching = film('watching', ['Drama']);
 
     facetsMock.mockResolvedValue({ genres: ['Comedy', 'Drama'], decades: [], maxRating: 10 });
@@ -209,13 +219,63 @@ describe('useHomeRows', () => {
     await waitFor(() => {
       expect(result.current.rails.map((rail) => rail.id)).toEqual([
         'resume',
-        'picked',
         'recent',
+        'picked',
         'acclaimed',
         'genre:Drama',
         'genre:Comedy',
       ]);
     });
+  });
+
+  it('draws the films of the season below what is new, from the libraries being shown', async () => {
+    seasonMock.mockReturnValue('christmas');
+    aLibrary({ recent: films('new', 5) });
+    seasonalMock.mockResolvedValue([
+      ...films('festive', 4),
+      { ...film('elsewhere'), libraryId: 'another-library' },
+    ]);
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(firstTime(result.current.rails).slice(0, 2)).toEqual(['recent', 'seasonal:christmas']);
+    });
+    expect(
+      result.current.rails
+        .find((rail) => rail.id === 'seasonal:christmas')
+        ?.items.map((media) => media.id),
+    ).toEqual(films('festive', 4).map((media) => media.id));
+    expect(seasonalMock).toHaveBeenCalledWith('christmas', 20);
+  });
+
+  it('asks for no seasonal films outside every season, or of a server too old to find them', async () => {
+    aLibrary({ recent: films('new', 5) });
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isReading).toBe(false);
+    });
+
+    seasonMock.mockReturnValue('christmas');
+    serverHasMock.mockImplementation(
+      (feature) => feature !== 'library.homeShelves' && feature !== 'library.seasonalFilms',
+    );
+
+    const later = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(later.result.current.isReading).toBe(false);
+    });
+
+    expect(seasonalMock).not.toHaveBeenCalled();
   });
 
   it('carries on with a film played from a source, read from the hidden library it is kept in', async () => {

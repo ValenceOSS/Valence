@@ -60,6 +60,7 @@ const appOf = (likeness: Partial<LikenessService>, isSignedIn = true) => {
       likeThis: () => Promise.resolve([]),
       becauseYouWatched: () => Promise.resolve([]),
       pickedForYou: () => Promise.resolve([]),
+      seasonalFilms: () => Promise.resolve([]),
       forget: () => {},
       ...likeness,
     },
@@ -130,5 +131,34 @@ describe('GET /api/because-you-watched', () => {
 
   it('tells somebody not signed in nothing', async () => {
     expect((await appOf({}, false).request(`${BASE}/api/because-you-watched`)).status).toBe(401);
+  });
+});
+
+describe('GET /api/seasonal-films', () => {
+  it('lists the films of the season asked for, twenty where the caller does not say', async () => {
+    const seasonalFilms = vi.fn(() => Promise.resolve([FILM]));
+    const response = await appOf({ seasonalFilms }).request(
+      `${BASE}/api/seasonal-films?season=christmas`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ items: [{ id: FILM.id }] });
+    expect(seasonalFilms).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'account' }),
+      'christmas',
+      20,
+    );
+  });
+
+  it('refuses a season it does not know', async () => {
+    const response = await appOf({}).request(`${BASE}/api/seasonal-films?season=easter`);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('tells somebody not signed in nothing', async () => {
+    expect(
+      (await appOf({}, false).request(`${BASE}/api/seasonal-films?season=halloween`)).status,
+    ).toBe(401);
   });
 });
