@@ -46,6 +46,7 @@ const aLocal = () => ({
   start: vi.fn<PlaybackService['start']>(() => Promise.resolve({ kind: 'notFound' })),
   readSessionFile: vi.fn<PlaybackService['readSessionFile']>(() => Promise.resolve(null)),
   readDirectFile: vi.fn<PlaybackService['readDirectFile']>(() => Promise.resolve(null)),
+  fitsLimit: vi.fn<PlaybackService['fitsLimit']>(() => Promise.resolve(true)),
   trickplay: vi.fn<PlaybackService['trickplay']>(() => Promise.resolve(null)),
   readFrame: vi.fn<PlaybackService['readFrame']>(() => Promise.resolve(null)),
   readPreview: vi.fn<PlaybackService['readPreview']>(() => Promise.resolve({ kind: 'absent' })),
@@ -193,6 +194,7 @@ describe('createLinkedPlayback', () => {
       undefined,
       [],
       undefined,
+      undefined,
     );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       converted: 'picture',
@@ -222,6 +224,7 @@ describe('createLinkedPlayback', () => {
       undefined,
       undefined,
       [],
+      undefined,
       undefined,
     );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
@@ -253,6 +256,7 @@ describe('createLinkedPlayback', () => {
       undefined,
       [],
       undefined,
+      undefined,
     );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       isCast: true,
@@ -283,6 +287,7 @@ describe('createLinkedPlayback', () => {
       ...asking,
       [],
       undefined,
+      undefined,
     );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       audioStreamIndex: 1,
@@ -312,7 +317,7 @@ describe('createLinkedPlayback', () => {
     await linked.start(HERE, aDeviceProfile(), 0, ...asking);
     await linked.explain(HERE, aDeviceProfile(), undefined, 'ja');
 
-    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking);
+    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking, undefined);
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       audioLanguage: 'ja',
       audioStreamIndex: 2,
@@ -585,5 +590,39 @@ describe('createLinkedPlayback', () => {
     expect(await playback(() => null).linked.readPreview(HERE, null)).toEqual({
       kind: 'absent',
     });
+  });
+
+  it('asks this server whether its own title fits a limit', async () => {
+    const { linked, local } = playback();
+    const limit = { maxQuality: '720p', maxBitrateKbps: null } as const;
+
+    local.fitsLimit.mockResolvedValueOnce(false);
+
+    expect(await linked.fitsLimit('mine', 'r1', limit)).toBe(false);
+    expect(local.fitsLimit).toHaveBeenCalledWith('mine', 'r1', limit);
+  });
+
+  it('lets a linked title fit a limit while this server is playing it under that limit', async () => {
+    const { linked } = playback();
+    const limit = { maxQuality: '720p', maxBitrateKbps: null } as const;
+
+    await linked.start(HERE, aDeviceProfile(), 0, undefined, '720p');
+
+    expect(await linked.fitsLimit(HERE, null, limit)).toBe(true);
+  });
+
+  it('lets a linked title fit only a limit that holds back neither quality nor bitrate, with nothing playing', async () => {
+    const { linked, local } = playback();
+
+    expect(await linked.fitsLimit(HERE, null, { maxQuality: null, maxBitrateKbps: null })).toBe(
+      true,
+    );
+    expect(await linked.fitsLimit(HERE, null, { maxQuality: '2160p', maxBitrateKbps: null })).toBe(
+      false,
+    );
+    expect(await linked.fitsLimit(HERE, null, { maxQuality: null, maxBitrateKbps: 80_000 })).toBe(
+      false,
+    );
+    expect(local.fitsLimit).not.toHaveBeenCalled();
   });
 });

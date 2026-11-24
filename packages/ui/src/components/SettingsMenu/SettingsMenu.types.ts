@@ -6,6 +6,7 @@ type SettingsChoice = {
   icon?: ReactNode;
   detail?: string;
   isDisabled?: boolean;
+  isLocked?: boolean;
 };
 
 type SettingsChoiceRow = {

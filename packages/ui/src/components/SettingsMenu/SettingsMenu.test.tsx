@@ -139,6 +139,31 @@ describe('SettingsMenu', () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
+  it('shows a locked choice with a lock, and does not report it when pressed', async () => {
+    const onSelect = vi.fn();
+    const actor = userEvent.setup();
+
+    draw([
+      {
+        ...SPEED,
+        onSelect,
+        choices: [...SPEED.choices, { id: '4', label: '4x', isLocked: true }],
+      },
+    ]);
+    await open(actor);
+    await actor.click(await screen.findByRole('button', { name: /Playback speed/ }));
+
+    const locked = await screen.findByRole('menuitemradio', { name: '4x' });
+
+    expect(locked).toBeDisabled();
+    expect(locked.querySelector('svg')).not.toBeNull();
+    expect(screen.getByRole('menuitemradio', { name: 'Normal' }).querySelector('svg')).toBeNull();
+
+    await actor.click(locked);
+
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it('offers the way back as the heading, rather than as a second thing to find', async () => {
     const actor = userEvent.setup();
 

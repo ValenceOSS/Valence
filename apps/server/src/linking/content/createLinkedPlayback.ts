@@ -129,6 +129,7 @@ const createLinkedPlayback = (
   };
 
   const devices = new Map<string, { deviceId: string; mediaId: string }>();
+  const playing = new Map<string, string>();
   const sending = new Set<string>();
 
   /**
@@ -208,6 +209,7 @@ const createLinkedPlayback = (
       picksItsOwnSound,
       refusedOrigins = [],
       audioLanguage,
+      qualityCeiling,
     ) => {
       const linked = await linkedTitleOf(mediaId);
 
@@ -227,6 +229,7 @@ const createLinkedPlayback = (
           picksItsOwnSound,
           refusedOrigins,
           audioLanguage,
+          qualityCeiling,
         );
       }
 
@@ -272,6 +275,8 @@ const createLinkedPlayback = (
 
       const started = read.data;
       const here = linkedNameOf(linked.serverId, started.sessionId);
+
+      playing.set(here, mediaId);
 
       if (deviceId !== undefined) {
         devices.set(here, { deviceId, mediaId });
@@ -342,6 +347,12 @@ const createLinkedPlayback = (
 
       return hasBody(answered) ? streamedOf(answered) : null;
     },
+
+    fitsLimit: async (mediaId, renditionId, limit) =>
+      (await linkedTitleOf(mediaId)) === null
+        ? local.fitsLimit(mediaId, renditionId, limit)
+        : (limit.maxQuality === null && limit.maxBitrateKbps === null) ||
+          [...playing.values()].includes(mediaId),
 
     readDirectFile: async (mediaId, range, renditionId) => {
       const linked = await linkedTitleOf(mediaId);
@@ -471,6 +482,7 @@ const createLinkedPlayback = (
       );
 
       devices.delete(sessionId);
+      playing.delete(sessionId);
 
       return answered?.ok === true;
     },

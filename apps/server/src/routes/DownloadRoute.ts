@@ -14,6 +14,10 @@ const DownloadOptionSchema = z
     comparison: z.string().nullable(),
     wouldTranscode: z.boolean(),
     savesSpace: z.boolean(),
+    isAboveLimit: z.boolean().default(false).openapi({
+      description:
+        'Whether it is above the quality the asker’s downloads are held to; asking for it saves a copy at that quality instead',
+    }),
   })
   .openapi('DownloadOption');
 

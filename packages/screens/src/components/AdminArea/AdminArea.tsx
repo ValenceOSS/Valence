@@ -331,7 +331,7 @@ const AdminArea = ({
     (askedPermissions.data?.permissions.includes('media.delete') ?? false);
   const maySignDevicesOut =
     askedPermissions.data?.isAdministrator === true ||
-    (askedPermissions.data?.permissions.includes('account.security') ?? false);
+    (askedPermissions.data?.permissions.includes('account.manage') ?? false);
 
   const everyFile = askedEveryFile.data ?? [];
   const reencodes = askedReencodes.data ?? [];

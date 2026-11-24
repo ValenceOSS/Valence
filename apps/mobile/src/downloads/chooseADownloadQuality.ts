@@ -6,7 +6,8 @@ import { say } from '@ValenceI18n/say';
 
 /**
  * Offers the qualities something can be downloaded at, each with what it costs, in the system's
- * action sheet. One that would come out no smaller than the original says so and cannot be picked.
+ * action sheet. One that would come out no smaller than the original, or that is above the quality
+ * the account's downloads are held to, says so and cannot be picked.
  *
  * @param offer - What the server offered.
  * @param title - What the sheet is headed with.
@@ -28,7 +29,11 @@ const chooseADownloadQuality = async (
             [
               option.label,
               option.bytes === null ? null : formatBytes(option.bytes),
-              option.savesSpace ? null : option.comparison,
+              option.isAboveLimit
+                ? say('common.aboveYourLimit')
+                : option.savesSpace
+                  ? null
+                  : option.comparison,
             ]
               .filter((part) => part !== null)
               .join(' · '),
@@ -37,7 +42,7 @@ const chooseADownloadQuality = async (
         ],
         cancelButtonIndex: offer.options.length,
         disabledButtonIndices: offer.options.flatMap((option, at) =>
-          option.savesSpace ? [] : [at],
+          option.savesSpace && !option.isAboveLimit ? [] : [at],
         ),
       },
       settle,

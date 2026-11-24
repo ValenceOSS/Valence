@@ -9,6 +9,22 @@ describe('readPermission', () => {
     }
   });
 
+  it('reads a permission since folded into another as the one it became', () => {
+    expect(readPermission('server.logs')).toBe('server.monitor');
+    expect(readPermission('library.create')).toBe('library.edit');
+  });
+
+  it('reads nothing for a retired name whose successor does more than it did', () => {
+    for (const widening of [
+      'account.ban',
+      'account.security',
+      'account.profiles',
+      'server.webhooks',
+    ]) {
+      expect(readPermission(widening)).toBeNull();
+    }
+  });
+
   it('refuses a name the catalogue no longer has', () => {
     expect(readPermission('library.summon')).toBeNull();
   });

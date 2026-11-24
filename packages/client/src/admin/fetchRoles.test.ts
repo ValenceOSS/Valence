@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchPermissionCatalogue,
   fetchRoles,
+  orderRoles,
   createRole,
   updateRole,
   deleteRole,
@@ -59,15 +60,24 @@ describe('reading what a server allows', () => {
       ],
     });
 
-    await expect(fetchRoles()).resolves.toEqual([
-      {
-        id: 'role-1',
-        name: 'Node testers',
-        position: 5,
-        permissions: ['jobs.run', 'plugin.anilist.sync'],
-        color: null,
-      },
-    ]);
+    await expect(fetchRoles()).resolves.toEqual({
+      roles: [
+        {
+          id: 'role-1',
+          name: 'Node testers',
+          position: 5,
+          permissions: ['jobs.run', 'plugin.anilist.sync'],
+          color: null,
+        },
+      ],
+      outOfReach: [],
+    });
+  });
+
+  it('reads which roles rank at or above the reader', async () => {
+    answering({ roles: [], outOfReach: ['role-1'] });
+
+    await expect(fetchRoles()).resolves.toEqual({ roles: [], outOfReach: ['role-1'] });
   });
 
   it('reads the catalogue of permissions', async () => {
@@ -96,7 +106,11 @@ describe('reading what a server allows', () => {
       ],
     });
 
-    await expect(fetchRoles()).resolves.toMatchObject([{ name: 'Admin' }]);
+    await expect(fetchRoles()).resolves.toMatchObject({
+      roles: [{ name: 'Admin' }],
+      outOfReach: [],
+    });
+    expect(lastCall().url).toBe('/api/admin/roles');
   });
 
   it('says so when the answer is not the shape it was promised', async () => {
@@ -134,10 +148,10 @@ describe('reading what a server allows', () => {
 describe('changing what a server allows', () => {
   const changes: [string, () => Promise<{ message: string } | null>, string, string][] = [
     [
-      'creating a role',
-      () => createRole({ name: 'Staff', position: 1, permissions: [], color: null }),
-      '/api/admin/roles',
-      'POST',
+      'putting the roles in order',
+      () => orderRoles(['role-2', 'role-1']),
+      '/api/admin/roles/order',
+      'PUT',
     ],
     [
       'changing a role',
@@ -208,4 +222,65 @@ describe('changing what a server allows', () => {
       });
     });
   }
+});
+
+describe('creating a role', () => {
+  const STAFF = { name: 'Staff', permissions: [], color: null };
+
+  it('answers with the role the server made, so it can be given to people straight away', async () => {
+    answering(
+      { id: 'role-1', name: 'Staff', position: 0, permissions: [], color: null },
+      true,
+      201,
+    );
+
+    await expect(createRole(STAFF)).resolves.toEqual({
+      role: { id: 'role-1', name: 'Staff', position: 0, permissions: [], color: null },
+      refusal: null,
+    });
+    expect(lastCall()).toEqual({ url: '/api/admin/roles', method: 'POST' });
+  });
+
+  it('passes on the reason the server gave for refusing', async () => {
+    answering({ error: 'That role is equal to or higher than yours.' }, false, 403);
+
+    await expect(createRole(STAFF)).resolves.toEqual({
+      role: null,
+      refusal: { message: 'That role is equal to or higher than yours.' },
+    });
+  });
+
+  it('says the server could not be reached rather than blaming the request', async () => {
+    unreachable();
+
+    await expect(createRole(STAFF)).resolves.toEqual({
+      role: null,
+      refusal: { message: 'Couldn’t reach the server.' },
+    });
+  });
+});
+
+describe('reading what a server of another version allows', () => {
+  it('reads a role whose permissions this app does not know, keeping those it does', async () => {
+    answering({
+      roles: [
+        {
+          id: 'role-1',
+          name: 'Staff',
+          position: 1,
+          permissions: ['media.rescan', 'jobs.run', 'something.newer'],
+          color: null,
+        },
+      ],
+      outOfReach: [],
+    });
+
+    expect((await fetchRoles()).roles[0]?.permissions).toEqual(['media.override', 'jobs.run']);
+  });
+
+  it('reads a catalogue holding permissions this app does not know', async () => {
+    answering({ permissions: ['library.edit', 'something.newer', 'library.create'] });
+
+    await expect(fetchPermissionCatalogue()).resolves.toEqual(['library.edit']);
+  });
 });

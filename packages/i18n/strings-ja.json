@@ -75,29 +75,14 @@
     "context": "A kind of job that ran because its schedule said so, in lists of jobs. {kind} is the job's name, such as Scan libraries."
   },
   {
-    "handler": "client.admin.describePermission.approveOrTurnDownRequests",
-    "text": "リクエストの承認・却下",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.approveRequests",
+    "text": "Approve requests",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.backTheServerUp",
-    "text": "サーバーのバックアップ",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.banAnAccount",
-    "text": "アカウントの利用停止",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.changeALibrarysSettings",
-    "text": "ライブラリの設定を変更",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.changeArtwork",
-    "text": "アートワークの変更",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.backUpAndRestore",
+    "text": "Back up and restore",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.changeServerSettings",
@@ -105,14 +90,9 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.changeWhenJobsRun",
-    "text": "ジョブの実行時間の変更",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.correctMetadata",
-    "text": "メタデータの修正",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.controlOtherPeoplesStreams",
+    "text": "Control other people’s streams",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.createShareLinks",
@@ -120,14 +100,14 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.deleteALibrary",
-    "text": "ライブラリの削除",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.deleteFiles",
+    "text": "Delete files",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.deleteMediaFromDisk",
-    "text": "ディスクからのメディアの削除",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.deleteLibraries",
+    "text": "Delete libraries",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.downloadMedia",
@@ -135,29 +115,9 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.everythingIncludingAnythingAddedLater",
-    "text": "後から追加されるものを含むすべて",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.findSubtitles",
-    "text": "視聴中の字幕の検索",
-    "context": "The name of the permission to search subtitle sites for a film or episode and fetch one, in the list of a role's permissions in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.haveRequestsGoStraightThrough",
-    "text": "リクエストの自動承認",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.haveTheServerCallOutWhen",
-    "text": "Webhookの管理",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.hideAnItemFromEverybody",
-    "text": "アイテムを全員に対して非表示",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.editTitles",
+    "text": "Edit titles",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.holdAPIKeysForUseOutside",
@@ -165,14 +125,9 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.installAndManagePlugins",
-    "text": "プラグインのインストールと管理",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.linkThisServerWithOthers",
-    "text": "このサーバーを他のValenceサーバーとリンク",
-    "context": "The short name of the permission to link servers, in the roles editor."
+    "handler": "client.admin.describePermission.linkServers",
+    "text": "Link servers",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.manageAccounts",
@@ -180,9 +135,14 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.manageOtherPeoplesProfiles",
-    "text": "他の人のプロフィールの管理",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.manageLibraries",
+    "text": "Manage libraries",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
+  },
+  {
+    "handler": "client.admin.describePermission.managePlugins",
+    "text": "Manage plugins",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.manageRoles",
@@ -190,14 +150,9 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.pauseSomebodysStream",
-    "text": "他の人のストリームの一時停止",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.playFilmsFromSources",
-    "text": "ソースからの映画の再生",
-    "context": "The name of a role permission in the roles editor (from `describePermission`): playing films that aren't in the library, from a source a plugin offers."
+    "handler": "client.admin.describePermission.manageShareLinks",
+    "text": "Manage share links",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.requestFilmsAndSeries",
@@ -210,39 +165,19 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.rescanOneItem",
-    "text": "アイテムの1件再スキャン",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.runAndScheduleJobs",
+    "text": "Run and schedule jobs",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.resetPasswordsAndSignAccountsOut",
-    "text": "パスワードのリセットとアカウントのサインアウト",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.seeEveryonesRequests",
+    "text": "See everyone’s requests",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.runAJob",
-    "text": "ジョブの実行",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.runResetAndRebuild",
-    "text": "リセットと再構築の実行",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.seeAndWithdrawAnybodysShareLinks",
-    "text": "他の人の共有リンクの表示と取り消し",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.seeEverybodysRequests",
-    "text": "全員のリクエストの表示",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.seeWhatTheServerIsDoing",
-    "text": "サーバーの状態の表示",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.seeServerStatusAndLogs",
+    "text": "See server status and logs",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.seeWhoIsWatching",
@@ -250,14 +185,14 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.sendSomebodyAMessage",
-    "text": "他の人へのメッセージ送信",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.setUpRequests",
+    "text": "Set up requests",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.setUpIndexersDownloadClientsAnd",
-    "text": "インデクサー、ダウンロードクライアント、品質プロファイルの設定",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.skipApproval",
+    "text": "Skip approval",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.startWatchParties",
@@ -265,14 +200,14 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.stopSomebodysStream",
-    "text": "他の人のストリームの停止",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.watchFilmsNotOnTheServer",
+    "text": "Watch films not on the server",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.addRenameOrRemoveAnotherAccounts",
-    "text": "別のアカウントのプロフィールを、本人に代わって追加、名前変更、削除します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.addLibrariesAndChangeTheirSettings",
+    "text": "Add libraries and change their settings, such as names, languages and scan options.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.approveOrTurnDownWhatOther",
@@ -290,39 +225,14 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.askValenceToReadOneItem",
-    "text": "ファイルやメタデータの変更を反映するため、1件のアイテムを再スキャンします。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.changeServerWideSettingsSuchAsHardware",
+    "text": "Change server-wide settings, such as hardware acceleration, quality and webhooks.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.banAnAccountEndingItsSessions",
-    "text": "アカウントを利用停止にし、すべてのデバイスからサインアウトさせて、再度サインインできないようにします。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.changeALibrarysSettingsItsName",
-    "text": "ライブラリの名前、優先言語、スキャンオプションなどの設定を変更します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.changeServerWideSettingsSuchAs",
-    "text": "ハードウェアアクセラレーションや画質など、サーバー全体の設定を変更します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.changeWhenARecurringJobRuns",
-    "text": "定期ジョブの実行時間を変更するか、スケジュールをオフにします。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.correctAnItemsMetadataByHand",
-    "text": "誤って照合されたアイテムのメタデータを手動で編集します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.createALinkThatLetsSomebody",
-    "text": "家族以外の人が1つの作品を視聴できる共有リンクを作成します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.createAPIKeysForScriptsAnd",
+    "text": "Create API keys for scripts and devices outside the app.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.createRolesAndChooseWhichPermissions",
@@ -330,99 +240,69 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.deleteAMediaFileFromDisk",
-    "text": "ライブラリからだけでなく、ディスクからメディアファイルを削除します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.deleteALibraryAndEverythingScanned",
+    "text": "Delete a library and everything scanned from it.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.endSomebodyElsesStream",
-    "text": "他の人のストリームを停止します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.deleteMediaFilesFromDiskNot",
+    "text": "Delete media files from disk, not just from the library.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.grantsEveryPermissionThereIsIncluding",
-    "text": "後のリリースで追加される権限を含め、すべての権限を付与します。これに加えて他の権限を付与する必要はありません。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.everyPermissionIncludingOnesAddedIn",
+    "text": "Every permission, including ones added in future updates.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.haveTheServerCallOutTo",
-    "text": "何かが起きたときに別のURLに通知するWebhookを作成します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.fixWrongMatchesEditMetadataChoose",
+    "text": "Fix wrong matches, edit metadata, choose artwork and rescan titles.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.haveWhatTheyAskForSearched",
-    "text": "リクエストされた内容は、承認を待たずに自動で検索されてダウンロードされます。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.installSetUpAndRemovePlugins",
+    "text": "Install, set up and remove plugins.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.hideAnItemFromEveryProfile",
-    "text": "アイテムを自分だけでなく、すべてのプロフィールから非表示にします。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.inviteSomeoneNewToMakeAn",
+    "text": "Invite someone new to make an account.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.holdAnAPIKeyForReaching",
-    "text": "ブラウザ以外のスクリプトやデバイスからValenceにアクセスするためのAPIキーを作成します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.letSomeoneOutsideTheServerWatch",
+    "text": "Let someone outside the server watch one title through a link.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.installPluginsFromTheCatalogueOr",
-    "text": "カタログまたはファイルからプラグインをインストールし、権限を選び、設定を変更して、削除します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.linkThisServerWithOtherValence",
+    "text": "Link this server with other Valence servers. Linking alone doesn’t share anything.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.inviteSomebodyNewToSignIn",
-    "text": "新しい人を招待して、アカウントを作成してもらいます。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.pauseOrStopSomeoneElsesStream",
+    "text": "Pause or stop someone else’s stream, or send a message over it.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.linkThisServerWithOthers",
-    "text": "別のValenceサーバーとリンクするための招待を作成して承諾し、リンクリクエストを承認または却下して、サーバーのリンクを解除します。リンクだけでは何も共有されません。",
-    "context": "What the permission to link servers allows, in the roles editor."
+    "handler": "client.admin.describePermissionDetail.playAFilmStraightAwayFromAPlugin",
+    "text": "Play a film straight away from a plugin, without requesting or downloading it.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area: play a film a plugin offers a source for, without it being in the library."
   },
   {
-    "handler": "client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere",
-    "text": "他の人のストリームを遠隔で一時停止します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.playOneStreamToEveryoneWho",
+    "text": "Play one stream to everyone who joins.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.playsFilmsThatAreNotIn",
-    "text": "ライブラリにない映画を、プラグインが提供するソースから直接再生します。ライブラリには何も追加されません。「映画とシリーズのリクエスト」も必要です。",
-    "context": "What a role permission allows, in the roles editor (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.reEncodeMediaAtAChosenQuality",
+    "text": "Re-encode media at a chosen quality, replacing the original or saving a copy beside it.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.pointValenceAtANewFolder",
-    "text": "メディアのフォルダーを新しいライブラリとして追加します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.readTheServersLogIncludingEntries",
-    "text": "このアカウントがサインインする前の項目を含め、サーバーのログを表示します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.reEncodeMediaAtAChosen",
-    "text": "選んだ画質でメディアを再エンコードします。元のファイルを置き換えるか、新しいファイルを隣に保存できます。置き換えの場合、結果を確認した後に元のファイルが削除され、非可逆エンコードで失われた画質は復元できません。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.removeALibraryAndForgetEverything",
-    "text": "ライブラリを削除し、そこからスキャンされたすべての内容を削除します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.renameSuspendOrRemoveAnExisting",
-    "text": "既存のアカウントの名前変更、利用停止、削除を行います。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.replaceAnItemsPosterOrBackdrop",
-    "text": "アイテムのポスターまたは背景画像を、別の画像に置き換えます。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.resetAnotherAccountsPasswordSignIt",
-    "text": "別のアカウントのパスワードをリセットし、すべてのデバイスからサインアウトさせて、サインインしている場所を確認します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.renameSuspendBanOrRemoveAccounts",
+    "text": "Rename, suspend, ban or remove accounts, reset passwords, sign people out and manage their profiles.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.runAResetOrAFull",
@@ -435,24 +315,24 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.searchForSubtitlesAndFetchOne",
-    "text": "視聴中に字幕を検索して1件取得します。アイテムのほかの設定は変更できません。",
-    "context": "What the Find subtitles permission allows, under its name in the list of a role's permissions in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.searchForAndDownloadSubtitlesWhile",
+    "text": "Search for and download subtitles while watching.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.seeEveryShareLinkAnybodyHas",
-    "text": "誰かが作成したすべての共有リンクを表示し、そのうちどれでも取り消せます。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.seeAndRevokeAnyonesShareLinks",
+    "text": "See and revoke anyone’s share links.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.seeWhatEverybodyHasAskedFor",
-    "text": "全員のリクエストと、各ダウンロードの進行状況を表示します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.seeCPUMemoryAndTranscodesAnd",
+    "text": "See CPU, memory and transcodes, and read the server log.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.seeWhatTheServerIsDoing",
-    "text": "サーバーのCPU負荷、メモリ使用量、アクティブなトランスコードを表示します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.seeEveryonesRequestsAndHowEach",
+    "text": "See everyone’s requests and how each download is going.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.seeWhoIsWatchingRightNow",
@@ -460,14 +340,9 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.sendAMessageThatAppearsOver",
-    "text": "他の人のストリームに重ねて表示されるメッセージを送信します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.setUpTheIndexersDownloadClients",
-    "text": "リクエストに使うインデクサー、ダウンロードクライアント、品質プロファイルを設定し、VPNの状態を表示します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.setUpIndexersDownloadClientsAnd",
+    "text": "Set up indexers, download clients and quality profiles, and see the VPN status.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.startABackupOfTheServer",
@@ -475,14 +350,14 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.startAJobSuchAsA",
-    "text": "スキャンなどのジョブを、スケジュールを待たずに手動で実行します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.startJobsSuchAsScansBy",
+    "text": "Start jobs such as scans by hand, and change when they run.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.startAWatchPartyPlayingOne",
-    "text": "参加者全員に1つのストリームを再生するウォッチパーティーを開始します。",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.theirRequestsDownloadStraightAwayWithout",
+    "text": "Their requests download straight away, without waiting for approval.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describeReencodeState.checkingWhatCameOut",
@@ -608,6 +483,11 @@
     "handler": "client.admin.groupPermissions.streaming",
     "text": "ストリーミング",
     "context": "Shown in the admin (from `groupPermissions`)."
+  },
+  {
+    "handler": "client.admin.groupPermissions.theirOwnAccount",
+    "text": "Their own account",
+    "context": "A heading in the roles panel above permissions about the holder's own account, such as creating API keys for it."
   },
   {
     "handler": "client.admin.logRanges.last15Minutes",
@@ -2333,6 +2213,11 @@
     "handler": "common.aboutTitle",
     "text": "{title} について",
     "context": "The label of a button, used in the episode in the show of the phone app and in the episode row in the show dialog. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.aboveYourLimit",
+    "text": "Above your limit",
+    "context": "Beside a quality or download size that can't be chosen, because it's above the quality the account is limited to."
   },
   {
     "handler": "common.access",
@@ -4384,6 +4269,11 @@
     "handler": "common.grey",
     "text": "グレー",
     "context": "A colour to put round the page in the phone reader."
+  },
+  {
+    "handler": "common.handleAndNote",
+    "text": "{handle} · {note}",
+    "context": "An account's handle with a short note after it, such as that it is above the reader's role. {handle} is the handle, {note} the note."
   },
   {
     "handler": "common.heavy",
@@ -10420,6 +10310,11 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `servePlayback`)."
   },
   {
+    "handler": "error.playback.thatIsAboveTheQualityYou",
+    "text": "That’s above the quality you’re allowed to play. Start it from the player instead, which sends it at a quality you can watch.",
+    "context": "An error the server answers with (HTTP 403) in the app on the server (from `servePlayback`), when something asks for a file as it is that is above the asker's streaming limit."
+  },
+  {
     "handler": "error.playback.thatSessionBelongsToSomebodyElse",
     "text": "そのセッションは別の人のものです。",
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `servePlayback`)."
@@ -10753,6 +10648,11 @@
     "handler": "error.role.noSuchRole",
     "text": "そのロールは存在しません。",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveRole`)."
+  },
+  {
+    "handler": "error.role.theRolesChangedWhileYouWere",
+    "text": "The roles changed while you were moving them. Have another go with the list as it is now.",
+    "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveRole`), when somebody puts the roles in an order that no longer names every role."
   },
   {
     "handler": "error.samples.thatIsForSomebodyWhoMay",
@@ -24835,19 +24735,9 @@
     "context": "Shown in the admin area."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.aboutRank",
-    "text": "ランクについて",
-    "context": "Label of the info button beside the rank column."
-  },
-  {
-    "handler": "screens.adminArea.rolesPanel.aHigherRankManagesALower",
-    "text": "上位のランクは下位のランクを管理できます。自分と同じか上位のランクのロールは、誰も変更できません。",
-    "context": "The detail of a dialog title in the roles panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.rolesPanel.aRoleIsANameAnd",
-    "text": "ロールは、名前と権限のセットです。ランクによって、誰が誰を管理できるかが決まります。",
-    "context": "The detail of a dialog title in the roles panel in the admin area."
+    "handler": "screens.adminArea.rolesPanel.aboveYourRole",
+    "text": "Above your role",
+    "context": "Read out for the lock beside a role the reader can't change or move."
   },
   {
     "handler": "screens.adminArea.rolesPanel.createARole",
@@ -24880,9 +24770,14 @@
     "context": "The title of a confirm dialog in the roles panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.editRole",
-    "text": "ロールを編集",
-    "context": "Shown in the roles panel in the admin area."
+    "handler": "screens.adminArea.rolesPanel.discard",
+    "text": "Discard",
+    "context": "The button that throws away unsaved changes to a role."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.discardChanges",
+    "text": "Discard changes?",
+    "context": "Title of the question asked when somebody opens another role before saving the one they changed."
   },
   {
     "handler": "screens.adminArea.rolesPanel.giveTheRoleAName",
@@ -24890,19 +24785,34 @@
     "context": "Shown under a role's name when it has been left empty."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.housemate",
-    "text": "家族",
-    "context": "Shown in an empty text field until something is typed in the roles panel in the admin area."
+    "handler": "screens.adminArea.rolesPanel.highestFirstDragToReorder",
+    "text": "Highest first · drag to reorder",
+    "context": "Above the list of roles, which rank from the top down and can be dragged into a new order."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.manageMembersMemberCount",
-    "text": "メンバーを管理（{memberCount}）",
-    "context": "The label in the roles panel in the admin area. {memberCount} is filled in by the app."
+    "handler": "screens.adminArea.rolesPanel.memberCount.one",
+    "text": "{count} member",
+    "context": "Under a role's name in the list of roles: how many people hold it."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.memberCount.other",
+    "text": "{count} members",
+    "context": "Under a role's name in the list of roles: how many people hold it."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.membersMemberCount",
+    "text": "Members ({memberCount})",
+    "context": "The tab of a role's settings listing who holds it. {memberCount} is how many do."
   },
   {
     "handler": "screens.adminArea.rolesPanel.nameWillBeRemovedAndAnybody",
     "text": "{name} は削除され、このロールを持つ人は権限を失います。この操作は元に戻せません。",
     "context": "Shown in the roles panel in the admin area. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.newRole",
+    "text": "New role",
+    "context": "The name shown for a role being made before it has been given one."
   },
   {
     "handler": "screens.adminArea.rolesPanel.noRolesYet",
@@ -24915,19 +24825,9 @@
     "context": "The label in the roles panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.rank",
-    "text": "ランク",
-    "context": "The label of a text field in the roles panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.rolesPanel.rankAbout",
-    "text": "ユーザーは、自分より下位のランクを持つ最上位のロールのアカウントのみ変更できます。",
-    "context": "The info hover beside the rank column."
-  },
-  {
-    "handler": "screens.adminArea.rolesPanel.rankIsAWholeNumber",
-    "text": "ランクは0以上の整数です。",
-    "context": "Shown under a role's rank when it is not a whole number of zero or more."
+    "handler": "screens.adminArea.rolesPanel.rolesAboveYours",
+    "text": "Roles above yours",
+    "context": "Read out to screen readers: the list of roles at or above the reader's own, which they can't change or move."
   },
   {
     "handler": "screens.adminArea.rolesPanel.roleSaved",
@@ -24935,9 +24835,19 @@
     "context": "Shown in the roles panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole",
-    "text": "このロールを持つ人の名前の横に表示されます。",
-    "context": "The description of a form field in the roles panel in the admin area."
+    "handler": "screens.adminArea.rolesPanel.rolesHighestFirst",
+    "text": "Roles, highest first",
+    "context": "Read out to screen readers: the list of roles, which can be dragged into a new order."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.rolesPutInOrder",
+    "text": "Role order saved",
+    "context": "A notice once the roles have been dragged into a new order."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.rolesWithEveryPermissionCannotBeDeleted",
+    "text": "Roles with every permission can’t be deleted",
+    "context": "Beside a greyed-out Delete in a role's menu, for a role that grants everything."
   },
   {
     "handler": "screens.adminArea.rolesPanel.theRolesCouldNotBeRead",
@@ -24945,9 +24855,29 @@
     "context": "Shown where the roles could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
+    "handler": "screens.adminArea.rolesPanel.thisRoleIsAtOrAboveYours",
+    "text": "This role is at or above yours, so you can’t change it.",
+    "context": "Above the settings of a role the reader can only look at."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.thisRoleIsNotSavedYet",
+    "text": "This role isn’t saved yet",
+    "context": "Beside the buttons that make a new role."
+  },
+  {
     "handler": "screens.adminArea.rolesPanel.whatToChangeAboutThisRole",
     "text": "このロールの変更内容",
     "context": "The label of a tab row in the roles panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.youHaveUnsavedChanges",
+    "text": "You have unsaved changes",
+    "context": "Beside Reset and Save changes, once a role has been changed."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.yourChangesToNameHaveNotBeenSaved",
+    "text": "Your changes to {name} haven’t been saved.",
+    "context": "Detail of the question asked when somebody opens another role before saving. {name} is the role's name."
   },
   {
     "handler": "screens.adminArea.roleStreamLimits.everybodyHoldingIt",
@@ -26483,6 +26413,41 @@
     "handler": "screens.adminArea.storagePanel.thisServerCannotMountBuckets",
     "text": "このサーバーではバケットをマウントできません。rclone と FUSE が必要です。Docker の場合は、コンテナーに /dev/fuse を与えるバケット用の Compose ファイルを追加してください。",
     "context": "Shown in the Buckets panel when the server lacks rclone or /dev/fuse."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.anythingAboveThisIsSentAt",
+    "text": "Anything above this is sent at this quality instead.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.downloadsAreSavedAtThisQuality",
+    "text": "Downloads are saved at this quality or lower.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.everythingPlayedIsSentAtOr",
+    "text": "Everything played is sent at or below this. Useful for a slow upload.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.highestBitrate",
+    "text": "Highest bitrate",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.howManyThingsCanPlayAt",
+    "text": "How many things can play at once, across every device and profile.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.limitDownloadsToo",
+    "text": "Limit downloads too",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.lowerLimitsMeanMoreOfWhat",
+    "text": "Lower limits mean more of what’s played has to be transcoded, which puts more load on the server’s CPU or GPU.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.aLargerModelHearsBetter",
@@ -36032,14 +35997,24 @@
     "context": "On the page a password reset link opens, once it worked."
   },
   {
-    "handler": "screens.rolesPanel.colorSwatchPicker.noColour",
-    "text": "色なし",
-    "context": "The label of a button in the color swatch picker in the roles panel."
+    "handler": "screens.rolesPanel.permissionEditor.adminPermissions",
+    "text": "Admin permissions",
+    "context": "A heading in a role's permissions, above those about running the server rather than watching on it."
+  },
+  {
+    "handler": "screens.rolesPanel.permissionEditor.everythingIsOnSoEveryPermission",
+    "text": "Everything is on, so every permission below is included.",
+    "context": "Above a role's permissions while it holds every permission, whose switches are then on and can't be changed one by one."
   },
   {
     "handler": "screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf",
     "text": "{pluginName} のこの部分を使用できるようにします。",
     "context": "Shown in the permission editor in the roles panel. {pluginName} is filled in by the app."
+  },
+  {
+    "handler": "screens.rolesPanel.permissionEditor.needsRequestFilmsAndSeriesToo",
+    "text": "Needs Request films and series too.",
+    "context": "Beside the permission to watch films not on the server, while the role can't request films, since the film is played from its request page."
   },
   {
     "handler": "screens.rolesPanel.permissionEditor.noLibraryTakesRequests",
@@ -36055,6 +36030,16 @@
     "handler": "screens.rolesPanel.permissionEditor.searchPermissions",
     "text": "権限を検索",
     "context": "Shown in an empty text field until something is typed in the permission editor in the roles panel."
+  },
+  {
+    "handler": "screens.rolesPanel.permissionEditor.youDoNotHaveThisSoYou",
+    "text": "You don’t have this permission, so you can’t give it.",
+    "context": "Beside a permission in a role's settings that the person editing the role doesn't hold themselves, whose switch is then greyed out."
+  },
+  {
+    "handler": "screens.rolesPanel.roleMembers.everyoneElse",
+    "text": "Everyone else",
+    "context": "Heading above the people who don't hold a role, in its Members tab, who it can be given to."
   },
   {
     "handler": "screens.rolesPanel.roleMembers.whetherNameHoldsThisRole",

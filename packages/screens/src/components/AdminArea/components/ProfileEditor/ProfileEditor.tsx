@@ -537,7 +537,10 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                     <AskerPicker
                       legend={say('common.roles')}
                       everyLabel={say('screens.adminArea.profileEditor.anyRole')}
-                      askers={(roles.data ?? []).map((role) => ({ id: role.id, name: role.name }))}
+                      askers={(roles.data?.roles ?? []).map((role) => ({
+                        id: role.id,
+                        name: role.name,
+                      }))}
                       chosen={new Set(values.roleIds)}
                       onChange={(chosen) => {
                         change({ roleIds: [...chosen] });

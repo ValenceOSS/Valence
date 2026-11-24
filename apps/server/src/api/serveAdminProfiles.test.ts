@@ -362,12 +362,12 @@ describe('an administrator managing somebody’s profiles', () => {
 });
 
 describe('who may manage somebody else’s profiles', () => {
-  it('is somebody holding account.profiles', async () => {
+  it('is somebody holding account.manage', async () => {
     const context = build();
     const { household, base } = await anAdministratorAndAHousehold(context);
     const keeper = await somebody(context, 'Keeper');
 
-    await giveARole(context, keeper.accountId, 200, ['account.profiles']);
+    await giveARole(context, keeper.accountId, 200, ['account.manage']);
 
     expect((await ask(context, keeper.cookie, 'GET', base)).status).toBe(200);
     expect(
@@ -381,7 +381,11 @@ describe('who may manage somebody else’s profiles', () => {
     const { household, base } = await anAdministratorAndAHousehold(context);
     const manager = await somebody(context, 'Manager');
 
-    await giveARole(context, manager.accountId, 200, ['account.manage', 'library.edit']);
+    await giveARole(context, manager.accountId, 200, [
+      'library.edit',
+      'server.settings',
+      'streaming.control',
+    ]);
 
     for (const [method, path, body] of [
       ['GET', base, undefined],
@@ -424,7 +428,7 @@ describe('who may manage somebody else’s profiles', () => {
     const { administrator } = await anAdministratorAndAHousehold(context);
     const keeper = await somebody(context, 'Keeper');
 
-    await giveARole(context, keeper.accountId, 200, ['account.profiles']);
+    await giveARole(context, keeper.accountId, 200, ['account.manage']);
 
     const base = `/api/admin/accounts/${administrator.accountId}/profiles`;
     const answers = [
@@ -451,7 +455,7 @@ describe('who may manage somebody else’s profiles', () => {
     const keeper = await somebody(context, 'Keeper');
 
     await context.settings.write({ ownerAccountId: owner.accountId });
-    await giveARole(context, keeper.accountId, 900, ['account.profiles']);
+    await giveARole(context, keeper.accountId, 900, ['account.manage']);
 
     const refused = await ask(
       context,

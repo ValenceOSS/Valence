@@ -4904,7 +4904,6 @@ describe('VideoPlayer, with a sound language remembered', () => {
 
     expect(startMock.mock.calls[0]?.[4]).toBeUndefined();
     expect(startMock.mock.calls[0]?.[14]).toBeUndefined();
-    expect(aboutMock).not.toHaveBeenCalled();
   });
 });
 

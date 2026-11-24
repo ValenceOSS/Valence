@@ -154,6 +154,7 @@ const COUNTED_KEYS = [
   'screens.adminArea.renameToPattern.count.renameFiles',
   'screens.adminArea.renameToPattern.count.renamedFiles',
   'screens.adminArea.requestsPanel.countFailing',
+  'screens.adminArea.rolesPanel.memberCount',
   'screens.adminArea.runLibraryJobDialog.actionOnCountLibraries',
   'screens.adminArea.runLibraryJobDialog.runOnCountLibraries',
   'screens.adminArea.sharesPanel.count.endsInCountDays',

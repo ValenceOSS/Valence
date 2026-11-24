@@ -2,63 +2,45 @@ import type { Permission } from '@ValenceContracts/schemas/Permission';
 import { say } from '@ValenceI18n/say';
 
 const DETAILS: Record<Permission, string> = {
-  administrator: say('client.admin.describePermissionDetail.grantsEveryPermissionThereIsIncluding'),
-
-  'library.create': say('client.admin.describePermissionDetail.pointValenceAtANewFolder'),
-  'library.edit': say('client.admin.describePermissionDetail.changeALibrarysSettingsItsName'),
-  'library.delete': say('client.admin.describePermissionDetail.removeALibraryAndForgetEverything'),
-
-  'jobs.run': say('client.admin.describePermissionDetail.startAJobSuchAsA'),
-  'jobs.schedule': say('client.admin.describePermissionDetail.changeWhenARecurringJobRuns'),
+  administrator: say('client.admin.describePermissionDetail.everyPermissionIncludingOnesAddedIn'),
+  'library.edit': say('client.admin.describePermissionDetail.addLibrariesAndChangeTheirSettings'),
+  'library.delete': say('client.admin.describePermissionDetail.deleteALibraryAndEverythingScanned'),
+  'jobs.run': say('client.admin.describePermissionDetail.startJobsSuchAsScansBy'),
   'jobs.runDestructive': say('client.admin.describePermissionDetail.runAResetOrAFull'),
-
-  'media.rescan': say('client.admin.describePermissionDetail.askValenceToReadOneItem'),
-  'media.delete': say('client.admin.describePermissionDetail.deleteAMediaFileFromDisk'),
-  'media.reencode': say('client.admin.describePermissionDetail.reEncodeMediaAtAChosen'),
-  'media.override': say('client.admin.describePermissionDetail.correctAnItemsMetadataByHand'),
-  'media.artwork': say('client.admin.describePermissionDetail.replaceAnItemsPosterOrBackdrop'),
-  'media.hide': say('client.admin.describePermissionDetail.hideAnItemFromEveryProfile'),
-  'media.subtitles': say('client.admin.describePermissionDetail.searchForSubtitlesAndFetchOne'),
-
-  'sharing.link': say('client.admin.describePermissionDetail.createALinkThatLetsSomebody'),
-  'sharing.party': say('client.admin.describePermissionDetail.startAWatchPartyPlayingOne'),
-  'sharing.manage': say('client.admin.describePermissionDetail.seeEveryShareLinkAnybodyHas'),
-
+  'media.override': say('client.admin.describePermissionDetail.fixWrongMatchesEditMetadataChoose'),
+  'media.delete': say('client.admin.describePermissionDetail.deleteMediaFilesFromDiskNot'),
+  'media.reencode': say('client.admin.describePermissionDetail.reEncodeMediaAtAChosenQuality'),
+  'media.subtitles': say(
+    'client.admin.describePermissionDetail.searchForAndDownloadSubtitlesWhile',
+  ),
+  'sharing.link': say('client.admin.describePermissionDetail.letSomeoneOutsideTheServerWatch'),
+  'sharing.party': say('client.admin.describePermissionDetail.playOneStreamToEveryoneWho'),
+  'sharing.manage': say('client.admin.describePermissionDetail.seeAndRevokeAnyonesShareLinks'),
   'streaming.view': say('client.admin.describePermissionDetail.seeWhoIsWatchingRightNow'),
-  'streaming.stop': say('client.admin.describePermissionDetail.endSomebodyElsesStream'),
-  'streaming.pause': say('client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere'),
-  'streaming.message': say('client.admin.describePermissionDetail.sendAMessageThatAppearsOver'),
-
+  'streaming.control': say('client.admin.describePermissionDetail.pauseOrStopSomeoneElsesStream'),
   'download.media': say('client.admin.describePermissionDetail.saveACopyOfMediaTo'),
-
   'requests.ask': say('client.admin.describePermissionDetail.askForAFilmOrSeries'),
   'requests.askMusic': say('client.admin.describePermissionDetail.askForAnArtistOrAlbum'),
-  'requests.autoApprove': say('client.admin.describePermissionDetail.haveWhatTheyAskForSearched'),
-  'requests.viewAll': say('client.admin.describePermissionDetail.seeWhatEverybodyHasAskedFor'),
+  'requests.autoApprove': say(
+    'client.admin.describePermissionDetail.theirRequestsDownloadStraightAwayWithout',
+  ),
+  'requests.viewAll': say('client.admin.describePermissionDetail.seeEveryonesRequestsAndHowEach'),
   'requests.approve': say('client.admin.describePermissionDetail.approveOrTurnDownWhatOther'),
-  'requests.manage': say('client.admin.describePermissionDetail.setUpTheIndexersDownloadClients'),
-
-  'sources.play': say('client.admin.describePermissionDetail.playsFilmsThatAreNotIn'),
-
-  'account.invite': say('client.admin.describePermissionDetail.inviteSomebodyNewToSignIn'),
-  'account.manage': say('client.admin.describePermissionDetail.renameSuspendOrRemoveAnExisting'),
-  'account.ban': say('client.admin.describePermissionDetail.banAnAccountEndingItsSessions'),
+  'requests.manage': say('client.admin.describePermissionDetail.setUpIndexersDownloadClientsAnd'),
+  'sources.play': say('client.admin.describePermissionDetail.playAFilmStraightAwayFromAPlugin'),
+  'account.keys': say('client.admin.describePermissionDetail.createAPIKeysForScriptsAnd'),
+  'account.invite': say('client.admin.describePermissionDetail.inviteSomeoneNewToMakeAn'),
+  'account.manage': say('client.admin.describePermissionDetail.renameSuspendBanOrRemoveAccounts'),
   'account.roles': say(
     'client.admin.describePermissionDetail.createRolesAndChooseWhichPermissions',
   ),
-  'account.profiles': say('client.admin.describePermissionDetail.addRenameOrRemoveAnotherAccounts'),
-  'account.security': say(
-    'client.admin.describePermissionDetail.resetAnotherAccountsPasswordSignIt',
+  'server.settings': say(
+    'client.admin.describePermissionDetail.changeServerWideSettingsSuchAsHardware',
   ),
-  'account.keys': say('client.admin.describePermissionDetail.holdAnAPIKeyForReaching'),
-
-  'server.settings': say('client.admin.describePermissionDetail.changeServerWideSettingsSuchAs'),
   'server.backup': say('client.admin.describePermissionDetail.startABackupOfTheServer'),
-  'server.logs': say('client.admin.describePermissionDetail.readTheServersLogIncludingEntries'),
-  'server.monitor': say('client.admin.describePermissionDetail.seeWhatTheServerIsDoing'),
-  'server.webhooks': say('client.admin.describePermissionDetail.haveTheServerCallOutTo'),
-  'server.plugins': say('client.admin.describePermissionDetail.installPluginsFromTheCatalogueOr'),
-  'server.links': say('client.admin.describePermissionDetail.linkThisServerWithOthers'),
+  'server.monitor': say('client.admin.describePermissionDetail.seeCPUMemoryAndTranscodesAnd'),
+  'server.plugins': say('client.admin.describePermissionDetail.installSetUpAndRemovePlugins'),
+  'server.links': say('client.admin.describePermissionDetail.linkThisServerWithOtherValence'),
 };
 
 /**

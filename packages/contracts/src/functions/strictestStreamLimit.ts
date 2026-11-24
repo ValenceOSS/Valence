@@ -1,9 +1,11 @@
 import { NO_STREAM_LIMIT } from '@ValenceContracts/schemas/StreamLimit';
+import { qualityUnderCeiling } from '@ValenceContracts/functions/qualityUnderCeiling';
 import type { StreamLimit } from '@ValenceContracts/schemas/StreamLimit';
 
 /**
  * The limit an account streams under, from its own and those of every role it holds: the lowest
- * ceiling set on each side, since a limit somebody set is one they meant to hold.
+ * ceiling set on each side, since a limit somebody set is one they meant to hold, and downloads held
+ * to the quality where any of them says so.
  *
  * @param limits - The account's own limit and its roles', any of which may leave a side open.
  * @returns The strictest of them on each side.
@@ -19,6 +21,11 @@ const strictestStreamLimit = (limits: readonly StreamLimit[]): StreamLimit =>
         limit.maxStreams === null
           ? strictest.maxStreams
           : Math.min(limit.maxStreams, strictest.maxStreams ?? Infinity),
+      maxQuality:
+        limit.maxQuality === null
+          ? strictest.maxQuality
+          : qualityUnderCeiling(strictest.maxQuality ?? undefined, limit.maxQuality),
+      limitsDownloads: strictest.limitsDownloads || limit.limitsDownloads,
     }),
     NO_STREAM_LIMIT,
   );

@@ -401,7 +401,6 @@ describe('Watching', () => {
       });
       expect(askedFor('episode-2')?.[4]).toBeUndefined();
       expect(askedFor('episode-2')?.[14]).toBeUndefined();
-      expect(fetchServerBuildInfo).not.toHaveBeenCalled();
     });
 
     it('readies the next episode in it, and plays that episode on the session readied', async () => {

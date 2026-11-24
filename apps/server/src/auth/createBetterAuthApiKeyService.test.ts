@@ -194,9 +194,9 @@ describe('readPermissions', () => {
   });
 
   it('reads the ones it recognises', () => {
-    expect(readPermissions({ [NAMESPACE]: ['jobs.run', 'library.create'] })).toEqual([
+    expect(readPermissions({ [NAMESPACE]: ['jobs.run', 'library.edit'] })).toEqual([
       'jobs.run',
-      'library.create',
+      'library.edit',
     ]);
   });
 
@@ -204,6 +204,19 @@ describe('readPermissions', () => {
     expect(readPermissions({ [NAMESPACE]: ['jobs.run', 'library.timeTravel'] })).toEqual([
       'jobs.run',
     ]);
+  });
+
+  it('reads a permission since folded into another as the one it became', () => {
+    expect(readPermissions({ [NAMESPACE]: ['jobs.schedule', 'server.logs'] })).toEqual([
+      'jobs.run',
+      'server.monitor',
+    ]);
+  });
+
+  it('reads a permission once where it was stored under its own name and a retired one', () => {
+    expect(
+      readPermissions({ [NAMESPACE]: ['account.manage', 'account.ban', 'account.security'] }),
+    ).toEqual(['account.manage']);
   });
 
   it('reads a key restricted to nothing as restricted to nothing', () => {

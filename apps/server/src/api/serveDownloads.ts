@@ -1,3 +1,8 @@
+import type { DownloadOffer } from '@ValenceServer/downloads/DownloadService';
+import { qualityUnderCeiling } from '@ValenceContracts/functions/qualityUnderCeiling';
+import { isAboveQuality } from '@ValenceContracts/functions/isAboveQuality';
+import type { DownloadQuality } from '@ValenceContracts/schemas/Download';
+import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import {
   askForDownloadRoute,
   askForSeriesRoute,
@@ -28,7 +33,60 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
-  const { downloads, readProfileId, forwardedFileHeaders, library, viewerOf, requires } = context;
+  const {
+    downloads,
+    readProfileId,
+    forwardedFileHeaders,
+    library,
+    viewerOf,
+    requires,
+    streamLimitOf,
+    playback,
+  } = context;
+
+  /**
+   * Whether every one of some titles' files is within a quality, as it is.
+   *
+   * @param mediaIds - The titles, where there is at least one.
+   * @param ceiling - The highest quality allowed.
+   * @returns Whether all fit, false for none at all.
+   */
+  const allFit = async (mediaIds: readonly string[], ceiling: QualityStepId): Promise<boolean> =>
+    mediaIds.length > 0 &&
+    (
+      await Promise.all(
+        mediaIds.map((mediaId) =>
+          playback.fitsLimit(mediaId, null, { maxQuality: ceiling, maxBitrateKbps: null }),
+        ),
+      )
+    ).every(Boolean);
+
+  /**
+   * The quality to save a copy at under the asker's limit, where their limit reaches downloads.
+   *
+   * @param asked - The quality asked for.
+   * @param headers - Who is asking.
+   * @param mediaIds - The titles being saved, whose files are kept as they are where every one is
+   *   within the limit; none where they are not known.
+   * @returns The quality to save it at.
+   */
+  const withinLimit = async (
+    asked: DownloadQuality,
+    headers: Headers,
+    mediaIds: readonly string[] = [],
+  ): Promise<DownloadQuality> => {
+    const limit = await streamLimitOf(headers);
+
+    if (limit === null || !limit.limitsDownloads || limit.maxQuality === null) {
+      return asked;
+    }
+
+    if (asked === 'original' && (await allFit(mediaIds, limit.maxQuality))) {
+      return asked;
+    }
+
+    return qualityUnderCeiling(asked === 'original' ? undefined : asked, limit.maxQuality);
+  };
 
   /**
    * Whether a download is of something its owner is now refused, by a library kept from them or an age
@@ -46,6 +104,34 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     return (
       viewer === null || (held !== undefined && (await library.isOutOfReach(viewer, held.mediaId)))
     );
+  };
+
+  /**
+   * Marks each size on offer that is above the quality the asker's downloads are held to, so a
+   * picker can show it locked rather than let somebody choose what they will not get.
+   *
+   * @param offer - What could be downloaded.
+   * @param headers - Who is asking.
+   * @param mediaIds - The titles the offer is for, whose files decide whether the original fits.
+   * @returns The offer, its sizes marked.
+   */
+  const markedAgainstLimit = async (
+    offer: DownloadOffer,
+    headers: Headers,
+    mediaIds: readonly string[] = [offer.mediaId],
+  ) => {
+    const limit = await streamLimitOf(headers);
+    const ceiling = limit !== null && limit.limitsDownloads ? limit.maxQuality : null;
+    const isOriginalAbove = ceiling !== null && !(await allFit(mediaIds, ceiling));
+
+    return {
+      ...offer,
+      options: offer.options.map((option) => ({
+        ...option,
+        isAboveLimit:
+          option.quality === 'original' ? isOriginalAbove : isAboveQuality(option.quality, ceiling),
+      })),
+    };
   };
 
   if (downloads === undefined) {
@@ -70,7 +156,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
 
     return offer === null
       ? context.json(refuse('error.common.noSuchMediaItem'), 404)
-      : context.json(offer, 200);
+      : context.json(await markedAgainstLimit(offer, context.req.raw.headers), 200);
   });
 
   app.openapi(askForDownloadRoute, async (context) => {
@@ -90,7 +176,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
       profileId,
       context.req.header('x-valence-client') ?? null,
       context.req.valid('param').mediaId,
-      quality,
+      await withinLimit(quality, context.req.raw.headers, [context.req.valid('param').mediaId]),
       audioLanguages ?? [],
     );
 
@@ -119,7 +205,10 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
 
     return offer === null
       ? context.json(refuse('error.common.noSuchProgramme'), 404)
-      : context.json(offer, 200);
+      : context.json(
+          await markedAgainstLimit(offer, context.req.raw.headers, mediaIds ?? [offer.mediaId]),
+          200,
+        );
   });
 
   app.openapi(askForSeriesRoute, async (context) => {
@@ -139,7 +228,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
       profileId,
       context.req.header('x-valence-client') ?? null,
       context.req.valid('param').seriesId,
-      quality,
+      await withinLimit(quality, context.req.raw.headers, mediaIds ?? []),
       audioLanguages ?? [],
       mediaIds,
     );

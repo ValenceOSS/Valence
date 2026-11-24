@@ -7,7 +7,12 @@ afterEach(() => {
 
 describe('saveRoleStreamLimit', () => {
   it('sends the limit to the role’s address', async () => {
-    const limit = { maxBitrateKbps: 4000, maxStreams: null };
+    const limit = {
+      maxBitrateKbps: 4000,
+      maxStreams: null,
+      maxQuality: null,
+      limitsDownloads: false,
+    };
     const fetch = vi.fn((_address: string, _init: RequestInit) =>
       Promise.resolve(new Response(JSON.stringify(limit))),
     );
@@ -25,7 +30,12 @@ describe('saveRoleStreamLimit', () => {
     );
 
     await expect(
-      saveRoleStreamLimit('kids', { maxBitrateKbps: null, maxStreams: null }),
+      saveRoleStreamLimit('kids', {
+        maxBitrateKbps: null,
+        maxStreams: null,
+        maxQuality: null,
+        limitsDownloads: false,
+      }),
     ).resolves.toBeNull();
   });
 });

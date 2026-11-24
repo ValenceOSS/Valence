@@ -136,9 +136,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
     const locks = await readLibraryLocks(settings);
     const locked = new Set(viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : []);
-    const mayChange =
-      (await requires(context.req.raw.headers, 'library.edit')) ||
-      (await requires(context.req.raw.headers, 'library.create'));
+    const mayChange = await requires(context.req.raw.headers, 'library.edit');
 
     const mayMonitor = mayChange || (await requires(context.req.raw.headers, 'server.monitor'));
 
@@ -155,7 +153,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(createLibraryRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'library.create'))) {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 

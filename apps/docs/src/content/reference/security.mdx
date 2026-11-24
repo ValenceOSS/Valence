@@ -33,7 +33,7 @@ After the gate, each route checks a permission where the action needs one, and a
 1. **Roles.** Each account holds roles, and each role grants named permissions. The default roles are Administrator, Manager, Member and Restricted, and you can make your own.
 2. **Account overrides.** A single permission can be allowed or denied for one account whatever its roles say.
 3. **Library access.** An account can be kept from seeing a library, and given an age ceiling in the libraries it can see, with exceptions for single titles.
-4. **Rank.** Roles are ranked. Nobody can grant a permission they do not hold, and nobody can change an account that outranks them.
+4. **Hierarchy.** Roles are kept in order, highest first. Nobody can grant a permission they do not hold, nobody can change or hand out a role at or above their own, and nobody can change an account whose highest role is at or above theirs.
 
 Give people the least they need. The Member role, which is what everybody gets by default, can watch, share, request and download, and nothing that changes the server. Reserve Administrator for the people who run it, and see [Accounts and roles](/use/accounts-and-roles).
 
@@ -114,7 +114,7 @@ If you use a tunnel or a CDN, remember it sees your traffic, including video, an
 
 ## Media mounts are read only
 
-The media folder is mounted `:ro` by default, which is how a media server should run. Valence never writes sidecars or renames files on its own. What writes to the library is what somebody with the permission for it does, and pre-transcoding once you switch it on, and each refuses with a message while the mount is read only: re-encoding and pre-transcoding, uploading media, making folders, renaming and moving files and folders, deleting files, folders or media, and moving media to another library. Turn them on by setting `MEDIA_ACCESS` to an empty string only when you use them. Re-encoding needs `media.reencode` and deleting needs `media.delete`, which no default role other than Administrator holds; making folders needs `library.create`, and uploading, renaming and moving need `library.edit`, both of which the Manager role holds too. See [Storage and volumes](/install/storage-and-volumes).
+The media folder is mounted `:ro` by default, which is how a media server should run. Valence never writes sidecars or renames files on its own. What writes to the library is what somebody with the permission for it does, and pre-transcoding once you switch it on, and each refuses with a message while the mount is read only: re-encoding and pre-transcoding, uploading media, making folders, renaming and moving files and folders, deleting files, folders or media, and moving media to another library. Turn them on by setting `MEDIA_ACCESS` to an empty string only when you use them. Re-encoding needs `media.reencode` and deleting needs `media.delete`, which no default role other than Administrator holds; making folders, uploading, renaming and moving need `library.edit`, which the Manager role holds too. See [Storage and volumes](/install/storage-and-volumes).
 
 The requests service is the exception in the stack: it mounts the library writable, because filing what it downloads into the library is its whole purpose. It is optional, and it is the only service that does.
 
@@ -124,7 +124,7 @@ The media service reads only the directories in `VALENCE_MEDIA_ROOTS` and writes
 
 Webhook deliveries are signed. Each request carries an `x-valence-signature` header of `sha256=` followed by the hex HMAC-SHA256 of the exact body, made with the subscription's secret. A receiver should recompute it and compare in constant time before trusting the payload, and reject requests without it. Deliveries time out after 10 seconds and use the `Valence` user agent.
 
-Valence refuses to send to addresses that are not HTTP or HTTPS, and to link-local addresses, which is where cloud instance metadata services live. That stops a webhook being used to read the machine's credentials, but it does not stop a subscription pointing at another service on your network, so only people with `server.webhooks` should be able to create them.
+Valence refuses to send to addresses that are not HTTP or HTTPS, and to link-local addresses, which is where cloud instance metadata services live. That stops a webhook being used to read the machine's credentials, but it does not stop a subscription pointing at another service on your network, so only people with `server.settings` should be able to create them.
 
 ## Share links
 

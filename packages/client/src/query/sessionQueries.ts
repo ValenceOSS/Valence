@@ -1,3 +1,4 @@
+import { fetchMyStreamLimit } from '@ValenceClient/streams/fetchMyStreamLimit';
 import { queryOptions } from '@tanstack/react-query';
 import { fetchSession, hasAPassword, listPasskeys } from '@ValenceClient/session/auth';
 import { readVersion } from '@ValenceClient/session/readVersion';
@@ -119,6 +120,18 @@ const permissions = () =>
     queryFn: () => fetchMyPermissions(),
   });
 
+/**
+ * The limit the account signed in streams under, held with the session so it goes when the session
+ * does.
+ *
+ * @returns The query.
+ */
+const streamLimit = () =>
+  queryOptions({
+    queryKey: [...SESSION, 'streamLimit'],
+    queryFn: () => fetchMyStreamLimit(),
+  });
+
 const sessionQueries = {
   setup,
   who,
@@ -129,6 +142,7 @@ const sessionQueries = {
   everyone,
   wayIn,
   permissions,
+  streamLimit,
   key: SESSION,
 };
 

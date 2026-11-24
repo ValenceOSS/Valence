@@ -43,11 +43,11 @@ describe('mayHearTopic', () => {
   });
 
   it('refuses an admin topic to somebody holding a different permission', () => {
-    expect(mayHearTopic('logs', held('server.monitor'))).toBe(false);
+    expect(mayHearTopic('jobs', held('server.monitor'))).toBe(false);
   });
 
   it('allows an admin topic to somebody holding exactly its permission', () => {
-    expect(mayHearTopic('logs', held('server.logs'))).toBe(true);
+    expect(mayHearTopic('logs', held('server.monitor'))).toBe(true);
   });
 
   it('reads sessions from streaming.view rather than an admin flag', () => {
@@ -71,10 +71,10 @@ describe('splitByEntitlement', () => {
   });
 
   it('refuses each admin topic separately rather than as one block', () => {
-    const split = splitByEntitlement(['monitor', 'sessions', 'logs'], held('server.monitor'));
+    const split = splitByEntitlement(['monitor', 'sessions', 'jobs'], held('server.monitor'));
 
     expect(split.allowed).toStrictEqual(['monitor']);
-    expect(split.refused).toStrictEqual(['sessions', 'logs']);
+    expect(split.refused).toStrictEqual(['sessions', 'jobs']);
   });
 });
 

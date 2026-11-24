@@ -8,6 +8,7 @@ const fetchProfiles = vi.hoisted(() => vi.fn());
 const fetchEveryone = vi.hoisted(() => vi.fn());
 const fetchWayIn = vi.hoisted(() => vi.fn());
 const fetchSetupStatus = vi.hoisted(() => vi.fn());
+const fetchMyStreamLimit = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/session/auth', () => ({ fetchSession }));
 vi.mock('@ValenceClient/session/readVersion', () => ({ readVersion }));
@@ -15,6 +16,7 @@ vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({ fetchProfiles }));
 vi.mock('@ValenceClient/profiles/fetchEveryone', () => ({ fetchEveryone }));
 vi.mock('@ValenceClient/profiles/fetchWayIn', () => ({ fetchWayIn }));
 vi.mock('@ValenceClient/setup/fetchSetupStatus', () => ({ fetchSetupStatus }));
+vi.mock('@ValenceClient/streams/fetchMyStreamLimit', () => ({ fetchMyStreamLimit }));
 
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -28,6 +30,7 @@ beforeEach(() => {
   fetchEveryone.mockResolvedValue([{ id: 'anybody' }]);
   fetchWayIn.mockResolvedValue({ profiles: [{ id: 'anybody' }], splashscreen: null });
   fetchSetupStatus.mockResolvedValue({ isComplete: true });
+  fetchMyStreamLimit.mockResolvedValue({ maxQuality: '720p', limitsDownloads: true });
 });
 
 describe('sessionQueries', () => {
@@ -68,8 +71,16 @@ describe('sessionQueries', () => {
     expect(cache.getQueryState(sessionQueries.wayIn().queryKey)?.isInvalidated).toBe(true);
   });
 
+  it('asks for the limit the account signed in streams under', async () => {
+    await expect(aCache().fetchQuery(sessionQueries.streamLimit())).resolves.toEqual({
+      maxQuality: '720p',
+      limitsDownloads: true,
+    });
+  });
+
   it('holds everything about a session under one key, so signing in throws the lot away', () => {
     expect(sessionQueries.who().queryKey.slice(0, 1)).toEqual(sessionQueries.key);
     expect(sessionQueries.profiles().queryKey.slice(0, 1)).toEqual(sessionQueries.key);
+    expect(sessionQueries.streamLimit().queryKey.slice(0, 1)).toEqual(sessionQueries.key);
   });
 });

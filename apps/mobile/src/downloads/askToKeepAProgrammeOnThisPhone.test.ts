@@ -21,6 +21,7 @@ const OFFER = {
       comparison: null,
       wouldTranscode: false,
       savesSpace: true,
+      isAboveLimit: false,
     },
   ],
 };

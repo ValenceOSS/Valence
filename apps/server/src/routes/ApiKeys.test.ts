@@ -198,7 +198,7 @@ describe('holding API keys', () => {
 
 describe('what a key may do', () => {
   it('reaches a route its account may reach', async () => {
-    const { asKey, mint } = await signedInWith(['account.keys', 'library.create']);
+    const { asKey, mint } = await signedInWith(['account.keys', 'library.edit']);
 
     const made = await mint({ name: 'Scripted' });
 
@@ -225,7 +225,7 @@ describe('what a key may do', () => {
   });
 
   it('is narrowed to what it names, below what its account holds', async () => {
-    const { mint } = await signedInWith(['account.keys', 'library.create', 'jobs.run']);
+    const { mint } = await signedInWith(['account.keys', 'library.edit', 'jobs.run']);
 
     const made = await mint({ name: 'Read only', permissions: ['jobs.run'] });
 
@@ -249,15 +249,15 @@ describe('what a key may do', () => {
   });
 
   it('reaches what it was narrowed to, rather than being narrowed to nothing', async () => {
-    const { asKey, mint } = await signedInWith(['account.keys', 'library.create']);
+    const { asKey, mint } = await signedInWith(['account.keys', 'library.edit']);
 
-    const made = await mint({ name: 'Just libraries', permissions: ['library.create'] });
+    const made = await mint({ name: 'Just libraries', permissions: ['library.edit'] });
 
     expect((await asKey(made.key, '/api/libraries', 'POST')).status).not.toBe(403);
   });
 
   it('stops working the moment it is revoked', async () => {
-    const { request, asKey, mint } = await signedInWith(['account.keys', 'library.create']);
+    const { request, asKey, mint } = await signedInWith(['account.keys', 'library.edit']);
 
     const made = await mint({ name: 'Doomed' });
 
@@ -269,7 +269,7 @@ describe('what a key may do', () => {
   });
 
   it('stops working while it is turned off', async () => {
-    const { request, asKey, mint } = await signedInWith(['account.keys', 'library.create']);
+    const { request, asKey, mint } = await signedInWith(['account.keys', 'library.edit']);
 
     const made = await mint({ name: 'Paused' });
 
@@ -301,7 +301,7 @@ describe('a key asking about keys', () => {
   });
 
   it('cannot turn another key off', async () => {
-    const { request, asKey, mint } = await signedInWith(['account.keys', 'library.create']);
+    const { request, asKey, mint } = await signedInWith(['account.keys', 'library.edit']);
 
     const made = await mint({ name: 'Leaked' });
     const other = await mint({ name: 'Other' });
@@ -314,7 +314,7 @@ describe('a key asking about keys', () => {
   });
 
   it('cannot revoke a key, its own included', async () => {
-    const { asKey, mint } = await signedInWith(['account.keys', 'library.create']);
+    const { asKey, mint } = await signedInWith(['account.keys', 'library.edit']);
 
     const made = await mint({ name: 'Leaked' });
 
@@ -410,7 +410,7 @@ describe('a key narrowed to a few permissions, against its own account', () => {
     const session = z
       .object({ user: z.object({ id: z.string() }) })
       .parse(await (await request('/api/auth/get-session')).json());
-    const security = await mint({ name: 'Security', permissions: ['account.security'] });
+    const security = await mint({ name: 'Security', permissions: ['account.manage'] });
 
     expect(
       (

@@ -10,7 +10,7 @@ describe('describePermission', () => {
   });
 
   it('says what is destroyed rather than that something is', () => {
-    expect(describePermission('jobs.runDestructive')).toBe('Run reset and rebuild');
+    expect(describePermission('jobs.runDestructive')).toBe('Reset and rebuild');
   });
 
   it('never answers with the identifier it was given', () => {
@@ -19,7 +19,13 @@ describe('describePermission', () => {
     }
   });
 
-  it('says administrator implies what has not been written yet', () => {
-    expect(describePermission('administrator')).toContain('anything added later');
+  it('calls administrator everything', () => {
+    expect(describePermission('administrator')).toBe('Everything');
+  });
+
+  it('names each permission differently, so no two rows of a role read the same', () => {
+    const labels = PERMISSIONS.map((permission) => describePermission(permission));
+
+    expect(new Set(labels).size).toBe(labels.length);
   });
 });

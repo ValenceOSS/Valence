@@ -324,7 +324,14 @@ describe('SessionCard', () => {
   });
 
   it('says what its account is limited to while it streams', () => {
-    draw(anActiveSession({ streams: { limit: { maxBitrateKbps: 8000, maxStreams: 3 }, now: 2 } }));
+    draw(
+      anActiveSession({
+        streams: {
+          limit: { maxBitrateKbps: 8000, maxStreams: 3, maxQuality: null, limitsDownloads: false },
+          now: 2,
+        },
+      }),
+    );
 
     expect(screen.getByText('2 of 3 streams · Up to 8 Mbps')).toBeInTheDocument();
   });

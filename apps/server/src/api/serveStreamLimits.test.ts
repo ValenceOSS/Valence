@@ -15,6 +15,8 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 const LimitSchema = z.object({
   maxBitrateKbps: z.number().nullable(),
   maxStreams: z.number().nullable(),
+  maxQuality: z.string().nullable(),
+  limitsDownloads: z.boolean(),
 });
 
 const AccountLimitSchema = z.object({
@@ -44,6 +46,8 @@ const build = () => {
   });
 
   return {
+    app,
+    settings,
     permissions,
     store,
     administrator: signedInApp(app, { auth, store, permissions, isAdministrator: true }),
@@ -66,8 +70,13 @@ describe('stream limits', () => {
     );
 
     expect(AccountLimitSchema.parse(await read.json())).toEqual({
-      own: { maxBitrateKbps: null, maxStreams: null },
-      effective: { maxBitrateKbps: null, maxStreams: null },
+      own: { maxBitrateKbps: null, maxStreams: null, maxQuality: null, limitsDownloads: false },
+      effective: {
+        maxBitrateKbps: null,
+        maxStreams: null,
+        maxQuality: null,
+        limitsDownloads: false,
+      },
       streamsNow: 0,
     });
   });
@@ -77,12 +86,14 @@ describe('stream limits', () => {
 
     const set = await administrator.request(
       `${TEST_ORIGIN}/api/admin/accounts/someone/stream-limit`,
-      put({ maxBitrateKbps: 8000, maxStreams: 2 }),
+      put({ maxBitrateKbps: 8000, maxStreams: 2, maxQuality: null, limitsDownloads: false }),
     );
 
     expect(AccountLimitSchema.parse(await set.json()).effective).toEqual({
       maxBitrateKbps: 8000,
       maxStreams: 2,
+      maxQuality: null,
+      limitsDownloads: false,
     });
   });
 
@@ -99,17 +110,17 @@ describe('stream limits', () => {
 
     await administrator.request(
       `${TEST_ORIGIN}/api/admin/roles/${role.id}/stream-limit`,
-      put({ maxBitrateKbps: 4000, maxStreams: null }),
+      put({ maxBitrateKbps: 4000, maxStreams: null, maxQuality: null, limitsDownloads: false }),
     );
 
     const set = await administrator.request(
       `${TEST_ORIGIN}/api/admin/accounts/someone/stream-limit`,
-      put({ maxBitrateKbps: 8000, maxStreams: 2 }),
+      put({ maxBitrateKbps: 8000, maxStreams: 2, maxQuality: null, limitsDownloads: false }),
     );
 
     expect(AccountLimitSchema.parse(await set.json())).toMatchObject({
-      own: { maxBitrateKbps: 8000, maxStreams: 2 },
-      effective: { maxBitrateKbps: 4000, maxStreams: 2 },
+      own: { maxBitrateKbps: 8000, maxStreams: 2, maxQuality: null, limitsDownloads: false },
+      effective: { maxBitrateKbps: 4000, maxStreams: 2, maxQuality: null, limitsDownloads: false },
     });
   });
 
@@ -118,7 +129,7 @@ describe('stream limits', () => {
 
     const refused = await administrator.request(
       `${TEST_ORIGIN}/api/admin/accounts/someone/stream-limit`,
-      put({ maxBitrateKbps: 1, maxStreams: null }),
+      put({ maxBitrateKbps: 1, maxStreams: null, maxQuality: null, limitsDownloads: false }),
     );
 
     expect(refused.status).toBe(400);
@@ -130,7 +141,7 @@ describe('stream limits', () => {
       name: 'Moderator',
       position: 60,
       color: null,
-      permissions: ['account.manage'],
+      permissions: ['account.roles'],
     });
     const administratorRole = (await permissions.listRoles()).find(
       (role) => role.name === 'Administrator',
@@ -145,7 +156,12 @@ describe('stream limits', () => {
     await viewer.request(`${TEST_ORIGIN}/api/admin/roles/${kids.id}/stream-limit`);
     permissions.state.assignments[store.user[0]?.id ?? ''] = [moderator.id];
 
-    const limit = put({ maxBitrateKbps: 250, maxStreams: 1 });
+    const limit = put({
+      maxBitrateKbps: 250,
+      maxStreams: 1,
+      maxQuality: null,
+      limitsDownloads: false,
+    });
 
     expect(
       (
@@ -169,9 +185,77 @@ describe('stream limits', () => {
 
     const refused = await viewer.request(
       `${TEST_ORIGIN}/api/admin/accounts/someone/stream-limit`,
-      put({ maxBitrateKbps: 8000, maxStreams: null }),
+      put({ maxBitrateKbps: 8000, maxStreams: null, maxQuality: null, limitsDownloads: false }),
     );
 
     expect(refused.status).toBe(403);
+  });
+
+  it('keeps a role’s limit that holds back only the quality', async () => {
+    const { administrator, permissions } = build();
+    const role = await permissions.createRole({
+      name: 'Kids',
+      position: 50,
+      color: null,
+      permissions: [],
+    });
+    const onlyQuality = {
+      maxBitrateKbps: null,
+      maxStreams: null,
+      maxQuality: '720p',
+      limitsDownloads: false,
+    };
+
+    await administrator.request(
+      `${TEST_ORIGIN}/api/admin/roles/${role.id}/stream-limit`,
+      put(onlyQuality),
+    );
+
+    const read = await administrator.request(
+      `${TEST_ORIGIN}/api/admin/roles/${role.id}/stream-limit`,
+    );
+
+    expect(LimitSchema.parse(await read.json())).toEqual(onlyQuality);
+  });
+});
+
+describe('the limit somebody streams under, asked by them', () => {
+  it('is refused when nobody is signed in', async () => {
+    const { app } = build();
+
+    const refused = await app.request(`${TEST_ORIGIN}/api/account/stream-limit`, {
+      headers: { origin: TEST_ORIGIN },
+    });
+
+    expect(refused.status).toBe(401);
+  });
+
+  it('is the limit that holds them, quality and downloads included', async () => {
+    const { viewer, settings, store } = build();
+
+    await viewer.request(`${TEST_ORIGIN}/api/account/stream-limit`);
+    await settings.write({
+      streamLimits: {
+        accounts: {
+          [store.user[0]?.id ?? '']: {
+            maxBitrateKbps: 6000,
+            maxStreams: null,
+            maxQuality: '1080p',
+            limitsDownloads: true,
+          },
+        },
+        roles: {},
+      },
+    });
+
+    const read = await viewer.request(`${TEST_ORIGIN}/api/account/stream-limit`);
+
+    expect(read.status).toBe(200);
+    expect(LimitSchema.parse(await read.json())).toEqual({
+      maxBitrateKbps: 6000,
+      maxStreams: null,
+      maxQuality: '1080p',
+      limitsDownloads: true,
+    });
   });
 });

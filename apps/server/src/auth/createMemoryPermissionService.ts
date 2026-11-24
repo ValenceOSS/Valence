@@ -49,7 +49,10 @@ const createMemoryPermissionService = (
         }),
       ),
 
-    listRoles: () => Promise.resolve([...state.roles].sort((a, b) => b.position - a.position)),
+    listRoles: () =>
+      Promise.resolve(
+        [...state.roles].sort((a, b) => b.position - a.position || a.name.localeCompare(b.name)),
+      ),
 
     createRole: (role) => {
       const created: Role = { ...role, id: randomUUID(), permissions: [...role.permissions] };
@@ -89,6 +92,21 @@ const createMemoryPermissionService = (
       }
 
       return Promise.resolve(state.roles.length !== before);
+    },
+
+    makeRoomAtBottom: () => {
+      state.roles = state.roles.map((role) => ({ ...role, position: role.position + 1 }));
+
+      return Promise.resolve();
+    },
+
+    rankRoles: (ranks) => {
+      state.roles = state.roles.map((role) => ({
+        ...role,
+        position: ranks.get(role.id) ?? role.position,
+      }));
+
+      return Promise.resolve();
     },
 
     rolesFor: (userId) => Promise.resolve(rolesFor(userId)),

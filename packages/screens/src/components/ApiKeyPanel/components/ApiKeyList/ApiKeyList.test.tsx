@@ -24,7 +24,7 @@ const BACKUPS: ApiKey = {
   name: 'Backup script',
   start: 'vk_c41e',
   enabled: false,
-  permissions: ['media.rescan', 'jobs.run', 'library.edit'],
+  permissions: ['media.override', 'jobs.run', 'library.edit'],
   rateLimit: null,
 };
 

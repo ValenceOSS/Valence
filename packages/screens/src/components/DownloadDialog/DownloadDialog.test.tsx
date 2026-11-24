@@ -37,6 +37,7 @@ const OFFER = {
       comparison: null,
       wouldTranscode: true,
       savesSpace: true,
+      isAboveLimit: false,
     },
     {
       quality: '1080p',
@@ -46,6 +47,7 @@ const OFFER = {
       comparison: 'a small fraction of the original — about a 15th',
       wouldTranscode: true,
       savesSpace: true,
+      isAboveLimit: false,
     },
   ],
 };
@@ -119,6 +121,7 @@ describe('DownloadDialog', () => {
               bytes: 70_000_000_000,
               comparison: 'bigger than the original',
               savesSpace: false,
+              isAboveLimit: false,
             },
           ],
         }),

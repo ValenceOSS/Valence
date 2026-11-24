@@ -1,11 +1,21 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
-import { GrantedPermissionSchema, PERMISSIONS } from '@ValenceContracts/schemas/Permission';
+import {
+  GrantedPermissionOrRetiredSchema,
+  GrantedPermissionSchema,
+  PERMISSIONS,
+  PermissionOrRetiredSchema,
+} from '@ValenceContracts/schemas/Permission';
 
 const PermissionName = z.enum(PERMISSIONS);
 
 const HeldPermission = GrantedPermissionSchema.openapi({
   description: 'One of Valence’s permissions, or a plugin’s own as plugin.<plugin>.<node>',
+});
+
+const AskedPermission = GrantedPermissionOrRetiredSchema.openapi({
+  description:
+    'One of Valence’s permissions, or a plugin’s own as plugin.<plugin>.<node>. A permission since folded into another is read as the one it became.',
 });
 
 const RoleColor = z
@@ -28,16 +38,35 @@ const RoleError = RefusalSchema.openapi('RoleError');
 const RoleBody = z
   .object({
     name: z.string().min(1).max(60),
-    position: z.number().int().nonnegative(),
-    permissions: z.array(HeldPermission),
+    position: z.number().int().nonnegative().optional().openapi({
+      description:
+        'Where the role ranks, higher above lower. Left out, it goes beneath every other role.',
+    }),
+    permissions: z.array(AskedPermission).transform((asked) => [...new Set(asked)]),
     color: RoleColor.optional(),
   })
   .openapi('RoleBody');
 
 const RolePatch = RoleBody.partial().openapi('RolePatch');
 
+const RoleList = z
+  .object({
+    roles: z.array(Role),
+    outOfReach: z.array(z.string().uuid()).openapi({
+      description:
+        'The roles at or above the asker’s own highest role, which they can neither change nor move',
+    }),
+  })
+  .openapi('RoleList');
+
+const RoleOrder = z
+  .object({
+    ids: z.array(z.string().uuid()).openapi({ description: 'Every role, highest first' }),
+  })
+  .openapi('RoleOrder');
+
 const OverrideBody = z
-  .object({ permission: PermissionName, effect: z.enum(['allow', 'deny']) })
+  .object({ permission: PermissionOrRetiredSchema, effect: z.enum(['allow', 'deny']) })
   .openapi('OverrideBody');
 
 const listPermissionsRoute = createRoute({
@@ -67,10 +96,34 @@ const listRolesRoute = createRoute({
   responses: {
     200: {
       description: 'Every role, highest first',
-      content: { 'application/json': { schema: z.object({ roles: z.array(Role) }) } },
+      content: { 'application/json': { schema: RoleList } },
     },
     403: {
       description: 'Not permitted',
+      content: { 'application/json': { schema: RoleError } },
+    },
+  },
+});
+
+const orderRolesRoute = createRoute({
+  method: 'put',
+  path: '/api/admin/roles/order',
+  tags: ['Roles'],
+  summary: 'Put the roles in order',
+  description:
+    'Ranks every role by where it is in the list, highest first. Roles at or above the asker’s own highest role stay where they are, and nothing may be moved above them.',
+  request: { body: { content: { 'application/json': { schema: RoleOrder } } } },
+  responses: {
+    200: {
+      description: 'Every role, in its new order',
+      content: { 'application/json': { schema: RoleList } },
+    },
+    403: {
+      description: 'Not permitted, or the order moves a role at or above the asker',
+      content: { 'application/json': { schema: RoleError } },
+    },
+    409: {
+      description: 'The order does not name every role exactly once',
       content: { 'application/json': { schema: RoleError } },
     },
   },
@@ -239,7 +292,9 @@ const clearOverrideRoute = createRoute({
   path: '/api/admin/accounts/{userId}/overrides/{permission}',
   tags: ['Roles'],
   summary: 'Forget an override, leaving the roles to decide',
-  request: { params: z.object({ userId: z.string().min(1), permission: PermissionName }) },
+  request: {
+    params: z.object({ userId: z.string().min(1), permission: PermissionOrRetiredSchema }),
+  },
   responses: {
     204: { description: 'The override was forgotten' },
     400: {
@@ -256,6 +311,7 @@ const clearOverrideRoute = createRoute({
 export {
   listPermissionsRoute,
   listRolesRoute,
+  orderRolesRoute,
   createRoleRoute,
   updateRoleRoute,
   deleteRoleRoute,

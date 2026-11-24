@@ -41,7 +41,7 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
   const asAdministrator = async (headers: Headers, userId: string) => {
     const actor = await readActor(headers);
 
-    if (actor === null || !actor.permissions.has('account.profiles')) {
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return { refusal: refuse('common.thatIsForAdministrators'), status: 403 } as const;
     }
 

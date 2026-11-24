@@ -229,7 +229,7 @@ describe('account administration', () => {
 
   describe('listing', () => {
     it('refuses somebody without account.manage', async () => {
-      const context = await signedInWith(['account.ban']);
+      const context = await signedInWith(['account.invite']);
 
       expect((await context.request('/api/admin/accounts')).status).toBe(403);
     });
@@ -307,8 +307,8 @@ describe('account administration', () => {
   });
 
   describe('banning', () => {
-    it('refuses somebody without account.ban', async () => {
-      const context = await signedInWith(['account.manage']);
+    it('refuses somebody without account.manage', async () => {
+      const context = await signedInWith(['account.invite']);
       const response = await context.request(`/api/admin/accounts/${OTHER}/ban`, 'POST', {
         reason: 'because',
       });
@@ -318,7 +318,7 @@ describe('account administration', () => {
     });
 
     it('bans somebody below the actor', async () => {
-      const context = await signedInWith(['account.ban']);
+      const context = await signedInWith(['account.manage']);
       const response = await context.request(`/api/admin/accounts/${OTHER}/ban`, 'POST', {
         reason: 'because',
       });
@@ -328,7 +328,7 @@ describe('account administration', () => {
     });
 
     it('refuses to ban somebody who outranks the actor', async () => {
-      const context = await signedInWith(['account.ban'], 100);
+      const context = await signedInWith(['account.manage'], 100);
       const senior = await context.permissions.createRole({
         name: 'Senior',
         position: 500,
@@ -357,7 +357,7 @@ describe('account administration', () => {
     });
 
     it('refuses to ban the last administrator', async () => {
-      const context = await signedInWith(['account.ban'], 900);
+      const context = await signedInWith(['account.manage'], 900);
       const administrator = (await context.permissions.listRoles()).find(
         (role) => role.name === 'Administrator',
       );
@@ -374,7 +374,7 @@ describe('account administration', () => {
     });
 
     it('reports an account that is not there', async () => {
-      const context = await signedInWith(['account.ban']);
+      const context = await signedInWith(['account.manage']);
 
       context.banAccount.mockResolvedValue(false);
 
@@ -386,7 +386,7 @@ describe('account administration', () => {
     });
 
     it('lets a ban be lifted', async () => {
-      const context = await signedInWith(['account.ban']);
+      const context = await signedInWith(['account.manage']);
       const response = await context.request(`/api/admin/accounts/${OTHER}/ban`, 'DELETE');
 
       expect(response.status).toBe(204);
@@ -394,7 +394,7 @@ describe('account administration', () => {
     });
 
     it('refuses to lift a ban on somebody who outranks the actor', async () => {
-      const context = await signedInWith(['account.ban'], 100);
+      const context = await signedInWith(['account.manage'], 100);
       const senior = await context.permissions.createRole({
         name: 'Senior',
         position: 500,
@@ -604,7 +604,7 @@ describe('account administration', () => {
 
   describe('editing', () => {
     it('refuses somebody without account.manage', async () => {
-      const context = await signedInWith(['account.ban']);
+      const context = await signedInWith(['account.invite']);
       const response = await context.request(`/api/admin/accounts/${OTHER}`, 'PATCH', {
         name: 'Samantha',
       });
@@ -732,7 +732,7 @@ describe('account administration', () => {
 
   describe('removing', () => {
     it('refuses somebody without account.manage', async () => {
-      const context = await signedInWith(['account.ban']);
+      const context = await signedInWith(['account.invite']);
 
       expect((await context.request(`/api/admin/accounts/${OTHER}`, 'DELETE')).status).toBe(403);
     });

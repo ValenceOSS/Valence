@@ -1,4 +1,5 @@
 import {
+  readMyStreamLimitRoute,
   readAccountStreamLimitRoute,
   readRoleStreamLimitRoute,
   setAccountStreamLimitRoute,
@@ -7,7 +8,11 @@ import {
 import { checkRoleChange } from '@ValenceServer/auth/checkRoleChange';
 import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
 import { streamsOf } from '@ValenceServer/streams/streamsOf';
-import { NO_STREAM_LIMIT, StreamLimitsSchema } from '@ValenceContracts/schemas/StreamLimit';
+import {
+  NO_STREAM_LIMIT,
+  StreamLimitSchema,
+  StreamLimitsSchema,
+} from '@ValenceContracts/schemas/StreamLimit';
 import type { StreamLimit, StreamLimits } from '@ValenceContracts/schemas/StreamLimit';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -23,7 +28,7 @@ const NOBODY_LIMITED: StreamLimits = { accounts: {}, roles: {} };
  * @returns Whether either side of it is set.
  */
 const holdsAnything = (limit: StreamLimit): boolean =>
-  limit.maxBitrateKbps !== null || limit.maxStreams !== null;
+  limit.maxBitrateKbps !== null || limit.maxStreams !== null || limit.maxQuality !== null;
 
 /**
  * Registers the endpoints that limit how much an account, or everybody holding a role, may stream.
@@ -41,7 +46,18 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
     refusalOver,
     theOwner,
     describeRefusal,
+    streamLimitOf,
   } = context;
+
+  app.openapi(readMyStreamLimitRoute, async (context) => {
+    const limit = await streamLimitOf(context.req.raw.headers);
+
+    if (limit === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    return context.json(StreamLimitSchema.parse(limit), 200);
+  });
 
   const limitsNow = async (): Promise<StreamLimits> =>
     StreamLimitsSchema.catch(NOBODY_LIMITED).parse((await settings.read()).streamLimits);
@@ -52,11 +68,7 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
 
     return {
       own: limits.accounts[userId] ?? NO_STREAM_LIMIT,
-      effective: readStreamLimit(
-        limits,
-        userId,
-        roles.map((role) => role.id),
-      ),
+      effective: readStreamLimit(limits, userId, roles),
       streamsNow: streamsOf(presence.list(), userId),
     };
   };
@@ -98,7 +110,7 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(readRoleStreamLimitRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
+    if (!(await requires(context.req.raw.headers, 'account.roles'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -116,7 +128,7 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(setRoleStreamLimitRoute, async (context) => {
     const actor = await readActor(context.req.raw.headers);
 
-    if (actor === null || !actor.permissions.has('account.manage')) {
+    if (actor === null || !actor.permissions.has('account.roles')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -150,7 +162,7 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
       },
     });
 
-    return context.json(limit, 200);
+    return context.json(holdsAnything(limit) ? limit : NO_STREAM_LIMIT, 200);
   });
 };
 

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
-import { ceilingOf } from '@ValenceServer/linking/content/ceilingOf';
+import { qualityUnderCeiling } from '@ValenceContracts/functions/qualityUnderCeiling';
 
 const AskedToStartSchema = z.object({}).catchall(JsonValueSchema);
 
@@ -35,7 +35,10 @@ const startBodyWithin = (sent: ArrayBuffer | null, ceiling: QualityStepId): Arra
     return new TextEncoder().encode(
       JSON.stringify({
         ...asked.data,
-        requestedQuality: ceilingOf(requested.success ? requested.data : undefined, ceiling),
+        requestedQuality: qualityUnderCeiling(
+          requested.success ? requested.data : undefined,
+          ceiling,
+        ),
       }),
     ).buffer;
   } catch {

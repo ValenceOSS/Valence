@@ -54,7 +54,7 @@ const keysAt = (now: number, hasMade: boolean): ApiKey[] => [
     expiresAt: null,
     lastRequestAt: new Date(now - 26 * 60 * MINUTE).toISOString(),
     requestCount: 31,
-    permissions: ['jobs.run', 'media.rescan', 'library.edit'],
+    permissions: ['jobs.run', 'media.override', 'library.edit'],
     rateLimit: null,
     createdAt: new Date(now - 30 * 24 * 60 * MINUTE).toISOString(),
   },

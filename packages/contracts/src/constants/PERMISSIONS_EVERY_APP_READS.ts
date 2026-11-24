@@ -1,6 +1,4 @@
-import type { GrantedPermission } from '@ValenceContracts/schemas/Permission';
-
-const PERMISSIONS_EVERY_APP_READS: ReadonlySet<GrantedPermission> = new Set<GrantedPermission>([
+const PERMISSIONS_EVERY_APP_READS: ReadonlySet<string> = new Set<string>([
   'administrator',
   'library.create',
   'library.edit',

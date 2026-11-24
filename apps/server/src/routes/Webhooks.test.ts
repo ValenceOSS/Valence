@@ -90,7 +90,7 @@ const signedInWith = async (granted: readonly Permission[]) => {
   return { app, request, create, queueWebhookDelivery, webhooks };
 };
 
-const asKeeper = () => signedInWith(['server.webhooks']);
+const asKeeper = () => signedInWith(['server.settings']);
 
 describe('the webhook routes', () => {
   it('lists nothing on a server nobody has set one up on', async () => {
@@ -340,8 +340,8 @@ describe('the webhook routes', () => {
     expect(queueWebhookDelivery).not.toHaveBeenCalled();
   });
 
-  it('refuses an account that may not manage webhooks', async () => {
-    const { request } = await signedInWith(['server.settings', 'server.logs']);
+  it('refuses an account that may not change the server’s settings', async () => {
+    const { request } = await signedInWith(['server.monitor', 'library.edit']);
 
     expect((await request('/api/webhooks')).status).toBe(403);
     expect((await request('/api/webhooks', 'POST', aSubscription)).status).toBe(403);
@@ -446,7 +446,7 @@ describe('the webhook routes', () => {
   });
 
   it('keeps the history behind the same permission as the rest', async () => {
-    const { request } = await signedInWith(['server.settings']);
+    const { request } = await signedInWith(['server.monitor']);
     const anyId = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
     expect((await request(`/api/webhooks/${anyId}/deliveries`)).status).toBe(403);

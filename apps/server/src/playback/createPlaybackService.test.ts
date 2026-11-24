@@ -11,6 +11,7 @@ import type {
 import type { CreatePlaybackServiceOptions, MediaLookup } from './createPlaybackService';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
+import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import { fallbackEncodeKbpsFor } from '@ValenceCore/functions/fallbackEncodeKbpsFor';
 
 const MEDIA_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
@@ -1950,6 +1951,117 @@ describe('playing a copy kept alongside', () => {
           audioStreamIndex: 1,
         }),
       ]);
+    });
+  });
+
+  describe('held to a limit', () => {
+    it('fits the original only where it is within both the quality and the bitrate', async () => {
+      const { service } = build({}, withACopy);
+
+      await expect(
+        service.fitsLimit(MEDIA_ID, null, { maxQuality: null, maxBitrateKbps: null }),
+      ).resolves.toBe(true);
+      await expect(
+        service.fitsLimit(MEDIA_ID, null, { maxQuality: '1080p', maxBitrateKbps: null }),
+      ).resolves.toBe(false);
+      await expect(
+        service.fitsLimit(MEDIA_ID, null, { maxQuality: null, maxBitrateKbps: 20_000 }),
+      ).resolves.toBe(false);
+      await expect(
+        service.fitsLimit(MEDIA_ID, null, { maxQuality: null, maxBitrateKbps: 50_000 }),
+      ).resolves.toBe(true);
+    });
+
+    it('fits a copy by its own quality and bitrate, found by its id', async () => {
+      const { service } = build({}, withACopy);
+
+      await expect(
+        service.fitsLimit(MEDIA_ID, RENDITION_ID, { maxQuality: '1080p', maxBitrateKbps: null }),
+      ).resolves.toBe(true);
+      await expect(
+        service.fitsLimit(MEDIA_ID, RENDITION_ID, { maxQuality: '720p', maxBitrateKbps: null }),
+      ).resolves.toBe(false);
+      await expect(
+        service.fitsLimit(MEDIA_ID, RENDITION_ID, { maxQuality: null, maxBitrateKbps: 2000 }),
+      ).resolves.toBe(false);
+    });
+
+    describe('streaming adaptively', () => {
+      const SMALLER_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3398';
+      const withTwoCopies = {
+        ...withACopy,
+        renditions: [
+          ...withACopy.renditions,
+          {
+            id: SMALLER_ID,
+            item: item({ id: SMALLER_ID, width: 1280, height: 720, bitrateKbps: 1500 }),
+            path: '/media/arrival - 720p H264.valence.mp4',
+          },
+        ],
+      };
+      const rungsOffered = async (qualityCeiling: QualityStepId | undefined) => {
+        const started: { spec: SessionSpec; variants: readonly SessionSpec[] }[] = [];
+        const { service } = build(
+          {
+            startSession: (spec, _deviceId, variants = []) => {
+              started.push({ spec, variants });
+
+              return Promise.resolve({
+                id: 'session-1',
+                manifest: 'index.m3u8',
+                encodesVideo: false,
+                encodedForKeyframes: false,
+                reuse: 'none' as const,
+              });
+            },
+          },
+          withTwoCopies,
+        );
+
+        const outcome = await service.start(
+          MEDIA_ID,
+          profile(),
+          0,
+          undefined,
+          '720p',
+          undefined,
+          undefined,
+          true,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          qualityCeiling,
+        );
+
+        return {
+          outcome,
+          rungs: (started[0]?.variants ?? []).map((variant) => variant.inputPath),
+        };
+      };
+
+      it('offers a copy above the quality asked for as a rung where nothing caps it', async () => {
+        const { rungs } = await rungsOffered(undefined);
+
+        expect(rungs).toContain('/media/arrival - 1080p H264.valence.mp4');
+      });
+
+      it('offers no rung above the ceiling it is given, so plays the copy within it as it is', async () => {
+        const { rungs, outcome } = await rungsOffered('720p');
+
+        expect(rungs).not.toContain('/media/arrival - 1080p H264.valence.mp4');
+        expect(outcome).toMatchObject({
+          kind: 'started',
+          session: {
+            delivery: {
+              kind: 'direct',
+              url: `/api/media/${MEDIA_ID}/file?rendition=${SMALLER_ID}`,
+            },
+          },
+        });
+      });
     });
   });
 

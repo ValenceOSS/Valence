@@ -58,6 +58,7 @@ const asking = {
   onSubtitle: jest.fn(),
   chosenAudio: null,
   chosenQuality: 'original' as const,
+  qualityLimit: null,
   onAudio: jest.fn(),
   onQuality: jest.fn(),
   captionStyle: DEFAULT_CAPTION_STYLE,
@@ -131,6 +132,72 @@ describe('theChoicesOn', () => {
     });
 
     expect(quality?.choices.map((one) => one.id)).not.toContain('2160p');
+  });
+
+  it('shuts the steps above the viewer’s limit and says why', () => {
+    const { quality } = theChoicesOn({
+      ...asking,
+      qualityLimit: '1080p',
+      streams: [aStream(1, 'eng', true)],
+    });
+
+    expect(quality?.choices.find((one) => one.id === '1440p')).toMatchObject({
+      detail: 'Above your limit',
+      isDisabled: true,
+    });
+    expect(
+      quality?.choices
+        .filter((one) => one.id === '2160p' || one.id === '1440p')
+        .every((one) => one.isDisabled === true && one.detail === 'Above your limit'),
+    ).toBe(true);
+  });
+
+  it('leaves the limit itself and everything under it to choose', () => {
+    const { quality } = theChoicesOn({
+      ...asking,
+      qualityLimit: '1080p',
+      streams: [aStream(1, 'eng', true)],
+    });
+
+    expect(quality?.choices.find((one) => one.id === 'auto')?.isDisabled).toBeUndefined();
+    expect(quality?.choices.find((one) => one.id === '1080p')?.isDisabled).toBeUndefined();
+    expect(quality?.choices.find((one) => one.id === '1080p')?.detail).toContain('Mbps');
+    expect(quality?.choices.find((one) => one.id === '720p')?.isDisabled).toBeUndefined();
+  });
+
+  it('shuts the file as it is where it is sharper than the viewer’s limit', () => {
+    const { quality } = theChoicesOn({
+      ...asking,
+      qualityLimit: '1080p',
+      streams: [aStream(1, 'eng', true)],
+    });
+
+    expect(quality?.choices.find((one) => one.id === 'original')).toMatchObject({
+      label: 'Original (4K)',
+      detail: 'Above your limit',
+      isDisabled: true,
+    });
+  });
+
+  it('leaves the file as it is to choose where it is within the viewer’s limit', () => {
+    const { quality } = theChoicesOn({
+      ...asking,
+      media: aFilm(1920, 1080),
+      qualityLimit: '1080p',
+      streams: [aStream(1, 'eng', true)],
+    });
+
+    const original = quality?.choices.find((one) => one.id === 'original');
+
+    expect(original?.detail).toBe('Original quality');
+    expect(original?.isDisabled).toBeUndefined();
+  });
+
+  it('shuts nothing for being too sharp where the viewer has no limit', () => {
+    const { quality } = theChoicesOn({ ...asking, streams: [aStream(1, 'eng', true)] });
+
+    expect(quality?.choices.some((one) => one.detail === 'Above your limit')).toBe(false);
+    expect(quality?.choices.find((one) => one.id === 'original')?.isDisabled).toBeUndefined();
   });
 
   it('offers no quality for a film nothing is known about yet', () => {

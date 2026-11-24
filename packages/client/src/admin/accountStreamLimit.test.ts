@@ -8,8 +8,8 @@ afterEach(() => {
 describe('accountStreamLimit', () => {
   it('reads an account’s limits and its streams now', async () => {
     const answer = {
-      own: { maxBitrateKbps: 8000, maxStreams: null },
-      effective: { maxBitrateKbps: 8000, maxStreams: 1 },
+      own: { maxBitrateKbps: 8000, maxStreams: null, maxQuality: null, limitsDownloads: false },
+      effective: { maxBitrateKbps: 8000, maxStreams: 1, maxQuality: null, limitsDownloads: false },
       streamsNow: 2,
     };
 

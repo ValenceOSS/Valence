@@ -23,7 +23,10 @@ const DownloadOptions = ({
   isOfASeries,
   freeBytes,
 }: DownloadOptionsProps) => {
-  const picked = options.find((one) => one.quality === chosen) ?? options[0] ?? null;
+  const picked =
+    options.find((one) => one.quality === chosen) ??
+    options.find((one) => !one.isAboveLimit) ??
+    null;
   const verdict = judgeFreeSpace({ bytes: picked?.bytes ?? null, freeBytes });
 
   return (
@@ -42,8 +45,12 @@ const DownloadOptions = ({
           id: option.quality,
           title: option.label,
           detail: option.meaning,
-          ...(option.wouldTranscode ? { note: say('screens.downloadDialog.converted') } : {}),
-          isDisabled: !option.savesSpace,
+          ...(option.isAboveLimit
+            ? { note: say('common.aboveYourLimit') }
+            : option.wouldTranscode
+              ? { note: say('screens.downloadDialog.converted') }
+              : {}),
+          isDisabled: !option.savesSpace || option.isAboveLimit,
           aside: (
             <span className="flex max-w-40 flex-col items-end gap-0.5">
               <span className="text-sm font-semibold tabular-nums text-text">

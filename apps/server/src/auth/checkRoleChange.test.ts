@@ -146,7 +146,7 @@ describe('checkRoleChange', () => {
           actorHighestPosition: 300,
           actorPermissions: holding('administrator'),
           targetPosition: 100,
-          granting: ['server.settings', 'account.ban'],
+          granting: ['server.settings', 'account.manage'],
         }),
       ).toBeNull();
     });
@@ -159,7 +159,7 @@ describe('checkRoleChange', () => {
           actorHighestPosition: 300,
           actorPermissions: holding('administrator'),
           targetPosition: 999,
-          granting: ['server.settings', 'account.ban'],
+          granting: ['server.settings', 'account.manage'],
         }),
       ).toBe('outranked');
     });

@@ -43,6 +43,18 @@ const watchPermissionChanges = (
     return deleted;
   },
 
+  rankRoles: async (ranks) => {
+    await service.rankRoles(ranks);
+
+    watcher.everyoneChanged();
+  },
+
+  makeRoomAtBottom: async () => {
+    await service.makeRoomAtBottom();
+
+    watcher.everyoneChanged();
+  },
+
   assignRole: async (userId, roleId) => {
     await service.assignRole(userId, roleId);
 

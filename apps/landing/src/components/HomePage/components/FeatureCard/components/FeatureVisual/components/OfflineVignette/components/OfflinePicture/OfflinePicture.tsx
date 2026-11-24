@@ -13,6 +13,7 @@ const OPTIONS: DownloadOffer['options'] = [
     comparison: null,
     wouldTranscode: true,
     savesSpace: true,
+    isAboveLimit: false,
   },
   {
     quality: '720p',
@@ -22,6 +23,7 @@ const OPTIONS: DownloadOffer['options'] = [
     comparison: null,
     wouldTranscode: true,
     savesSpace: true,
+    isAboveLimit: false,
   },
 ];
 

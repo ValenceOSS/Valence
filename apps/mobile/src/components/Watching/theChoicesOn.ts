@@ -1,6 +1,9 @@
 import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
+import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
+import { isAboveQuality } from '@ValenceContracts/functions/isAboveQuality';
+import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
 import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
@@ -30,6 +33,7 @@ type WhatThereIsToChoose = {
   profile: DeviceProfile;
   chosenAudio: number | null;
   chosenQuality: QualityPreference;
+  qualityLimit: QualityStepId | null;
   onAudio: (streamIndex: number) => void;
   onQuality: (quality: QualityPreference) => void;
   captionStyle: CaptionStyle;
@@ -63,6 +67,7 @@ type ThePlayersChoices = {
  * @param profile - What this phone can play, which decides what each quality would cost.
  * @param chosenAudio - Which soundtrack is playing, or none chosen and the file's own default.
  * @param chosenQuality - What was asked for: auto, the file as it is, or a step down.
+ * @param qualityLimit - The highest quality the viewer may play, above which choices are shut.
  * @param onAudio - Told which soundtrack they want.
  * @param onQuality - Told how much of their connection to spend.
  * @param captionStyle - How the lines are drawn, whose parts are offered while a track is read.
@@ -78,6 +83,7 @@ const theChoicesOn = ({
   profile,
   chosenAudio,
   chosenQuality,
+  qualityLimit,
   onAudio,
   onQuality,
   captionStyle,
@@ -148,11 +154,18 @@ const theChoicesOn = ({
               label: say('common.auto'),
               detail: say('phone.watching.theChoicesOn.movesWithYourConnection'),
             },
-            {
-              id: AS_SENT,
-              label: originalLabel(media),
-              detail: say('phone.watching.theChoicesOn.asItIsOnTheServer'),
-            },
+            isAboveQuality(sharpestStepOf(media)?.id ?? '144p', qualityLimit)
+              ? {
+                  id: AS_SENT,
+                  label: originalLabel(media),
+                  detail: say('common.aboveYourLimit'),
+                  isDisabled: true,
+                }
+              : {
+                  id: AS_SENT,
+                  label: originalLabel(media),
+                  detail: say('phone.watching.theChoicesOn.asItIsOnTheServer'),
+                },
             ...rungs.flatMap((rung) => {
               const step = QUALITY_STEPS.find((one) => one.id === rung);
 
@@ -161,14 +174,17 @@ const theChoicesOn = ({
               }
 
               const isNoSmaller = savingNothing.includes(rung);
-              const detail = qualityStepDetail({ cost: costs[rung], isNoSmaller });
+              const isAbove = isAboveQuality(rung, qualityLimit);
+              const detail = isAbove
+                ? say('common.aboveYourLimit')
+                : qualityStepDetail({ cost: costs[rung], isNoSmaller });
 
               return [
                 {
                   id: rung,
                   label: step.label,
                   ...(detail === undefined ? {} : { detail }),
-                  ...(isNoSmaller ? { isDisabled: true } : {}),
+                  ...(isNoSmaller || isAbove ? { isDisabled: true } : {}),
                 },
               ];
             }),

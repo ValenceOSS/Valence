@@ -1,5 +1,10 @@
 import { listMyPermissionsRoute } from '@ValenceServer/routes/PermissionRoute';
-import { ADMINISTRATOR, PluginNodeSchema } from '@ValenceContracts/schemas/Permission';
+import {
+  ADMINISTRATOR,
+  PluginNodeSchema,
+  RETIRED_PERMISSIONS,
+  RETIRED_PERMISSION_NAMES,
+} from '@ValenceContracts/schemas/Permission';
 import { PERMISSIONS_EVERY_APP_READS } from '@ValenceContracts/constants/PERMISSIONS_EVERY_APP_READS';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -24,12 +29,15 @@ const servePermission = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const held = [...(await grantsOf(headers))];
-    const isReadByEveryApp = (grant: (typeof held)[number]) =>
+    const isReadByEveryApp = (grant: string) =>
       PERMISSIONS_EVERY_APP_READS.has(grant) || PluginNodeSchema.safeParse(grant).success;
+    const asOlderAppsKnowThem = RETIRED_PERMISSION_NAMES.filter((retired) =>
+      held.includes(RETIRED_PERMISSIONS[retired]),
+    );
 
     return context.json(
       {
-        permissions: held.filter(isReadByEveryApp),
+        permissions: [...held.filter(isReadByEveryApp), ...asOlderAppsKnowThem],
         newerPermissions: held.filter((grant) => !isReadByEveryApp(grant)),
         isAdministrator: held.includes(ADMINISTRATOR),
         isDemo: await isOnTheDemo(headers),

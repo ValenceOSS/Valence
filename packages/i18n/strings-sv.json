@@ -75,29 +75,14 @@
     "context": "A kind of job that ran because its schedule said so, in lists of jobs. {kind} is the job's name, such as Scan libraries."
   },
   {
-    "handler": "client.admin.describePermission.approveOrTurnDownRequests",
-    "text": "Godkänn eller avslå förfrågningar",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.approveRequests",
+    "text": "Approve requests",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.backTheServerUp",
-    "text": "Säkerhetskopiera servern",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.banAnAccount",
-    "text": "Utestäng ett konto",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.changeALibrarysSettings",
-    "text": "Ändra inställningarna för ett bibliotek",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.changeArtwork",
-    "text": "Ändra omslagsbilder",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.backUpAndRestore",
+    "text": "Back up and restore",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.changeServerSettings",
@@ -105,14 +90,9 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.changeWhenJobsRun",
-    "text": "Ändra när jobb körs",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.correctMetadata",
-    "text": "Rätta metadata",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.controlOtherPeoplesStreams",
+    "text": "Control other people’s streams",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.createShareLinks",
@@ -120,14 +100,14 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.deleteALibrary",
-    "text": "Ta bort ett bibliotek",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.deleteFiles",
+    "text": "Delete files",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.deleteMediaFromDisk",
-    "text": "Ta bort media från disken",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.deleteLibraries",
+    "text": "Delete libraries",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.downloadMedia",
@@ -135,29 +115,9 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.everythingIncludingAnythingAddedLater",
-    "text": "Allt, inklusive sådant som läggs till senare",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.findSubtitles",
-    "text": "Hitta undertexter under uppspelning",
-    "context": "The name of the permission to search subtitle sites for a film or episode and fetch one, in the list of a role's permissions in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.haveRequestsGoStraightThrough",
-    "text": "Godkänn förfrågningar automatiskt",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.haveTheServerCallOutWhen",
-    "text": "Hantera webhooks",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.hideAnItemFromEverybody",
-    "text": "Dölj ett objekt för alla",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.editTitles",
+    "text": "Edit titles",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.holdAPIKeysForUseOutside",
@@ -165,14 +125,9 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.installAndManagePlugins",
-    "text": "Installera och hantera tillägg",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.linkThisServerWithOthers",
-    "text": "Länka den här servern med andra Valence-servrar",
-    "context": "The short name of the permission to link servers, in the roles editor."
+    "handler": "client.admin.describePermission.linkServers",
+    "text": "Link servers",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.manageAccounts",
@@ -180,9 +135,14 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.manageOtherPeoplesProfiles",
-    "text": "Hantera andras profiler",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.manageLibraries",
+    "text": "Manage libraries",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
+  },
+  {
+    "handler": "client.admin.describePermission.managePlugins",
+    "text": "Manage plugins",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.manageRoles",
@@ -190,14 +150,9 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.pauseSomebodysStream",
-    "text": "Pausa någons ström",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.playFilmsFromSources",
-    "text": "Spela upp filmer från källor",
-    "context": "The name of a role permission in the roles editor (from `describePermission`): playing films that aren't in the library, from a source a plugin offers."
+    "handler": "client.admin.describePermission.manageShareLinks",
+    "text": "Manage share links",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.requestFilmsAndSeries",
@@ -210,39 +165,19 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.rescanOneItem",
-    "text": "Skanna om ett objekt",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.runAndScheduleJobs",
+    "text": "Run and schedule jobs",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.resetPasswordsAndSignAccountsOut",
-    "text": "Återställ lösenord och logga ut konton",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.seeEveryonesRequests",
+    "text": "See everyone’s requests",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.runAJob",
-    "text": "Kör ett jobb",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.runResetAndRebuild",
-    "text": "Kör återställning och ombyggnad",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.seeAndWithdrawAnybodysShareLinks",
-    "text": "Visa och återkalla allas delningslänkar",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.seeEverybodysRequests",
-    "text": "Visa alla förfrågningar",
-    "context": "Shown in the admin (from `describePermission`)."
-  },
-  {
-    "handler": "client.admin.describePermission.seeWhatTheServerIsDoing",
-    "text": "Visa serverstatus",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.seeServerStatusAndLogs",
+    "text": "See server status and logs",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.seeWhoIsWatching",
@@ -250,14 +185,14 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.sendSomebodyAMessage",
-    "text": "Skicka ett meddelande till någon",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.setUpRequests",
+    "text": "Set up requests",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermission.setUpIndexersDownloadClientsAnd",
-    "text": "Konfigurera indexerare, nedladdningsklienter och profiler",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.skipApproval",
+    "text": "Skip approval",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermission.startWatchParties",
@@ -265,14 +200,14 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
-    "handler": "client.admin.describePermission.stopSomebodysStream",
-    "text": "Stoppa någons ström",
-    "context": "Shown in the admin (from `describePermission`)."
+    "handler": "client.admin.describePermission.watchFilmsNotOnTheServer",
+    "text": "Watch films not on the server",
+    "context": "The name of a permission a role can hold, in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.addRenameOrRemoveAnotherAccounts",
-    "text": "Lägg till, byt namn på eller ta bort ett annat kontos profiler åt dem.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.addLibrariesAndChangeTheirSettings",
+    "text": "Add libraries and change their settings, such as names, languages and scan options.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.approveOrTurnDownWhatOther",
@@ -290,39 +225,14 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.askValenceToReadOneItem",
-    "text": "Skanna om ett enskilt objekt för att hämta fil- eller metadataändringar.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.changeServerWideSettingsSuchAsHardware",
+    "text": "Change server-wide settings, such as hardware acceleration, quality and webhooks.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.banAnAccountEndingItsSessions",
-    "text": "Utestäng ett konto, loggar ut det på alla enheter och blockerar nya inloggningar.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.changeALibrarysSettingsItsName",
-    "text": "Ändra ett biblioteks inställningar, till exempel namn, föredragna språk och skanningsalternativ.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.changeServerWideSettingsSuchAs",
-    "text": "Ändra serverövergripande inställningar, till exempel hårdvaruaccelerationen och kvaliteten.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.changeWhenARecurringJobRuns",
-    "text": "Ändra när ett återkommande jobb körs, eller stäng av dess schema.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.correctAnItemsMetadataByHand",
-    "text": "Redigera ett objekts metadata manuellt när det matchats fel.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.createALinkThatLetsSomebody",
-    "text": "Skapa en delningslänk som låter någon utanför hushållet titta på en titel.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.createAPIKeysForScriptsAnd",
+    "text": "Create API keys for scripts and devices outside the app.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.createRolesAndChooseWhichPermissions",
@@ -330,99 +240,69 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.deleteAMediaFileFromDisk",
-    "text": "Ta bort en mediefil från disken, inte bara från biblioteket.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.deleteALibraryAndEverythingScanned",
+    "text": "Delete a library and everything scanned from it.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.endSomebodyElsesStream",
-    "text": "Stoppa någon annans ström.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.deleteMediaFilesFromDiskNot",
+    "text": "Delete media files from disk, not just from the library.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.grantsEveryPermissionThereIsIncluding",
-    "text": "Ger alla behörigheter, inklusive de som läggs till i senare versioner. Ingen annan behörighet behöver ges tillsammans med den.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.everyPermissionIncludingOnesAddedIn",
+    "text": "Every permission, including ones added in future updates.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.haveTheServerCallOutTo",
-    "text": "Skapa webhooks som meddelar en annan URL när något händer.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.fixWrongMatchesEditMetadataChoose",
+    "text": "Fix wrong matches, edit metadata, choose artwork and rescan titles.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.haveWhatTheyAskForSearched",
-    "text": "Deras förfrågningar söks upp och hämtas automatiskt, utan att vänta på godkännande.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.installSetUpAndRemovePlugins",
+    "text": "Install, set up and remove plugins.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.hideAnItemFromEveryProfile",
-    "text": "Dölj ett objekt för alla profiler, inte bara för deras egen.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.inviteSomeoneNewToMakeAn",
+    "text": "Invite someone new to make an account.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.holdAnAPIKeyForReaching",
-    "text": "Skapa API-nycklar för att komma åt Valence från skript eller enheter utanför webbläsaren.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.letSomeoneOutsideTheServerWatch",
+    "text": "Let someone outside the server watch one title through a link.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.installPluginsFromTheCatalogueOr",
-    "text": "Installera tillägg från katalogen eller från en fil, välj deras behörigheter, ändra deras inställningar och ta bort dem.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.linkThisServerWithOtherValence",
+    "text": "Link this server with other Valence servers. Linking alone doesn’t share anything.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.inviteSomebodyNewToSignIn",
-    "text": "Bjud in någon ny att skapa ett konto.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.pauseOrStopSomeoneElsesStream",
+    "text": "Pause or stop someone else’s stream, or send a message over it.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.linkThisServerWithOthers",
-    "text": "Skapa och acceptera inbjudningar för att länka den här servern med en annan Valence-server, godkänna eller avslå länkförfrågningar och avlänka servrar. Att länka delar inget i sig.",
-    "context": "What the permission to link servers allows, in the roles editor."
+    "handler": "client.admin.describePermissionDetail.playAFilmStraightAwayFromAPlugin",
+    "text": "Play a film straight away from a plugin, without requesting or downloading it.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area: play a film a plugin offers a source for, without it being in the library."
   },
   {
-    "handler": "client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere",
-    "text": "Pausa någon annans ström på distans.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.playOneStreamToEveryoneWho",
+    "text": "Play one stream to everyone who joins.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.playsFilmsThatAreNotIn",
-    "text": "Spelar upp filmer som inte finns i biblioteket, direkt från en källa som ett tillägg erbjuder. Inget läggs till i biblioteket. Kräver även Begär filmer och serier.",
-    "context": "What a role permission allows, in the roles editor (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.reEncodeMediaAtAChosenQuality",
+    "text": "Re-encode media at a chosen quality, replacing the original or saving a copy beside it.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.pointValenceAtANewFolder",
-    "text": "Lägg till en mapp med media som ett nytt bibliotek.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.readTheServersLogIncludingEntries",
-    "text": "Visa serverloggen, inklusive poster från tiden innan det här kontot loggade in.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.reEncodeMediaAtAChosen",
-    "text": "Koda om media med vald kvalitet, antingen genom att ersätta originalfilen eller genom att spara den nya filen bredvid den. Vid ersättning tas originalet bort när resultatet har granskats, och kvalitet som förlorats vid förlustbehäftad kodning går inte att återställa.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.removeALibraryAndForgetEverything",
-    "text": "Ta bort ett bibliotek och glöm allt som skannats från det.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.renameSuspendOrRemoveAnExisting",
-    "text": "Byt namn på, stäng av eller ta bort ett befintligt konto.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.replaceAnItemsPosterOrBackdrop",
-    "text": "Byt ut ett objekts affisch eller bakgrundsbild mot en annan bild.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.resetAnotherAccountsPasswordSignIt",
-    "text": "Återställ ett annat kontos lösenord, logga ut det på alla enheter och se var det är inloggat.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.renameSuspendBanOrRemoveAccounts",
+    "text": "Rename, suspend, ban or remove accounts, reset passwords, sign people out and manage their profiles.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.runAResetOrAFull",
@@ -435,24 +315,24 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.searchForSubtitlesAndFetchOne",
-    "text": "Sök efter undertexter under uppspelning och hämta en, utan att kunna ändra något annat på objektet.",
-    "context": "What the Find subtitles permission allows, under its name in the list of a role's permissions in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.searchForAndDownloadSubtitlesWhile",
+    "text": "Search for and download subtitles while watching.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.seeEveryShareLinkAnybodyHas",
-    "text": "Se alla delningslänkar som någon har skapat och återkalla vilken som helst av dem.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.seeAndRevokeAnyonesShareLinks",
+    "text": "See and revoke anyone’s share links.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.seeWhatEverybodyHasAskedFor",
-    "text": "Se allas förfrågningar och förloppet för varje nedladdning.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.seeCPUMemoryAndTranscodesAnd",
+    "text": "See CPU, memory and transcodes, and read the server log.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.seeWhatTheServerIsDoing",
-    "text": "Se serverns CPU-belastning, minnesanvändning och aktiva transkodningar.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.seeEveryonesRequestsAndHowEach",
+    "text": "See everyone’s requests and how each download is going.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.seeWhoIsWatchingRightNow",
@@ -460,14 +340,9 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.sendAMessageThatAppearsOver",
-    "text": "Skicka ett meddelande som visas över någon annans ström.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
-  },
-  {
-    "handler": "client.admin.describePermissionDetail.setUpTheIndexersDownloadClients",
-    "text": "Konfigurera indexerare, nedladdningsklienter och kvalitetsprofiler som används för förfrågningar, och se VPN-status.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.setUpIndexersDownloadClientsAnd",
+    "text": "Set up indexers, download clients and quality profiles, and see the VPN status.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describePermissionDetail.startABackupOfTheServer",
@@ -475,14 +350,14 @@
     "context": "Shown in the admin (from `describePermissionDetail`)."
   },
   {
-    "handler": "client.admin.describePermissionDetail.startAJobSuchAsA",
-    "text": "Kör ett jobb, till exempel en skanning, manuellt i stället för att vänta på dess schema.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.startJobsSuchAsScansBy",
+    "text": "Start jobs such as scans by hand, and change when they run.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
-    "handler": "client.admin.describePermissionDetail.startAWatchPartyPlayingOne",
-    "text": "Starta en tittarfest som spelar upp en ström för alla som ansluter.",
-    "context": "Shown in the admin (from `describePermissionDetail`)."
+    "handler": "client.admin.describePermissionDetail.theirRequestsDownloadStraightAwayWithout",
+    "text": "Their requests download straight away, without waiting for approval.",
+    "context": "What a permission lets somebody do, beneath its name in the roles panel of the admin area."
   },
   {
     "handler": "client.admin.describeReencodeState.checkingWhatCameOut",
@@ -608,6 +483,11 @@
     "handler": "client.admin.groupPermissions.streaming",
     "text": "Strömning",
     "context": "Shown in the admin (from `groupPermissions`)."
+  },
+  {
+    "handler": "client.admin.groupPermissions.theirOwnAccount",
+    "text": "Their own account",
+    "context": "A heading in the roles panel above permissions about the holder's own account, such as creating API keys for it."
   },
   {
     "handler": "client.admin.logRanges.last15Minutes",
@@ -2333,6 +2213,11 @@
     "handler": "common.aboutTitle",
     "text": "Om {title}",
     "context": "The label of a button, used in the episode in the show of the phone app and in the episode row in the show dialog. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.aboveYourLimit",
+    "text": "Above your limit",
+    "context": "Beside a quality or download size that can't be chosen, because it's above the quality the account is limited to."
   },
   {
     "handler": "common.access",
@@ -4384,6 +4269,11 @@
     "handler": "common.grey",
     "text": "Grå",
     "context": "A colour to put round the page in the phone reader."
+  },
+  {
+    "handler": "common.handleAndNote",
+    "text": "{handle} · {note}",
+    "context": "An account's handle with a short note after it, such as that it is above the reader's role. {handle} is the handle, {note} the note."
   },
   {
     "handler": "common.heavy",
@@ -10416,6 +10306,11 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `servePlayback`)."
   },
   {
+    "handler": "error.playback.thatIsAboveTheQualityYou",
+    "text": "That’s above the quality you’re allowed to play. Start it from the player instead, which sends it at a quality you can watch.",
+    "context": "An error the server answers with (HTTP 403) in the app on the server (from `servePlayback`), when something asks for a file as it is that is above the asker's streaming limit."
+  },
+  {
     "handler": "error.playback.thatSessionBelongsToSomebodyElse",
     "text": "Den sessionen tillhör någon annan.",
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `servePlayback`)."
@@ -10749,6 +10644,11 @@
     "handler": "error.role.noSuchRole",
     "text": "Det finns ingen sådan roll.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveRole`)."
+  },
+  {
+    "handler": "error.role.theRolesChangedWhileYouWere",
+    "text": "The roles changed while you were moving them. Have another go with the list as it is now.",
+    "context": "An error the server answers with (HTTP 409) in the app on the server (from `serveRole`), when somebody puts the roles in an order that no longer names every role."
   },
   {
     "handler": "error.samples.thatIsForSomebodyWhoMay",
@@ -24831,19 +24731,9 @@
     "context": "Shown in the admin area."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.aboutRank",
-    "text": "Om rang",
-    "context": "Label of the info button beside the rank column."
-  },
-  {
-    "handler": "screens.adminArea.rolesPanel.aHigherRankManagesALower",
-    "text": "En högre rang kan hantera lägre ranger. Ingen kan ändra en roll på eller över sin egen rang.",
-    "context": "The detail of a dialog title in the roles panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.rolesPanel.aRoleIsANameAnd",
-    "text": "En roll är ett namn och en uppsättning behörigheter. Rang avgör vem som kan hantera vem.",
-    "context": "The detail of a dialog title in the roles panel in the admin area."
+    "handler": "screens.adminArea.rolesPanel.aboveYourRole",
+    "text": "Above your role",
+    "context": "Read out for the lock beside a role the reader can't change or move."
   },
   {
     "handler": "screens.adminArea.rolesPanel.createARole",
@@ -24876,9 +24766,14 @@
     "context": "The title of a confirm dialog in the roles panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.editRole",
-    "text": "Redigera roll",
-    "context": "Shown in the roles panel in the admin area."
+    "handler": "screens.adminArea.rolesPanel.discard",
+    "text": "Discard",
+    "context": "The button that throws away unsaved changes to a role."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.discardChanges",
+    "text": "Discard changes?",
+    "context": "Title of the question asked when somebody opens another role before saving the one they changed."
   },
   {
     "handler": "screens.adminArea.rolesPanel.giveTheRoleAName",
@@ -24886,19 +24781,34 @@
     "context": "Shown under a role's name when it has been left empty."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.housemate",
-    "text": "Hushållsmedlem",
-    "context": "Shown in an empty text field until something is typed in the roles panel in the admin area."
+    "handler": "screens.adminArea.rolesPanel.highestFirstDragToReorder",
+    "text": "Highest first · drag to reorder",
+    "context": "Above the list of roles, which rank from the top down and can be dragged into a new order."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.manageMembersMemberCount",
-    "text": "Hantera medlemmar ({memberCount})",
-    "context": "The label in the roles panel in the admin area. {memberCount} is filled in by the app."
+    "handler": "screens.adminArea.rolesPanel.memberCount.one",
+    "text": "{count} member",
+    "context": "Under a role's name in the list of roles: how many people hold it."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.memberCount.other",
+    "text": "{count} members",
+    "context": "Under a role's name in the list of roles: how many people hold it."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.membersMemberCount",
+    "text": "Members ({memberCount})",
+    "context": "The tab of a role's settings listing who holds it. {memberCount} is how many do."
   },
   {
     "handler": "screens.adminArea.rolesPanel.nameWillBeRemovedAndAnybody",
     "text": "{name} tas bort, och alla med den här rollen förlorar dess behörigheter. Det går inte att ångra.",
     "context": "Shown in the roles panel in the admin area. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.newRole",
+    "text": "New role",
+    "context": "The name shown for a role being made before it has been given one."
   },
   {
     "handler": "screens.adminArea.rolesPanel.noRolesYet",
@@ -24911,19 +24821,9 @@
     "context": "The label in the roles panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.rank",
-    "text": "Rang",
-    "context": "The label of a text field in the roles panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.rolesPanel.rankAbout",
-    "text": "Personer kan bara ändra konton vars högsta roll har lägre rang än deras egen.",
-    "context": "The info hover beside the rank column."
-  },
-  {
-    "handler": "screens.adminArea.rolesPanel.rankIsAWholeNumber",
-    "text": "En rang är ett heltal från 0 och uppåt.",
-    "context": "Shown under a role's rank when it is not a whole number of zero or more."
+    "handler": "screens.adminArea.rolesPanel.rolesAboveYours",
+    "text": "Roles above yours",
+    "context": "Read out to screen readers: the list of roles at or above the reader's own, which they can't change or move."
   },
   {
     "handler": "screens.adminArea.rolesPanel.roleSaved",
@@ -24931,9 +24831,19 @@
     "context": "Shown in the roles panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole",
-    "text": "Visas bredvid namnet på alla med den här rollen.",
-    "context": "The description of a form field in the roles panel in the admin area."
+    "handler": "screens.adminArea.rolesPanel.rolesHighestFirst",
+    "text": "Roles, highest first",
+    "context": "Read out to screen readers: the list of roles, which can be dragged into a new order."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.rolesPutInOrder",
+    "text": "Role order saved",
+    "context": "A notice once the roles have been dragged into a new order."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.rolesWithEveryPermissionCannotBeDeleted",
+    "text": "Roles with every permission can’t be deleted",
+    "context": "Beside a greyed-out Delete in a role's menu, for a role that grants everything."
   },
   {
     "handler": "screens.adminArea.rolesPanel.theRolesCouldNotBeRead",
@@ -24941,9 +24851,29 @@
     "context": "Shown where the roles could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
+    "handler": "screens.adminArea.rolesPanel.thisRoleIsAtOrAboveYours",
+    "text": "This role is at or above yours, so you can’t change it.",
+    "context": "Above the settings of a role the reader can only look at."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.thisRoleIsNotSavedYet",
+    "text": "This role isn’t saved yet",
+    "context": "Beside the buttons that make a new role."
+  },
+  {
     "handler": "screens.adminArea.rolesPanel.whatToChangeAboutThisRole",
     "text": "Vad som ska ändras för den här rollen",
     "context": "The label of a tab row in the roles panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.youHaveUnsavedChanges",
+    "text": "You have unsaved changes",
+    "context": "Beside Reset and Save changes, once a role has been changed."
+  },
+  {
+    "handler": "screens.adminArea.rolesPanel.yourChangesToNameHaveNotBeenSaved",
+    "text": "Your changes to {name} haven’t been saved.",
+    "context": "Detail of the question asked when somebody opens another role before saving. {name} is the role's name."
   },
   {
     "handler": "screens.adminArea.roleStreamLimits.everybodyHoldingIt",
@@ -26479,6 +26409,41 @@
     "handler": "screens.adminArea.storagePanel.thisServerCannotMountBuckets",
     "text": "Den här servern kan inte montera buckets. Den behöver rclone och FUSE: i Docker, lägg till compose-filen för buckets, som ger containern /dev/fuse.",
     "context": "Shown in the Buckets panel when the server lacks rclone or /dev/fuse."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.anythingAboveThisIsSentAt",
+    "text": "Anything above this is sent at this quality instead.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.downloadsAreSavedAtThisQuality",
+    "text": "Downloads are saved at this quality or lower.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.everythingPlayedIsSentAtOr",
+    "text": "Everything played is sent at or below this. Useful for a slow upload.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.highestBitrate",
+    "text": "Highest bitrate",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.howManyThingsCanPlayAt",
+    "text": "How many things can play at once, across every device and profile.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.limitDownloadsToo",
+    "text": "Limit downloads too",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.streamLimitCard.lowerLimitsMeanMoreOfWhat",
+    "text": "Lower limits mean more of what’s played has to be transcoded, which puts more load on the server’s CPU or GPU.",
+    "context": "In the card of streaming limits, for a role or an account, in the admin area."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.aLargerModelHearsBetter",
@@ -36032,14 +35997,24 @@
     "context": "On the page a password reset link opens, once it worked."
   },
   {
-    "handler": "screens.rolesPanel.colorSwatchPicker.noColour",
-    "text": "Ingen färg",
-    "context": "The label of a button in the color swatch picker in the roles panel."
+    "handler": "screens.rolesPanel.permissionEditor.adminPermissions",
+    "text": "Admin permissions",
+    "context": "A heading in a role's permissions, above those about running the server rather than watching on it."
+  },
+  {
+    "handler": "screens.rolesPanel.permissionEditor.everythingIsOnSoEveryPermission",
+    "text": "Everything is on, so every permission below is included.",
+    "context": "Above a role's permissions while it holds every permission, whose switches are then on and can't be changed one by one."
   },
   {
     "handler": "screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf",
     "text": "Ger någon rätt att använda den här delen av {pluginName}.",
     "context": "Shown in the permission editor in the roles panel. {pluginName} is filled in by the app."
+  },
+  {
+    "handler": "screens.rolesPanel.permissionEditor.needsRequestFilmsAndSeriesToo",
+    "text": "Needs Request films and series too.",
+    "context": "Beside the permission to watch films not on the server, while the role can't request films, since the film is played from its request page."
   },
   {
     "handler": "screens.rolesPanel.permissionEditor.noLibraryTakesRequests",
@@ -36055,6 +36030,16 @@
     "handler": "screens.rolesPanel.permissionEditor.searchPermissions",
     "text": "Sök behörigheter",
     "context": "Shown in an empty text field until something is typed in the permission editor in the roles panel."
+  },
+  {
+    "handler": "screens.rolesPanel.permissionEditor.youDoNotHaveThisSoYou",
+    "text": "You don’t have this permission, so you can’t give it.",
+    "context": "Beside a permission in a role's settings that the person editing the role doesn't hold themselves, whose switch is then greyed out."
+  },
+  {
+    "handler": "screens.rolesPanel.roleMembers.everyoneElse",
+    "text": "Everyone else",
+    "context": "Heading above the people who don't hold a role, in its Members tab, who it can be given to."
   },
   {
     "handler": "screens.rolesPanel.roleMembers.whetherNameHoldsThisRole",

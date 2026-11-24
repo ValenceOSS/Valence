@@ -64,7 +64,7 @@ describe('useWhatIMayDo', () => {
     const { result } = renderHookInACache(() => useWhatIMayDo());
 
     expect(result.current.mayAdminister).toBe(false);
-    expect(result.current.may('library.create')).toBe(false);
+    expect(result.current.may('library.edit')).toBe(false);
   });
 
   it('grants nothing when the answer could not be read', async () => {
@@ -77,22 +77,22 @@ describe('useWhatIMayDo', () => {
     });
 
     expect(result.current.mayAdminister).toBe(false);
-    expect(result.current.may('library.create')).toBe(false);
+    expect(result.current.may('library.edit')).toBe(false);
   });
 
   it('answers for a permission that was granted, and for one that was not', async () => {
     fetchMyPermissions.mockResolvedValue({
-      permissions: ['library.create'],
+      permissions: ['library.edit'],
       isAdministrator: false,
     });
 
     const { result } = renderHookInACache(() => useWhatIMayDo());
 
     await waitFor(() => {
-      expect(result.current.may('library.create')).toBe(true);
+      expect(result.current.may('library.edit')).toBe(true);
     });
 
-    expect(result.current.may('server.logs')).toBe(false);
+    expect(result.current.may('server.monitor')).toBe(false);
   });
 
   it('reads the answer as it stands rather than implying one permission from another', async () => {
@@ -107,7 +107,7 @@ describe('useWhatIMayDo', () => {
       expect(result.current.mayAdminister).toBe(true);
     });
 
-    expect(result.current.may('server.logs')).toBe(false);
+    expect(result.current.may('server.monitor')).toBe(false);
   });
 
   it('asks once however many screens ask it', async () => {

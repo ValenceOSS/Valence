@@ -804,7 +804,7 @@ const registerMusicRoutes = (
     const removed = await music.playlists.remove(
       viewer,
       context.req.valid('param').playlistId,
-      await requires(context.req.raw.headers, 'account.profiles'),
+      await requires(context.req.raw.headers, 'account.manage'),
     );
 
     return removed

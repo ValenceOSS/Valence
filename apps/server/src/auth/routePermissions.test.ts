@@ -193,17 +193,17 @@ describe('what a route actually requires', () => {
       expect((await context.request('/api/admin/sessions/abc', 'DELETE')).status).toBe(403);
     });
 
-    it('lets somebody with streaming.stop reach that route', async () => {
-      const context = await signedInWith(['streaming.stop']);
+    it('lets somebody with streaming.control reach that route', async () => {
+      const context = await signedInWith(['streaming.control']);
 
       expect((await context.request('/api/admin/sessions/abc', 'DELETE')).status).not.toBe(403);
     });
 
-    it('separates scheduling a job from running one', async () => {
-      const context = await signedInWith(['jobs.schedule']);
+    it('lets the one permission that runs jobs also see when they are scheduled', async () => {
+      const context = await signedInWith(['jobs.run']);
 
       expect((await context.request('/api/admin/jobs/schedules', 'GET')).status).toBe(200);
-      expect((await context.request(SCAN)).status).toBe(403);
+      expect((await context.request(SCAN)).status).toBe(202);
     });
   });
 
@@ -250,7 +250,7 @@ describe('every gated route, asked by somebody with no permissions', () => {
     string,
     { query?: string; body?: object; refusesWith?: number }?,
   ][] = [
-    ['POST', '/api/libraries', 'library.create'],
+    ['POST', '/api/libraries', 'library.edit'],
     ['PATCH', `/api/libraries/${LIBRARY_ID}`, 'library.edit'],
     ['GET', `/api/libraries/${LIBRARY_ID}/left-out`, 'library.edit'],
     [
@@ -283,10 +283,10 @@ describe('every gated route, asked by somebody with no permissions', () => {
     ['GET', '/api/admin/sessions', 'streaming.view'],
     ['GET', '/api/admin/shares', 'sharing.manage'],
     ['DELETE', '/api/admin/shares/6f8e6d3e-6f3a-4a1e-8e9a-2f7b6c5d4e3a', 'sharing.manage'],
-    ['DELETE', '/api/admin/sessions/tab-1', 'streaming.stop'],
-    ['POST', '/api/admin/sessions/tab-1/pause', 'streaming.pause'],
-    ['POST', '/api/admin/sessions/tab-1/resume', 'streaming.pause'],
-    ['POST', '/api/admin/sessions/tab-1/sign-out', 'account.security'],
+    ['DELETE', '/api/admin/sessions/tab-1', 'streaming.control'],
+    ['POST', '/api/admin/sessions/tab-1/pause', 'streaming.control'],
+    ['POST', '/api/admin/sessions/tab-1/resume', 'streaming.control'],
+    ['POST', '/api/admin/sessions/tab-1/sign-out', 'account.manage'],
     ['GET', '/api/admin/jobs/definitions', 'jobs.run'],
     ['POST', '/api/admin/jobs/library.scan/run', 'jobs.run'],
     ['POST', '/api/admin/jobs/library.reset/run', 'jobs.runDestructive'],
@@ -297,14 +297,14 @@ describe('every gated route, asked by somebody with no permissions', () => {
     ['POST', '/api/admin/jobs/queue/pause', 'jobs.run'],
     ['POST', '/api/admin/jobs/queue/resume', 'jobs.run'],
     ['POST', '/api/admin/jobs/queue/jobs/7/run-now', 'jobs.run'],
-    ['GET', '/api/admin/jobs/schedules', 'jobs.schedule'],
-    ['POST', '/api/admin/jobs/library.scan/triggers', 'jobs.schedule'],
-    ['DELETE', '/api/admin/jobs/library.scan/triggers/trigger-1', 'jobs.schedule'],
+    ['GET', '/api/admin/jobs/schedules', 'jobs.run'],
+    ['POST', '/api/admin/jobs/library.scan/triggers', 'jobs.run'],
+    ['DELETE', '/api/admin/jobs/library.scan/triggers/trigger-1', 'jobs.run'],
     ['GET', '/api/admin/permissions', 'account.roles'],
     ['GET', '/api/admin/roles', 'account.roles'],
     ['GET', '/api/admin/accounts/user-1/roles', 'account.roles'],
     ['GET', '/api/admin/accounts', 'account.manage'],
-    ['DELETE', '/api/admin/accounts/user-1/ban', 'account.ban'],
+    ['DELETE', '/api/admin/accounts/user-1/ban', 'account.manage'],
     ['POST', '/api/admin/accounts', 'account.invite'],
   ];
 
@@ -373,6 +373,7 @@ describe('every route that needs somebody signed in, asked by nobody', () => {
 describe('the routes that read who is asking, asked by nobody at all', () => {
   const ROLE_ROUTES: [string, string, object?][] = [
     ['POST', '/api/admin/roles', { name: 'Staff', position: 10, permissions: [] }],
+    ['PUT', '/api/admin/roles/order', { ids: [] }],
     ['PATCH', '/api/admin/roles/role-1', { name: 'Staff' }],
     ['DELETE', '/api/admin/roles/role-1'],
     ['PUT', '/api/admin/accounts/usr_other/roles/role-1'],
@@ -380,7 +381,7 @@ describe('the routes that read who is asking, asked by nobody at all', () => {
     [
       'PUT',
       '/api/admin/accounts/usr_other/overrides',
-      { permission: 'server.logs', effect: 'allow' },
+      { permission: 'server.monitor', effect: 'allow' },
     ],
     ['DELETE', '/api/admin/accounts/usr_other/overrides/server.logs'],
   ];

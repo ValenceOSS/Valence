@@ -109,15 +109,15 @@ curl -s https://valence.example.com/api/health
 
 `"status": "ok"` means the media service answers. `"status": "degraded"` with `"transcoderReachable": false` means the server cannot reach it, so anything that cannot be played directly fails. The log says `transcoder: stopped answering` when this starts and `transcoder: answering again` when it recovers.
 
-| Symptom                                     | Cause                                                                                | Fix                                                                                                                      |
-| :------------------------------------------ | :----------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- |
-| Every transcode fails, health is `degraded` | The media service is not running or `TRANSCODER_URL` disagrees with where it listens | In the standard image both are set for you. If you set `TRANSCODER_URL`, remove it, or use the same value on both halves |
-| Playback answers `422`                      | The server cannot produce a stream this client can play                              | The error text gives the reason. Try a different client, or one that accepts more codecs                                 |
-| Playback answers `500`                      | The media service could not start a session                                          | Read the `transcoder` lines in the log                                                                                   |
-| Video stalls at regular intervals           | A proxy is buffering the segments                                                    | Set `proxy_buffering off` and `proxy_request_buffering off`, see [Reverse proxy](/install/reverse-proxy)                 |
-| Playback stops after a minute               | A proxy read timeout                                                                 | Raise it, an hour is sensible                                                                                            |
-| Constant buffering on a transcode           | Transcoding on the processor, or a slow transcode disk                               | Check hardware acceleration, and keep `/transcodes` on a fast local disk                                                 |
-| Many viewers, one stutters                  | The machine running out of encoder or processor time                                 | Check hardware acceleration and the server load. A role's stream limit caps how many of its people play at once          |
+| Symptom                                     | Cause                                                                                | Fix                                                                                                                                                       |
+| :------------------------------------------ | :----------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Every transcode fails, health is `degraded` | The media service is not running or `TRANSCODER_URL` disagrees with where it listens | In the standard image both are set for you. If you set `TRANSCODER_URL`, remove it, or use the same value on both halves                                  |
+| Playback answers `422`                      | The server cannot produce a stream this client can play                              | The error text gives the reason. Try a different client, or one that accepts more codecs                                                                  |
+| Playback answers `500`                      | The media service could not start a session                                          | Read the `transcoder` lines in the log                                                                                                                    |
+| Video stalls at regular intervals           | A proxy is buffering the segments                                                    | Set `proxy_buffering off` and `proxy_request_buffering off`, see [Reverse proxy](/install/reverse-proxy)                                                  |
+| Playback stops after a minute               | A proxy read timeout                                                                 | Raise it, an hour is sensible                                                                                                                             |
+| Constant buffering on a transcode           | Transcoding on the processor, or a slow transcode disk                               | Check hardware acceleration, and keep `/transcodes` on a fast local disk                                                                                  |
+| Many viewers, one stutters                  | The machine running out of encoder or processor time                                 | Check hardware acceleration and the server load. **Streams at once**, on an account or its highest role, caps how many things each account plays together |
 
 To see how an item would be played without starting anything, call `POST /api/playback/{mediaId}/explain`, or open the item in the web client and read what it says about the playback mode.
 
@@ -258,7 +258,7 @@ To free space, reduce `BACKUPS_KEPT`, delete old files from `/config/backups` by
 
 Valence keeps its log in two places, and both are useful.
 
-**The Jobs and logs page.** Administrators with the `server.logs` permission can read and filter the log in the web client, by level, source, search text and time range. The sources are `server`, `scanner`, `transcoder`, `jobs`, `auth`, `playback`, `catalogue` and `requests`. The page also shows the job history, running jobs and their issues. See [Jobs and logs](/use/jobs-and-logs).
+**The Jobs and logs page.** Administrators with the `server.monitor` permission can read and filter the log in the web client, by level, source, search text and time range. The sources are `server`, `scanner`, `transcoder`, `jobs`, `auth`, `playback`, `catalogue` and `requests`. The page also shows the job history, running jobs and their issues. See [Jobs and logs](/use/jobs-and-logs).
 
 ![The Jobs and logs page of the admin area, showing filters above a list of log lines and job runs.](/screenshots/admin-jobs-and-logs.png)
 

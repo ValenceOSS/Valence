@@ -20,19 +20,19 @@ describe('resolvePermissions', () => {
   describe('several roles', () => {
     it('grants what either of them grants', () => {
       const resolved = resolvePermissions({
-        roles: [{ permissions: ['jobs.run'] }, { permissions: ['media.rescan'] }],
+        roles: [{ permissions: ['jobs.run'] }, { permissions: ['media.override'] }],
       });
 
       expect(resolved.has('jobs.run')).toBe(true);
-      expect(resolved.has('media.rescan')).toBe(true);
+      expect(resolved.has('media.override')).toBe(true);
     });
 
     it('does not mind them overlapping', () => {
       const resolved = resolvePermissions({
-        roles: [{ permissions: ['jobs.run'] }, { permissions: ['jobs.run', 'jobs.schedule'] }],
+        roles: [{ permissions: ['jobs.run'] }, { permissions: ['jobs.run', 'media.override'] }],
       });
 
-      expect([...resolved].sort()).toEqual(['jobs.run', 'jobs.schedule']);
+      expect([...resolved].sort()).toEqual(['jobs.run', 'media.override']);
     });
   });
 
@@ -65,10 +65,10 @@ describe('resolvePermissions', () => {
     it('grants something no role gave', () => {
       const resolved = resolvePermissions({
         roles: [{ permissions: ['jobs.run'] }],
-        overrides: [{ permission: 'server.logs', effect: 'allow' }],
+        overrides: [{ permission: 'server.monitor', effect: 'allow' }],
       });
 
-      expect(resolved.has('server.logs')).toBe(true);
+      expect(resolved.has('server.monitor')).toBe(true);
     });
 
     it('takes back something a role gave', () => {

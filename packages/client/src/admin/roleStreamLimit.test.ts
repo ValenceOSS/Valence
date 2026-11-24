@@ -7,7 +7,7 @@ afterEach(() => {
 
 describe('roleStreamLimit', () => {
   it('reads the limit a role carries', async () => {
-    const limit = { maxBitrateKbps: 4000, maxStreams: 1 };
+    const limit = { maxBitrateKbps: 4000, maxStreams: 1, maxQuality: null, limitsDownloads: false };
 
     vi.stubGlobal(
       'fetch',

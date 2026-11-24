@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PermissionSchema } from './Permission';
+import { PermissionsReadSchema } from './Permission';
 
 const ApiKeySchema = z.object({
   id: z.string(),
@@ -9,7 +9,7 @@ const ApiKeySchema = z.object({
   expiresAt: z.string().datetime().nullable(),
   lastRequestAt: z.string().datetime().nullable(),
   requestCount: z.number().int().nonnegative(),
-  permissions: z.array(PermissionSchema).nullable(),
+  permissions: PermissionsReadSchema.nullable(),
   rateLimit: z
     .object({ max: z.number().int().positive(), everySeconds: z.number().int().positive() })
     .nullable(),

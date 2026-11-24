@@ -462,7 +462,7 @@ describe('the music routes', () => {
     const me = await listening(context);
 
     context.permissions.state.overrides[context.store.user[0]?.id ?? ''] = [
-      { permission: 'account.profiles', effect: 'allow' },
+      { permission: 'account.manage', effect: 'allow' },
     ];
 
     await me.ask(`/api/playlists/${PLAYLIST_ID}`, { method: 'DELETE' });

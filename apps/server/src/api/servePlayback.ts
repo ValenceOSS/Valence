@@ -1,6 +1,7 @@
 import { canonicalIdOf } from '@ValenceServer/visibility/canonicalIdOf';
 import { refuseWith } from '@ValenceI18n/refuseWith';
-import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
+import { qualityUnderCeiling } from '@ValenceContracts/functions/qualityUnderCeiling';
+import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import { streamsOf } from '@ValenceServer/streams/streamsOf';
 import { underTheCeiling } from '@ValenceServer/streams/underTheCeiling';
 import type { PreviewRead, StartedSession } from '@ValenceServer/playback/PlaybackService';
@@ -68,9 +69,9 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     readProfileId,
     isTheSessionOfWhoeverIsAsking,
     isTheDeviceOfWhoeverIsAsking,
+    streamLimitOf,
     readAccount,
     settings,
-    permissions,
     statistics,
     telemetry,
     log,
@@ -86,24 +87,23 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
   const mayNote = createRateLimiter({ most: NOTES_AT_MOST, withinMs: REPORTS_WITHIN_MS });
   const castTickets = createDirectTickets<{ sessionId: string }>();
 
-  const limitOf = async (headers: Headers) => {
-    const account = await readAccount(headers);
+  /**
+   * The quality to play at under the asker's limit: what they asked for where it is within it, the
+   * limit where it is above it or where they asked for the file as it is.
+   *
+   * @param asked - The quality asked for, if any.
+   * @param limit - The limit they stream under, if any.
+   * @returns The quality to play at, or nothing for the file as it is.
+   */
+  const withinQuality = (
+    asked: QualityStepId | undefined,
+    limit: { maxQuality: QualityStepId | null } | null,
+  ): QualityStepId | undefined =>
+    limit === null || limit.maxQuality === null
+      ? asked
+      : qualityUnderCeiling(asked, limit.maxQuality);
 
-    if (account === null) {
-      return null;
-    }
-
-    const roles = await permissions.rolesFor(account.id);
-
-    return {
-      accountId: account.id,
-      ...readStreamLimit(
-        (await settings.read()).streamLimits,
-        account.id,
-        roles.map((role) => role.id),
-      ),
-    };
-  };
+  const limitOf = streamLimitOf;
 
   app.openapi(explainRoute, async (context) => {
     const { mediaId } = context.req.valid('param');
@@ -113,7 +113,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     const explanation = await playback.explain(
       mediaId,
       underTheCeiling(deviceProfile, limit?.maxBitrateKbps ?? null),
-      requestedQuality,
+      withinQuality(requestedQuality, limit),
       audioLanguage,
     );
 
@@ -239,7 +239,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       underTheCeiling(deviceProfile, limit?.maxBitrateKbps ?? null),
       startSeconds ?? 0,
       audioStreamIndex,
-      requestedQuality,
+      withinQuality(requestedQuality, limit),
       clientId,
       subtitleStreamIndex,
       isAdaptive,
@@ -249,6 +249,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       picksItsOwnSound,
       refusedOrigins,
       audioLanguage,
+      limit?.maxQuality ?? undefined,
     );
 
     if (outcome.kind === 'notFound') {
@@ -370,6 +371,12 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
 
     if (await mayNotPlayFromSources(mediaId, context.req.raw.headers)) {
       return context.json(refuse('error.streams.youMayNotPlayFilmsFrom'), 403);
+    }
+
+    const limit = await limitOf(context.req.raw.headers);
+
+    if (limit !== null && !(await playback.fitsLimit(mediaId, rendition ?? null, limit))) {
+      return context.json(refuse('error.playback.thatIsAboveTheQualityYou'), 403);
     }
 
     const file = await playback.readDirectFile(mediaId, range, rendition ?? null);

@@ -566,6 +566,7 @@ import { createWorkLock } from '@ValenceServer/jobs/createWorkLock';
 import { createDatabaseWorkLock } from '@ValenceServer/jobs/createDatabaseWorkLock';
 import { createLibraryWorkRunner } from '@ValenceServer/jobs/createLibraryWorkRunner';
 import { seedDefaultJobTriggers } from '@ValenceServer/jobs/seedDefaultJobTriggers';
+import { untieRoles } from '@ValenceServer/auth/untieRoles';
 import { seedDefaultRoles } from '@ValenceServer/auth/seedDefaultRoles';
 import { giveAccountsUsernames } from '@ValenceServer/auth/giveAccountsUsernames';
 import { ADMINISTRATOR_ROLE_NAME, DEFAULT_ROLE_NAME } from '@ValenceCore/functions/defaultRoles';
@@ -3740,6 +3741,7 @@ const jobs = createJobQueue({
             env.BETTER_AUTH_URL,
             BrandSettingsSchema.catch(NO_BRAND).parse((await settings.read()).brand),
             await brandLogo.address(),
+            SERVER_VERSION,
           ),
         });
 
@@ -6200,6 +6202,8 @@ const seededRoles = await seedDefaultRoles({
       role: row.role ?? null,
     })),
 });
+
+await untieRoles(permissions);
 
 if (seededRoles.rolesCreated.length > 0) {
   log.info('server', `roles: created ${seededRoles.rolesCreated.join(', ')}`);

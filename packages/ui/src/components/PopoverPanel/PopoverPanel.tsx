@@ -115,6 +115,7 @@ const PopoverPanel = ({
           sideOffset={offset}
           align={align}
           collisionPadding={12}
+          sticky="always"
           data-slot="popover-content"
           onOpenAutoFocus={(event) => {
             event.preventDefault();

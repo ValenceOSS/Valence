@@ -9,12 +9,19 @@ import type { PermissionRowProps } from './PermissionRow.types';
  * @param detail - What it lets somebody do.
  * @param isOn - Whether the role holds it.
  * @param onToggle - Told it was switched.
+ * @param isDisabled - Whether it is held through something wider and so cannot be switched alone.
  */
-const PermissionRow = ({ label, detail, isOn, onToggle }: PermissionRowProps) => (
-  <li className="flex items-start justify-between gap-4 py-3 first:pt-0">
+const PermissionRow = ({
+  label,
+  detail,
+  isOn,
+  onToggle,
+  isDisabled = false,
+}: PermissionRowProps) => (
+  <li className="flex items-center justify-between gap-4 px-4 py-3">
     <div className="flex min-w-0 flex-col gap-0.5">
       <span className="text-sm font-medium text-text">{label}</span>
-      <span className="text-xs leading-relaxed text-text-muted">{detail}</span>
+      <span className="text-xs text-text-muted">{detail}</span>
     </div>
 
     <Switch
@@ -22,7 +29,8 @@ const PermissionRow = ({ label, detail, isOn, onToggle }: PermissionRowProps) =>
       isLabelHidden
       isOn={isOn}
       onToggle={onToggle}
-      className="mt-0.5 shrink-0"
+      disabled={isDisabled}
+      className="shrink-0"
     />
   </li>
 );

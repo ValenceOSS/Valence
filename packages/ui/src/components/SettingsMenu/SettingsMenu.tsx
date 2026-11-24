@@ -3,6 +3,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
 } from '@keyline-icons/react';
+import { Lock as LockFilledIcon } from '@keyline-icons/react/fill';
 import { useState } from 'react';
 import * as RadixPopover from '@radix-ui/react-popover';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
@@ -255,7 +256,7 @@ const SettingsMenu = ({
                             size="none"
                             role="menuitemradio"
                             aria-checked={choice.id === opened.selectedId}
-                            disabled={choice.isDisabled === true}
+                            disabled={choice.isDisabled === true || choice.isLocked === true}
                             onClick={() => {
                               opened.onSelect(choice.id);
                               close();
@@ -263,7 +264,8 @@ const SettingsMenu = ({
                             className={cn(
                               ROW,
                               'shrink-0',
-                              choice.isDisabled === true && 'opacity-50',
+                              (choice.isDisabled === true || choice.isLocked === true) &&
+                                'opacity-50',
                             )}
                           >
                             <span className={MENU.marker}>
@@ -281,6 +283,15 @@ const SettingsMenu = ({
                             {choice.detail === undefined ? null : (
                               <span className={MENU.detail}>{choice.detail}</span>
                             )}
+
+                            {choice.isLocked === true ? (
+                              <Icon
+                                of={LockFilledIcon}
+                                size={14}
+                                tone="muted"
+                                className="shrink-0"
+                              />
+                            ) : null}
                           </Button>
                         ))),
                   ]}

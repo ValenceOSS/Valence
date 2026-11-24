@@ -17,7 +17,7 @@ const held = vi.hoisted(() => ({ profiles: false, music: false }));
 vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
   useWhatIMayDo: () => ({
     may: (permission: string) =>
-      (permission === 'account.profiles' && held.profiles) ||
+      (permission === 'account.manage' && held.profiles) ||
       (permission === 'requests.askMusic' && held.music),
     mayAdminister: held.profiles,
     isLoading: false,

@@ -9,6 +9,8 @@ const createService = (): PermissionService => ({
   createRole: (role) => Promise.resolve({ ...role, id: 'role' }),
   updateRole: () => Promise.resolve(null),
   deleteRole: () => Promise.resolve(true),
+  rankRoles: () => Promise.resolve(),
+  makeRoomAtBottom: () => Promise.resolve(),
   rolesFor: () => Promise.resolve([]),
   assignRole: () => Promise.resolve(),
   removeRole: () => Promise.resolve(),
@@ -57,7 +59,7 @@ describe('watchPermissionChanges', () => {
     const seen = createWatcher();
     const watched = watchPermissionChanges(createService(), seen.watcher);
 
-    await watched.setOverride('someone', { permission: 'server.logs', effect: 'deny' });
+    await watched.setOverride('someone', { permission: 'server.monitor', effect: 'deny' });
 
     expect(seen.accounts).toStrictEqual(['someone']);
   });
@@ -66,7 +68,7 @@ describe('watchPermissionChanges', () => {
     const seen = createWatcher();
     const watched = watchPermissionChanges(createService(), seen.watcher);
 
-    await watched.clearOverride('someone', 'server.logs');
+    await watched.clearOverride('someone', 'server.monitor');
 
     expect(seen.accounts).toStrictEqual(['someone']);
   });
@@ -85,6 +87,15 @@ describe('watchPermissionChanges', () => {
     const watched = watchPermissionChanges(createService(), seen.watcher);
 
     await watched.deleteRole('role');
+
+    expect(seen.everyone()).toBe(1);
+  });
+
+  it('announces everyone when the roles are put in a new order', async () => {
+    const seen = createWatcher();
+    const watched = watchPermissionChanges(createService(), seen.watcher);
+
+    await watched.rankRoles(new Map([['role', 0]]));
 
     expect(seen.everyone()).toBe(1);
   });

@@ -21,14 +21,14 @@ const createReader = (permissions: Permission[]) => {
 
 describe('createEntitlements', () => {
   it('reads permissions for an account it has not seen', async () => {
-    const reader = createReader(['server.logs']);
+    const reader = createReader(['server.monitor']);
     const entitlements = createEntitlements({ resolve: reader.resolve, now: () => 0, ttlMs: 5000 });
 
-    expect(await entitlements.of('account', null)).toStrictEqual(new Set(['server.logs']));
+    expect(await entitlements.of('account', null)).toStrictEqual(new Set(['server.monitor']));
   });
 
   it('does not read again within the window, so a flood costs one query', async () => {
-    const reader = createReader(['server.logs']);
+    const reader = createReader(['server.monitor']);
     const entitlements = createEntitlements({ resolve: reader.resolve, now: () => 0, ttlMs: 5000 });
 
     for (let index = 0; index < 4000; index += 1) {
@@ -39,7 +39,7 @@ describe('createEntitlements', () => {
   });
 
   it('reads again once the window has passed', async () => {
-    const reader = createReader(['server.logs']);
+    const reader = createReader(['server.monitor']);
     let clock = 0;
     const entitlements = createEntitlements({
       resolve: reader.resolve,
@@ -55,7 +55,7 @@ describe('createEntitlements', () => {
   });
 
   it('keeps accounts apart rather than answering one with another', async () => {
-    const reader = createReader(['server.logs']);
+    const reader = createReader(['server.monitor']);
     const entitlements = createEntitlements({ resolve: reader.resolve, now: () => 0, ttlMs: 5000 });
 
     await entitlements.of('one', null);
@@ -65,7 +65,7 @@ describe('createEntitlements', () => {
   });
 
   it('picks up a revoked permission immediately when told to forget', async () => {
-    const reader = createReader(['server.logs']);
+    const reader = createReader(['server.monitor']);
     const entitlements = createEntitlements({ resolve: reader.resolve, now: () => 0, ttlMs: 5000 });
 
     await entitlements.of('account', null);
@@ -76,7 +76,7 @@ describe('createEntitlements', () => {
   });
 
   it('forgets every account when a role everyone holds changes', async () => {
-    const reader = createReader(['server.logs']);
+    const reader = createReader(['server.monitor']);
     const entitlements = createEntitlements({ resolve: reader.resolve, now: () => 0, ttlMs: 5000 });
 
     await entitlements.of('one', null);
@@ -104,7 +104,7 @@ describe('createEntitlements', () => {
       resolve: (accountId, profileId) =>
         Promise.resolve(
           new Set<Permission>(
-            accountId === 'account' && profileId === 'parent' ? ['server.logs'] : [],
+            accountId === 'account' && profileId === 'parent' ? ['server.monitor'] : [],
           ),
         ),
       now: () => 0,
@@ -118,7 +118,7 @@ describe('createEntitlements', () => {
   });
 
   it('remembers each profile’s reading on its own', async () => {
-    const reader = createReader(['server.logs']);
+    const reader = createReader(['server.monitor']);
     const entitlements = createEntitlements({ resolve: reader.resolve, now: () => 0, ttlMs: 5000 });
 
     await entitlements.of('account', 'kid');
@@ -129,7 +129,7 @@ describe('createEntitlements', () => {
   });
 
   it('forgets every profile on an account at once, and no other account’s', async () => {
-    const reader = createReader(['server.logs']);
+    const reader = createReader(['server.monitor']);
     const entitlements = createEntitlements({ resolve: reader.resolve, now: () => 0, ttlMs: 5000 });
 
     await entitlements.of('account', 'kid');
@@ -142,17 +142,17 @@ describe('createEntitlements', () => {
     expect(await entitlements.of('account', 'kid')).toStrictEqual(new Set());
     expect(await entitlements.of('account', 'parent')).toStrictEqual(new Set());
     expect(await entitlements.of('account', null)).toStrictEqual(new Set());
-    expect(await entitlements.of('other', 'kid')).toStrictEqual(new Set(['server.logs']));
+    expect(await entitlements.of('other', 'kid')).toStrictEqual(new Set(['server.monitor']));
   });
 
   it('does not forget an account whose name merely starts with another’s', async () => {
-    const reader = createReader(['server.logs']);
+    const reader = createReader(['server.monitor']);
     const entitlements = createEntitlements({ resolve: reader.resolve, now: () => 0, ttlMs: 5000 });
 
     await entitlements.of('account-2', 'kid');
     reader.give([]);
     entitlements.forget('account');
 
-    expect(await entitlements.of('account-2', 'kid')).toStrictEqual(new Set(['server.logs']));
+    expect(await entitlements.of('account-2', 'kid')).toStrictEqual(new Set(['server.monitor']));
   });
 });
