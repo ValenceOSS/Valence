@@ -1,7 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Search } from '@keyline-icons/react-native';
-import { Broadcast, Film, Headphones, Home, MusicNote, Tv } from '@keyline-icons/react-native/fill';
+import {
+  Broadcast,
+  Film,
+  Headphones,
+  History,
+  Home,
+  MusicNote,
+  Tv,
+} from '@keyline-icons/react-native/fill';
 import { Face } from '@ValenceTv/components/Face/Face';
 import { Glass } from '@ValenceTv/components/Glass/Glass';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
@@ -30,6 +38,8 @@ const BOOKS: TopTab = { id: 'books', label: say('common.books'), icon: Headphone
 
 const LIVE: TopTab = { id: 'live', label: say('common.liveTv'), icon: Broadcast };
 
+const HISTORY: TopTab = { id: 'history', label: say('common.history'), icon: History };
+
 const NAME_SIZE = tokens.type.heading;
 
 const MARK_HIGH = Math.round(NAME_SIZE * LOCKUP.capHeight);
@@ -43,8 +53,8 @@ const ROUND_SIZE = 60;
 /**
  * The bar that floats over the top of every part, as the television's own apps float theirs: a
  * capsule of Liquid Glass over whatever is behind it, holding the way to search, the parts there
- * are, and the face of whoever is watching, which opens their profile. Valence's mark sits apart at
- * the left.
+ * are, ending with what has been watched, and the face of whoever is watching, which opens their
+ * profile. Valence's mark sits apart at the left.
  *
  * Landing on an item opens its part, search included, as the television's own tab bars do. The
  * search screen does not take the remote as it opens; it waits for somebody to press down into it.
@@ -100,6 +110,7 @@ const TopBar = ({
       ...(hasMusic ? [MUSIC] : []),
       ...(hasBooks ? [BOOKS] : []),
       ...(hasLive ? [LIVE] : []),
+      HISTORY,
     ],
     [hasFilms, hasShows, hasMusic, hasBooks, hasLive],
   );

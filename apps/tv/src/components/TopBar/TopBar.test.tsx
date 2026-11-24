@@ -130,6 +130,20 @@ describe('TopBar', () => {
     expect(withLive.getByRole('button', { name: 'Live TV' })).toBeOnTheScreen();
   });
 
+  it('ends the parts with the watch history, opened as the remote lands on it', async () => {
+    const onChoose = jest.fn();
+    const drawn = await render(<TopBar {...aBar({ hasLive: true, onChoose })} />);
+    const buttons = drawn.getAllByRole('button');
+    const history = drawn.getByRole('button', { name: 'History' });
+    const live = drawn.getByRole('button', { name: 'Live TV' });
+
+    expect(buttons.indexOf(history)).toBe(buttons.indexOf(live) + 1);
+
+    await fireEvent(drawn.getByRole('button', { name: 'History' }), 'focus');
+
+    expect(onChoose).toHaveBeenCalledWith('history');
+  });
+
   it('has no face where nobody is watching', async () => {
     const drawn = await render(<TopBar {...aBar({ profile: null })} />);
 

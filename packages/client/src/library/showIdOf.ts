@@ -10,7 +10,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
  * @param media - An episode, or a card standing for a programme.
  * @returns The programme's id, or nothing for a film.
  */
-const showIdOf = (media: MediaSummary): string | null => {
+const showIdOf = (media: Pick<MediaSummary, 'seriesId' | 'seriesTitle'>): string | null => {
   const id = media.seriesId ?? showSlug(media.seriesTitle ?? '');
 
   return id === '' ? null : id;

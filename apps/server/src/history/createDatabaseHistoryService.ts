@@ -1,6 +1,6 @@
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
-import { and, desc, eq, isNull, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, lt } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { watchHistory, mediaItem, viewerProfile } from '#dialect/Schema';
 import { decideViewing } from './decideViewing';
@@ -206,6 +206,39 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
       const gone = await db
         .delete(watchHistory)
         .where(and(lt(watchHistory.lastWatchedAt, before), isNull(watchHistory.importedFrom)));
+
+      return countAffected(gone);
+    },
+
+    forgetTitle: async (profileId, mediaItemId) => {
+      const [item] = await db
+        .select({
+          libraryId: mediaItem.libraryId,
+          seriesId: mediaItem.seriesId,
+          seriesTitle: mediaItem.seriesTitle,
+        })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaItemId));
+      const sameTitle =
+        item === undefined || item.seriesTitle === null
+          ? eq(watchHistory.mediaItemId, mediaItemId)
+          : inArray(
+              watchHistory.mediaItemId,
+              db
+                .select({ id: mediaItem.id })
+                .from(mediaItem)
+                .where(
+                  item.seriesId === null
+                    ? and(
+                        eq(mediaItem.libraryId, item.libraryId),
+                        eq(mediaItem.seriesTitle, item.seriesTitle),
+                      )
+                    : eq(mediaItem.seriesId, item.seriesId),
+                ),
+            );
+      const gone = await db
+        .delete(watchHistory)
+        .where(and(eq(watchHistory.profileId, profileId), sameTitle));
 
       return countAffected(gone);
     },

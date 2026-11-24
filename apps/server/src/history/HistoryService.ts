@@ -36,6 +36,8 @@ type HistoryService = {
 
   forget: (profileId: string, viewingId: string) => Promise<boolean>;
 
+  forgetTitle: (profileId: string, mediaItemId: string) => Promise<number>;
+
   forgetAll: (profileId: string) => Promise<number>;
 
   prune: (before: Date) => Promise<number>;

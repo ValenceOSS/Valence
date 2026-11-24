@@ -188,6 +188,27 @@ jest.mock('@ValenceTv/components/TopBar/TopBar', () => ({
       'Go to Account': () => {
         onChoose('account');
       },
+      'Go to History': () => {
+        onChoose('history');
+      },
+    }),
+}));
+
+jest.mock('@ValenceTv/screens/WatchHistory/WatchHistory', () => ({
+  WatchHistory: ({
+    onOpen,
+    onPlay,
+  }: {
+    onOpen: (wanted: { kind: 'film' | 'show'; mediaId: string }) => void;
+    onPlay: (mediaId: string, startSeconds: number) => void;
+  }) =>
+    mockStandIn('Watch history', {
+      'Resume Arrival from history': () => {
+        onPlay(mockArrival.id, 90);
+      },
+      'Open Arrival from history': () => {
+        onOpen({ kind: 'film', mediaId: mockArrival.id });
+      },
     }),
 }));
 
@@ -536,6 +557,25 @@ describe('SignedIn', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Open my request' }));
 
     expect(drawn.getByText('Ask for film 438631')).toBeTruthy();
+  });
+
+  it('opens the watch history from the bar, playing and opening what is chosen in it', async () => {
+    const drawn = await drawSignedIn();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Go to History' }));
+
+    expect(drawn.getByText('Watch history')).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Open Arrival from history' }));
+
+    expect(drawn.getByText(`Film ${mockArrival.id}`)).toBeTruthy();
+
+    await act(() => {
+      pressMenu();
+    });
+    await userEvent.press(drawn.getByRole('button', { name: 'Resume Arrival from history' }));
+
+    expect(await drawn.findByText(`Playing ${mockArrival.id} from 90`)).toBeTruthy();
   });
 
   it('hands moving to another server up from the profile', async () => {

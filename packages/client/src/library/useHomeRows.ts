@@ -40,6 +40,8 @@ const ENCORE_REACH = 20;
 
 const ENCORE_ORDERS = ['newest', 'title'] as const;
 
+const RESUMING_READ = ROW_LIMIT * 2;
+
 const TASTE_DEPTH = 3;
 
 const LIKED_STARS = 4;
@@ -297,7 +299,12 @@ const useHomeRows = (
   const facets = useQuery({ ...libraryQueries.facets(), enabled: canAsk && !hasShelves });
 
   const resumingIds = useMemo(
-    () => [...progress.values()].filter(isOnContinueWatching).map((one) => one.mediaId),
+    () =>
+      [...progress.values()]
+        .filter(isOnContinueWatching)
+        .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
+        .slice(0, RESUMING_READ)
+        .map((one) => one.mediaId),
     [progress],
   );
 
@@ -328,7 +335,7 @@ const useHomeRows = (
   );
 
   const resuming = useQuery({
-    ...libraryQueries.across(viewable, { ids: resumingIds, limit: ROW_LIMIT }),
+    ...libraryQueries.across(viewable, { ids: resumingIds, limit: RESUMING_READ }),
     enabled: canAsk && resumingIds.length > 0,
     placeholderData: keepPreviousData,
   });

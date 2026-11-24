@@ -283,6 +283,34 @@ describe('useHomeRows', () => {
     expect(upNextMock).not.toHaveBeenCalled();
   });
 
+  it('carries on with the episode watched last however many older things were left part way', async () => {
+    const episode = { ...film('zz episode'), seriesTitle: 'A Show', seasonNumber: 1 };
+    const older = films('aa', 30);
+
+    itemsMock.mockImplementation((_libraryId, options: { ids?: string[]; limit?: number }) => {
+      const items = [...older, episode]
+        .filter((media) => options.ids?.includes(media.id) === true)
+        .sort((left, right) => left.title.localeCompare(right.title))
+        .slice(0, options.limit);
+
+      return Promise.resolve({ items, total: items.length });
+    });
+
+    const progress = new Map([
+      ...older.map((media) => [media.id, halfWay(media.id)] as const),
+      [episode.id, { ...halfWay(episode.id), updatedAt: '2026-09-10T00:00:00.000Z' }],
+    ]);
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], progress, true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(result.current.rails.find((rail) => rail.id === 'resume')?.items[0]?.id).toBe(
+        'zz episode',
+      );
+    });
+  });
+
   it('offers what is like each title watched lately, from the libraries being shown', async () => {
     const elsewhere = { ...film('elsewhere'), libraryId: 'another-library' };
 

@@ -58,6 +58,28 @@ const forgetViewingRoute = createRoute({
   },
 });
 
+const forgetTitleRoute = createRoute({
+  method: 'delete',
+  path: '/api/history/titles/{mediaId}',
+  tags: ['History'],
+  summary: 'Forget everything this profile watched of one film or series',
+  description:
+    'Named by a film, forgets every viewing of it; named by an episode, forgets every viewing of every episode of its series.',
+  request: { params: z.object({ mediaId: z.string().min(1) }) },
+  responses: {
+    200: {
+      description: 'How much was forgotten',
+      content: {
+        'application/json': { schema: z.object({ forgotten: z.number().int().nonnegative() }) },
+      },
+    },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: HistoryError } },
+    },
+  },
+});
+
 const forgetHistoryRoute = createRoute({
   method: 'delete',
   path: '/api/history',
@@ -77,4 +99,4 @@ const forgetHistoryRoute = createRoute({
   },
 });
 
-export { listHistoryRoute, forgetViewingRoute, forgetHistoryRoute };
+export { listHistoryRoute, forgetViewingRoute, forgetTitleRoute, forgetHistoryRoute };

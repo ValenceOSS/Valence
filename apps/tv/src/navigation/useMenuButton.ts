@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BackHandler, TVEventControl } from 'react-native';
+import { menuKeyClaims } from '@ValenceTv/navigation/menuKeyClaims';
 
 /**
  * Takes the remote's Menu button to mean "back a step", while there is a step to go back to.
@@ -17,8 +18,12 @@ import { BackHandler, TVEventControl } from 'react-native';
  */
 const useMenuButton = (back: (() => void) | null, isInside = false): void => {
   useEffect(() => {
+    if (!isInside) {
+      menuKeyClaims.isScreenHolding = back !== null;
+    }
+
     if (back === null) {
-      if (!isInside) {
+      if (!isInside && menuKeyClaims.overlays === 0) {
         TVEventControl.disableTVMenuKey();
       }
 

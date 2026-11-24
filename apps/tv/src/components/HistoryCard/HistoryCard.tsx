@@ -3,13 +3,14 @@ import { describeWhen } from '@ValenceClient/history/describeWhen';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
+import { ProgressLine } from '@ValenceTv/components/ProgressLine/ProgressLine';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { HistoryCardProps } from './HistoryCard.types';
 import { say } from '@ValenceI18n/say';
 
 const SHADOW_REACH = 12;
 
-const PICTURE = { width: 480, height: 270 };
+const WIDE = 480;
 
 const styles = StyleSheet.create({
   picture: {
@@ -27,19 +28,32 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Something this viewer lately watched, as a wide card: its picture — the episode's own still, or
- * the film's backdrop — what it was, and when, with that it was finished where it was.
+ * A film or a programme this viewer lately watched, as a wide card: the picture of what they watched
+ * last — the episode's own still, or the film's backdrop — what it was, the episode where it is a
+ * programme, and when, with that it was finished where it was or how far they got where they
+ * stopped part way.
  *
- * @param viewing - What was watched.
+ * @param watched - The title, and its latest viewing.
+ * @param width - How wide to draw it.
+ * @param watchedFraction - How far through what was watched last this viewer is, where they stopped
+ *   part way.
  * @param onPress - Told it was chosen.
  * @param onFocus - Told the remote has come to rest on it.
  */
-const HistoryCard = ({ viewing, onPress, onFocus }: HistoryCardProps) => {
-  const what = viewing.seriesTitle ?? viewing.title ?? say('common.something');
+const HistoryCard = ({
+  watched,
+  width = WIDE,
+  watchedFraction,
+  onPress,
+  onFocus,
+}: HistoryCardProps) => {
+  const { latest } = watched;
+  const height = Math.round((width * 9) / 16);
+  const what = latest.seriesTitle ?? latest.title ?? say('common.something');
   const when = [
-    viewing.seriesTitle === null ? null : viewing.title,
-    describeWhen(new Date(viewing.lastWatchedAt), new Date()),
-    viewing.isFinished ? say('common.finished') : null,
+    latest.seriesTitle === null ? null : latest.title,
+    describeWhen(new Date(latest.lastWatchedAt), new Date()),
+    latest.isFinished ? say('common.finished') : null,
   ]
     .filter((part) => part !== null)
     .join(' · ');
@@ -47,21 +61,23 @@ const HistoryCard = ({ viewing, onPress, onFocus }: HistoryCardProps) => {
   return (
     <Focusable
       label={`${what}, ${when}`}
-      shadow={{ height: PICTURE.height, cornerRadius: tokens.radii.lg, reach: SHADOW_REACH }}
+      shadow={{ height, cornerRadius: tokens.radii.lg, reach: SHADOW_REACH }}
       scale={1.06}
       onFocus={() => {
-        onFocus(viewing);
+        onFocus(watched);
       }}
       onPress={() => {
-        onPress(viewing);
+        onPress(watched);
       }}
     >
-      <View style={{ width: PICTURE.width }}>
-        <View style={[styles.picture, PICTURE]}>
+      <View style={{ width }}>
+        <View style={[styles.picture, { width, height }]}>
           <Artwork
-            path={artworkUrl(viewing.mediaItemId, 'backdrop', { size: 'medium' })}
+            path={artworkUrl(latest.mediaItemId, 'backdrop', { size: 'medium' })}
             style={StyleSheet.absoluteFill}
           />
+
+          {watchedFraction === undefined ? null : <ProgressLine fraction={watchedFraction} />}
         </View>
 
         <Text numberOfLines={1} style={styles.title}>

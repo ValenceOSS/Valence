@@ -1,6 +1,7 @@
 import {
   listHistoryRoute,
   forgetViewingRoute,
+  forgetTitleRoute,
   forgetHistoryRoute,
 } from '@ValenceServer/routes/HistoryRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -50,6 +51,19 @@ const serveHistory = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.body(null, 204);
+  });
+
+  app.openapi(forgetTitleRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null || history === undefined) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    return context.json(
+      { forgotten: await history.forgetTitle(profileId, context.req.valid('param').mediaId) },
+      200,
+    );
   });
 
   app.openapi(forgetHistoryRoute, async (context) => {
