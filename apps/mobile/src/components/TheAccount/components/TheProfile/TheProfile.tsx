@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { ImagePlus } from '@keyline-icons/react-native';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { useServerHas } from '@ValenceClient/about/useServerHas';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { saveProfile } from '@ValenceClient/profiles/fetchProfiles';
 import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
@@ -38,6 +39,7 @@ const styles = StyleSheet.create({
 const TheProfile = () => {
   const cache = useQueryClient();
   const colours = useTheColours();
+  const hasSeasons = useServerHas('library.seasonalFilms') === true;
   const asked = useQuery(profileQueries.watching());
   const profile = asked.data ?? null;
   const [name, setName] = useState<string | null>(null);
@@ -189,19 +191,21 @@ const TheProfile = () => {
           />
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.asks}>
-            <Words>{say('screens.accountArea.profileSettings.seasonalRows')}</Words>
-            <Words size="small" tone="muted">
-              {say('screens.accountArea.profileSettings.showsChristmasFilmsOnTheHomePage')}
-            </Words>
+        {hasSeasons ? (
+          <View style={styles.row}>
+            <View style={styles.asks}>
+              <Words>{say('screens.accountArea.profileSettings.seasonalRows')}</Words>
+              <Words size="small" tone="muted">
+                {say('screens.accountArea.profileSettings.showsChristmasFilmsOnTheHomePage')}
+              </Words>
+            </View>
+            <Toggle
+              label={say('screens.accountArea.profileSettings.seasonalRows')}
+              isOn={draft.showsSeasonalRows}
+              onToggle={setShowsSeasonal}
+            />
           </View>
-          <Toggle
-            label={say('screens.accountArea.profileSettings.seasonalRows')}
-            isOn={draft.showsSeasonalRows}
-            onToggle={setShowsSeasonal}
-          />
-        </View>
+        ) : null}
       </AGroup>
 
       {refusal === null ? null : <Words tone="danger">{refusal}</Words>}

@@ -7,6 +7,7 @@ import { HOME_ROW_SIZE } from '@ValenceContracts/constants/HOME_ROW_SIZE';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { BecauseYouWatchedRow } from '@ValenceContracts/schemas/Likeness';
 import type { Season } from '@ValenceContracts/constants/SEASONS';
+import { SEASON_ROW_TITLES } from '@ValenceClient/library/SEASON_ROW_TITLES';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import { RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { say } from '@ValenceI18n/say';
@@ -110,17 +111,6 @@ const comeRoundAgain = (rows: readonly Rail[], count: number): Rail[] =>
       }).flat();
 
 /**
- * Names a season's row, such as Christmas films.
- *
- * @param season - The season.
- * @returns What the row says it is.
- */
-const seasonalTitle = (season: Season): string =>
-  season === 'christmas'
-    ? say('client.library.homeRows.christmasFilms')
-    : say('client.library.homeRows.halloweenFilms');
-
-/**
  * The rows the front page is browsed by: carrying on, what is new, the films of the season,
  * what somebody is likely to want, what is like what they watched lately, what is well thought of, the rows plugins add that
  * this profile chose, a row for each of a handful of genres, and then the decades the library
@@ -171,7 +161,11 @@ const homeRows = ({
     ...row('recent', say('common.recentlyAdded'), recent, true, 1),
     ...(seasonal === null
       ? []
-      : row(`seasonal:${seasonal.season}`, seasonalTitle(seasonal.season), seasonal.items)),
+      : row(
+          `seasonal:${seasonal.season}`,
+          say(SEASON_ROW_TITLES[seasonal.season]),
+          seasonal.items,
+        )),
     ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
     ...because.flatMap(({ watched, items }) =>
       row(
