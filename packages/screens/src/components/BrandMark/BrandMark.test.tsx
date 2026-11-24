@@ -1,9 +1,30 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
+import type * as MotionReact from 'motion/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { BrandMark } from './BrandMark';
+
+vi.mock('motion/react', async () => {
+  const actual = await vi.importActual<typeof MotionReact>('motion/react');
+  const span = ({
+    layoutId,
+    className,
+    children,
+  }: {
+    layoutId?: string;
+    className?: string;
+    children?: ReactNode;
+  }) => (
+    <span data-layout-id={layoutId} className={className}>
+      {children}
+    </span>
+  );
+
+  return { ...actual, motion: { span } };
+});
 
 describe('BrandMark', () => {
   it('names Valence once to somebody listening', () => {
@@ -23,6 +44,16 @@ describe('BrandMark', () => {
 
     expect(letters.map((letter) => letter.textContent).join('')).toBe('Valence');
     expect(letters).toHaveLength('Valence'.length);
+  });
+
+  it('lets go of the place it travels under once it has landed, so a new page never sends it flying', async () => {
+    const { container } = render(<BrandMark hasMark marksPlace="valence-mark" />, {
+      wrapper: CacheScope,
+    });
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-layout-id="valence-mark"]')).toBeNull();
+    });
   });
 
   it('keeps the mark hidden where it is still on its way from elsewhere', () => {
