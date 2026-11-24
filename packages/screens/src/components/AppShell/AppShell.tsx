@@ -177,8 +177,9 @@ const SECTION_LABELS: Record<ShellSection, string> = {
 /**
  * The frame every page is drawn inside: the bar along the top, the light behind, and the footer at
  * the end of the scroll. The bar is clear until the page has been scrolled and painted in after, so
- * the top of a page is the page rather than chrome laid over it. Sections arrive rather than appear, and each remembers how far down it was
- * scrolled so moving between them and back lands where it was left.
+ * the top of a page is the page rather than chrome laid over it. Sections arrive rather than appear.
+ * Where a page is scrolled to is left to the router: a page opened afresh starts at the top, and going
+ * back to one puts it where it was left.
  *
  * @param section - Which section is showing.
  * @param onSectionChange - Told which section was chosen.
@@ -289,26 +290,6 @@ const AppShell = ({
   useEffect(() => {
     reach(window.scrollY);
   }, [reach, section]);
-
-  const placesRef = useRef<Record<string, number>>({});
-  const leavingRef = useRef(section);
-
-  useEffect(() => {
-    const left = leavingRef.current;
-
-    if (left !== section) {
-      placesRef.current[left] = window.scrollY;
-      leavingRef.current = section;
-    }
-
-    const frame = requestAnimationFrame(() => {
-      window.scrollTo({ top: placesRef.current[section] ?? 0 });
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, [section]);
 
   const [desktopApp] = useState(desktopAppOffer);
 
