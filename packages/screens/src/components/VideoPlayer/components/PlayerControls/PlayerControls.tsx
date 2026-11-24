@@ -753,7 +753,7 @@ const PlayerControls = ({
                             ? {}
                             : { detail: qualityStepCosts.original }),
                           ...(originalStep !== null && isAboveQuality(originalStep, qualityLimit)
-                            ? { isLocked: true }
+                            ? { isLocked: true, detail: say('common.aboveYourLimit') }
                             : {}),
                         },
                         ...qualityRungs.map((id) => {
@@ -769,7 +769,9 @@ const PlayerControls = ({
                             ...tierOf(id),
                             ...(detail === undefined ? {} : { detail }),
                             ...(isNoSmaller ? { isDisabled: true } : {}),
-                            ...(isAboveQuality(id, qualityLimit) ? { isLocked: true } : {}),
+                            ...(isAboveQuality(id, qualityLimit)
+                              ? { isLocked: true, detail: say('common.aboveYourLimit') }
+                              : {}),
                           };
                         }),
                       ],

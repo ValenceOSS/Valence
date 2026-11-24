@@ -93,8 +93,20 @@ const RETIRED_PERMISSIONS: Readonly<
   'server.webhooks': 'server.settings',
 };
 
+const CARRIED_OVER_PERMISSION_NAMES = [
+  'library.create',
+  'jobs.schedule',
+  'media.rescan',
+  'media.artwork',
+  'media.hide',
+  'streaming.stop',
+  'streaming.pause',
+  'streaming.message',
+  'server.logs',
+] as const satisfies readonly (typeof RETIRED_PERMISSION_NAMES)[number][];
+
 const RetiredPermissionSchema = z
-  .enum(RETIRED_PERMISSION_NAMES)
+  .enum(CARRIED_OVER_PERMISSION_NAMES)
   .transform((retired) => RETIRED_PERMISSIONS[retired]);
 
 const PermissionOrRetiredSchema = z.union([PermissionSchema, RetiredPermissionSchema]);
@@ -103,6 +115,26 @@ const GrantedPermissionOrRetiredSchema = z.union([
   PermissionSchema,
   RetiredPermissionSchema,
   PluginNodeSchema,
+]);
+
+const PermissionsReadSchema = z.array(z.string()).transform((names) => [
+  ...new Set(
+    names.flatMap((name) => {
+      const known = PermissionOrRetiredSchema.safeParse(name);
+
+      return known.success ? [known.data] : [];
+    }),
+  ),
+]);
+
+const GrantedPermissionsReadSchema = z.array(z.string()).transform((names) => [
+  ...new Set(
+    names.flatMap((name) => {
+      const known = GrantedPermissionOrRetiredSchema.safeParse(name);
+
+      return known.success ? [known.data] : [];
+    }),
+  ),
 ]);
 
 const PermissionGrantSchema = z.object({
@@ -167,6 +199,8 @@ export {
   RETIRED_PERMISSION_NAMES,
   PermissionOrRetiredSchema,
   GrantedPermissionOrRetiredSchema,
+  PermissionsReadSchema,
+  GrantedPermissionsReadSchema,
   PermissionSchema,
   PermissionGrantSchema,
   PluginNodeSchema,

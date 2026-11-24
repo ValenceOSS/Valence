@@ -94,6 +94,12 @@ const createMemoryPermissionService = (
       return Promise.resolve(state.roles.length !== before);
     },
 
+    makeRoomAtBottom: () => {
+      state.roles = state.roles.map((role) => ({ ...role, position: role.position + 1 }));
+
+      return Promise.resolve();
+    },
+
     rankRoles: (ranks) => {
       state.roles = state.roles.map((role) => ({
         ...role,

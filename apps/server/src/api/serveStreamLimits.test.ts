@@ -141,7 +141,7 @@ describe('stream limits', () => {
       name: 'Moderator',
       position: 60,
       color: null,
-      permissions: ['account.manage'],
+      permissions: ['account.roles'],
     });
     const administratorRole = (await permissions.listRoles()).find(
       (role) => role.name === 'Administrator',

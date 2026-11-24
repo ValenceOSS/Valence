@@ -535,7 +535,9 @@ describe('PlayerControls', () => {
     await user.click(screen.getByRole('button', { name: 'Settings' }));
     await user.click(await screen.findByRole('button', { name: /^Quality/ }));
 
-    expect(await screen.findByRole('menuitemradio', { name: '4K' })).toBeDisabled();
+    expect(
+      await screen.findByRole('menuitemradio', { name: /^4K.*Above your limit/ }),
+    ).toBeDisabled();
     expect(screen.getByRole('menuitemradio', { name: /1080p/ })).toBeDisabled();
     expect(screen.getByRole('menuitemradio', { name: /720p/ })).toBeEnabled();
     expect(screen.getByRole('menuitemradio', { name: /480p/ })).toBeEnabled();

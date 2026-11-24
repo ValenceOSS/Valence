@@ -10,6 +10,7 @@ const createService = (): PermissionService => ({
   updateRole: () => Promise.resolve(null),
   deleteRole: () => Promise.resolve(true),
   rankRoles: () => Promise.resolve(),
+  makeRoomAtBottom: () => Promise.resolve(),
   rolesFor: () => Promise.resolve([]),
   assignRole: () => Promise.resolve(),
   removeRole: () => Promise.resolve(),

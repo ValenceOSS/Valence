@@ -2,7 +2,11 @@ import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readRefusal } from './readRefusal';
 import type { Refusal } from './readRefusal';
 import { z } from 'zod';
-import { GrantedPermissionSchema, PermissionSchema } from '@ValenceContracts/schemas/Permission';
+import {
+  GrantedPermissionsReadSchema,
+  PermissionOrRetiredSchema,
+  PermissionsReadSchema,
+} from '@ValenceContracts/schemas/Permission';
 import type { Permission, PermissionGrant, Role } from '@ValenceContracts/schemas/Permission';
 import { say } from '@ValenceI18n/say';
 
@@ -10,19 +14,25 @@ const RoleSchema = z.object({
   id: z.string(),
   name: z.string(),
   position: z.number(),
-  permissions: z.array(GrantedPermissionSchema),
+  permissions: GrantedPermissionsReadSchema,
   color: z.string().nullable(),
 });
 
 const GrantSchema = z.object({
-  permission: PermissionSchema,
+  permission: z.string(),
   effect: z.enum(['allow', 'deny']),
 });
 
 const AccountPermissionsSchema = z.object({
   roles: z.array(RoleSchema),
-  overrides: z.array(GrantSchema),
-  effective: z.array(GrantedPermissionSchema),
+  overrides: z.array(GrantSchema).transform((grants) =>
+    grants.flatMap((grant) => {
+      const known = PermissionOrRetiredSchema.safeParse(grant.permission);
+
+      return known.success ? [{ permission: known.data, effect: grant.effect }] : [];
+    }),
+  ),
+  effective: GrantedPermissionsReadSchema,
 });
 
 type AccountPermissions = z.infer<typeof AccountPermissionsSchema>;
@@ -42,10 +52,7 @@ type RoleList = z.infer<typeof RoleListSchema>;
  */
 const fetchPermissionCatalogue = async (): Promise<Permission[]> => {
   return (
-    await readFromServer(
-      '/api/admin/permissions',
-      z.object({ permissions: z.array(PermissionSchema) }),
-    )
+    await readFromServer('/api/admin/permissions', z.object({ permissions: PermissionsReadSchema }))
   ).permissions;
 };
 

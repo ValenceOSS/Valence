@@ -8,8 +8,12 @@ describe('readGrantedPermission', () => {
   });
 
   it('reads a permission since folded into another as the one it became', () => {
-    expect(readGrantedPermission('account.ban')).toBe('account.manage');
     expect(readGrantedPermission('streaming.pause')).toBe('streaming.control');
+  });
+
+  it('reads nothing for a retired name whose successor does more than it did', () => {
+    expect(readGrantedPermission('account.ban')).toBeNull();
+    expect(readGrantedPermission('server.webhooks')).toBeNull();
   });
 
   it.each([

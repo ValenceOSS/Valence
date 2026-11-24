@@ -1,3 +1,4 @@
+import { untieRoles } from '@ValenceServer/auth/untieRoles';
 import { z } from '@hono/zod-openapi';
 import { createDatabaseMediaOriginStore } from '@ValenceServer/origins/createDatabaseMediaOriginStore';
 import { createSetupCode } from '@ValenceServer/setup/createSetupCode';
@@ -6201,6 +6202,8 @@ const seededRoles = await seedDefaultRoles({
       role: row.role ?? null,
     })),
 });
+
+await untieRoles(permissions);
 
 if (seededRoles.rolesCreated.length > 0) {
   log.info('server', `roles: created ${seededRoles.rolesCreated.join(', ')}`);

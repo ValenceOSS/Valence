@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PERMISSIONS, RETIRED_PERMISSIONS } from '@ValenceContracts/schemas/Permission';
+import { PERMISSIONS } from '@ValenceContracts/schemas/Permission';
 import { readPermission } from './readPermission';
 
 describe('readPermission', () => {
@@ -10,11 +10,19 @@ describe('readPermission', () => {
   });
 
   it('reads a permission since folded into another as the one it became', () => {
-    for (const [retired, became] of Object.entries(RETIRED_PERMISSIONS)) {
-      expect(readPermission(retired)).toBe(became);
-    }
-
     expect(readPermission('server.logs')).toBe('server.monitor');
+    expect(readPermission('library.create')).toBe('library.edit');
+  });
+
+  it('reads nothing for a retired name whose successor does more than it did', () => {
+    for (const widening of [
+      'account.ban',
+      'account.security',
+      'account.profiles',
+      'server.webhooks',
+    ]) {
+      expect(readPermission(widening)).toBeNull();
+    }
   });
 
   it('refuses a name the catalogue no longer has', () => {

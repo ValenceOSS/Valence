@@ -49,6 +49,12 @@ const watchPermissionChanges = (
     watcher.everyoneChanged();
   },
 
+  makeRoomAtBottom: async () => {
+    await service.makeRoomAtBottom();
+
+    watcher.everyoneChanged();
+  },
+
   assignRole: async (userId, roleId) => {
     await service.assignRole(userId, roleId);
 

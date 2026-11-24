@@ -187,12 +187,14 @@ const RoleList = ({
                 memberCount={memberCounts.get(role.id) ?? 0}
                 isChosen={chosenId === role.id}
                 lead={
-                  <Icon
-                    of={GripVerticalIcon}
-                    size={14}
-                    tone="faint"
-                    className="opacity-40 transition-opacity group-hover/role:opacity-100"
-                  />
+                  <span data-role-grip className="flex touch-none">
+                    <Icon
+                      of={GripVerticalIcon}
+                      size={14}
+                      tone="faint"
+                      className="opacity-40 transition-opacity group-hover/role:opacity-100"
+                    />
+                  </span>
                 }
                 menu={menuOf(role, at)}
                 onChoose={() => {

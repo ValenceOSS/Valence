@@ -110,7 +110,7 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(readRoleStreamLimitRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
+    if (!(await requires(context.req.raw.headers, 'account.roles'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -128,7 +128,7 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(setRoleStreamLimitRoute, async (context) => {
     const actor = await readActor(context.req.raw.headers);
 
-    if (actor === null || !actor.permissions.has('account.manage')) {
+    if (actor === null || !actor.permissions.has('account.roles')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
@@ -162,7 +162,7 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
       },
     });
 
-    return context.json(limit, 200);
+    return context.json(holdsAnything(limit) ? limit : NO_STREAM_LIMIT, 200);
   });
 };
 

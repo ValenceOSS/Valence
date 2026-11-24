@@ -136,9 +136,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
     const locks = await readLibraryLocks(settings);
     const locked = new Set(viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : []);
-    const mayChange =
-      (await requires(context.req.raw.headers, 'library.edit')) ||
-      (await requires(context.req.raw.headers, 'library.edit'));
+    const mayChange = await requires(context.req.raw.headers, 'library.edit');
 
     const mayMonitor = mayChange || (await requires(context.req.raw.headers, 'server.monitor'));
 

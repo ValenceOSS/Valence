@@ -13,6 +13,7 @@ type PermissionService = {
   updateRole: (id: string, role: Partial<Omit<Role, 'id'>>) => Promise<Role | null>;
   deleteRole: (id: string) => Promise<boolean>;
   rankRoles: (ranks: ReadonlyMap<string, number>) => Promise<void>;
+  makeRoomAtBottom: () => Promise<void>;
 
   rolesFor: (userId: string) => Promise<Role[]>;
   assignRole: (userId: string, roleId: string) => Promise<void>;

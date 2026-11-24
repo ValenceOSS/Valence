@@ -602,7 +602,16 @@ describe('createLinkedPlayback', () => {
     expect(local.fitsLimit).toHaveBeenCalledWith('mine', 'r1', limit);
   });
 
-  it('lets a linked title fit only a limit that holds back neither quality nor bitrate', async () => {
+  it('lets a linked title fit a limit while this server is playing it under that limit', async () => {
+    const { linked } = playback();
+    const limit = { maxQuality: '720p', maxBitrateKbps: null } as const;
+
+    await linked.start(HERE, aDeviceProfile(), 0, undefined, '720p');
+
+    expect(await linked.fitsLimit(HERE, null, limit)).toBe(true);
+  });
+
+  it('lets a linked title fit only a limit that holds back neither quality nor bitrate, with nothing playing', async () => {
     const { linked, local } = playback();
 
     expect(await linked.fitsLimit(HERE, null, { maxQuality: null, maxBitrateKbps: null })).toBe(

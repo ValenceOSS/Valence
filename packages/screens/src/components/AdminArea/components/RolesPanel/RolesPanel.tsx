@@ -100,6 +100,7 @@ const RolesPanel = () => {
   const putInOrder = async (ids: string[]) => {
     const byId = new Map(roles.map((role) => [role.id, role]));
 
+    await cache.cancelQueries({ queryKey: adminQueries.roles().queryKey });
     cache.setQueryData(adminQueries.roles().queryKey, {
       roles: ids.flatMap((id) => {
         const role = byId.get(id);

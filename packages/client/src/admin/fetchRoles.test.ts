@@ -259,3 +259,28 @@ describe('creating a role', () => {
     });
   });
 });
+
+describe('reading what a server of another version allows', () => {
+  it('reads a role whose permissions this app does not know, keeping those it does', async () => {
+    answering({
+      roles: [
+        {
+          id: 'role-1',
+          name: 'Staff',
+          position: 1,
+          permissions: ['media.rescan', 'jobs.run', 'something.newer'],
+          color: null,
+        },
+      ],
+      outOfReach: [],
+    });
+
+    expect((await fetchRoles()).roles[0]?.permissions).toEqual(['media.override', 'jobs.run']);
+  });
+
+  it('reads a catalogue holding permissions this app does not know', async () => {
+    answering({ permissions: ['library.edit', 'something.newer', 'library.create'] });
+
+    await expect(fetchPermissionCatalogue()).resolves.toEqual(['library.edit']);
+  });
+});

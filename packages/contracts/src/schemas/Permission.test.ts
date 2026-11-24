@@ -35,9 +35,18 @@ describe('PermissionOrRetiredSchema', () => {
     expect(PermissionOrRetiredSchema.parse('jobs.schedule')).toBe('jobs.run');
     expect(PermissionOrRetiredSchema.parse('media.hide')).toBe('media.override');
     expect(PermissionOrRetiredSchema.parse('streaming.pause')).toBe('streaming.control');
-    expect(PermissionOrRetiredSchema.parse('account.ban')).toBe('account.manage');
     expect(PermissionOrRetiredSchema.parse('server.logs')).toBe('server.monitor');
-    expect(PermissionOrRetiredSchema.parse('server.webhooks')).toBe('server.settings');
+  });
+
+  it('does not carry over a retired name whose successor does more than it did', () => {
+    for (const widening of [
+      'account.ban',
+      'account.security',
+      'account.profiles',
+      'server.webhooks',
+    ]) {
+      expect(PermissionOrRetiredSchema.safeParse(widening).success).toBe(false);
+    }
   });
 
   it('refuses a name that never existed, and a plugin node', () => {
@@ -49,7 +58,8 @@ describe('PermissionOrRetiredSchema', () => {
 describe('GrantedPermissionOrRetiredSchema', () => {
   it('reads a retired name as the permission that took it over', () => {
     expect(GrantedPermissionOrRetiredSchema.parse('media.rescan')).toBe('media.override');
-    expect(GrantedPermissionOrRetiredSchema.parse('account.security')).toBe('account.manage');
+    expect(GrantedPermissionOrRetiredSchema.parse('streaming.stop')).toBe('streaming.control');
+    expect(GrantedPermissionOrRetiredSchema.safeParse('account.security').success).toBe(false);
   });
 
   it('keeps a current permission and a plugin node as they are', () => {

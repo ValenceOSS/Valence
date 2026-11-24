@@ -175,14 +175,19 @@ const PermissionEditor = ({
           <PermissionRow
             key={node.node}
             label={node.title}
-            detail={
+            detail={[
               node.description ??
-              say('screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf', {
-                pluginName: group.pluginName,
-              })
-            }
+                say('screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf', {
+                  pluginName: group.pluginName,
+                }),
+              isOutOfMyGift(node.node)
+                ? say('screens.rolesPanel.permissionEditor.youDoNotHaveThisSoYou')
+                : null,
+            ]
+              .filter((part) => part !== null)
+              .join(' ')}
             isOn={hasEverything || selected.includes(node.node)}
-            isDisabled={hasEverything}
+            isDisabled={hasEverything || isOutOfMyGift(node.node)}
             onToggle={() => {
               onToggle(node.node);
             }}

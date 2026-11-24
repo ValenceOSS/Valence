@@ -139,9 +139,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (body.position === undefined) {
-      const existing = await permissions.listRoles();
-
-      await permissions.rankRoles(new Map(existing.map((role) => [role.id, role.position + 1])));
+      await permissions.makeRoomAtBottom();
     }
 
     const created = await permissions.createRole({

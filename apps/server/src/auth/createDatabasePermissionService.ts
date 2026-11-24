@@ -1,6 +1,6 @@
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { randomUUID } from 'node:crypto';
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { resolvePermissions } from '@ValenceCore/functions/resolvePermissions';
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
 import type {
@@ -14,14 +14,15 @@ import { upsert } from '@ValenceDatabase/upsert';
 import { role, rolePermission, userPermissionOverride, userRole } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { readPermission } from './readPermission';
+import { retiredSuccessorOf } from './retiredSuccessorOf';
 import { readGrantedPermission } from './readGrantedPermission';
 import { namesOfPermission } from './namesOfPermission';
 import type { PermissionService } from './PermissionService';
 
 /**
  * Reads permission rows into grants, dropping any naming a permission or an effect this version of
- * Valence does not recognise, and keeping a denial over an allowance where two rows come to the same
- * permission. Rows outlive the code that wrote them, and an unreadable grant is safer discarded than
+ * Valence does not recognise, reading a denial of any retired permission as a denial of the one it
+ * became, and keeping a denial over an allowance where two rows come to the same permission. Rows outlive the code that wrote them, and an unreadable grant is safer discarded than
  * guessed at.
  *
  * @param rows - The rows as stored.
@@ -31,7 +32,9 @@ const readGrants = (rows: readonly { permission: string; effect: string }[]): Pe
   const grants = new Map<PermissionGrant['permission'], PermissionGrant['effect']>();
 
   for (const row of rows) {
-    const permission = readPermission(row.permission);
+    const permission =
+      readPermission(row.permission) ??
+      (row.effect === 'deny' ? retiredSuccessorOf(row.permission) : null);
 
     if (permission === null || (row.effect !== 'allow' && row.effect !== 'deny')) {
       continue;
@@ -99,7 +102,7 @@ const createDatabasePermissionService = (db: AnyValenceDatabase): PermissionServ
         color: row.color,
         permissions: byRole.get(row.id) ?? [],
       }))
-      .sort((a, b) => b.position - a.position);
+      .sort((a, b) => b.position - a.position || a.name.localeCompare(b.name));
   };
 
   const overridesFor = async (userId: string): Promise<PermissionGrant[]> =>
@@ -178,9 +181,15 @@ const createDatabasePermissionService = (db: AnyValenceDatabase): PermissionServ
     },
 
     rankRoles: async (ranks) => {
-      for (const [id, position] of ranks) {
-        await db.update(role).set({ position }).where(eq(role.id, id));
-      }
+      await db.transaction(async (tx) => {
+        for (const [id, position] of ranks) {
+          await tx.update(role).set({ position }).where(eq(role.id, id));
+        }
+      });
+    },
+
+    makeRoomAtBottom: async () => {
+      await db.update(role).set({ position: sql`${role.position} + 1` });
     },
 
     rolesFor,
