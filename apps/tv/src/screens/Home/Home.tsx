@@ -267,7 +267,7 @@ Home.displayName = 'Home';
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  inside: { gap: tokens.space.md, paddingBottom: tokens.space.xl },
+  inside: { gap: tokens.space.sm, paddingBottom: tokens.space.xl },
   waiting: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   empty: { color: tokens.colours.muted, fontSize: tokens.type.body },
   more: { marginVertical: tokens.space.lg },

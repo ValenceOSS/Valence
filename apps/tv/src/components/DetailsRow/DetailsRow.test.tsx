@@ -19,6 +19,21 @@ describe('DetailsRow', () => {
     expect(drawn.queryByRole('button')).toBeNull();
   });
 
+  it('leads the critics’ score with Rotten Tomatoes’ mark, as the web does', async () => {
+    const drawn = await render(
+      <DetailsRow
+        details={[
+          { label: 'Released', value: '15 July 2011' },
+          { label: 'Rotten Tomatoes', value: '96%', tomato: 96 },
+        ]}
+      />,
+    );
+
+    expect(drawn.getByText('96%')).toBeTruthy();
+    expect(drawn.getAllByRole('image')).toHaveLength(1);
+    expect(drawn.getByRole('image', { name: 'Fresh on Rotten Tomatoes' })).toBeTruthy();
+  });
+
   it('draws nothing where no fact is known', async () => {
     const drawn = await render(<DetailsRow details={[]} />);
 

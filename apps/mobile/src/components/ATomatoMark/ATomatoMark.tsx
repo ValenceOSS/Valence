@@ -1,9 +1,6 @@
 import { Image, StyleSheet } from 'react-native';
-import fresh from '@ValenceRatings/rotten-tomatoes-fresh.png';
-import rotten from '@ValenceRatings/rotten-tomatoes-rotten.png';
-import { isFreshTomato } from '@ValenceCore/functions/isFreshTomato';
+import { tomatoMarkOf } from '@ValenceNative/library/tomatoMarkOf';
 import type { ATomatoMarkProps } from './ATomatoMark.types';
-import { say } from '@ValenceI18n/say';
 
 const SIZE = 16;
 
@@ -18,20 +15,16 @@ const styles = StyleSheet.create({
  * @param score - The critics' score, as a percentage.
  */
 const ATomatoMark = ({ score }: ATomatoMarkProps) => {
-  const isFresh = isFreshTomato(score);
+  const mark = tomatoMarkOf(score);
 
   return (
     <Image
-      source={isFresh ? fresh : rotten}
+      source={mark.picture}
       style={styles.mark}
       resizeMode="contain"
       accessible
       accessibilityRole="image"
-      accessibilityLabel={
-        isFresh
-          ? say('ui.tomatoMark.freshOnRottenTomatoes')
-          : say('ui.tomatoMark.rottenOnRottenTomatoes')
-      }
+      accessibilityLabel={mark.label}
       accessibilityIgnoresInvertColors
     />
   );
