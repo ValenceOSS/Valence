@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { aMediaSummary } from '@ValenceClient/testing/aMediaSummary';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
+import { HrefOf } from '@ValenceScreens/navigation/HrefOf';
 import { LibraryRail } from './LibraryRail';
 import type { LibraryRailProps } from './LibraryRail.types';
 
@@ -75,6 +76,36 @@ describe('LibraryRail', () => {
     });
 
     await userEvent.click(screen.getByRole('button', { name: 'Drama' }));
+
+    expect(onOpenRail).toHaveBeenCalledWith(opens);
+  });
+
+  it('makes the title a link to that page, so it can be opened in a tab of its own', async () => {
+    const opens = { section: 'search', filters: 'genre:Drama' } as const;
+    const onOpenRail = vi.fn();
+
+    renderInAnAddress(
+      <HrefOf.Provider
+        value={(change) => `/${String(change.section)}?filters=${String(change.filters)}`}
+      >
+        <LibraryRail
+          rail={{ id: 'genre:Drama', title: 'Drama', items: [ARRIVAL, ALIEN], opens }}
+          isHome
+          progress={new Map()}
+          flagOf={() => null}
+          onPlayFilm={vi.fn()}
+          onPlayShow={vi.fn()}
+          onInspect={vi.fn()}
+          onOpenRail={onOpenRail}
+        />
+      </HrefOf.Provider>,
+    );
+
+    const link = screen.getByRole('link', { name: 'Drama' });
+
+    expect(link).toHaveAttribute('href', '/search?filters=genre:Drama');
+
+    await userEvent.click(link);
 
     expect(onOpenRail).toHaveBeenCalledWith(opens);
   });

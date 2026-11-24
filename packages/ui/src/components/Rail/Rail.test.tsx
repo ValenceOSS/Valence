@@ -193,6 +193,24 @@ describe('Rail', () => {
     expect(container.querySelector('h2 [aria-hidden="true"]')).toBeNull();
   });
 
+  it('makes the heading a link where it has an address, still told of a plain click', async () => {
+    const onOpenTitle = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Rail title="Christmas films" onOpenTitle={onOpenTitle} titleHref="/films?filters=x">
+        {items}
+      </Rail>,
+    );
+
+    const link = screen.getByRole('link', { name: 'Christmas films' });
+
+    expect(link).toHaveAttribute('href', '/films?filters=x');
+
+    await user.click(link);
+
+    expect(onOpenTitle).toHaveBeenCalledOnce();
+  });
+
   it('keeps the heading a heading, so the row is still found by its name', () => {
     render(
       <Rail title="A Sign of Affection · Season 1" onOpenTitle={vi.fn()}>

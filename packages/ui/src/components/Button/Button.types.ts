@@ -11,6 +11,7 @@ type ButtonVariant =
   | 'overlay'
   | 'glass'
   | 'link'
+  | 'heading'
   | 'subtle'
   | 'discord'
   | 'row'

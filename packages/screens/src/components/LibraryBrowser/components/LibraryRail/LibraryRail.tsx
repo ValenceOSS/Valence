@@ -2,6 +2,8 @@ import { memo } from 'react';
 import { Rail } from '@ValenceUI/Rail';
 import { DrawnWhenNear } from '@ValenceUI/DrawnWhenNear';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
+import { useHrefOf } from '@ValenceScreens/navigation/useHrefOf';
+import { NOTHING_OPEN } from '@ValenceScreens/navigation/NOTHING_OPEN';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
@@ -44,6 +46,11 @@ const LibraryRailFace = ({
   onDismiss,
 }: LibraryRailProps) => {
   const { showOf, opens, standsForShows = false } = rail;
+  const hrefOf = useHrefOf();
+  const leadsTo =
+    showOf === undefined && opens !== undefined && onOpenRail !== undefined && hrefOf !== null
+      ? hrefOf({ ...NOTHING_OPEN, section: opens.section, filters: opens.filters })
+      : undefined;
   const openTitle =
     showOf !== undefined && onOpenShow !== undefined
       ? () => {
@@ -63,6 +70,7 @@ const LibraryRailFace = ({
           sizesCards
           className="-mx-4 sm:-mx-6"
           {...(openTitle === undefined ? {} : { onOpenTitle: openTitle })}
+          {...(leadsTo === undefined ? {} : { titleHref: leadsTo })}
         >
           {rail.items.map((media, at) => {
             const isShow = isHome && standsForShows && showIdOf(media) !== null;

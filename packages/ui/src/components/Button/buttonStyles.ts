@@ -24,6 +24,7 @@ const buttonStyles = cva(
         overlay: `${FLAT} border-overlay-line bg-overlay text-on-scrim backdrop-blur-md hover:bg-overlay-hover`,
         glass: 'bg-[var(--color-glass)] text-text hover:bg-[var(--color-glass-hover)]',
         link: 'bg-transparent text-foreground underline-offset-4 hover:underline',
+        heading: 'bg-transparent text-foreground',
         discord: `${FLAT} border-transparent bg-[#5662f0] text-accent-contrast hover:brightness-110`,
         subtle: 'bg-transparent text-text-muted hover:text-text',
         windowControl:

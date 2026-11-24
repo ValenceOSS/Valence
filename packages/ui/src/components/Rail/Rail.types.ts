@@ -6,6 +6,7 @@ type RailProps = {
   count?: number;
   action?: ReactNode;
   onOpenTitle?: () => void;
+  titleHref?: string;
   sizesCards?: boolean | undefined;
   cards?: 'wide' | 'portrait' | 'large' | 'poster' | 'library' | undefined;
   hasArrows?: boolean | undefined;
