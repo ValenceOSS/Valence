@@ -11,6 +11,7 @@ const aProfile = (avatar: ViewerProfile['avatar']): ViewerProfile => ({
   avatar,
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
+  showsSeasonalRows: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
   language: null,
