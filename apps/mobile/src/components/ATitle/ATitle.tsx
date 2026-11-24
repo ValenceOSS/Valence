@@ -6,10 +6,8 @@ import {
   Heart,
   MoreHorizontal,
   Share,
-  Tv,
 } from '@keyline-icons/react-native';
-import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
-import { APlayOnSheet } from '@ValenceMobile/components/APlayOnSheet/APlayOnSheet';
+import { APlayOnATelevision } from '@ValenceMobile/components/APlayOnATelevision/APlayOnATelevision';
 import {
   CircleCheck as CircleCheckFilled,
   Heart as HeartFilled,
@@ -40,7 +38,6 @@ import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
 import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { ADetailRow } from '@ValenceMobile/components/ADetailRow/ADetailRow';
-import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { AWideButton } from '@ValenceMobile/components/AWideButton/AWideButton';
 import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
@@ -99,7 +96,8 @@ const styles = StyleSheet.create({
 
 /**
  * Everything about one film or episode, as the web's page about it: its artwork, what it is, a way
- * to watch it — from the start, from where somebody stopped, or in another version — and the rest:
+ * to watch it — from the start, from where somebody stopped, in another version, or on a television
+ * of theirs that has Valence open — and the rest:
  * favouriting it, downloading it to the phone, rating it, its trailer, hiding it, who is in it, the
  * details the catalogue knows and whatever extras came with it.
  *
@@ -140,8 +138,6 @@ const ATitle = ({
   const held = useHeldFiles().find((file) => file.mediaId === mediaId) ?? null;
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
   const [collecting, setCollecting] = useState<CollectionSubject | null>(null);
-  const [isPlayingOn, setIsPlayingOn] = useState(false);
-  const hasTelevision = useVideoDevices().some((device) => device.kind === 'tv');
   const preparing =
     useQuery(downloadQueries.all()).data?.find(
       (download) => download.mediaId === mediaId && download.state === 'preparing',
@@ -303,19 +299,6 @@ const ATitle = ({
           : {
               behind: <ATintedGround tint={tint} />,
             })}
-        {...(hasTelevision
-          ? {
-              corner: (
-                <AGlassCircle
-                  of={Tv}
-                  label={say('common.playOnTV')}
-                  onPress={() => {
-                    setIsPlayingOn(true);
-                  }}
-                />
-              ),
-            }
-          : {})}
       >
         <ARising>
           <View style={styles.headline}>
@@ -371,6 +354,12 @@ const ATitle = ({
                       onWatch(playing, 0);
                     },
                   })}
+            />
+
+            <APlayOnATelevision
+              media={{ id: playing, title: title.title }}
+              startSeconds={carryOnAt ?? 0}
+              onSent={onToTheRemote}
             />
 
             {programme === null ? null : (
@@ -485,15 +474,6 @@ const ATitle = ({
           onClose={() => {
             setSharing(null);
           }}
-        />
-
-        <APlayOnSheet
-          media={isPlayingOn ? { id: playing, title: title.title } : null}
-          startSeconds={carryOnAt ?? 0}
-          onClose={() => {
-            setIsPlayingOn(false);
-          }}
-          onSent={onToTheRemote}
         />
 
         <ACardPart>

@@ -10,6 +10,8 @@ import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { fetchMyPermissions } from '@ValenceClient/session/fetchMyPermissions';
 import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
+import { sendVideoCommand } from '@ValenceClient/video/videoDevices';
+import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { ATitle } from './ATitle';
 import { MediaDetailSchema, MediaSummarySchema } from '@ValenceContracts/schemas/Library';
 import { useLikeThis } from '@ValenceClient/library/useLikeThis';
@@ -21,6 +23,11 @@ jest.mock('@ValenceClient/library/useLikeThis', () => ({ useLikeThis: jest.fn() 
 jest.mock('@ValenceClient/linking/fetchLinkedServerFaces');
 jest.mock('@ValenceClient/session/fetchMyPermissions');
 jest.mock('@ValenceClient/playback/markWatched', () => ({ markWatched: jest.fn() }));
+jest.mock('@ValenceClient/video/useVideoDevices', () => ({ useVideoDevices: jest.fn() }));
+jest.mock('@ValenceClient/video/videoDevices', () => ({
+  ...jest.requireActual<object>('@ValenceClient/video/videoDevices'),
+  sendVideoCommand: jest.fn(() => Promise.resolve(true)),
+}));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
   fetchWatchProgress: jest.fn(),
@@ -91,6 +98,8 @@ beforeEach(() => {
   jest.mocked(fetchLibraries).mockReset().mockResolvedValue([]);
   jest.mocked(fetchLinkedServerFaces).mockReset().mockResolvedValue([]);
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
+  jest.mocked(useVideoDevices).mockReset().mockReturnValue([]);
+  jest.mocked(sendVideoCommand).mockClear();
   jest
     .mocked(fetchMyPermissions)
     .mockReset()
@@ -395,6 +404,69 @@ describe('ATitle', () => {
     await userEvent.press(drawn.getByText('Resume from 1h 10m'));
 
     expect(onWatch).toHaveBeenCalledWith('one', 4200);
+  });
+
+  it('plays it on the television, from where they left, and brings up its remote', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
+    jest
+      .mocked(useVideoDevices)
+      .mockReturnValue([
+        {
+          clientId: 'living-room',
+          label: 'Valence on Living Room TV',
+          kind: 'tv',
+          nowWatching: null,
+        },
+      ]);
+    partWayThrough(4200);
+
+    const onToTheRemote = jest.fn();
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+          onToTheRemote={onToTheRemote}
+        />,
+      ),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByText('Resume from 1h 10m')).toBeTruthy();
+    });
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Play on Valence on Living Room TV' }));
+
+    expect(sendVideoCommand).toHaveBeenCalledWith(
+      'living-room',
+      expect.objectContaining({ kind: 'play', mediaId: 'one', startSeconds: 4200 }),
+    );
+    expect(onToTheRemote).toHaveBeenCalled();
+  });
+
+  it('offers no television where none is on', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByText('Play')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: /Play on/ })).toBeNull();
   });
 
   it('still lets them start again, which is a thing they have to ask for', async () => {

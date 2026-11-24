@@ -1,7 +1,5 @@
 import { StyleSheet, View } from 'react-native';
 import { ChevronRight, Tv } from '@keyline-icons/react-native';
-import { controlDevice } from '@ValenceClient/video/controlledDevice';
-import { sendVideoCommand } from '@ValenceClient/video/videoDevices';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { ASheet } from '@ValenceMobile/components/ASheet/ASheet';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -11,10 +9,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { APlayOnSheetProps } from './APlayOnSheet.types';
 import { say } from '@ValenceI18n/say';
-import {
-  readAudioLanguage,
-  readSubtitleLanguage,
-} from '@ValenceClient/playback/languagePreference';
+import { playOnTelevision } from '@ValenceMobile/playback/playOnTelevision';
 
 const styles = StyleSheet.create({
   device: {
@@ -59,14 +54,7 @@ const APlayOnSheet = ({ media, startSeconds, onClose, onSent }: APlayOnSheetProp
                   return;
                 }
 
-                void sendVideoCommand(device.clientId, {
-                  kind: 'play',
-                  mediaId: media.id,
-                  startSeconds: Math.floor(startSeconds),
-                  subtitleLanguage: readSubtitleLanguage(),
-                  audioLanguage: readAudioLanguage(),
-                });
-                controlDevice({ clientId: device.clientId, label: device.label });
+                playOnTelevision(device, media.id, startSeconds);
                 onClose();
                 onSent();
               }}

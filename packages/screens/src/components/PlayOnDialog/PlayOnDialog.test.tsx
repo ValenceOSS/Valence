@@ -95,6 +95,7 @@ describe('PlayOnDialog', () => {
           canStepBack: false,
           settings: [],
           skip: null,
+          volume: null,
           reportedAtMs: 1,
         },
       }),

@@ -15,6 +15,8 @@ const SERVER_FEATURES = [
   'library.largeArtwork',
   'playback.audioLanguage',
   'streams.qualityLimit',
+  'history.forgetTitle',
+  'playback.remoteVolume',
 ] as const;
 
 export { SERVER_FEATURES };

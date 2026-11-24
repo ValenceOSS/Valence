@@ -6,6 +6,7 @@ type AShowProps = {
   onLookAtShow: (libraryId: string, showId: string) => void;
   onBack: () => void;
   onRequestMore?: (tmdbId: number) => void;
+  onToTheRemote?: () => void;
 };
 
 export type { AShowProps };

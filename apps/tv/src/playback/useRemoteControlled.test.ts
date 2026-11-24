@@ -22,6 +22,7 @@ const aPlayer = (position = 100) => ({
   stepsBy: null,
   canStepOn: false,
   canStepBack: false,
+  volume: 1,
   read: () => ({ position, duration: 9000 }),
   onPause: jest.fn(),
   onResume: jest.fn(),
@@ -29,6 +30,7 @@ const aPlayer = (position = 100) => ({
   onNext: jest.fn(),
   onStep: jest.fn(),
   onChoose: jest.fn(),
+  onVolume: jest.fn(),
   onStop: jest.fn(),
 });
 
@@ -155,6 +157,33 @@ describe('useRemoteControlled', () => {
     fromAPhone({ kind: 'choose', setting: 'subtitles', choiceId: 'eng-1' });
 
     expect(player.onChoose).toHaveBeenCalledWith('subtitles', 'eng-1');
+  });
+
+  it('turns the volume up or down for another device', async () => {
+    const player = aPlayer();
+
+    await renderHook(() => {
+      useRemoteControlled(player);
+    });
+
+    fromAPhone({ kind: 'volume', level: 0.4 });
+
+    expect(player.onVolume).toHaveBeenCalledWith(0.4);
+  });
+
+  it('says how loud it is, and says so again when that changes', async () => {
+    const { rerender } = await renderHook(
+      ({ volume }: { volume: number }) => {
+        useRemoteControlled({ ...aPlayer(), volume });
+      },
+      { initialProps: { volume: 1 } },
+    );
+
+    expect(reportNowWatching).toHaveBeenLastCalledWith(expect.objectContaining({ volume: 1 }));
+
+    await rerender({ volume: 0.3 });
+
+    expect(reportNowWatching).toHaveBeenLastCalledWith(expect.objectContaining({ volume: 0.3 }));
   });
 
   it('says so again when what can be chosen or skipped changes', async () => {

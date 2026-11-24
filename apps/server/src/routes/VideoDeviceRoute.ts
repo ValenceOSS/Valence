@@ -48,7 +48,8 @@ const commandVideoDeviceRoute = createRoute({
   method: 'post',
   path: '/api/video/devices/{clientId}/command',
   tags: ['Playback'],
-  summary: 'Tell another of your devices to play a film, or pause, move or stop what it is playing',
+  summary:
+    'Tell another of your devices to play a film, or pause, move, stop or turn up or down what it is playing',
   request: {
     params: z.object({ clientId: z.string().min(1).max(120) }),
     body: { content: { 'application/json': { schema: SendVideoCommandSchema } }, required: true },

@@ -21,6 +21,7 @@ const WATCHING: VideoNowWatching = {
   stepsBy: null,
   canStepOn: false,
   canStepBack: false,
+  volume: null,
   reportedAtMs: 1,
 };
 
@@ -44,11 +45,14 @@ jest.mock('@ValenceClient/video/useVideoRemote', () => ({
 
 jest.mock('@ValenceMobile/hooks/usePictureLights', () => ({ usePictureLights: jest.fn(() => []) }));
 
-const mockServer = { hasBarePosters: true };
+const mockServer = { hasBarePosters: true, hasRemoteVolume: true };
 
 jest.mock('@ValenceClient/about/useServerHas', () => ({
-  useServerHas: () => mockServer.hasBarePosters,
+  useServerHas: (feature: string) =>
+    feature === 'playback.remoteVolume' ? mockServer.hasRemoteVolume : mockServer.hasBarePosters,
 }));
+
+jest.mock('@ValenceMobile/platform/thePhonesVolume', () => ({ thePhonesVolume: null }));
 
 const SourceSchema = z.object({ uri: z.string() }).or(z.array(z.object({ uri: z.string() })));
 
@@ -97,6 +101,7 @@ const draw = () => {
 
 beforeEach(() => {
   mockServer.hasBarePosters = true;
+  mockServer.hasRemoteVolume = true;
   mockSend.mockClear();
   mockRelease.mockClear();
 });
@@ -173,6 +178,32 @@ describe('TheVideoRemote', () => {
       [{ kind: 'skip', seconds: -10 }],
       [{ kind: 'skip', seconds: 10 }],
     ]);
+  });
+
+  it('turns the television’s volume', async () => {
+    controlling({ ...WATCHING, volume: 0.5 });
+    const { drawn } = await draw();
+
+    fireEvent(drawn.getByRole('adjustable', { name: 'Volume' }), 'accessibilityAction', {
+      nativeEvent: { actionName: 'decrement' },
+    });
+
+    expect(mockSend).toHaveBeenCalledWith({ kind: 'volume', level: 0 });
+  });
+
+  it('offers no volume where the television is too old to say how loud it is', async () => {
+    controlling(WATCHING);
+    const { drawn } = await draw();
+
+    expect(drawn.queryByRole('adjustable', { name: 'Volume' })).toBeNull();
+  });
+
+  it('offers no volume where the server is too old to pass it on', async () => {
+    mockServer.hasRemoteVolume = false;
+    controlling({ ...WATCHING, volume: 0.5 });
+    const { drawn } = await draw();
+
+    expect(drawn.queryByRole('adjustable', { name: 'Volume' })).toBeNull();
   });
 
   it('steps back and on through the episodes of a programme', async () => {

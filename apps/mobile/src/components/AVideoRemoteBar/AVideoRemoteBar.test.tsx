@@ -18,6 +18,7 @@ const WATCHING: VideoNowWatching = {
   stepsBy: null,
   canStepOn: false,
   canStepBack: false,
+  volume: null,
   reportedAtMs: 1,
 };
 
