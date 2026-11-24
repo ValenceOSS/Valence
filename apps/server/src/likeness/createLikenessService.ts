@@ -22,6 +22,8 @@ import { readSummaries } from '@ValenceServer/library/readSummaries';
 import type { Ranked } from './rankLikeness';
 import { titleKey } from './titleKey';
 import { inSeasonOrder } from '@ValenceCore/functions/inSeasonOrder';
+import type { Season } from '@ValenceContracts/constants/SEASONS';
+import { readSeasonalFilms } from './readSeasonalFilms';
 
 type LikenessService = {
   likeThis: (viewer: Viewer, mediaId: string, limit: number) => Promise<MediaSummary[] | null>;
@@ -31,6 +33,7 @@ type LikenessService = {
     limit: number,
   ) => Promise<BecauseYouWatchedRow[]>;
   pickedForYou: (viewer: Viewer, limit: number) => Promise<MediaSummary[]>;
+  seasonalFilms: (viewer: Viewer, season: Season, limit: number) => Promise<MediaSummary[]>;
   forget: () => void;
 };
 
@@ -401,6 +404,16 @@ const createLikenessService = ({
         db,
         viewer,
         index: await indexed(),
+        limit,
+        ...(artworkAddressOf === undefined ? {} : { artworkAddressOf }),
+      }),
+
+    seasonalFilms: async (viewer, season, limit) =>
+      readSeasonalFilms({
+        db,
+        viewer,
+        index: await indexed(),
+        season,
         limit,
         ...(artworkAddressOf === undefined ? {} : { artworkAddressOf }),
       }),

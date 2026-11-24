@@ -38,6 +38,10 @@ const ShowsWhatIamWatchingSchema = z.object({
   profiles: z.array(z.object({ showsWhatIamWatching: z.boolean() })),
 });
 
+const SeasonalRowsListSchema = z.object({
+  profiles: z.array(z.object({ showsSeasonalRows: z.boolean() })),
+});
+
 const DiscordPresenceListSchema = z.object({
   profiles: z.array(z.object({ discordPresence: DiscordPresenceSchema })),
 });
@@ -193,6 +197,33 @@ describe('profiles over HTTP', () => {
     );
 
     expect(listed.profiles[0]?.showsWhatIamWatching).toBe(true);
+  });
+
+  it('shows the seasonal rows until somebody turns them off, and remembers that', async () => {
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const [profile] = await read(app, cookie);
+    const listed = async () =>
+      SeasonalRowsListSchema.parse(
+        await (
+          await app.request(`${BASE}/api/profiles`, { headers: { cookie, origin: BASE } })
+        ).json(),
+      ).profiles[0]?.showsSeasonalRows;
+
+    expect(await listed()).toBe(true);
+
+    const response = await app.request(`${BASE}/api/profiles/${profile?.id ?? ''}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({
+        name: profile?.name ?? '',
+        colour: '#3a8ee8',
+        showsSeasonalRows: false,
+      }),
+    });
+
+    expect(response.status).toBe(204);
+    expect(await listed()).toBe(false);
   });
 
   it('remembers how somebody wants to look on Discord', async () => {
@@ -764,6 +795,7 @@ describe('giving a profile an account of its own', () => {
       showsWhatIamWatching: false,
       discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
+      showsSeasonalRows: true,
       language: null,
       isOwner: true,
       hasPin: false,

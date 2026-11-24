@@ -1,0 +1,1 @@
+ALTER TABLE "viewer_profile" ADD COLUMN "showsSeasonalRows" boolean DEFAULT true NOT NULL;

@@ -15,6 +15,7 @@ const SERVER_FEATURES = [
   'library.largeArtwork',
   'playback.audioLanguage',
   'streams.qualityLimit',
+  'library.seasonalFilms',
   'history.forgetTitle',
   'playback.remoteVolume',
 ] as const;

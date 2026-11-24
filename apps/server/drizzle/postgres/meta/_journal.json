@@ -1198,6 +1198,13 @@
       "when": 1794858253224,
       "tag": "0170_progress_keeps_its_copy",
       "breakpoints": true
+    },
+    {
+      "idx": 171,
+      "version": "7",
+      "when": 1795529235915,
+      "tag": "0171_profile_chooses_seasonal_rows",
+      "breakpoints": true
     }
   ]
 }

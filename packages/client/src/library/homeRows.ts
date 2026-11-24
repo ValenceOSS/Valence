@@ -6,6 +6,8 @@ import type { HomeShelf } from '@ValenceContracts/schemas/HomeShelves';
 import { HOME_ROW_SIZE } from '@ValenceContracts/constants/HOME_ROW_SIZE';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { BecauseYouWatchedRow } from '@ValenceContracts/schemas/Likeness';
+import type { Season } from '@ValenceContracts/constants/SEASONS';
+import { SEASON_ROW_TITLES } from '@ValenceClient/library/SEASON_ROW_TITLES';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import { RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { say } from '@ValenceI18n/say';
@@ -14,6 +16,7 @@ type HomeRowsInput = {
   resuming: MediaSummary[];
   picked: MediaSummary[];
   recent: MediaSummary[];
+  seasonal?: { season: Season; items: MediaSummary[] } | null;
   because: BecauseYouWatchedRow[];
   acclaimed: MediaSummary[];
   genres: { genre: string; items: MediaSummary[] }[];
@@ -108,8 +111,8 @@ const comeRoundAgain = (rows: readonly Rail[], count: number): Rail[] =>
       }).flat();
 
 /**
- * The rows the front page is browsed by: carrying on, what somebody is likely to want, what is
- * new, what is like what they watched lately, what is well thought of, the rows plugins add that
+ * The rows the front page is browsed by: carrying on, what is new, the films of the season,
+ * what somebody is likely to want, what is like what they watched lately, what is well thought of, the rows plugins add that
  * this profile chose, a row for each of a handful of genres, and then the decades the library
  * spans.
  *
@@ -133,6 +136,7 @@ const homeRows = ({
   resuming,
   picked,
   recent,
+  seasonal = null,
   because,
   acclaimed,
   genres,
@@ -154,8 +158,15 @@ const homeRows = ({
 
   return [
     ...row(RESUMING, say('common.continueWatching'), resuming, false, 1),
-    ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
     ...row('recent', say('common.recentlyAdded'), recent, true, 1),
+    ...(seasonal === null
+      ? []
+      : row(
+          `seasonal:${seasonal.season}`,
+          say(SEASON_ROW_TITLES[seasonal.season]),
+          seasonal.items,
+        )),
+    ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
     ...because.flatMap(({ watched, items }) =>
       row(
         `because:${watched.seriesId ?? watched.mediaId}`,

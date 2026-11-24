@@ -1,5 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import { SEASONS } from '@ValenceContracts/constants/SEASONS';
 import { FEWEST_IN_A_ROW } from '@ValenceServer/likeness/createLikenessService';
 import {
   BecauseYouWatchedSchema,
@@ -92,4 +93,28 @@ const pickedForYouRoute = createRoute({
   },
 });
 
-export { becauseYouWatchedRoute, likeThisRoute, pickedForYouRoute };
+const seasonalFilmsRoute = createRoute({
+  method: 'get',
+  path: '/api/seasonal-films',
+  tags: ['Library'],
+  summary:
+    'List the films in the libraries tied to a season, such as Christmas, best rated first, or none where this profile turned the seasonal rows off',
+  request: {
+    query: z.object({
+      season: z.enum(SEASONS),
+      limit: z.coerce.number().int().positive().max(MOST_ASKED).default(LIKE_THIS_SHOWN),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'The films, best rated first',
+      content: { 'application/json': { schema: LikeThisSchema.openapi('SeasonalFilms') } },
+    },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: LikenessError } },
+    },
+  },
+});
+
+export { becauseYouWatchedRoute, likeThisRoute, pickedForYouRoute, seasonalFilmsRoute };

@@ -815,6 +815,11 @@
     "context": "The heading of a home page row of films and shows like one you watched lately. {title} is the film or show you watched."
   },
   {
+    "handler": "client.library.homeRows.christmasFilms",
+    "text": "Christmas films",
+    "context": "The heading of a home page row of Christmas films, shown from the start of November to Boxing Day."
+  },
+  {
     "handler": "client.library.homeRows.criticallyAcclaimed",
     "text": "Με κριτική αναγνώριση",
     "context": "Shown in the library (from `homeRows`)."
@@ -823,6 +828,11 @@
     "handler": "client.library.homeRows.fromTheDecadeS",
     "text": "Από τη δεκαετία του {decade}",
     "context": "Shown in the library (from `homeRows`). {decade} is filled in by the app."
+  },
+  {
+    "handler": "client.library.homeRows.halloweenFilms",
+    "text": "Halloween films",
+    "context": "The heading of a home page row of Halloween films, shown through October."
   },
   {
     "handler": "client.library.homeRows.pickedForYou",
@@ -13953,9 +13963,19 @@
     "context": "The first choice of the Language setting in a profile's settings: speak whichever of the device's own languages Valence has."
   },
   {
+    "handler": "screens.accountArea.profileSettings.seasonalRows",
+    "text": "Seasonal rows",
+    "context": "Profile setting: show a home page row of Christmas films in November and December, and of Halloween films in October."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.showsANoticeOnThisComputer",
     "text": "Εμφανίζει ειδοποίηση σε αυτόν τον υπολογιστή όταν κάτι νέο φτάνει στα εισερχόμενά σου. Αποθηκεύεται σε αυτή τη συσκευή.",
     "context": "The description under the Desktop notifications setting in the profile settings of the desktop app."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.showsChristmasFilmsOnTheHomePage",
+    "text": "Shows Christmas films on the home page from November to Boxing Day, and Halloween films through October.",
+    "context": "The description under the Seasonal rows profile setting."
   },
   {
     "handler": "screens.accountArea.profileSettings.showWhatIAmPlayingOn",

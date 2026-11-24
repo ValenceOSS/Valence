@@ -13,6 +13,7 @@ const fetchPerson = vi.hoisted(() => vi.fn());
 const fetchPersonCredits = vi.hoisted(() => vi.fn());
 const fetchLikeThis = vi.hoisted(() => vi.fn());
 const fetchPickedForYou = vi.hoisted(() => vi.fn(() => Promise.resolve([{ id: 'heat' }])));
+const fetchSeasonalFilms = vi.hoisted(() => vi.fn(() => Promise.resolve([{ id: 'elf' }])));
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraries,
@@ -26,6 +27,7 @@ vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets }));
 vi.mock('@ValenceClient/library/fetchPerson', () => ({ fetchPerson, fetchPersonCredits }));
 vi.mock('@ValenceClient/library/fetchLikeThis', () => ({ fetchLikeThis }));
 vi.mock('@ValenceClient/library/fetchPickedForYou', () => ({ fetchPickedForYou }));
+vi.mock('@ValenceClient/library/fetchSeasonalFilms', () => ({ fetchSeasonalFilms }));
 
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -111,6 +113,16 @@ describe('libraryQueries', () => {
       { id: 'heat' },
     ]);
     expect(fetchPickedForYou).toHaveBeenCalledWith(12);
+  });
+
+  it('reads the films of the season, once the server can say and only in a season', async () => {
+    expect(libraryQueries.seasonalFilms('christmas', 12, false).enabled).toBe(false);
+    expect(libraryQueries.seasonalFilms(null, 12, true).enabled).toBe(false);
+
+    await expect(
+      aCache().fetchQuery(libraryQueries.seasonalFilms('christmas', 12, true)),
+    ).resolves.toEqual([{ id: 'elf' }]);
+    expect(fetchSeasonalFilms).toHaveBeenCalledWith('christmas', 12);
   });
 
   it('reads what a library can be narrowed by', async () => {

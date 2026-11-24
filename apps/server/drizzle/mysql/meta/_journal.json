@@ -540,6 +540,13 @@
       "when": 1794858254039,
       "tag": "0076_progress_keeps_its_copy",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "5",
+      "when": 1795529236564,
+      "tag": "0077_profile_chooses_seasonal_rows",
+      "breakpoints": true
     }
   ]
 }

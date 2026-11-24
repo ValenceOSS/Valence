@@ -45,6 +45,7 @@ const aProfile = (change: Partial<ViewerProfile> = {}): ViewerProfile => ({
     hiddenLibraryIds: [],
   },
   prefersBestCopy: false,
+  showsSeasonalRows: true,
   language: null,
   isOwner: true,
   hasPin: false,

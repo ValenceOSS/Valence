@@ -338,6 +338,21 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           }}
         />
       </SettingRow>
+
+      <SettingRow
+        title={say('screens.accountArea.profileSettings.seasonalRows')}
+        description={say('screens.accountArea.profileSettings.showsChristmasFilmsOnTheHomePage')}
+      >
+        <Switch
+          label={say('screens.accountArea.profileSettings.seasonalRows')}
+          isLabelHidden
+          isOn={draft?.showsSeasonalRows ?? true}
+          disabled={!isReady}
+          onToggle={() => {
+            onDraft({ showsSeasonalRows: !(draft?.showsSeasonalRows ?? true) });
+          }}
+        />
+      </SettingRow>
     </>
   );
 };

@@ -17,6 +17,7 @@ const ADA: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  showsSeasonalRows: true,
   language: null,
   isOwner: true,
   hasPin: false,
