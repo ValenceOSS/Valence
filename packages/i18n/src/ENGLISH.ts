@@ -10499,7 +10499,9 @@ const ENGLISH = {
   'tv.livePlayer.playsOnAComputerOrPhone':
     'This channel plays on a computer or phone, not on a TV.',
   'tv.music.albumItem.nameAlbum': '{name} • Album',
+  'tv.music.albumsYouMightLike': 'Albums you might like',
   'tv.music.playlistItem.playlistName': 'Playlist • {name}',
+  'tv.music.yourTopArtists': 'Your top artists',
   'tv.musicCollection.useCollection.songsValueHrValue2Min': '{songs}, {value} hr {value2} min',
   'tv.nowPlaying.devicesPanel.deviceControlling': '{device} · controlling',
   'tv.nowPlaying.devicesPanel.deviceNotPlaying': '{device} · not playing',
@@ -10537,6 +10539,7 @@ const ENGLISH = {
   'tv.player.playerControls.sKIPSBYS': '{SKIPS_BY}s',
   'tv.player.scrubber.scrub': 'Seek',
   'tv.player.startedFromLabel': 'Started from {label}',
+  'tv.player.streamStats.bitrateOverTime': 'Bitrate over the last minute',
   'tv.player.streamStats.bufferedAhead': 'Buffered ahead',
   'tv.player.streamStats.container': 'Container',
   'tv.player.streamStats.delivery': 'Delivery',
@@ -10580,6 +10583,15 @@ const ENGLISH = {
   'tv.topBar.nameSProfile': '{name}’s profile',
   'tv.trackRow.e': 'E · ',
   'tv.trackRow.smartShuffle': 'Smart shuffle · ',
+  'tv.watchHistory.clearYourWatchHistory': 'Clear your watch history?',
+  'tv.watchHistory.everythingYouHaveWatchedIsRemoved':
+    'Everything you’ve watched is removed from your history. Where you got to in each film and series is kept.',
+  'tv.watchHistory.historyChoices.goToTheFilm': 'Go to the film',
+  'tv.watchHistory.historyChoices.goToTheShow': 'Go to the show',
+  'tv.watchHistory.historyChoices.playTheNextEpisode': 'Play the next episode',
+  'tv.watchHistory.historyChoices.removeFromHistory': 'Remove from history',
+  'tv.watchHistory.whatYouWatchShowsUpHere':
+    'What you watch shows up here, so you can pick up where you left off.',
   'tv.whoIsWatching.copyrightAddress': '© Valence · {address}',
   'tv.whoIsWatching.copyrightThisValence': '© Valence · this server',
   'tv.whoIsWatching.thisValenceCouldNotBeReached': 'Couldn’t reach this Valence server.',

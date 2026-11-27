@@ -6,7 +6,7 @@ import { ASwatchRing } from '@ValenceMobile/components/AColourSwatches/component
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
-import { paintStyleOf } from '@ValenceMobile/pictures/paintStyleOf';
+import { paintStyleOf } from '@ValenceNative/pictures/paintStyleOf';
 import type { AColourSwatchesProps } from './AColourSwatches.types';
 import { say } from '@ValenceI18n/say';
 

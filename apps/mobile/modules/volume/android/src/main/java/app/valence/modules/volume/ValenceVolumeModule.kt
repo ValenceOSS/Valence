@@ -15,7 +15,9 @@ import kotlin.math.roundToInt
  *
  * Android lets an app set it directly, so there is no hidden system slider as on an iPhone. It is
  * watched through the system settings, which change whenever the buttons on the side are pressed,
- * so the slider follows them.
+ * so the slider follows them. While nothing plays, those buttons turn the ringer rather than the
+ * media volume, so where the app wants to hear them — as the remote for a television — it asks for
+ * them to turn the media volume until it is done.
  */
 class ValenceVolumeModule : Module() {
   private val main = Handler(Looper.getMainLooper())
@@ -42,6 +44,11 @@ class ValenceVolumeModule : Module() {
         (to.coerceIn(0.0, 1.0) * most).roundToInt(),
         0,
       )
+    }
+
+    Function("hearTheButtons") { isOn: Boolean ->
+      appContext.currentActivity?.volumeControlStream =
+        if (isOn) AudioManager.STREAM_MUSIC else AudioManager.USE_DEFAULT_STREAM_TYPE
     }
 
     OnStartObserving {

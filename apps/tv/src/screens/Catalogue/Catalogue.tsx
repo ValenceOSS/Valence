@@ -19,6 +19,7 @@ import { CollectionShelves } from '@ValenceTv/components/CollectionShelves/Colle
 import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
+import { FocusedOnTop } from '@ValenceTv/components/FocusedOnTop/FocusedOnTop';
 import { ArrangementRow } from '@ValenceTv/screens/Catalogue/components/ArrangementRow/ArrangementRow';
 import { FilterPanel } from '@ValenceTv/screens/Catalogue/components/FilterPanel/FilterPanel';
 import { useProgress } from '@ValenceTv/library/useProgress';
@@ -47,8 +48,9 @@ const TITLES = { films: say('common.films'), shows: say('common.shows') } as con
  * filter is read, so the panel stays open and the remote stays where it was. The page is lit by its first poster
  * once it arrives, and then by the
  * poster the remote rests on, once it has rested there a moment rather than at every step. The
- * posters are sized so six fill the width of the screen between its margins. Above the wall sits a
- * shelf for each collection of films, or of shows.
+ * posters are sized so six fill the width of the screen between its margins, and the one the remote
+ * is on is drawn above those around it, so as it grows it covers them. Above the wall sits a shelf
+ * for each collection of films, or of shows.
  *
  * @param kind - Films or shows.
  * @param watchable - The libraries holding something to watch.
@@ -181,6 +183,7 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
           style={{ height: room.height }}
           contentContainerStyle={styles.inside}
           columnWrapperStyle={styles.row}
+          CellRendererComponent={FocusedOnTop}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <>
@@ -229,24 +232,26 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
             const watched = progress.get(item.id);
 
             return (
-              <MediaCard
-                media={item}
-                {...(unwatched === null
-                  ? {}
-                  : {
-                      unwatchedCount: unwatched.get(item.seriesId ?? item.seriesTitle ?? '') ?? 0,
-                    })}
-                shape="poster"
-                width={cardWidth}
-                onPress={onOpen}
-                onFocus={() => {
-                  restOn(item);
-                  upToBar.leave();
-                }}
-                {...(watched === undefined || kind === 'shows'
-                  ? {}
-                  : { watchedFraction: watchedFraction(watched) })}
-              />
+              <FocusedOnTop>
+                <MediaCard
+                  media={item}
+                  {...(unwatched === null
+                    ? {}
+                    : {
+                        unwatchedCount: unwatched.get(item.seriesId ?? item.seriesTitle ?? '') ?? 0,
+                      })}
+                  shape="poster"
+                  width={cardWidth}
+                  onPress={onOpen}
+                  onFocus={() => {
+                    restOn(item);
+                    upToBar.leave();
+                  }}
+                  {...(watched === undefined || kind === 'shows'
+                    ? {}
+                    : { watchedFraction: watchedFraction(watched) })}
+                />
+              </FocusedOnTop>
             );
           }}
         />

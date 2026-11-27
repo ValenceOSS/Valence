@@ -52,11 +52,14 @@ import { useRemoteRing } from '@ValenceTv/remote/useRemoteRing';
 import { usePlaybackSession } from '@ValenceTv/playback/usePlaybackSession';
 import { theTvsProfile } from '@ValenceTv/playback/theTvsProfile';
 import { useRemoteControlled } from '@ValenceTv/playback/useRemoteControlled';
+import { useStreamReadings } from '@ValenceTv/playback/useStreamReadings';
+import { useRemoteVolume } from '@ValenceTv/playback/useRemoteVolume';
 import { PlayerControls } from '@ValenceTv/screens/Player/components/PlayerControls/PlayerControls';
 import { SubtitleLine } from '@ValenceTv/screens/Player/components/SubtitleLine/SubtitleLine';
 import { SettingsMenu } from '@ValenceTv/screens/Player/components/SettingsMenu/SettingsMenu';
 import { ratingOf } from '@ValenceTv/library/ratingOf';
 import { StartedFrom } from '@ValenceTv/screens/Player/components/StartedFrom/StartedFrom';
+import { VolumeIndicator } from '@ValenceTv/screens/Player/components/VolumeIndicator/VolumeIndicator';
 import { StreamStats } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats';
 import { TrackMenu } from '@ValenceTv/screens/Player/components/TrackMenu/TrackMenu';
 import { SubtitleSearch } from '@ValenceTv/screens/Player/components/SubtitleSearch/SubtitleSearch';
@@ -75,7 +78,6 @@ import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
 import type { HWEvent } from 'react-native';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { SoundtrackAsked } from '@ValenceClient/playback/soundtrackAsked';
-import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import type { PlayerProps, StoppedBy } from './Player.types';
 import { PlaybackProblem } from '@ValenceTv/screens/Player/components/PlaybackProblem/PlaybackProblem';
 import { describePlaybackProblem } from '@ValenceClient/playback/describePlaybackProblem';
@@ -116,20 +118,7 @@ const A_TURN_SCRUBS = 60;
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
-const STATS_READ_EVERY_MS = 1000;
-
 const FIND_SUBTITLES = 'findSubtitles';
-
-const NOTHING_READ: StreamReading = {
-  positionSeconds: 0,
-  bufferedSeconds: 0,
-  width: null,
-  height: null,
-  mimeType: null,
-  bitrate: null,
-  frameRate: null,
-  range: null,
-};
 
 const REFUSED_SIGN_IN = '-1013';
 
@@ -215,7 +204,8 @@ const qualityLabelOf = (quality: QualityPreference): string =>
  * kept in step with the room — Play/Pause, skipping and scrubbing go to the room rather than
  * straight to the player, and what the others did is said over the picture — and the party is
  * reached from the settings, to start one, see who is in it, or leave. A party wanting its password
- * asks for it over the film.
+ * asks for it over the film, as a menu would: the controls stay away and the remote stays on the
+ * asking, rather than a press bringing the controls up to take the remote from it.
  */
 const Player = ({
   mediaId,
@@ -326,11 +316,12 @@ const Player = ({
     | `caption:${CaptionChoiceSet['id']}`
     | null
   >(null);
+  const isAskedForAPassword = watchParty !== undefined && watchParty.passwordWanted !== null;
+  const isAnythingOpen = menu !== null || isAskedForAPassword;
   const [subtitleOffset, setSubtitleOffset] = useState(0);
   const captions = useCaptionStyle();
   const [speed, setSpeed] = useState(1);
   const [isShowingStats, setIsShowingStats] = useState(false);
-  const [reading, setReading] = useState<StreamReading>(NOTHING_READ);
   const [quality, setQuality] = useState<QualityPreference>(qualityToBeginWith);
   const [scrubAt, setScrubAt] = useState<number | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
@@ -357,6 +348,7 @@ const Player = ({
   const player = useVideoPlayer(null, (made) => {
     made.timeUpdateEventInterval = 0.5;
   });
+  const volume = useRemoteVolume(player);
   const at = useRef({ position: startSeconds, duration: 0, isPlaying: false });
   const isSwitching = useRef(true);
   const session = usePlaybackSession(
@@ -751,7 +743,7 @@ const Player = ({
   );
 
   useEffect(() => {
-    if (!isShowing || !isPlaying || menu !== null) {
+    if (!isShowing || !isPlaying || isAnythingOpen) {
       return;
     }
 
@@ -762,7 +754,7 @@ const Player = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [isShowing, isPlaying, menu, touchedAt]);
+  }, [isShowing, isPlaying, isAnythingOpen, touchedAt]);
 
   const held = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -802,14 +794,14 @@ const Player = ({
   );
 
   useEffect(() => {
-    if (!isScrubbing || menu !== null) {
+    if (!isScrubbing || isAnythingOpen) {
       letGo();
     }
-  }, [isScrubbing, menu, letGo]);
+  }, [isScrubbing, isAnythingOpen, letGo]);
 
   useEffect(() => letGo, [letGo]);
 
-  useRemoteRing(isScrubbing && menu === null, (degrees) => {
+  useRemoteRing(isScrubbing && !isAnythingOpen, (degrees) => {
     scrubBy((degrees / 360) * A_TURN_SCRUBS);
   });
 
@@ -829,7 +821,7 @@ const Player = ({
     decided.kind !== 'nothing' &&
     !isUpNextAway &&
     (nextOffer !== null || hasEnded);
-  const isUpNextUp = isOfferingNext && menu === null;
+  const isUpNextUp = isOfferingNext && !isAnythingOpen;
   const isInTheEnd = nextOffer !== null;
 
   useEffect(() => {
@@ -848,7 +840,7 @@ const Player = ({
 
   const hearRemote = useCallback(
     (event: HWEvent) => {
-      if (menu !== null || event.eventType === 'menu' || event.eventType === 'back') {
+      if (isAnythingOpen || event.eventType === 'menu' || event.eventType === 'back') {
         return;
       }
 
@@ -893,7 +885,7 @@ const Player = ({
       touch();
     },
     [
-      menu,
+      isAnythingOpen,
       isShowing,
       isScrubbing,
       isUpNextUp,
@@ -912,34 +904,7 @@ const Player = ({
     playTheVideoAt(player, speed);
   }, [player, speed]);
 
-  useEffect(() => {
-    if (!isShowingStats) {
-      return;
-    }
-
-    const read = () => {
-      const track = player.videoTrack;
-
-      setReading({
-        positionSeconds: player.currentTime,
-        bufferedSeconds: player.bufferedPosition,
-        width: track?.size.width ?? null,
-        height: track?.size.height ?? null,
-        mimeType: track?.mimeType ?? null,
-        bitrate: track?.bitrate ?? track?.averageBitrate ?? null,
-        frameRate: track?.frameRate ?? null,
-        range: track?.videoRange ?? null,
-      });
-    };
-
-    read();
-
-    const timer = setInterval(read, STATS_READ_EVERY_MS);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, [isShowingStats, player]);
+  const { reading, history } = useStreamReadings(player, isShowingStats);
 
   const backToSettings = useCallback(() => {
     setMenu('settings');
@@ -959,8 +924,6 @@ const Player = ({
   const putControlsAway = useCallback(() => {
     setIsShowing(false);
   }, []);
-
-  const isAskedForAPassword = watchParty !== undefined && watchParty.passwordWanted !== null;
 
   useMenuButton(
     isAskedForAPassword
@@ -1189,6 +1152,8 @@ const Player = ({
         chooseSpeed(choiceId);
       }
     },
+    volume: volume.level,
+    onVolume: volume.turnTo,
     onStop: onLeave,
   });
 
@@ -1327,7 +1292,7 @@ const Player = ({
         </View>
       ) : null}
 
-      {isShowing && menu === null && !isUpNextUp ? (
+      {isShowing && !isAnythingOpen && !isUpNextUp ? (
         <PlayerControls
           title={title}
           year={detail.data?.year ?? null}
@@ -1375,7 +1340,7 @@ const Player = ({
         />
       ) : null}
 
-      {skippable === null || menu !== null || isOfferingNext ? null : (
+      {skippable === null || isAnythingOpen || isOfferingNext ? null : (
         <View style={styles.skip}>
           <Button
             label={describeSkip(skippable)}
@@ -1391,7 +1356,7 @@ const Player = ({
         </View>
       )}
 
-      {isOfferingNext && menu === null ? (
+      {isOfferingNext && !isAnythingOpen ? (
         <UpNext
           episode={following}
           isAsking={decided.kind === 'ask'}
@@ -1416,6 +1381,7 @@ const Player = ({
           sessionStartSeconds={startFrom}
           quality={qualityLabelOf(quality)}
           reading={reading}
+          history={history}
         />
       ) : null}
 
@@ -1524,6 +1490,8 @@ const Player = ({
       ) : null}
 
       {startedFrom === undefined ? null : <StartedFrom label={startedFrom} />}
+
+      <VolumeIndicator level={volume.level} isShown={volume.isShown} />
 
       {heard === null && (watchParty?.notice ?? null) === null ? null : (
         <View style={styles.said} pointerEvents="none">

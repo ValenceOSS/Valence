@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingHorizontal: tokens.space.edge,
   },
-  row: { overflow: 'visible' },
+  row: { overflow: 'visible', marginTop: -tokens.space.xs },
   inside: {
     paddingHorizontal: tokens.space.edge,
     paddingVertical: tokens.space.md,

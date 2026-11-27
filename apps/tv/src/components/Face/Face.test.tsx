@@ -1,6 +1,7 @@
 import { createElement as mockCreateElement } from 'react';
 import { Image as mockNativeImage } from 'react-native';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { DRAWINGS } from '@ValenceClient/profiles/DRAWINGS';
 import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import { Face } from '@ValenceTv/components/Face/Face';
 import { keepTheSessionToken } from '@ValenceTv/platform/theSessionToken';
@@ -11,6 +12,7 @@ import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFon
 
 type MockImageProps = {
   source: { uri: string; headers: Record<string, string> };
+  onLoad?: () => void;
   onError?: () => void;
 };
 
@@ -25,6 +27,7 @@ jest.mock('expo-image', () => ({
       accessible: true,
       accessibilityRole: 'image',
       accessibilityLabel: props.source.uri,
+      onLoad: props.onLoad,
       onError: props.onError,
     });
   },
@@ -49,6 +52,11 @@ const PROFILE: ViewerProfile = {
 };
 
 describe('Face', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    DRAWINGS.clear();
+  });
+
   beforeEach(() => {
     mockDrawnImage.mockClear();
     rememberServerAddress('https://valence.test');
@@ -63,6 +71,16 @@ describe('Face', () => {
     expect(drawn.queryByRole('image')).toBeNull();
   });
 
+  it('writes the initial in whichever ink reads on the colour', async () => {
+    const light = await render(<Face profile={{ ...PROFILE, colour: '#111418' }} size={100} />);
+
+    expect(light.getByText('M')).toHaveStyle({ color: '#f7f7f5' });
+
+    const dark = await render(<Face profile={{ ...PROFILE, colour: '#f2c94c' }} size={100} />);
+
+    expect(dark.getByText('M')).toHaveStyle({ color: '#15171a' });
+  });
+
   it('draws their photograph, asked for as whoever is signed in', async () => {
     const drawn = await render(
       <Face
@@ -74,7 +92,10 @@ describe('Face', () => {
       />,
     );
 
-    expect(drawn.getByRole('image')).toBeTruthy();
+    expect(drawn.getByText('M')).toBeTruthy();
+
+    await fireEvent(drawn.getByRole('image'), 'load');
+
     expect(drawn.queryByText('M')).toBeNull();
     expect(mockDrawnImage).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -107,10 +128,50 @@ describe('Face', () => {
     );
   });
 
-  it('falls back to their initial where their picture will not load', async () => {
+  it('draws a drawn face as a vector read from the drawing, which needs nobody signed in', async () => {
+    const asked = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(
+        new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect /></svg>'),
+      );
     const drawn = await render(
       <Face
         profile={{ ...PROFILE, avatar: { kind: 'drawn', style: 'lorelei', seed: 'marques' } }}
+        size={100}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(drawn.queryByText('M')).toBeNull();
+    });
+    expect(asked).toHaveBeenCalledWith(
+      'https://valence.test/api/profiles/avatars/lorelei?seed=marques',
+    );
+    expect(mockDrawnImage).not.toHaveBeenCalled();
+  });
+
+  it('keeps the initial where a drawing cannot be had', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(new Response('gone', { status: 404 }));
+    const drawn = await render(
+      <Face
+        profile={{ ...PROFILE, avatar: { kind: 'drawn', style: 'lorelei', seed: 'gone' } }}
+        size={100}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+    expect(drawn.getByText('M')).toBeTruthy();
+  });
+
+  it('falls back to their initial where their picture will not load', async () => {
+    const drawn = await render(
+      <Face
+        profile={{
+          ...PROFILE,
+          avatar: { kind: 'photo', isVideo: false, frame: null, hasFramedPicture: false },
+        }}
         size={100}
       />,
     );
@@ -131,6 +192,10 @@ describe('Face', () => {
     const drawn = await render(<Face profile={PROFILE} size={80} />);
 
     expect(drawn.toJSON()).toHaveStyle({ borderRadius: tokens.radii.md });
+  });
+
+  it('sets a display name so devtools can identify it', () => {
+    expect(Face.displayName).toBe('Face');
   });
 
   it('is ringed in white while the remote is on it', async () => {

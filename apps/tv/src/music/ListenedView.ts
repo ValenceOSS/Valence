@@ -1,5 +1,5 @@
 import type { MusicView } from '@ValenceClient/music/musicView';
 
-type ListenedView = Extract<MusicView, { kind: 'album' | 'artist' | 'playlist' | 'liked' }>;
+type ListenedView = Extract<MusicView, { kind: 'album' | 'artist' | 'playlist' | 'liked' | 'mix' }>;
 
 export type { ListenedView };

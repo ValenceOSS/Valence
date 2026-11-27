@@ -27,6 +27,7 @@ type Controlled = {
   canStepBack: boolean;
   settings: VideoSettingChoices[];
   skip: VideoNowWatching['skip'];
+  volume: number;
   read: () => { position: number; duration: number };
   onPause: () => void;
   onResume: () => void;
@@ -34,6 +35,7 @@ type Controlled = {
   onNext: () => void;
   onStep: (toward: 'back' | 'on') => void;
   onChoose: (setting: VideoSetting, choiceId: string) => void;
+  onVolume: (level: number) => void;
   onStop: () => void;
 };
 
@@ -59,6 +61,7 @@ const sayWhatIsPlaying = (controlled: Controlled): void => {
     canStepBack: controlled.canStepBack,
     settings: controlled.settings,
     skip: controlled.skip,
+    volume: controlled.volume,
     reportedAtMs: Date.now(),
   });
 };
@@ -68,16 +71,16 @@ const sayWhatIsPlaying = (controlled: Controlled): void => {
  * got to — what makes a phone a remote for the television.
  *
  * Another device's pause, play, move, next episode, step back or on through the episodes or the
- * chapters, choice of subtitles, sound, quality or speed, and stop reach the player, as do an
+ * chapters, choice of subtitles, sound, quality or speed, volume, and stop reach the player, as do an
  * administrator's stop, pause and resume. What is playing is said straight away, again whenever it
- * pauses, plays, moves, or what can be chosen or skipped changes, and every few seconds between,
+ * pauses, plays, moves, turns up or down, or what can be chosen or skipped changes, and every few seconds between,
  * and the device says it has stopped once the player closes — a moment after, so going on to
  * another episode, which closes one player and opens the next, reads as one thing playing on rather
  * than a stop and a start.
  *
  * @param controlled - What is playing, whether an episode follows it, what can be chosen about it
- *   and skipped in it, what a step back or on moves through, and how to pause, play, move, go on to
- *   that episode, step, choose and stop it.
+ *   and skipped in it, what a step back or on moves through, how loud it is, and how to pause, play,
+ *   move, go on to that episode, step, choose, turn up or down and stop it.
  */
 const useRemoteControlled = (controlled: Controlled): void => {
   const latest = useRef(controlled);
@@ -93,6 +96,7 @@ const useRemoteControlled = (controlled: Controlled): void => {
     canStepBack,
     settings,
     skip,
+    volume,
   } = controlled;
   const settingsSaid = JSON.stringify(settings);
   const skipLabel = skip?.label ?? null;
@@ -164,6 +168,8 @@ const useRemoteControlled = (controlled: Controlled): void => {
         now.onStep(command.toward);
       } else if (command.kind === 'choose') {
         now.onChoose(command.setting, command.choiceId);
+      } else if (command.kind === 'volume') {
+        now.onVolume(command.level);
       } else if (command.kind === 'stop') {
         now.onStop();
 
@@ -191,6 +197,7 @@ const useRemoteControlled = (controlled: Controlled): void => {
     settingsSaid,
     skipLabel,
     skipTo,
+    volume,
     mediaId,
     title,
     subtitle,

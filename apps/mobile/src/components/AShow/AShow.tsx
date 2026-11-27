@@ -39,6 +39,7 @@ import { askToKeepAProgrammeOnThisPhone } from '@ValenceMobile/downloads/askToKe
 import { AnEpisodeList } from '@ValenceMobile/components/AShow/components/AnEpisodeList/AnEpisodeList';
 import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
 import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
+import { APlayOnATelevision } from '@ValenceMobile/components/APlayOnATelevision/APlayOnATelevision';
 import { AWideButton } from '@ValenceMobile/components/AWideButton/AWideButton';
 import { ARising } from '@ValenceMobile/components/ARising/ARising';
 import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
@@ -98,6 +99,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headline: { alignItems: 'center', gap: 12 },
+  playing: { gap: 10 },
   episodesHead: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -127,6 +129,8 @@ const styles = StyleSheet.create({
  * @param onLookAtShow - Told to open a programme like this one.
  * @param onBack - Told somebody is done with it.
  * @param onRequestMore - Told to open the programme's catalogue page to ask for more of it.
+ * @param onToTheRemote - Told the episode was sent to a television, to bring up that television's
+ *   remote.
  */
 const AShow = ({
   libraryId,
@@ -136,6 +140,7 @@ const AShow = ({
   onLookAtShow,
   onBack,
   onRequestMore,
+  onToTheRemote,
 }: AShowProps) => {
   const asking = useQuery(libraryQueries.show(libraryId, showId));
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
@@ -419,28 +424,38 @@ const AShow = ({
 
         {pickingUp === null ? null : (
           <ARising turn={1}>
-            <APlayButton
-              says={say(
-                pickingUp.isResuming
-                  ? 'phone.aShow.carryOnSeasonEpisode'
-                  : 'phone.aShow.playSeasonEpisode',
-                {
-                  season: (pickingUp.episode.seasonNumber ?? 0).toString(),
-                  episode: (pickingUp.episode.episodeNumber ?? 0).toString(),
-                },
+            <View style={styles.playing}>
+              <APlayButton
+                says={say(
+                  pickingUp.isResuming
+                    ? 'phone.aShow.carryOnSeasonEpisode'
+                    : 'phone.aShow.playSeasonEpisode',
+                  {
+                    season: (pickingUp.episode.seasonNumber ?? 0).toString(),
+                    episode: (pickingUp.episode.episodeNumber ?? 0).toString(),
+                  },
+                )}
+                watched={pickingUp.isResuming ? fractionOf(pickingUp.episode.id) : null}
+                onPress={() => {
+                  onWatch(pickingUp.episode.id, pickingUp.startSeconds);
+                }}
+                {...(pickingUp.isResuming
+                  ? {
+                      onStartAgain: () => {
+                        onWatch(pickingUp.episode.id, 0);
+                      },
+                    }
+                  : {})}
+              />
+
+              {onToTheRemote === undefined ? null : (
+                <APlayOnATelevision
+                  media={{ id: pickingUp.episode.id, title: pickingUp.episode.title }}
+                  startSeconds={pickingUp.startSeconds}
+                  onSent={onToTheRemote}
+                />
               )}
-              watched={pickingUp.isResuming ? fractionOf(pickingUp.episode.id) : null}
-              onPress={() => {
-                onWatch(pickingUp.episode.id, pickingUp.startSeconds);
-              }}
-              {...(pickingUp.isResuming
-                ? {
-                    onStartAgain: () => {
-                      onWatch(pickingUp.episode.id, 0);
-                    },
-                  }
-                : {})}
-            />
+            </View>
           </ARising>
         )}
 

@@ -30,6 +30,7 @@ import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFon
 import { isTheServerUp } from '@ValenceClient/session/isTheServerUp';
 import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
 import { signOutHere } from '@ValenceTv/session/signOutHere';
+import { encode } from 'uqr';
 
 type Heard = (event: { eventType: string; eventKeyAction?: number }) => void;
 
@@ -67,6 +68,12 @@ const mockReport = jest.fn<Promise<boolean>, [string, object]>(() => Promise.res
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
 }));
+
+jest.mock('uqr', () => {
+  const actual = jest.requireActual<{ encode: (value: string) => object }>('uqr');
+
+  return { ...actual, encode: jest.fn(actual.encode) };
+});
 
 jest.mock('@ValenceClient/session/isTheServerUp', () => ({ isTheServerUp: jest.fn() }));
 jest.mock('@ValenceClient/playback/reportWhatStopped', () => ({ reportWhatStopped: jest.fn() }));
@@ -1036,6 +1043,79 @@ describe('Player', () => {
       await menu();
 
       expect(watchParty.stopAsking).toHaveBeenCalled();
+    });
+
+    it('keeps the remote on the password a party asks for, rather than the controls behind it', async () => {
+      const watchParty = aWatchPartyStateWith(jest.fn, {
+        party: aWatchParty({ mediaId: MEDIA_ID }),
+        passwordWanted: { partyId: 'p-9', wasWrong: false },
+      });
+      const { drawn } = await draw({ watchParty });
+
+      await playingAt(100);
+
+      expect(drawn.queryByRole('button', { name: 'Pause' })).toBeNull();
+
+      await press('right');
+      await press('select');
+
+      expect(watchParty.send).not.toHaveBeenCalled();
+      expect(drawn.queryByRole('button', { name: 'Pause' })).toBeNull();
+      expect(drawn.getByText('This watch party has a password')).toBeTruthy();
+    });
+
+    it('brings the controls back once the password is given', async () => {
+      const asking = aWatchPartyStateWith(jest.fn, {
+        passwordWanted: { partyId: 'p-9', wasWrong: false },
+      });
+      const { drawn, redrawIn } = await draw({ watchParty: asking });
+
+      await playingAt(100);
+      await redrawIn({
+        ...asking,
+        passwordWanted: null,
+        party: aWatchParty({ mediaId: MEDIA_ID }),
+      });
+      await press('select');
+
+      expect(drawn.getByRole('button', { name: 'Pause' })).toBeTruthy();
+    });
+
+    it('draws the invitation once, not again each time the film or the room moves on', async () => {
+      const party = aWatchParty({
+        mediaId: MEDIA_ID,
+        members: [
+          {
+            connectionId: 'me',
+            accountId: 'a-1',
+            profileId: 'pr-1',
+            name: 'Sam',
+            role: 'host',
+            joinedAtMs: 0,
+            isWatching: true,
+            isReady: true,
+            positionSeconds: 0,
+            reportedAtMs: 0,
+            bufferedAheadSeconds: 0,
+          },
+        ],
+      });
+      const watchParty = aWatchPartyStateWith(jest.fn, { party, referenceSeconds: 0 });
+      const { drawn, redrawIn } = await draw({ watchParty });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: /^Watch party,/ }));
+
+      expect(drawn.getByRole('button', { name: 'Leave' })).toBeTruthy();
+
+      jest.mocked(encode).mockClear();
+
+      for (let second = 1; second <= 10; second += 1) {
+        await tell('timeUpdate', { currentTime: second });
+        await redrawIn({ ...watchParty, referenceSeconds: second, waitingFor: [] });
+      }
+
+      expect(encode).not.toHaveBeenCalled();
     });
 
     it('says what somebody else in the room did', async () => {

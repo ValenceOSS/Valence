@@ -64,6 +64,17 @@ describe('YourHistory', () => {
     });
   });
 
+  it('stands a programme once, at the episode watched last', async () => {
+    const drawn = await drawWith([
+      { ...aViewing('3', 'Hide and Seek', 'Severance'), seriesId: 'severance' },
+      { ...aViewing('2', 'Half Loop', 'Severance'), seriesId: 'severance' },
+    ]);
+
+    expect(drawn.getAllByText('Severance')).toHaveLength(1);
+    expect(drawn.getByText(/^Hide and Seek · /u)).toBeTruthy();
+    expect(drawn.queryByText(/^Half Loop · /u)).toBeNull();
+  });
+
   it('lights the page with the programme of the card the remote rests on', async () => {
     const onLight = jest.fn();
     const cache = new QueryClient({

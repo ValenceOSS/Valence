@@ -3,6 +3,7 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { albumItem } from '@ValenceTv/music/albumItem';
 import { artistItem } from '@ValenceTv/music/artistItem';
 import { LIKED_SONGS } from '@ValenceTv/music/LIKED_SONGS';
+import { mixItem } from '@ValenceTv/music/mixItem';
 import { playlistItem } from '@ValenceTv/music/playlistItem';
 import type { QueueSource } from '@ValenceClient/music/playQueue';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
@@ -42,8 +43,9 @@ const lengthOf = (tracks: readonly MusicTrack[]): string => {
 };
 
 /**
- * Reads what a page of the music section holds — an album, an artist, a playlist or somebody's
- * liked songs — as one shape: what it is, the songs on it, and, for an artist, their albums.
+ * Reads what a page of the music section holds — an album, an artist, a playlist, a mix Valence
+ * made or somebody's liked songs — as one shape: what it is, the songs on it, and, for an artist,
+ * their albums.
  *
  * @param view - The page.
  * @returns What it holds, or nothing while it is read.
@@ -62,6 +64,10 @@ const useCollection = (view: ListenedView): Collection | null => {
     enabled: view.kind === 'playlist',
   });
   const liked = useQuery({ ...musicQueries.liked(), enabled: view.kind === 'liked' });
+  const mix = useQuery({
+    ...musicQueries.mix(view.kind === 'mix' ? view.id : ''),
+    enabled: view.kind === 'mix',
+  });
 
   if (view.kind === 'album' && album.data !== undefined) {
     const { tracks } = album.data;
@@ -111,6 +117,21 @@ const useCollection = (view: ListenedView): Collection | null => {
       albums: [],
       source: { kind: 'playlist', id: view.id, name: item.title },
       isOrdered: playlist.data.playlist.isOrdered,
+      showsAlbum: true,
+    };
+  }
+
+  if (view.kind === 'mix' && mix.data !== undefined) {
+    const item = mixItem(mix.data);
+
+    return {
+      item,
+      by: null,
+      facts: [mix.data.detail, lengthOf(mix.data.tracks)].filter(Boolean).join(' · '),
+      tracks: mix.data.tracks,
+      albums: [],
+      source: { kind: 'tracks', id: view.id, name: item.title },
+      isOrdered: false,
       showsAlbum: true,
     };
   }

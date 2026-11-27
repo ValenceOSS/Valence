@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
@@ -12,6 +12,7 @@ import { createMemoryWatchProgressService } from '@ValenceServer/progress/create
 import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMemoryFavouriteService';
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
+import type { RealtimePublisher } from '@ValenceServer/realtime/RealtimePublisher';
 
 const BASE = 'http://localhost:8420';
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
@@ -51,6 +52,7 @@ const FavouriteListSchema = z.object({
 const build = () => {
   const { auth, settings } = createMemoryAuth();
   const favourites = createMemoryFavouriteService();
+  const publish = vi.fn<RealtimePublisher['publish']>();
   const app = createApp({
     auth,
     settings,
@@ -83,9 +85,10 @@ const build = () => {
     progress: createMemoryWatchProgressService(),
     favourites,
     ratings: createMemoryRatingService(),
+    realtime: { publish, recheck: vi.fn(), recheckAll: vi.fn() },
   });
 
-  return { app, auth, favourites };
+  return { app, auth, favourites, publish };
 };
 
 const kept = async (app: ReturnType<typeof build>['app'], cookie: string) =>
@@ -176,5 +179,39 @@ describe('favourites over HTTP', () => {
     );
 
     expect(response.status).toBe(404);
+  });
+
+  it('tells the other screens of the profile when it keeps something or stops', async () => {
+    const { app, auth, publish } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const reach = { kind: 'profiles', profileIds: [expect.any(String)] };
+
+    await app.request(`${BASE}/api/media/${MEDIA_ID}/favourite`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(publish).toHaveBeenLastCalledWith('profile', { event: 'favourites' }, reach);
+
+    await app.request(`${BASE}/api/media/${MEDIA_ID}/favourite`, {
+      method: 'DELETE',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(publish).toHaveBeenCalledTimes(2);
+    expect(publish).toHaveBeenLastCalledWith('profile', { event: 'favourites' }, reach);
+  });
+
+  it('tells nobody about something it refused to keep', async () => {
+    const { app, auth, publish } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+
+    await app.request(`${BASE}/api/media/11111111-2222-4333-8444-555555555555/favourite`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(publish).not.toHaveBeenCalled();
   });
 });

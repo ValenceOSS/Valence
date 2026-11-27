@@ -21,6 +21,7 @@ const NOW_WATCHING = {
   stepsBy: null,
   canStepOn: false,
   canStepBack: false,
+  volume: 0.5,
   reportedAtMs: 1,
 };
 
@@ -69,6 +70,18 @@ describe('VideoCommandSchema', () => {
     }
   });
 
+  it('reads how loud another device wants it', () => {
+    expect(VideoCommandSchema.parse({ kind: 'volume', level: 0.25 })).toEqual({
+      kind: 'volume',
+      level: 0.25,
+    });
+  });
+
+  it('refuses a volume below nothing or above all the way up', () => {
+    expect(VideoCommandSchema.safeParse({ kind: 'volume', level: -0.1 }).success).toBe(false);
+    expect(VideoCommandSchema.safeParse({ kind: 'volume', level: 1.1 }).success).toBe(false);
+  });
+
   it('refuses to seek before the start', () => {
     expect(VideoCommandSchema.safeParse({ kind: 'seek', positionSeconds: -1 }).success).toBe(false);
   });
@@ -106,6 +119,7 @@ describe('VideoNowWatchingSchema', () => {
       stepsBy: _stepsBy,
       canStepOn: _canStepOn,
       canStepBack: _canStepBack,
+      volume: _volume,
       ...fromAnOlderTelevision
     } = NOW_WATCHING;
     const read = VideoNowWatchingSchema.parse(fromAnOlderTelevision);
@@ -115,6 +129,11 @@ describe('VideoNowWatchingSchema', () => {
     expect(read.stepsBy).toBeNull();
     expect(read.canStepOn).toBe(false);
     expect(read.canStepBack).toBe(false);
+    expect(read.volume).toBeNull();
+  });
+
+  it('refuses a volume louder than all the way up', () => {
+    expect(VideoNowWatchingSchema.safeParse({ ...NOW_WATCHING, volume: 1.5 }).success).toBe(false);
   });
 
   it('takes a choice of subtitles from another device', () => {

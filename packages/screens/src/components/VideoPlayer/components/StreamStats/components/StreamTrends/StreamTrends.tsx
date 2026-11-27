@@ -1,7 +1,7 @@
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { TrendChart } from '@ValenceUI/TrendChart';
 import { InfoRow } from '@ValenceUI/InfoRow';
-import { roundUpToNice } from './roundUpToNice';
+import { roundUpToNice } from '@ValenceCore/functions/roundUpToNice';
 import type { StreamTrendsProps } from './StreamTrends.types';
 import { say } from '@ValenceI18n/say';
 

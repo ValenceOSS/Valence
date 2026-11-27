@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { ScrollView, Text } from 'react-native';
+import { Platform, ScrollView, Text } from 'react-native';
 import { z } from 'zod';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import type { TitleSpreadProps } from '@ValenceTv/components/TitleSpread/TitleSpread.types';
@@ -54,8 +54,11 @@ const thePageOf = (drawn: Awaited<ReturnType<typeof render>>) => {
 };
 
 describe('TitleSpread', () => {
+  const was = Platform.OS;
+
   afterEach(() => {
     jest.restoreAllMocks();
+    Platform.OS = was;
   });
 
   it('writes everything about the title', async () => {
@@ -112,28 +115,60 @@ describe('TitleSpread', () => {
     expect(picturesIn(drawn)).toEqual(['https://images.example/dune.jpg']);
   });
 
-  it('scrolls back to the top as the remote comes back onto the actions from far below', async () => {
+  it('brings the page back to its top as the remote lands on the first action', async () => {
     const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
-    const drawn = await render(<TitleSpread {...aSpread({ below: <Text>Season 1</Text> })} />);
+    const drawn = await render(
+      <TitleSpread
+        {...aSpread({
+          children: [<Text key="play">Play</Text>, <Text key="hide">Hide</Text>],
+          below: <Text>Season 1</Text>,
+        })}
+      />,
+    );
 
-    await fireEvent(thePageOf(drawn), 'scroll', {
-      nativeEvent: { contentOffset: { x: 0, y: 900 } },
-    });
-    await fireEvent(drawn.getByText('Play'), 'focusCapture');
+    await fireEvent(drawn.getByText('Play'), 'focus');
 
     expect(scrollTo).toHaveBeenCalledWith({ y: 0, animated: true });
   });
 
-  it('leaves the page where it is while the remote moves between the actions', async () => {
+  it('leaves the page where it is as the remote lands on any other action', async () => {
     const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
-    const drawn = await render(<TitleSpread {...aSpread({ below: <Text>Season 1</Text> })} />);
+    const drawn = await render(
+      <TitleSpread
+        {...aSpread({
+          children: [<Text key="play">Play</Text>, <Text key="hide">Hide</Text>],
+          below: <Text>Season 1</Text>,
+        })}
+      />,
+    );
 
-    await fireEvent(thePageOf(drawn), 'scroll', {
-      nativeEvent: { contentOffset: { x: 0, y: 60 } },
-    });
     scrollTo.mockClear();
-    await fireEvent(drawn.getByText('Play'), 'focusCapture');
+    await fireEvent(drawn.getByText('Hide'), 'focus');
 
     expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it('has the Apple TV land the page at its top in the same move that reaches the first action', async () => {
+    Platform.OS = 'ios';
+
+    const drawn = await render(<TitleSpread {...aSpread({ below: <Text>Season 1</Text> })} />);
+    const actions = drawn.root?.queryAll((node) => typeof node.props.onLayout === 'function');
+
+    await fireEvent(actions?.at(-1) ?? thePageOf(drawn), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 512, width: 1830, height: 400 } },
+    });
+
+    expect(thePageOf(drawn).props.snapToAlignment).toBe('item');
+    expect(
+      drawn.root?.queryAll((node) => node.props.scrollSnapOffset === 512).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('leaves Android TV to scroll as it always does', async () => {
+    Platform.OS = 'android';
+
+    const drawn = await render(<TitleSpread {...aSpread({ below: <Text>Season 1</Text> })} />);
+
+    expect(thePageOf(drawn).props.snapToAlignment).toBeUndefined();
   });
 });

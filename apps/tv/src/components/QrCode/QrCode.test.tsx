@@ -1,7 +1,14 @@
 import { PixelRatio } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { z } from 'zod';
+import { encode } from 'uqr';
 import { QrCode } from '@ValenceTv/components/QrCode/QrCode';
+
+jest.mock('uqr', () => {
+  const actual = jest.requireActual<{ encode: (value: string) => object }>('uqr');
+
+  return { ...actual, encode: jest.fn(actual.encode) };
+});
 
 const SquareSchema = z.object({ backgroundColor: z.string(), width: z.number() });
 
@@ -62,6 +69,26 @@ describe('QrCode', () => {
     expect(squares[0]?.every((isDark) => !isDark)).toBe(true);
     expect(squares.at(-1)?.every((isDark) => !isDark)).toBe(true);
     expect(squares.flat().some((isDark) => isDark)).toBe(true);
+  });
+
+  it('is not drawn again when the screen around it is, only when what it says changes', async () => {
+    const drawn = await render(
+      <QrCode value="https://valence.example/a" size={300} label="Sign in on your phone" />,
+    );
+
+    jest.mocked(encode).mockClear();
+
+    await drawn.rerender(
+      <QrCode value="https://valence.example/a" size={300} label="Sign in on your phone" />,
+    );
+
+    expect(encode).not.toHaveBeenCalled();
+
+    await drawn.rerender(
+      <QrCode value="https://valence.example/b" size={300} label="Sign in on your phone" />,
+    );
+
+    expect(encode).toHaveBeenCalledTimes(1);
   });
 
   it('draws a different code for a different address', async () => {

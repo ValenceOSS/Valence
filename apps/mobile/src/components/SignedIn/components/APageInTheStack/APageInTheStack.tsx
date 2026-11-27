@@ -68,6 +68,7 @@ const whatItShows = ({ page, ways, mayRequest, watchParty }: APageInTheStackProp
           onLookAtShow={ways.lookAtShow}
           onBack={ways.back}
           onRequestMore={ways.requestMore}
+          onToTheRemote={ways.toTheVideoRemote}
         />
       );
     case 'series':

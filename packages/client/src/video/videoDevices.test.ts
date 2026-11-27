@@ -30,6 +30,7 @@ const NOW_WATCHING = {
   stepsBy: null,
   canStepOn: false,
   canStepBack: false,
+  volume: null,
   reportedAtMs: 1,
 };
 

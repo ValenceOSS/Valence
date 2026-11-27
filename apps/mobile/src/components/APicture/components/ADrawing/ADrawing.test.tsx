@@ -1,5 +1,5 @@
 import { render, waitFor } from '@testing-library/react-native';
-import { DRAWINGS } from '@ValenceMobile/components/APicture/components/ADrawing/DRAWINGS';
+import { DRAWINGS } from '@ValenceClient/profiles/DRAWINGS';
 import { ADrawing } from './ADrawing';
 
 const SVG =

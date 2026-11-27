@@ -45,6 +45,7 @@ const NOW_WATCHING = {
   stepsBy: null,
   canStepOn: false,
   canStepBack: false,
+  volume: 0.4,
   reportedAtMs: 1,
 };
 
@@ -150,6 +151,23 @@ describe('registerVideoDeviceRoutes', () => {
     expect(presence.tell).toHaveBeenCalledWith('tv', {
       kind: 'video',
       command: { kind: 'seek', positionSeconds: 90 },
+      fromClientId: 'laptop',
+      fromLabel: 'laptop label',
+    });
+  });
+
+  it('passes on how loud another device wants the television', async () => {
+    const { presence, post } = build();
+
+    const response = await post('/api/video/devices/tv/command', {
+      fromClientId: 'laptop',
+      command: { kind: 'volume', level: 0.3 },
+    });
+
+    expect(response.status).toBe(200);
+    expect(presence.tell).toHaveBeenCalledWith('tv', {
+      kind: 'video',
+      command: { kind: 'volume', level: 0.3 },
       fromClientId: 'laptop',
       fromLabel: 'laptop label',
     });

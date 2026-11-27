@@ -28,6 +28,7 @@ import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircl
 import { AFadingInPicture } from '@ValenceMobile/components/TheVideoRemote/components/AFadingInPicture/AFadingInPicture';
 import { ARemoteChoice } from '@ValenceMobile/components/TheVideoRemote/components/ARemoteChoice/ARemoteChoice';
 import { TheTelevisionsChoices } from '@ValenceMobile/components/TheVideoRemote/components/TheTelevisionsChoices/TheTelevisionsChoices';
+import { TheTelevisionsVolume } from '@ValenceMobile/components/TheVideoRemote/components/TheTelevisionsVolume/TheTelevisionsVolume';
 import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
 import { ASkipStep } from '@ValenceMobile/components/Watching/components/ASkipStep/ASkipStep';
 import { TheSkip } from '@ValenceMobile/components/Watching/components/TheSkip/TheSkip';
@@ -161,7 +162,9 @@ const styles = StyleSheet.create({
  * step, ten seconds back, play or pause, ten seconds on and on a step, where a step is an episode
  * on a programme, a chapter in a film that has them, and otherwise back to the start; each greyed
  * out where there is no step to take, as before a programme's first episode or after its last.
- * Last, a row of choices in the player's look — the speed, the sound and subtitles and the quality,
+ * Then the television's volume, which the buttons on the side of the phone turn too while the
+ * remote is open, where the television and the server are new enough to turn it. Last, a row of
+ * choices in the player's look — the speed, the sound and subtitles and the quality,
  * each saying what it is set to and opening a sheet of what the television offers, and taking the
  * film back to play on this phone from where it got to, which stops it on the television.
  *
@@ -256,6 +259,7 @@ const TheVideoRemote = ({ onBack, onPlayHere }: TheVideoRemoteProps) => {
   const detail = useQuery(libraryQueries.detail(watching?.mediaId ?? null));
   const [hasNoBarePoster, setHasNoBarePoster] = useState<string | null>(null);
   const hasBarePosters = useServerHas('library.barePosters') === true;
+  const hasRemoteVolume = useServerHas('playback.remoteVolume') === true;
   const isPoster = watching !== null && hasBarePosters && hasNoBarePoster !== watching.mediaId;
   const picture =
     watching === null
@@ -295,6 +299,7 @@ const TheVideoRemote = ({ onBack, onPlayHere }: TheVideoRemoteProps) => {
   const { device } = shown;
 
   const isPlaying = watching?.isPlaying ?? false;
+  const volume = hasRemoteVolume ? (watching?.volume ?? null) : null;
   const duration = watching?.durationSeconds ?? 0;
   const title = watching?.title ?? say('common.starting');
   const film = detail.data ?? null;
@@ -562,6 +567,15 @@ const TheVideoRemote = ({ onBack, onPlayHere }: TheVideoRemoteProps) => {
               </View>
             </Button>
           </View>
+
+          {volume === null ? null : (
+            <TheTelevisionsVolume
+              level={volume}
+              onTurn={(level) => {
+                send({ kind: 'volume', level });
+              }}
+            />
+          )}
 
           <View style={styles.actions}>
             {speed === null ? null : (

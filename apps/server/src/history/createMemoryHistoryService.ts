@@ -11,6 +11,8 @@ type MemoryHistoryState = {
 
   titles?: Record<string, string>;
 
+  seriesOf?: Record<string, string>;
+
   visibleTo?: (viewer: Viewer, mediaItemId: string) => boolean;
 };
 
@@ -162,6 +164,18 @@ const createMemoryHistoryService = (
       );
 
       return Promise.resolve(was - state.viewings.length);
+    },
+
+    forgetTitle: (profileId, mediaItemId) => {
+      const before = state.viewings.length;
+      const series = state.seriesOf?.[mediaItemId];
+      const isOfIt = (one: MemoryViewing) =>
+        one.mediaItemId === mediaItemId ||
+        (series !== undefined && state.seriesOf?.[one.mediaItemId] === series);
+
+      state.viewings = state.viewings.filter((one) => one.profileId !== profileId || !isOfIt(one));
+
+      return Promise.resolve(before - state.viewings.length);
     },
 
     forgetAll: (profileId) => {

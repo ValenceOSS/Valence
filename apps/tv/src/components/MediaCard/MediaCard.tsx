@@ -14,6 +14,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { Shade } from '@ValenceTv/components/Shade/Shade';
+import { GrowsWhenLeftAlone } from '@ValenceTv/components/MediaCard/components/GrowsWhenLeftAlone/GrowsWhenLeftAlone';
 
 /**
  * Which of a title's pictures suits a card of this shape, falling back to the other where it has
@@ -45,7 +46,9 @@ const pictureFor = (media: MediaSummary, shape: MediaCardShape): string | null =
  * be, and an episode somebody is part-way through says which one it is.
  *
  * Only the name beneath changes as the remote lands on it and leaves, so the picture is built once
- * and handed back unchanged each time, and landing on a card never draws its pictures again.
+ * and handed back unchanged each time, and landing on a card never draws its pictures again. A card
+ * the remote rests on, with nothing pressed for five seconds, grows a little further, and settles
+ * back as soon as anything is pressed.
  *
  * @param media - The title.
  * @param onPress - Told when it is chosen.
@@ -168,28 +171,30 @@ const MediaCard = ({
       }}
     >
       {(isFocused) => (
-        <View style={{ width: size.width }}>
-          {picture}
+        <GrowsWhenLeftAlone isFocused={isFocused}>
+          <View style={{ width: size.width }}>
+            {picture}
 
-          {watchedFraction === undefined ? null : (
-            <ProgressLine fraction={watchedFraction} isBelow />
-          )}
+            {watchedFraction === undefined ? null : (
+              <ProgressLine fraction={watchedFraction} isBelow />
+            )}
 
-          {isLettered ? null : (
-            <Text
-              numberOfLines={1}
-              style={[styles.name, !isFocused && !isEpisode && styles.hidden]}
-            >
-              {name}
-            </Text>
-          )}
+            {isLettered ? null : (
+              <Text
+                numberOfLines={1}
+                style={[styles.name, !isFocused && !isEpisode && styles.hidden]}
+              >
+                {name}
+              </Text>
+            )}
 
-          {isEpisode && !isLettered && typeof media.seriesTitle === 'string' ? (
-            <Text numberOfLines={1} style={styles.detail}>
-              {whereItFalls(media)}
-            </Text>
-          ) : null}
-        </View>
+            {isEpisode && !isLettered && typeof media.seriesTitle === 'string' ? (
+              <Text numberOfLines={1} style={styles.detail}>
+                {whereItFalls(media)}
+              </Text>
+            ) : null}
+          </View>
+        </GrowsWhenLeftAlone>
       )}
     </Focusable>
   );
@@ -222,7 +227,7 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colours.raised,
   },
   name: {
-    marginTop: tokens.space.md,
+    marginTop: tokens.space.xs,
     color: tokens.colours.text,
     fontSize: tokens.type.small,
     fontWeight: '600',

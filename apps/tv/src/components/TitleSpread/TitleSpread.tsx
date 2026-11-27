@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Children, useRef, useState } from 'react';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
@@ -15,8 +15,6 @@ import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 
 const COLUMN = 760;
 
-const FAR_DOWN = 0.3;
-
 const PICTURE_SHARE = 0.68;
 
 const PICTURE_HEIGHT_SHARE = 0.78;
@@ -29,13 +27,13 @@ const PICTURE_HEIGHT_SHARE = 0.78;
  * about and who is in it — above a list of what can be done with it.
  *
  * Anything more the title has, such as a programme's seasons, carries on straight beneath the
- * actions, rising into view on the first screen rather than waiting below it. Coming back up onto
- * the actions from far below scrolls the page back to its top, so the title is seen whole again;
- * moving between the actions leaves the page where the television put it, since putting it back
- * each time fought the television's own nudge to keep the lowest action clear of the screen's edge,
- * and the page bobbed. A title with nothing more sits centred on the screen. The actions catch the
- * remote across the whole width of the page, so pressing up from anywhere beneath lands on them
- * rather than only from what sits straight below.
+ * actions, rising into view on the first screen rather than waiting below it. The first action is
+ * the top of the page: landing on it brings the page back to its top, so the title and its picture
+ * are seen whole again, with the Apple TV's focus engine told to scroll there in its own move.
+ * Moving between the other actions leaves the page where the television put it. A title with
+ * nothing more sits centred on the screen. The actions catch the remote across the whole width of
+ * the page, so pressing up from anywhere beneath lands on them rather than only from what sits
+ * straight below.
  *
  * @param mediaId - The title, whose picture, lettering and preview these are, or nothing for one
  *   the library does not have yet, which shows its picture still and its name in words.
@@ -49,7 +47,7 @@ const PICTURE_HEIGHT_SHARE = 0.78;
  * @param tagline - Its line, where it has one.
  * @param overview - What it is about.
  * @param credits - Who is in it and who made it, a line each.
- * @param children - What can be done with it, as action rows.
+ * @param children - What can be done with it, as action rows, the first of them the top of the page.
  * @param below - What carries on beneath.
  */
 const TitleSpread = ({
@@ -70,7 +68,8 @@ const TitleSpread = ({
   const screen = useTheScreen();
   const isStill = useKeepsStill();
   const page = useRef<ScrollView>(null);
-  const scrolled = useRef(0);
+  const [actionsAt, setActionsAt] = useState<number | null>(null);
+  const [first, ...rest] = Children.toArray(children);
   const picture = {
     width: screen.width * PICTURE_SHARE,
     height: screen.height * PICTURE_HEIGHT_SHARE,
@@ -81,10 +80,7 @@ const TitleSpread = ({
       ref={page}
       style={styles.page}
       showsVerticalScrollIndicator={false}
-      scrollEventThrottle={100}
-      onScroll={(event) => {
-        scrolled.current = event.nativeEvent.contentOffset.y;
-      }}
+      {...(Platform.OS === 'ios' ? { snapToAlignment: 'item' as const } : {})}
     >
       <FadeIn>
         <View
@@ -138,19 +134,29 @@ const TitleSpread = ({
               </View>
             )}
 
-            <FocusGuide
-              isRemembering
-              onFocusInside={() => {
-                if (scrolled.current < screen.height * FAR_DOWN) {
-                  return;
-                }
-
-                page.current?.scrollTo({ y: 0, animated: !isStill });
+            <View
+              style={styles.actions}
+              onLayout={(event) => {
+                setActionsAt(event.nativeEvent.layout.y);
               }}
-              style={[styles.actions, { width: screen.width - tokens.space.edge }]}
             >
-              {children}
-            </FocusGuide>
+              <FocusGuide
+                isRemembering
+                style={[styles.actionList, { width: screen.width - tokens.space.edge }]}
+              >
+                <View
+                  collapsable={false}
+                  {...(actionsAt === null ? {} : { scrollSnapOffset: actionsAt })}
+                  onFocus={() => {
+                    page.current?.scrollTo({ y: 0, animated: !isStill });
+                  }}
+                >
+                  {first}
+                </View>
+
+                {rest}
+              </FocusGuide>
+            </View>
           </View>
         </View>
 
@@ -184,11 +190,8 @@ const styles = StyleSheet.create({
   },
   credits: { gap: 4, maxWidth: tokens.ACTION_WIDTH },
   credit: { color: tokens.colours.muted, fontSize: tokens.type.small - 2, fontStyle: 'italic' },
-  actions: {
-    marginTop: tokens.space.md,
-    gap: tokens.space.xs,
-    alignItems: 'flex-start',
-  },
+  actions: { marginTop: tokens.space.md },
+  actionList: { gap: tokens.space.xs, alignItems: 'flex-start' },
 });
 
 export { TitleSpread };

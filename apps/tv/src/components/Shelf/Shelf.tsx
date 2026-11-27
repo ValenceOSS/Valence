@@ -7,6 +7,7 @@ import { cardSizes } from '@ValenceTv/components/MediaCard/cardSizes';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ShelfProps } from './Shelf.types';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
+import { FocusedOnTop } from '@ValenceTv/components/FocusedOnTop/FocusedOnTop';
 import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
 /**
@@ -40,6 +41,9 @@ const isSameShelf = (was: ShelfProps, now: ShelfProps): boolean =>
  * sits straight above or below. On a television it sends the remote back to the card it was last on,
  * as the television's own rows do; in a browser, where the row does not bring that card back into
  * line, up and down land on the nearest card instead.
+ *
+ * The card the remote is on is drawn above the cards beside it, so as it lifts and grows it covers
+ * them rather than slipping under the next one along.
  *
  * It is drawn again only when its titles or what it is handed change, so moving about the rest of
  * the page does not draw every card on it again. It builds only the cards that fit across the screen
@@ -85,6 +89,7 @@ const ShelfRow = ({
           maxToRenderPerBatch={inView}
           windowSize={3}
           removeClippedSubviews={false}
+          CellRendererComponent={FocusedOnTop}
           data={items}
           keyExtractor={(media) => media.id}
           showsHorizontalScrollIndicator={false}
@@ -125,7 +130,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingHorizontal: tokens.space.edge,
   },
-  row: { overflow: 'visible' },
+  row: { overflow: 'visible', marginTop: -tokens.space.xs },
   inside: {
     paddingHorizontal: tokens.space.edge,
     paddingVertical: tokens.space.md,

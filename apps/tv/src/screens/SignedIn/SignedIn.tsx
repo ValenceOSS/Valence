@@ -49,6 +49,7 @@ import { readOpeningLink } from '@ValenceTv/navigation/readOpeningLink';
 import { readArrivalLink } from '@ValenceTv/notifications/readArrivalLink';
 import { useArrivals } from '@ValenceTv/notifications/useArrivals';
 import { Account } from '@ValenceTv/screens/Account/Account';
+import { WatchHistory } from '@ValenceTv/screens/WatchHistory/WatchHistory';
 import { BookPage } from '@ValenceTv/screens/BookPage/BookPage';
 import { Books } from '@ValenceTv/screens/Books/Books';
 import { Catalogue } from '@ValenceTv/screens/Catalogue/Catalogue';
@@ -87,7 +88,7 @@ const WATCHABLE = new Set(['movies', 'shows', 'anime']);
 
 const UNDER_THE_BAR = 130;
 
-const KEPT = ['films', 'shows', 'music', 'books', 'live', 'account'] as const;
+const KEPT = ['films', 'shows', 'music', 'books', 'live', 'history', 'account'] as const;
 
 type Moods = {
   home: string | null;
@@ -97,6 +98,7 @@ type Moods = {
   books: string | null;
   live: string | null;
   search: string | null;
+  history: string | null;
   account: string | null;
 };
 
@@ -123,7 +125,8 @@ const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(
  *
  * Each page is lit by its own picture: the front page by the title its top is showing, Films and
  * Shows by the poster the remote has come to rest on, a title's page by that title, search by the
- * first poster on its shelves, the profile by what was last watched, and the list of requests by
+ * first poster on its shelves, the watch history by the title the remote rests on, the profile by
+ * what was last watched, and the list of requests by
  * the newest one asked for — never by a face, which is too small a picture to blur into a wash and
  * comes out as its own shapes blown up across the screen. The light crossfades as the page changes.
  * Menu goes back a page at a time, and from the parts themselves leaves the app as it does anywhere
@@ -227,6 +230,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     books: null,
     live: null,
     search: null,
+    history: null,
     account: null,
   });
   const [items, setItems] = useState<ReadonlyMap<Tab, View>>(new Map());
@@ -581,6 +585,17 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     setMoods((was) => ({ ...was, search: path }));
   }, []);
 
+  const featureHistory = useCallback((path: string | null) => {
+    setMoods((was) => (was.history === path ? was : { ...was, history: path }));
+  }, []);
+
+  const playFrom = useCallback(
+    (mediaId: string, startSeconds: number) => {
+      open({ kind: 'play', mediaId, startSeconds, carriedOn: 0 });
+    },
+    [open],
+  );
+
   const featureAccount = useCallback((path: string | null) => {
     setMoods((was) => (was.account === path ? was : { ...was, account: path }));
   }, []);
@@ -817,6 +832,13 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         upTo={items.get('live') ?? null}
                         cameBackTo={liveCameBack}
                         isCovered={top !== undefined || tab !== 'live'}
+                      />
+                    ) : part === 'history' ? (
+                      <WatchHistory
+                        onOpen={openByMediaId}
+                        onPlay={playFrom}
+                        onMood={featureHistory}
+                        upTo={items.get('history') ?? null}
                       />
                     ) : part === 'account' ? (
                       <Account

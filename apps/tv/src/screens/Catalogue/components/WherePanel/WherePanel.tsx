@@ -1,5 +1,5 @@
 import { ChoicePanel } from '@ValenceTv/components/ChoicePanel/ChoicePanel';
-import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
+import { useMenuToClose } from '@ValenceTv/navigation/useMenuToClose';
 import type { WherePanelProps } from './WherePanel.types';
 import { say } from '@ValenceI18n/say';
 
@@ -13,7 +13,7 @@ import { say } from '@ValenceI18n/say';
  * @param onClose - Told to put the panel away.
  */
 const WherePanel = ({ options, chosen, onChoose, onClose }: WherePanelProps) => {
-  useMenuButton(onClose, true);
+  useMenuToClose(onClose);
 
   return (
     <ChoicePanel

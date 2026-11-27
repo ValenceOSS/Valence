@@ -3,7 +3,7 @@ import { LETTER_FONTS } from '@ValenceContracts/schemas/LetterFont';
 import { PROFILE_COLOURS, profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { facePaint } from '@ValenceClient/profiles/facePaint';
 import { PROFILE_GRADIENTS } from '@ValenceClient/profiles/PROFILE_GRADIENTS';
-import { paintStyleOf } from '@ValenceMobile/pictures/paintStyleOf';
+import { paintStyleOf } from '@ValenceNative/pictures/paintStyleOf';
 import { LETTER_FONT_NAMES } from '@ValenceClient/profiles/LETTER_FONT_NAMES';
 import { AColourSwatches } from '@ValenceMobile/components/AColourSwatches/AColourSwatches';
 import { AFaceChoice } from '@ValenceMobile/components/AFaceEditor/components/AFaceChoice/AFaceChoice';

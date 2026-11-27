@@ -28,6 +28,24 @@ describe('a profile’s viewing history', () => {
     expect(await history.list(asTheServer, 'profile-1')).toHaveLength(1);
   });
 
+  it('forgets every episode of a series by one of them, and only for that profile', async () => {
+    const history = createMemoryHistoryService({
+      viewings: [],
+      seriesOf: { 'episode-1': 'severance', 'episode-2': 'severance' },
+    });
+
+    await history.record('profile-1', 'episode-1', watched());
+    await history.record('profile-1', 'episode-2', watched());
+    await history.record('profile-1', 'film', watched());
+    await history.record('profile-2', 'episode-1', watched());
+
+    await expect(history.forgetTitle('profile-1', 'episode-2')).resolves.toBe(2);
+    expect((await history.list(asTheServer, 'profile-1')).map((one) => one.mediaItemId)).toEqual([
+      'film',
+    ]);
+    expect(await history.list(asTheServer, 'profile-2')).toHaveLength(1);
+  });
+
   it('does not remember something barely opened', async () => {
     const history = createMemoryHistoryService();
 

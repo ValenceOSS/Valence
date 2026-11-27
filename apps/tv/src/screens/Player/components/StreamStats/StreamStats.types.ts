@@ -1,5 +1,7 @@
-import type { StreamStatsInput } from '@ValenceClient/playback/describeStreamStats';
+import type { StreamReading, StreamStatsInput } from '@ValenceClient/playback/describeStreamStats';
 
-type StreamStatsProps = StreamStatsInput;
+type StreamStatsProps = StreamStatsInput & {
+  history: readonly StreamReading[];
+};
 
 export type { StreamStatsProps };

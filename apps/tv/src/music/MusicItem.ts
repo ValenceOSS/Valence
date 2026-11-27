@@ -1,6 +1,6 @@
 import type { ListenedView } from '@ValenceTv/music/ListenedView';
 
-type MusicItemKind = 'album' | 'artist' | 'playlist' | 'liked' | 'song';
+type MusicItemKind = 'album' | 'artist' | 'playlist' | 'liked' | 'mix' | 'song';
 
 type MusicItem = {
   kind: MusicItemKind;

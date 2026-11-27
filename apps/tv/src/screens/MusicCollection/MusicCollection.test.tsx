@@ -287,4 +287,32 @@ describe('MusicCollection', () => {
     expect(drawn.getByText('Playlist')).toBeTruthy();
     expect(drawn.getByText('Liked Songs')).toBeTruthy();
   });
+
+  it('calls a mix made by Valence, and plays it from the song chosen', async () => {
+    const player = aPlayer();
+    const { drawn, onPlayed } = await draw({ kind: 'mix', id: 'daily-1' }, (cache) => {
+      cache.setQueryData(musicQueries.mix('daily-1').queryKey, {
+        id: 'daily-1',
+        kind: 'daily',
+        title: 'Daily Mix 1',
+        detail: 'Sleep Token and more',
+        trackCount: 3,
+        coverAlbumIds: [],
+        faces: [],
+        tracks: TRACKS,
+      });
+    });
+
+    expect(drawn.getByText('Made by Valence')).toBeTruthy();
+    expect(drawn.getByText('Daily Mix 1')).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Play' }));
+
+    expect(player.play).toHaveBeenCalledWith(
+      TRACKS,
+      0,
+      expect.objectContaining({ source: { kind: 'tracks', id: 'daily-1', name: 'Daily Mix 1' } }),
+    );
+    expect(onPlayed).toHaveBeenCalled();
+  });
 });

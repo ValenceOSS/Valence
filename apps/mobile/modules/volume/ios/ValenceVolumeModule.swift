@@ -10,6 +10,14 @@ import MediaPlayer
 /// player when the buttons on the side of the phone are pressed. The volume is
 /// read from the audio session, and watched there so the slider follows those
 /// buttons.
+///
+/// The audio session only says its volume has changed while it is active, which
+/// it is not while the phone plays nothing, as when it is the remote for a
+/// television. So the buttons can be heard there, the session is made active
+/// where no other app is playing, as sound that mixes with anything that starts
+/// unless the app's own player has already claimed it, and left so: making it
+/// inactive again would stop anything of the app's own that had started playing
+/// since.
 public class ValenceVolumeModule: Module {
   private var watching: NSKeyValueObservation?
 
@@ -25,6 +33,20 @@ public class ValenceVolumeModule: Module {
     AsyncFunction("set") { (to: Float) in
       ValenceVolumeView.setVolume(to)
     }.runOnQueue(.main)
+
+    Function("hearTheButtons") { (isOn: Bool) in
+      let session = AVAudioSession.sharedInstance()
+
+      guard isOn, !session.isOtherAudioPlaying else {
+        return
+      }
+
+      if session.category != .playback {
+        try? session.setCategory(.ambient)
+      }
+
+      try? session.setActive(true)
+    }
 
     OnStartObserving {
       self.watching = AVAudioSession.sharedInstance().observe(\.outputVolume, options: [.new]) {

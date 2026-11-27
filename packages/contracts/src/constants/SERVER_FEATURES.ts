@@ -16,6 +16,8 @@ const SERVER_FEATURES = [
   'playback.audioLanguage',
   'streams.qualityLimit',
   'library.seasonalFilms',
+  'history.forgetTitle',
+  'playback.remoteVolume',
 ] as const;
 
 export { SERVER_FEATURES };

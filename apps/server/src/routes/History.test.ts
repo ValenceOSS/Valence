@@ -177,6 +177,19 @@ describe('a profile’s history', () => {
     expect((await request('/api/history/not-a-viewing', 'DELETE')).status).toBe(404);
   });
 
+  it('lets a viewer forget everything watched of one title', async () => {
+    const { request, listed } = await build();
+
+    await request(`/api/media/${MEDIA_ID}/progress`, 'PUT', report(0));
+    await request(`/api/media/${MEDIA_ID}/progress`, 'PUT', report(600));
+
+    const response = await request(`/api/history/titles/${MEDIA_ID}`, 'DELETE');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ forgotten: 1 });
+    expect((await listed()).viewings).toEqual([]);
+  });
+
   it('lets a viewer forget the lot', async () => {
     const { request, listed } = await build();
 

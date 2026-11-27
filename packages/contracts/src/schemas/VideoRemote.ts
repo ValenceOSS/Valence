@@ -36,6 +36,7 @@ const VideoNowWatchingSchema = z.object({
     .object({ label: z.string().max(120), toSeconds: z.number().nonnegative() })
     .nullable()
     .default(null),
+  volume: z.number().min(0).max(1).nullable().default(null),
   reportedAtMs: z.number().int().nonnegative(),
 });
 
@@ -68,6 +69,7 @@ const VideoCommandSchema = z.discriminatedUnion('kind', [
     choiceId: z.string().min(1).max(200),
   }),
   z.object({ kind: z.literal('stop') }),
+  z.object({ kind: z.literal('volume'), level: z.number().min(0).max(1) }),
 ]);
 
 const ReportNowWatchingSchema = z.object({

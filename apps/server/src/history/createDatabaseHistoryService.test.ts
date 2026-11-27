@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { watchHistory } from '#dialect/Schema';
+import { library, mediaItem, watchHistory } from '#dialect/Schema';
+import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { aHousehold } from '@ValenceServer/testing/aHousehold';
 import { createDatabaseHistoryService } from './createDatabaseHistoryService';
 
@@ -87,6 +88,30 @@ describe('createDatabaseHistoryService', { timeout: STARTING_POSTGRES_MS }, () =
     await expect(history.prune(LATER)).resolves.toBe(1);
     await expect(history.forgetAll('sam')).resolves.toBe(1);
     await expect(history.forgetAll('pat')).resolves.toBe(1);
+  });
+
+  it('forgets every episode of a series by one of them, and a film by itself, for one profile', async () => {
+    const { db, viewer } = await aHousehold();
+    const history = createDatabaseHistoryService(db);
+    const seen = { secondsWatched: 600, isFinished: true, at: EVENING };
+
+    await db.insert(library).values({ id: 'telly', name: 'Telly', kind: 'shows', path: '/telly' });
+    await db.insert(mediaItem).values([
+      { ...aMediaItemRow('one', 'telly'), seriesTitle: 'Severance' },
+      { ...aMediaItemRow('two', 'telly'), seriesTitle: 'Severance' },
+      { ...aMediaItemRow('other', 'telly'), seriesTitle: 'Slow Horses' },
+    ]);
+
+    for (const mediaItemId of ['one', 'two', 'other', 'film']) {
+      await history.record('pat', mediaItemId, seen);
+    }
+
+    await history.record('sam', 'one', seen);
+
+    await expect(history.forgetTitle('pat', 'two')).resolves.toBe(2);
+    await expect(history.forgetTitle('pat', 'film')).resolves.toBe(1);
+    expect((await history.list(viewer, 'pat')).map((one) => one.mediaItemId)).toEqual(['other']);
+    expect((await history.list(viewer, 'sam')).map((one) => one.mediaItemId)).toEqual(['one']);
   });
 
   it('keeps every imported viewing however old, so history brought across survives the prune', async () => {

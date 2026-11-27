@@ -1,28 +1,12 @@
-import { Volume, VolumeLow } from '@keyline-icons/react-native';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { requireNativeView, requireOptionalNativeModule } from 'expo';
 import { z } from 'zod';
-import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
-import { Icon } from '@ValenceMobile/components/Icon/Icon';
-import { Slider } from '@ValenceMobile/components/Slider/Slider';
+import { AVolumeRow } from '@ValenceMobile/components/AVolumeRow/AVolumeRow';
+import { TheSystemVolume } from '@ValenceMobile/components/TheSystemVolume/TheSystemVolume';
+import { thePhonesVolume } from '@ValenceMobile/platform/thePhonesVolume';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
-import type { NativeVolumeProps, VolumeModule } from './AVolumeSlider.types';
-import { say } from '@ValenceI18n/say';
-
-const TheSystemSlider = requireNativeView<NativeVolumeProps>('ValenceVolume');
-
-const volumeControl = requireOptionalNativeModule<VolumeModule>('ValenceVolume');
 
 const VolumeSchema = z.object({ volume: z.number() });
-
-const OUT_OF_SIGHT = { height: 1, left: 0, position: 'absolute', top: 0, width: 1 } as const;
-
-const styles = StyleSheet.create({
-  row: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  slider: { flex: 1 },
-});
 
 /**
  * The phone's volume, between a quiet speaker and a loud one as Apple Music draws it, on the same
@@ -31,14 +15,14 @@ const styles = StyleSheet.create({
  */
 const AVolumeSlider = () => {
   const colours = useTheColours();
-  const [volume, setVolume] = useState(() => volumeControl?.now() ?? 1);
+  const [volume, setVolume] = useState(() => thePhonesVolume?.now() ?? 1);
 
   useEffect(() => {
-    if (volumeControl === null) {
+    if (thePhonesVolume === null) {
       return undefined;
     }
 
-    const listening = volumeControl.addListener('onVolume', (change) => {
+    const listening = thePhonesVolume.addListener('onVolume', (change) => {
       const read = VolumeSchema.safeParse(change);
 
       if (read.success) {
@@ -58,27 +42,21 @@ const AVolumeSlider = () => {
    */
   const turnTo = (to: number) => {
     setVolume(to);
-    void volumeControl?.set(to);
+    void thePhonesVolume?.set(to);
   };
 
   return (
-    <View style={styles.row}>
-      {drawsNatively() ? <TheSystemSlider style={OUT_OF_SIGHT} /> : null}
-      <Icon of={VolumeLow} size={16} colour={colours.textMuted} />
-      <View style={styles.slider}>
-        <Slider
-          label={say('common.volume')}
-          value={volume}
-          furthest={1}
-          colour={colours.text}
-          restColour={withAlpha(colours.text, 0.2)}
-          aheadColour={withAlpha(colours.text, 0.2)}
-          onScrubbing={turnTo}
-          onScrubbed={turnTo}
-        />
-      </View>
-      <Icon of={Volume} size={16} colour={colours.textMuted} />
-    </View>
+    <>
+      <TheSystemVolume />
+      <AVolumeRow
+        level={volume}
+        colour={colours.text}
+        quietColour={colours.textMuted}
+        restColour={withAlpha(colours.text, 0.2)}
+        onTurning={turnTo}
+        onTurned={turnTo}
+      />
+    </>
   );
 };
 

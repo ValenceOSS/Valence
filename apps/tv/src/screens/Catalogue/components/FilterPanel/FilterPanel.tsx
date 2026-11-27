@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChoicePanel } from '@ValenceTv/components/ChoicePanel/ChoicePanel';
-import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
+import { useMenuToClose } from '@ValenceTv/navigation/useMenuToClose';
 import type { FilterPanelProps } from './FilterPanel.types';
 import { say } from '@ValenceI18n/say';
 
@@ -23,13 +23,12 @@ const FilterPanel = ({ groups, selected, onChange, onClose }: FilterPanelProps) 
   const [open, setOpen] = useState<string | null>(null);
   const group = groups.find((one) => one.name === open) ?? null;
 
-  useMenuButton(
+  useMenuToClose(
     group === null
       ? onClose
       : () => {
           setOpen(null);
         },
-    true,
   );
 
   if (group === null) {

@@ -9,12 +9,24 @@ beforeEach(() => {
 });
 
 describe('SoundPanel', () => {
-  it('offers volume levelling and crossfade', async () => {
+  it('offers the streaming quality, volume levelling and crossfade', async () => {
     const drawn = await render(<SoundPanel />);
 
+    expect(drawn.getByText('Streaming quality')).toBeTruthy();
+    expect(drawn.getByText('Data saver')).toBeTruthy();
     expect(drawn.getByText('Volume levelling')).toBeTruthy();
     expect(drawn.getByText('Crossfade')).toBeTruthy();
     expect(drawn.getByText('Whole albums')).toBeTruthy();
+  });
+
+  it('streams at the quality chosen', async () => {
+    const choosing = jest.spyOn(theMusicPlayer(), 'setQuality');
+    const drawn = await render(<SoundPanel />);
+
+    await userEvent.press(drawn.getByText('Normal'));
+
+    expect(choosing).toHaveBeenCalledWith('normal');
+    choosing.mockRestore();
   });
 
   it('levels songs the way chosen', async () => {

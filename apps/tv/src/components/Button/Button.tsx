@@ -4,46 +4,66 @@ import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ButtonProps, ButtonSize, ButtonVariant } from './Button.types';
 
-type Look = { face: string; edge: string; ink: string };
+type Look = {
+  face: string;
+  edge: string;
+  ink: string;
+  focusedInk?: string;
+  isUnderlined?: boolean;
+};
 
 const LOOKS: Record<ButtonVariant, Look> = {
   primary: { face: '#ffffff', edge: 'transparent', ink: tokens.colours.onWhite },
-  secondary: {
-    face: tokens.colours.hover,
-    edge: tokens.colours.line,
-    ink: tokens.colours.text,
-  },
-  glossy: {
-    face: tokens.colours.hover,
-    edge: tokens.colours.line,
-    ink: tokens.colours.text,
-  },
   confirm: { face: '#ffffff', edge: 'transparent', ink: tokens.colours.onWhite },
-  overlay: { face: 'rgba(128,128,128,0.5)', edge: 'transparent', ink: '#ffffff' },
-  glass: { face: 'rgba(255,255,255,0.16)', edge: 'transparent', ink: '#ffffff' },
+  secondary: { face: tokens.colours.hover, edge: tokens.colours.line, ink: tokens.colours.text },
+  glossy: { face: tokens.colours.hover, edge: tokens.colours.line, ink: tokens.colours.text },
+  raised: { face: tokens.colours.raised, edge: tokens.colours.line, ink: tokens.colours.text },
   soft: { face: tokens.colours.hover, edge: 'transparent', ink: tokens.colours.text },
   ghost: { face: 'transparent', edge: 'transparent', ink: tokens.colours.text },
-  danger: {
-    face: tokens.colours.danger,
-    edge: 'transparent',
-    ink: tokens.colours.onAccent,
+  danger: { face: tokens.colours.danger, edge: 'transparent', ink: tokens.colours.onDanger },
+  overlay: {
+    face: 'rgba(128,128,128,0.5)',
+    edge: 'rgba(255,255,255,0.1)',
+    ink: tokens.colours.onScrim,
   },
+  glass: { face: 'rgba(85,85,85,0.7)', edge: 'transparent', ink: tokens.colours.text },
+  subtle: {
+    face: 'transparent',
+    edge: 'transparent',
+    ink: tokens.colours.muted,
+    focusedInk: tokens.colours.text,
+  },
+  link: { face: 'transparent', edge: 'transparent', ink: tokens.colours.text, isUnderlined: true },
 };
 
 const RING_GAP = 4;
 
-const HEIGHTS: Record<ButtonSize, number> = { md: 72, lg: 80, xl: 88, play: 84 };
+const HEIGHTS: Record<ButtonSize, number> = { md: 64, lg: 72, xl: 88, play: 84 };
 
 const TEXT: Record<ButtonSize, number> = { md: 26, lg: 28, xl: 32, play: 28 };
+
+const ACROSS: Record<ButtonSize, number> = { md: 24, lg: 28, xl: 40, play: 40 };
+
+const GAPS: Record<ButtonSize, number> = { md: 16, lg: 16, xl: 20, play: 20 };
+
+const WEIGHTS: Record<ButtonSize, '500' | '600' | '700'> = {
+  md: '500',
+  lg: '500',
+  xl: '600',
+  play: '700',
+};
+
+const ICON_TO_TEXT = 1.15;
 
 const PLAY_ROUND = 23;
 
 /**
- * ValenceUI's button, for a television: the same variants and shapes as the web's, sized for a room
- * rather than a desk, and coloured as the television's own buttons are rather than the web's — none
- * of them blue. The main action is white, the rest grey or see-through, and whichever the remote is
- * on is ringed in white a little way outside its edge, so a white button shows it as well as a grey
- * one. Every button keeps a clear ring of the same size, so moving the remote shifts nothing.
+ * ValenceUI's button, for a television: the web's variants, heights, padding, type and corners, each
+ * doubled to be read across a room, and painted as the web paints them in the dark — the main action
+ * white, the rest grey or see-through, none of them blue. Where the web rings the button the keyboard
+ * is on, the television rings the one the remote is on, in white a little way outside its edge, so a
+ * white button shows it as well as a grey one. Every button keeps a clear ring of the same size, so
+ * moving the remote shifts nothing.
  *
  * @param label - What it says.
  * @param detail - A second, quieter line, such as where a server is.
@@ -101,6 +121,7 @@ const Button = ({
       style={isWide ? styles.wide : undefined}
     >
       {(isFocused) => {
+        const ink = isFocused ? (look.focusedInk ?? look.ink) : look.ink;
         const corner =
           isPill || isIconOnly
             ? tokens.radii.round
@@ -114,7 +135,7 @@ const Button = ({
               styles.ring,
               {
                 borderRadius: corner + RING_GAP + tokens.FOCUS_RING,
-                borderColor: isFocused && !isRingHidden ? '#ffffff' : 'transparent',
+                borderColor: isFocused && !isRingHidden ? tokens.colours.text : 'transparent',
               },
             ]}
           >
@@ -123,6 +144,8 @@ const Button = ({
                 styles.face,
                 {
                   minHeight: HEIGHTS[size],
+                  gap: GAPS[size],
+                  paddingHorizontal: ACROSS[size],
                   ...(minWidth === undefined ? {} : { minWidth }),
                   ...(isIconOnly ? { width: HEIGHTS[size], paddingHorizontal: 0 } : {}),
                   borderRadius: corner,
@@ -132,26 +155,29 @@ const Button = ({
                 isHeldOff && styles.heldOff,
               ]}
             >
-              {isLoading ? <ActivityIndicator color={look.ink} /> : null}
+              {isLoading ? <ActivityIndicator color={ink} /> : null}
 
               {icon === undefined || isLoading ? null : (
-                <Icon of={icon} colour={look.ink} size={iconSize ?? Math.round(TEXT[size] * 1.1)} />
+                <Icon
+                  of={icon}
+                  colour={ink}
+                  size={iconSize ?? Math.round(TEXT[size] * ICON_TO_TEXT)}
+                />
               )}
 
               {isIconOnly ? null : (
                 <View style={styles.words}>
                   <Text
                     style={[
-                      styles.label,
-                      size === 'play' && styles.strong,
-                      { color: look.ink, fontSize: TEXT[size] },
+                      { color: ink, fontSize: TEXT[size], fontWeight: WEIGHTS[size] },
+                      look.isUnderlined === true && isFocused && styles.underlined,
                     ]}
                   >
                     {label}
                   </Text>
 
                   {detail === undefined ? null : (
-                    <Text style={[styles.detail, { color: look.ink }]}>{detail}</Text>
+                    <Text style={[styles.detail, { color: ink }]}>{detail}</Text>
                   )}
                 </View>
               )}
@@ -177,14 +203,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: tokens.space.sm,
-    paddingHorizontal: tokens.space.lg,
     paddingVertical: tokens.space.xs,
   },
   heldOff: { opacity: 0.5 },
   words: { alignItems: 'center' },
-  label: { fontWeight: '500' },
-  strong: { fontWeight: '700' },
+  underlined: { textDecorationLine: 'underline' },
   detail: { fontSize: tokens.type.small, opacity: 0.7 },
 });
 

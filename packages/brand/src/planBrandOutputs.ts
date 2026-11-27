@@ -47,9 +47,10 @@ type BrandOutput =
  * The web, desktop, docs, landing and metrics pages each serve the logo themselves, so each gets a
  * copy, and the web, docs, landing and metrics pages a small render of the icon for the browser's
  * tab, as does the README. The web takes a second, smaller render at 192 for a push notice's icon
- * and badge, and the landing page another at 256 for its footer. The
- * phone and television tint the logo from a picture, so they get it drawn at the sizes
- * they use. The iPhone's icon reads the bundle straight from `design`; the desktop build takes a copy
+ * and badge, and the landing page another at 256 for its footer. The phone and television tint the
+ * logo from a picture, so they get it drawn at the sizes they use, the television's launch screen at
+ * the size its splash then draws the mark, so one hands over to the other without the mark changing
+ * size. The iPhone's icon reads the bundle straight from `design`; the desktop build takes a copy
  * of it for the Mac, and a flat render for Windows, Linux and the dock while it is being worked on,
  * with the margin a Mac icon leaves around itself. Apple TV and Android cannot take an Icon Composer
  * bundle, so their icons are cut from renders of it: Apple TV's icons and top shelf whole, and
@@ -155,8 +156,8 @@ const planBrandOutputs = (): BrandOutput[] => {
     mark('apps/mobile/src/assets/valence-mark@2x.png', 59, 56),
     mark('apps/mobile/src/assets/valence-mark@3x.png', 89, 84),
     mark('apps/tv/src/assets/valence-mark.png', 972, 916),
-    mark('apps/tv/assets/launch/launch-mark.png', 124, 117),
-    mark('apps/tv/assets/launch/launch-mark@2x.png', 248, 234),
+    mark('apps/tv/assets/launch/launch-mark.png', 57, 54),
+    mark('apps/tv/assets/launch/launch-mark@2x.png', 114, 108),
     ...LAYERS.flatMap((layer): BrandOutput[] => [
       ...['web', 'desktop', 'docs', 'landing', 'metrics'].map((app): BrandOutput => ({
         kind: 'copy',

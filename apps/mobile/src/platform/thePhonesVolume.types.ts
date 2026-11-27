@@ -1,6 +1,7 @@
 type VolumeModule = {
   now: () => number;
   set: (to: number) => Promise<void>;
+  hearTheButtons: (isOn: boolean) => void;
   addListener: (event: 'onVolume', listener: (change: object) => void) => { remove: () => void };
 };
 

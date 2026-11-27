@@ -21,11 +21,12 @@ const KINDS = {
   artist: say('common.artist'),
   playlist: say('common.playlist'),
   liked: say('common.playlist'),
+  mix: say('common.mixByValence'),
 } as const;
 
 /**
- * An album, an artist, a playlist or somebody's liked songs, as the television's music apps show
- * one: its picture beside its name, what it is and how long it lasts, Play and Shuffle beneath, and
+ * An album, an artist, a playlist, a mix Valence made or somebody's liked songs, as the
+ * television's music apps show one: its picture beside its name, what it is and how long it lasts, Play and Shuffle beneath, and
  * then every song on it. An artist's page plays their most liked songs, and ends with their albums.
  *
  * Choosing a song plays the list from there and opens what is playing; the page is lit by its own

@@ -1,6 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { act, render } from '@testing-library/react-native';
 import { Animated } from 'react-native';
 import { Splash } from '@ValenceTv/components/Splash/Splash';
+
+const LAUNCH_MARK = join(__dirname, '..', '..', '..', 'assets', 'launch', 'launch-mark.png');
 
 const runsInJavaScript = Animated.timing;
 
@@ -24,6 +28,16 @@ describe('Splash', () => {
   afterEach(() => {
     jest.useRealTimers();
     jest.restoreAllMocks();
+  });
+
+  it('draws the mark at the size the launch screen drew it, so one hands over to the other', async () => {
+    const picture = readFileSync(LAUNCH_MARK);
+    const drawn = await render(<Splash isDone={false} onGone={jest.fn()} />);
+
+    expect(drawn.getByRole('image', { name: 'Valence' })).toHaveStyle({
+      width: picture.readUInt32BE(16),
+      height: picture.readUInt32BE(20),
+    });
   });
 
   it('stays while the app is still finding out who is signed in', async () => {

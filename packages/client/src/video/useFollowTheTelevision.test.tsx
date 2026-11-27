@@ -46,6 +46,7 @@ const watching = (overrides: Partial<VideoNowWatching> = {}): VideoNowWatching =
   stepsBy: null,
   canStepOn: false,
   canStepBack: false,
+  volume: null,
   reportedAtMs: NOW - 5_000,
   ...overrides,
 });

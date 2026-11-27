@@ -1,9 +1,12 @@
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { Check } from '@keyline-icons/react-native';
 import { crossfadeChoices } from '@ValenceClient/music/crossfadeChoices';
+import { describeAudioQuality } from '@ValenceClient/music/describeAudioQuality';
 import { levellingChoices } from '@ValenceClient/music/levellingChoices';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { whatTheFileHolds } from '@ValenceClient/music/whatTheFileHolds';
+import { AUDIO_QUALITIES } from '@ValenceContracts/schemas/Music';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
@@ -14,37 +17,58 @@ const WIDTH = 820;
 
 /**
  * How the music sounds on this television, in a panel down the right of the screen as the web's
- * menu offers it: whether songs are levelled to one loudness, each on its own or each album as a
- * whole, and how many seconds one song fades into the next. A choice is kept on this television and
- * heard from the next song; the panel stays open so another can be tried, and Menu closes it.
+ * menu and the phone's sheet offer it: the quality it streams at — the song's own file, or one of
+ * the smaller ones made from it, each saying what it sends — with what the song's own file holds
+ * beneath, then whether songs are levelled to one loudness, each on its own or each album as a
+ * whole, and how many seconds one song fades into the next. A quality is heard at once, from where
+ * the song has got to, and every choice is kept on this television; the panel stays open so
+ * another can be tried, and Menu closes it.
  */
 const SoundPanel = () => {
   const { state, player } = useMusicPlayer(theMusicPlayer());
+  const track = state.current;
 
   return (
     <FocusGuide style={styles.panel} trapsLeft trapsRight trapsUp trapsDown>
       <FadeIn>
-        <Text style={styles.title}>{say('common.audio')}</Text>
+        <Text style={styles.title}>{say('common.quality')}</Text>
 
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-          <Text style={styles.heading}>{say('client.music.levellingChoices.volumeLevelling')}</Text>
+          <Text style={styles.heading}>{say('screens.nowPlayingBar.streamingQuality')}</Text>
 
-          {levellingChoices().map((choice) => {
-            const isChosen = choice.id === state.levelling;
+          {AUDIO_QUALITIES.map((quality) => {
+            const choice = describeAudioQuality(quality, track);
+            const isChosen = quality === state.quality;
 
             return (
               <ActionRow
-                key={choice.id}
+                key={quality}
                 label={choice.label}
                 detail={choice.detail}
                 {...(isChosen ? { icon: Check } : {})}
                 hasPreferredFocus={isChosen}
                 onPress={() => {
-                  player.setLevelling(choice.id);
+                  player.setQuality(quality);
                 }}
               />
             );
           })}
+
+          {track === null ? null : <Text style={styles.file}>{whatTheFileHolds(track)}</Text>}
+
+          <Text style={styles.heading}>{say('client.music.levellingChoices.volumeLevelling')}</Text>
+
+          {levellingChoices().map((choice) => (
+            <ActionRow
+              key={choice.id}
+              label={choice.label}
+              detail={choice.detail}
+              {...(choice.id === state.levelling ? { icon: Check } : {})}
+              onPress={() => {
+                player.setLevelling(choice.id);
+              }}
+            />
+          ))}
 
           <Text style={styles.heading}>{say('client.music.crossfadeChoices.crossfade')}</Text>
 
@@ -93,6 +117,12 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginTop: tokens.space.lg,
     paddingHorizontal: tokens.space.md,
+  },
+  file: {
+    color: tokens.colours.muted,
+    fontSize: tokens.type.small,
+    paddingHorizontal: tokens.space.md,
+    paddingTop: tokens.space.xs,
   },
   list: { gap: tokens.space.xs, paddingBottom: tokens.space.xl },
 });

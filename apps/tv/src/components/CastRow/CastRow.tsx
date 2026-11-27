@@ -1,7 +1,7 @@
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
 import { canOpenPerson } from '@ValenceContracts/schemas/Person';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
+import { CastPortrait } from '@ValenceTv/components/CastRow/components/CastPortrait/CastPortrait';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { CastRowProps } from './CastRow.types';
 import { say } from '@ValenceI18n/say';
@@ -19,8 +19,10 @@ const AT_MOST = 16;
  * catalogue took it in so no face is cut, lifting as the remote reaches it, with their name and the
  * part they played beneath, each given two lines rather than cut short, opening their own page.
  * Only somebody the catalogue knows enough about to open is shown, since a face that opens an empty
- * page is worse than no face. Nothing is drawn where nobody can be opened. The row catches the
- * remote across the whole width of the page.
+ * page is worse than no face. Somebody with no photograph, or one that will not load, keeps their
+ * place with a figure, as on the web. Every portrait is built at once and kept as the row moves, so
+ * none waits to be built or is dropped once off the screen. Nothing is drawn where nobody can be
+ * opened. The row catches the remote across the whole width of the page.
  *
  * @param cast - Who is in it, in billing order.
  * @param onOpen - Told whose page to open.
@@ -39,6 +41,8 @@ const CastRow = ({ cast, onOpen }: CastRowProps) => {
       <FocusGuide isRemembering={rowsRememberTheirPlace}>
         <FlatList
           horizontal
+          initialNumToRender={AT_MOST}
+          removeClippedSubviews={false}
           data={shown}
           keyExtractor={(member) => `${String(member.personId)}:${member.role}`}
           showsHorizontalScrollIndicator={false}
@@ -60,14 +64,8 @@ const CastRow = ({ cast, onOpen }: CastRowProps) => {
               }}
             >
               <View style={styles.member}>
-                <View style={[styles.portrait, PORTRAIT]}>
-                  {item.imageUrl === null ? null : (
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.picture}
-                      contentFit="cover"
-                    />
-                  )}
+                <View style={styles.portrait}>
+                  <CastPortrait imageUrl={item.imageUrl} size={PORTRAIT} />
                 </View>
                 <Text style={styles.name} numberOfLines={2}>
                   {item.name}
@@ -101,13 +99,7 @@ const styles = StyleSheet.create({
     gap: tokens.space.md,
   },
   member: { width: PORTRAIT.width },
-  portrait: {
-    borderRadius: tokens.radii.lg,
-    overflow: 'hidden',
-    backgroundColor: tokens.colours.raised,
-    marginBottom: tokens.space.sm,
-  },
-  picture: { width: '100%', height: '100%' },
+  portrait: { marginBottom: tokens.space.sm },
   name: { color: tokens.colours.text, fontSize: tokens.type.small, fontWeight: '600' },
   role: { color: tokens.colours.muted, fontSize: tokens.type.small - 4 },
 });

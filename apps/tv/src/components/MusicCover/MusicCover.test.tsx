@@ -1,6 +1,15 @@
+import { Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { z } from 'zod';
 import { MusicCover } from '@ValenceTv/components/MusicCover/MusicCover';
+
+const mockTraced = (name: string) => <Text>{name}</Text>;
+
+jest.mock('@keyline-icons/react-native', () => ({
+  ...jest.requireActual<object>('@keyline-icons/react-native'),
+  MusicNote: () => mockTraced('note'),
+  Sparkles: () => mockTraced('sparkles'),
+}));
 
 const SourceSchema = z.array(z.object({ uri: z.string() }));
 
@@ -59,5 +68,16 @@ describe('MusicCover', () => {
 
     expect(picturesIn(drawn)).toEqual([]);
     expect(drawn.root).toHaveStyle({ backgroundColor: '#4f3bd9' });
+  });
+
+  it('draws sparkles for a mix Valence made with no cover, and a note for anything else', async () => {
+    const mix = await render(<MusicCover kind="mix" art={null} size={200} />);
+
+    expect(mix.getByText('sparkles')).toBeTruthy();
+    expect(mix.queryByText('note')).toBeNull();
+
+    const album = await render(<MusicCover kind="album" art={null} size={200} />);
+
+    expect(album.getByText('note')).toBeTruthy();
   });
 });
